@@ -215,7 +215,9 @@ function applyCompactBar() {
   var cards = bar.children; if (!cards.length) return;
   var available = bar.clientWidth - 10;
   var need = cards.length * 88 + (cards.length - 1) * 6;
-  if (available >= need) { bar.classList.add('wide'); } else { bar.classList.remove('wide'); }
+  // 卡片最少可压到 54px：只要放得下就整行均分，避免底部出现横向滚动条
+  var minNeed = cards.length * 54 + (cards.length - 1) * 4;
+  if (available >= need || available >= minNeed) { bar.classList.add('wide'); } else { bar.classList.remove('wide'); }
 }
 function updateBuildBarOverflow() {
   var el = document.getElementById('buildBar'); if (!el) return;

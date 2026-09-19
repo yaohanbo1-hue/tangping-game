@@ -230,9 +230,6 @@ function powerInfo() {
   return { regen: regen * (1 + G.tech.electric * 0.12) * techVal('overcore', 0.40) * (G.event.eff.powerMul || 1) };
 }
 const powerNet = () => powerInfo().regen;
-function powerBuffer() {
-  return { ratio: 1, surplus: true, seconds: Infinity };
-}
 const canFire = () => true;
 function computeResonance() {
   const tw = G.buildings.filter(b => b.def && b.def.tower);
@@ -288,7 +285,6 @@ function towerDmgMul(b) {
   if (b.resDmg) m *= b.resDmg;
   return m;
 }
-function towerDisabled(b) { return (b.empT || 0) > 0; }
 function towerRateMulOn(b) {
   let m = 1;
   if ((b.freezeT || 0) > 0) m *= 0.4;
@@ -945,7 +941,6 @@ function fire_(b, t, s) {
   const dtype = b.def.dmgType;
   if (b.type === 'laser') {
     const shots = s.multi || 1;
-    const ang0 = Math.atan2(t.y - b.y, t.x - b.x);
     let list = [t];
     if (shots > 1) {
       list = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range)
@@ -1484,10 +1479,6 @@ function gameWin() {
   Store.del('tangping_save');
   spawnParts(640, 300, 80, '#ffd166', 6, 1.4);
   showVictory();
-}
-function continueEndless() {
-  G.over = false; G.state = 'build'; G.prepTimer = 20;
-  setTip('无尽模式开启！梦魇将持续增强，看你能撑到第几波。', 8);
 }
 function step(dt) {
   // 击杀停顿：精英/BOSS 击杀时短暂冻结时间

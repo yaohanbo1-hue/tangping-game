@@ -9,6 +9,14 @@
 html,body{height:100%;background:#08060f;overflow:hidden;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:#e6e2ff}
 #wrap{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center center;background:#0e0b1c;border-radius:10px;box-shadow:0 0 60px rgba(120,80,255,.25);overflow:hidden}
 canvas{display:block;width:1280px;height:720px}
+/* 梦境氛围层：仅覆盖走廊区域（56–556），不遮挡 HUD 与底部操作栏 */
+#fx{position:absolute;left:0;top:56px;width:1280px;height:500px;pointer-events:none;z-index:4;
+  background:
+    radial-gradient(130% 82% at 50% 46%,transparent 42%,rgba(6,3,18,.5) 100%),
+    repeating-linear-gradient(180deg,rgba(180,160,255,.026) 0 1px,transparent 1px 3px);
+  box-shadow:inset 0 0 90px rgba(90,60,200,.1)}
+#fx::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(150,120,255,.045),transparent 20%,transparent 80%,rgba(60,30,120,.06))}
 #hud{position:absolute;left:0;top:0;width:1280px;height:56px;display:flex;align-items:center;gap:5px;padding:0 10px;
   background:linear-gradient(180deg,rgba(15,20,40,.96),rgba(12,16,32,.98));
   backdrop-filter:blur(16px) saturate(1.8);-webkit-backdrop-filter:blur(16px) saturate(1.8);
@@ -35,19 +43,11 @@ canvas{display:block;width:1280px;height:720px}
 #hud.compact{gap:5px;padding:0 7px}
 #hud.compact .stat{font-size:11px;padding:3px 5px;gap:2px}
 #hud.compact .btn{padding:5px 7px;font-size:11px}
-#hud.compact #pwWrap{width:42px}
 #hud.ultra{gap:4px;padding:0 6px}
 #hud.ultra .stat{font-size:10px;padding:2px 4px}
 #hud.ultra .stat i{font-size:11px}
 #hud.ultra .btn{padding:4px 5px;font-size:10px}
-#hud.ultra #pwWrap{width:34px}
 #hud.ultra .logo{font-size:13px}
-#pwWrap{width:54px;height:9px;background:rgba(0,0,0,.5);border-radius:5px;overflow:hidden;border:1px solid rgba(120,200,255,.25);flex-shrink:0}
-#powerFill{height:100%;width:100%;background:linear-gradient(90deg,#38bdf8,#a78bfa);transition:width .2s}
-#powerFill.ok{background:linear-gradient(90deg,#34d399,#4ade80)}
-#powerFill.low{background:linear-gradient(90deg,#fbbf24,#fb923c)}
-#powerFill.crit{background:linear-gradient(90deg,#f87171,#ef4444);animation:pwBlink .7s infinite}
-@keyframes pwBlink{0%,100%{opacity:1}50%{opacity:.45}}
 #detail{position:absolute;left:392px;bottom:148px;width:320px;max-height:340px;overflow-y:auto;
   background:linear-gradient(180deg,rgba(16,13,34,.92),rgba(12,10,28,.94));
   backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);
@@ -80,7 +80,7 @@ canvas{display:block;width:1280px;height:720px}
   backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);
   border-top:1px solid rgba(120,100,255,.18);z-index:5;box-shadow:0 -4px 30px rgba(0,0,0,.4)}
 #buildBar{flex:1;display:flex;gap:5px;overflow-x:auto;overflow-y:hidden;scroll-behavior:smooth;
-  -webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(130,120,220,.35) transparent;padding:2px 2px;animation:fadeInUp .8s ease-out .2s both}
+  -webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:rgba(130,120,220,.35) transparent;padding:6px 2px 3px;animation:fadeInUp .8s ease-out .2s both}
 /* 响应式：窗口够宽时卡片自适应放大、gap 自动分配，尽量一次显示全部 16 种建筑，避免滚动 */
 @media (min-width: 1366px) {
   .card{flex:1 1 0;min-width:0;width:auto;max-width:96px}
@@ -94,19 +94,30 @@ canvas{display:block;width:1280px;height:720px}
 /* 运行时由 applyCompactBar() 添加：容器够宽时 16 卡均分一行，彻底无需滚动 */
 #buildBar.wide .card{flex:1 1 0;min-width:0;width:auto;max-width:none}
 #buildBar.wide{gap:4px}
-#buildBar.canScroll::after{content:'◀ 滑动查看 ▶';position:absolute;right:224px;bottom:9px;font-size:10px;color:#a5a0c4;
-  background:rgba(20,16,42,.85);border:1px solid rgba(160,140,255,.25);border-radius:10px;padding:2px 8px;pointer-events:none;z-index:7}
+/* 底部建造栏可横向滚动时的提示：右缘渐隐 + 呼吸箭头（旧版文字胶囊会遮挡最后一张卡片的费用行） */
+#buildBar.canScroll::after{content:'';position:absolute;right:250px;bottom:7px;width:44px;height:136px;pointer-events:none;z-index:6;
+  background:linear-gradient(90deg,rgba(12,9,26,0),rgba(12,9,26,.7) 55%,rgba(12,9,26,.92))}
+#buildBar.canScroll::before{content:'›';position:absolute;right:259px;bottom:58px;font-size:26px;font-weight:800;line-height:1;color:#cfc9ea;
+  pointer-events:none;z-index:7;text-shadow:0 0 12px rgba(150,120,255,.75);animation:barArrow 1.5s ease-in-out infinite}
+@keyframes barArrow{0%,100%{opacity:.35;transform:translateX(-2px)}50%{opacity:1;transform:translateX(3px)}}
 #buildBar:not(.canScroll)::after{display:none}
+#buildBar:not(.canScroll)::before{display:none}
 #buildBar::-webkit-scrollbar{height:7px}
 #buildBar::-webkit-scrollbar-thumb{background:rgba(160,140,255,.4);border-radius:4px}
 #buildBar::-webkit-scrollbar-track{background:transparent}
-.card{flex:0 0 84px;width:84px;height:130px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid rgba(130,120,220,.15);border-radius:10px;
-  cursor:pointer;display:flex;flex-direction:column;align-items:center;padding:5px 3px;position:relative;transition:all .2s;overflow:hidden}
-.card::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.04),transparent);pointer-events:none;border-radius:10px}
-.card:hover{background:linear-gradient(180deg,rgba(110,100,240,.35),rgba(90,80,220,.2));
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  border-color:rgba(150,140,255,.5);transform:scale(1.06) translateY(-3px);
-  box-shadow:0 6px 20px rgba(110,100,240,.35),0 0 15px rgba(150,140,255,.15)}
+.card{--dc:#8b8bd6;flex:0 0 84px;width:84px;height:126px;
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015));border:1px solid rgba(130,120,220,.15);border-radius:11px;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;padding:6px 3px 5px;position:relative;
+  transition:transform .18s cubic-bezier(.2,.9,.3,1.35),box-shadow .22s,border-color .22s,background .22s;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:11px 11px 0 0;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--dc),transparent);opacity:.45;transition:opacity .22s}
+.card::after{content:'';position:absolute;inset:0;pointer-events:none;border-radius:11px;opacity:.10;
+  background:radial-gradient(120% 70% at 50% 0%,var(--dc),transparent 70%);transition:opacity .22s}
+.card:hover{background:linear-gradient(180deg,rgba(110,100,240,.26),rgba(90,80,220,.13));
+  border-color:var(--dc);transform:translateY(-4px) scale(1.045);
+  box-shadow:0 8px 22px rgba(0,0,0,.45),0 0 18px -3px var(--dc)}
+.card:hover::before{opacity:1}
+.card:hover::after{opacity:.2}
 .card.sel{background:linear-gradient(180deg,rgba(158,240,26,.18),rgba(130,220,20,.1));border-color:rgba(158,240,26,.7);box-shadow:0 0 16px rgba(158,240,26,.3)}
 .card.no{opacity:.35;filter:grayscale(.7);cursor:not-allowed}
 .card.ok{border-color:rgba(158,240,26,.5);background:linear-gradient(180deg,rgba(158,240,26,.1),rgba(130,220,20,.05));
@@ -121,26 +132,43 @@ canvas{display:block;width:1280px;height:720px}
 50%{box-shadow:0 0 24px rgba(255,180,60,.75),inset 0 0 20px rgba(255,180,60,.18)}}
 .card.okTower .nm{color:#ffe0a3}
 .card.okTower .ico{filter:drop-shadow(0 0 6px rgba(255,180,60,.7))}
-.card .ico{font-size:30px;line-height:1.1;margin-top:2px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.3))}
-.card .nm{font-size:11px;font-weight:700;margin-top:4px;text-align:center;color:#ddd8f5;line-height:1.2;text-shadow:0 1px 2px rgba(0,0,0,.3)}
-.card .dt{font-size:9px;position:absolute;top:4px;left:6px}
-.card .pr{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;width:100%}
-.card .pr .g{color:#fcd34d}
-.card .pr .p{color:#7dd3fc}
-.card .kb{position:absolute;top:3px;right:5px;font-size:9px;background:rgba(255,255,255,.12);border-radius:3px;padding:1px 4px;color:#a5a0c4}
-#right{width:210px;display:flex;flex-direction:column;gap:6px}
-#skillBar{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
-.skill{position:relative;height:44px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
-  border:1px solid rgba(130,120,220,.2);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;transition:all .18s}
-.skill:hover{background:linear-gradient(180deg,rgba(130,120,220,.25),rgba(110,100,200,.15));border-color:rgba(150,140,255,.45);transform:translateY(-2px);box-shadow:0 4px 12px rgba(110,100,220,.2)}
-.skill .sico{font-size:22px;z-index:2}
-.skill .scd{position:absolute;left:0;bottom:0;width:100%;height:0%;background:rgba(10,8,20,.8);
-  display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;z-index:3;transition:height .1s}
-.skill .skey{position:absolute;top:2px;left:4px;font-size:9px;color:#8b85a8;z-index:2}
-.skill.cool{filter:grayscale(.7)}
-#ctrls{display:flex;flex-wrap:wrap;gap:5px}
-#ctrls .btn{flex:1;min-width:60px;text-align:center;padding:7px 3px;font-size:11.5px;font-weight:600}
-#hint{font-size:10.5px;color:#8882a8;line-height:1.5;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));padding:5px 7px;border-radius:6px;flex:1;overflow:hidden;border:1px solid rgba(255,255,255,.03)}
+.card .ico{font-size:29px;line-height:1;width:100%;height:44px;display:flex;align-items:center;justify-content:center;margin-top:1px;border-radius:9px;
+  background:radial-gradient(64% 64% at 50% 50%,rgba(255,255,255,.07),rgba(255,255,255,0) 72%);
+  filter:drop-shadow(0 2px 5px rgba(0,0,0,.45));transition:transform .2s cubic-bezier(.2,.9,.3,1.4)}
+.card:hover .ico{transform:scale(1.12)}
+.card .nm{font-size:9.5px;font-weight:700;margin-top:4px;text-align:center;color:#ddd8f5;line-height:1.3;text-shadow:0 1px 2px rgba(0,0,0,.4);
+  max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 1px;letter-spacing:.1px}
+.card .dt{margin-top:auto;display:inline-flex;align-items:center;gap:1px;font-size:8.5px;font-weight:700;line-height:1.75;
+  padding:0 7px 1px 5px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid currentColor;opacity:.95;max-width:100%;box-sizing:border-box;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .dt i{font-style:normal;font-size:9.5px;line-height:1}
+.card .dt.generic{color:#8f8ab0;border-color:rgba(143,138,176,.35)}
+.card .pr{display:flex;flex-direction:column;align-items:center;gap:0;font-size:10.5px;width:100%;margin-top:3px;line-height:1.2}
+.card .pr .g{color:#fcd34d;font-weight:800}
+.card .kb{position:absolute;top:4px;right:5px;font-size:8.5px;font-weight:800;line-height:1.5;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:0 4px;color:#a5a0c4;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+/* 右侧控制区：必须完整塞进 150px 高的 #bottom（修复 11 个按钮 + 提示被裁掉的问题）
+   预算：136px 内容高 = 技能条 36 + 间隔 5 + 按钮网格 2 行 44 + 间隔 5 + 提示 46 */
+#right{width:232px;display:flex;flex-direction:column;gap:5px;min-height:0}
+#skillBar{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;flex-shrink:0}
+.skill{position:relative;height:36px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));
+  border:1px solid rgba(130,120,220,.22);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  transition:transform .16s cubic-bezier(.2,.9,.3,1.3),box-shadow .2s,background .2s,border-color .2s}
+.skill:hover{background:linear-gradient(180deg,rgba(130,120,220,.3),rgba(110,100,200,.16));border-color:rgba(150,140,255,.5);
+  transform:translateY(-2px);box-shadow:0 4px 12px rgba(110,100,220,.3)}
+.skill:active{transform:translateY(0)}
+.skill .sico{font-size:16px;z-index:2;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))}
+.skill .scd{position:absolute;left:0;bottom:0;width:100%;height:0%;background:linear-gradient(180deg,rgba(15,10,30,.5),rgba(10,8,20,.9));
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;z-index:3;transition:height .1s}
+.skill .skey{position:absolute;top:1px;left:3px;font-size:8px;font-weight:700;color:#8b85a8;z-index:2}
+.skill.cool{filter:grayscale(.75) brightness(.85)}
+.skill:not(.cool){border-color:rgba(158,240,26,.32)}
+#ctrls{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;flex-shrink:0}
+#ctrls .btn{min-width:0;width:100%;padding:5px 1px;font-size:9px;font-weight:700;text-align:center;letter-spacing:0;
+  line-height:1.15;overflow:hidden;white-space:nowrap;border-radius:6px}
+#hint{font-size:9.5px;color:#8882a8;line-height:1.42;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+  padding:4px 6px;border-radius:6px;flex:1;min-height:0;overflow:hidden;border:1px solid rgba(255,255,255,.035)}
 #hint b{color:#b8b0d8}
 .slide{position:absolute;right:0;top:56px;width:352px;height:504px;
   background:linear-gradient(180deg,rgba(14,11,30,.92),rgba(10,8,22,.94));
@@ -445,7 +473,8 @@ canvas{display:block;width:1280px;height:720px}
 .npc-list::-webkit-scrollbar{width:6px}
 .npc-list::-webkit-scrollbar-thumb{background:rgba(160,140,255,.35);border-radius:3px}
 .npc-card{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.02));
-  border:1px solid rgba(130,120,220,.18);border-radius:12px;padding:14px;display:flex;gap:12px;align-items:flex-start;
+  border:1px solid rgba(130,120,220,.18);border-radius:12px;padding:12px 14px;
+  display:grid;grid-template-columns:52px minmax(0,1fr) auto;grid-template-rows:auto auto 1fr;gap:2px 12px;align-items:start;
   transition:all .22s;cursor:pointer;position:relative;overflow:hidden}
 .npc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
   background:linear-gradient(90deg,transparent,rgba(167,139,250,.25),transparent);opacity:0;transition:opacity .2s}
@@ -455,20 +484,21 @@ canvas{display:block;width:1280px;height:720px}
 .npc-card.stationed{border-color:rgba(74,222,128,.5);background:linear-gradient(180deg,rgba(74,222,128,.08),rgba(74,222,128,.03));
   box-shadow:0 0 16px rgba(74,222,128,.12)}
 .npc-card.stationed::before{background:linear-gradient(90deg,transparent,rgba(74,222,128,.4),transparent);opacity:1}
-.npc-avatar{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,rgba(167,139,250,.12),rgba(120,80,246,.08));
+.npc-avatar{grid-column:1;grid-row:1/4;width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,rgba(167,139,250,.12),rgba(120,80,246,.08));
   display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;
   border:1px solid rgba(160,140,255,.2);box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .npc-card.stationed .npc-avatar{border-color:rgba(74,222,128,.4);background:linear-gradient(135deg,rgba(74,222,128,.12),rgba(34,197,94,.08))}
-.npc-name{font-size:14px;font-weight:700;color:#e6e2ff}
+.npc-name{grid-column:2;grid-row:1;align-self:center;font-size:13.5px;font-weight:700;color:#e6e2ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .npc-card.stationed .npc-name{color:#4ade80}
-.npc-role{font-size:11px;color:#a78bfa;margin-top:1px}
-.npc-ability{font-size:11px;color:#8b85a8;line-height:1.5;margin-top:4px}
+.npc-role{grid-column:2;grid-row:2;justify-self:start;font-size:9.5px;line-height:1.6;color:#c4b5fd;
+  background:rgba(167,139,250,.14);border:1px solid rgba(167,139,250,.28);border-radius:20px;padding:0 7px}
+.npc-ability{grid-column:2;grid-row:3;font-size:10.5px;color:#8b85a8;line-height:1.45;margin-top:3px}
 .npc-card.stationed .npc-ability{color:#6ee7b7}
-.npc-room{font-size:10px;color:#4ade80;margin-top:6px;padding:2px 8px;border-radius:4px;
-  background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.25);display:inline-block}
-.npc-recruit-btn{margin-top:8px;padding:6px 16px;border-radius:8px;font-size:12px;font-weight:700;
+.npc-room{grid-column:3;grid-row:1/4;align-self:center;font-size:10px;color:#4ade80;padding:3px 10px;border-radius:20px;
+  background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.25);white-space:nowrap}
+.npc-recruit-btn{grid-column:3;grid-row:1/4;align-self:center;margin:0;padding:6px 13px;border-radius:8px;font-size:11.5px;font-weight:700;white-space:nowrap;
   border:1px solid rgba(167,139,250,.5);background:linear-gradient(135deg,rgba(91,79,199,.35),rgba(124,93,217,.25));
-  color:#e6e2ff;cursor:pointer;font-family:inherit;transition:.2s;letter-spacing:1px}
+  color:#e6e2ff;cursor:pointer;font-family:inherit;transition:.2s;letter-spacing:.5px}
 .npc-recruit-btn:hover{background:linear-gradient(135deg,rgba(91,79,199,.55),rgba(124,93,217,.4));
   transform:translateY(-1px);box-shadow:0 4px 14px rgba(120,80,230,.3)}
 
@@ -650,6 +680,7 @@ canvas{display:block;width:1280px;height:720px}
 <body>
 <div id="wrap">
   <canvas id="game" width="1280" height="720"></canvas>
+  <div id="fx"></div>
   <div id="hud">
     <div class="logo">🛏️躺平发育</div>
     <div class="stat" title="当前波次"><i>🌊</i><b id="hudWave">0</b></div>
@@ -678,14 +709,14 @@ canvas{display:block;width:1280px;height:720px}
       <div id="ctrls">
         <button class="btn" id="btnTech2">🔬科技</button>
         <button class="btn" id="btnSkip2">⏩召唤</button>
-        <button class="btn" id="btnHelp2">❓</button>
+        <button class="btn" id="btnHelp2" title="帮助与图鉴">❓</button>
         <button class="btn hot" id="btnLot2" title="摇奖机">🎰摇奖</button>
         <button class="btn rune" id="btnRune" title="符文背包（G）">🔮符文</button>
         <button class="btn" id="btnUpAll" title="所有建筑各升 1 级">⬆️全升</button>
         <button class="btn" id="btnUpTower" title="所有炮塔各升 1 级">🔫塔升</button>
-        <button class="btn upmax" id="btnMaxSel" title="把选中的建筑/床/门一次性升到满级（M）">⏫升满选中</button>
+        <button class="btn upmax" id="btnMaxSel" title="把选中的建筑/床/门一次性升到满级（M）">⏫满级</button>
         <button class="btn upmax" id="btnMaxAll" title="所有建筑、床、门全部升到能升的最高">⏫全满</button>
-        <button class="btn" id="btnSound">🔊</button>
+        <button class="btn" id="btnSound" title="音效开关">🔊</button>
         <button class="btn" id="btnSave" title="保存进度">💾</button>
       </div>
       <div id="hint">
@@ -2588,9 +2619,6 @@ function powerInfo() {
   return { regen: regen * (1 + G.tech.electric * 0.12) * techVal('overcore', 0.40) * (G.event.eff.powerMul || 1) };
 }
 const powerNet = () => powerInfo().regen;
-function powerBuffer() {
-  return { ratio: 1, surplus: true, seconds: Infinity };
-}
 const canFire = () => true;
 function computeResonance() {
   const tw = G.buildings.filter(b => b.def && b.def.tower);
@@ -2646,7 +2674,6 @@ function towerDmgMul(b) {
   if (b.resDmg) m *= b.resDmg;
   return m;
 }
-function towerDisabled(b) { return (b.empT || 0) > 0; }
 function towerRateMulOn(b) {
   let m = 1;
   if ((b.freezeT || 0) > 0) m *= 0.4;
@@ -3303,7 +3330,6 @@ function fire_(b, t, s) {
   const dtype = b.def.dmgType;
   if (b.type === 'laser') {
     const shots = s.multi || 1;
-    const ang0 = Math.atan2(t.y - b.y, t.x - b.x);
     let list = [t];
     if (shots > 1) {
       list = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range)
@@ -3842,10 +3868,6 @@ function gameWin() {
   Store.del('tangping_save');
   spawnParts(640, 300, 80, '#ffd166', 6, 1.4);
   showVictory();
-}
-function continueEndless() {
-  G.over = false; G.state = 'build'; G.prepTimer = 20;
-  setTip('无尽模式开启！梦魇将持续增强，看你能撑到第几波。', 8);
 }
 function step(dt) {
   // 击杀停顿：精英/BOSS 击杀时短暂冻结时间
@@ -6835,15 +6857,20 @@ function buildBuildBar() {
     const d = BUILD_DEFS[k];
     const c = document.createElement('div');
     c.className = 'card'; c.dataset.k = k;
-    const dt = d.dmgType ? '<span class="dt" style="color:' + DMG[d.dmgType].color + '">' + DMG[d.dmgType].icon + '</span>' : '';
+    const dt = d.dmgType
+      ? '<div class="dt" style="color:' + DMG[d.dmgType].color + '"><i>' + DMG[d.dmgType].icon + '</i>' + DMG[d.dmgType].name + '</div>'
+      : '<div class="dt generic"><i>🔌</i>免电</div>';
+    c.style.setProperty('--dc', (d.dmgType && DMG[d.dmgType].color) || d.color || '#8b8bd6');
     c.innerHTML = '<div class="ico">' + d.icon + '</div><div class="nm">' + d.name + '</div>' + dt +
-      '<div class="pr"><span class="g">' + fmt(d.cost.gold) + '💰</span><span class="p">免电量</span></div>' +
+      '<div class="pr"><span class="g">' + fmt(d.cost.gold) + '💰</span></div>' +
       '<div class="kb">' + d.key + '</div>';
-    c.title = d.name + '：' + d.desc;
+    c.title = d.name + '：' + d.desc + '（建造不消耗电力）';
     c.onclick = () => selectBuild(k);
     el.appendChild(c);
   });
   if (typeof updateBuildBarOverflow === 'function') updateBuildBarOverflow();
+  // 卡片是初始化之后才生成的，这里必须再跑一次宽度判定，否则永远不会进入 wide 均分模式
+  if (typeof applyCompactBar === 'function') applyCompactBar();
 }
 function buildSkillBar() {
   const el = $('skillBar'); el.innerHTML = '';
@@ -6926,7 +6953,6 @@ function updateHUD(dt) {
   if (hudT > 0) return;
   hudT = 0.08;
   updateDetail();
-  const pw = powerInfo();
   $('hudWave').textContent = G.wave;
   $('hudGold').textContent = G.admin ? '∞' : fmt(G.gold);
   $('hudRate').textContent = '+' + fmt1(totalGoldRate()) + '/s';
@@ -8044,7 +8070,9 @@ function applyCompactBar() {
   var cards = bar.children; if (!cards.length) return;
   var available = bar.clientWidth - 10;
   var need = cards.length * 88 + (cards.length - 1) * 6;
-  if (available >= need) { bar.classList.add('wide'); } else { bar.classList.remove('wide'); }
+  // 卡片最少可压到 54px：只要放得下就整行均分，避免底部出现横向滚动条
+  var minNeed = cards.length * 54 + (cards.length - 1) * 4;
+  if (available >= need || available >= minNeed) { bar.classList.add('wide'); } else { bar.classList.remove('wide'); }
 }
 function updateBuildBarOverflow() {
   var el = document.getElementById('buildBar'); if (!el) return;

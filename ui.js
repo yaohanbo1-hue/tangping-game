@@ -6,15 +6,20 @@ function buildBuildBar() {
     const d = BUILD_DEFS[k];
     const c = document.createElement('div');
     c.className = 'card'; c.dataset.k = k;
-    const dt = d.dmgType ? '<span class="dt" style="color:' + DMG[d.dmgType].color + '">' + DMG[d.dmgType].icon + '</span>' : '';
+    const dt = d.dmgType
+      ? '<div class="dt" style="color:' + DMG[d.dmgType].color + '"><i>' + DMG[d.dmgType].icon + '</i>' + DMG[d.dmgType].name + '</div>'
+      : '<div class="dt generic"><i>🔌</i>免电</div>';
+    c.style.setProperty('--dc', (d.dmgType && DMG[d.dmgType].color) || d.color || '#8b8bd6');
     c.innerHTML = '<div class="ico">' + d.icon + '</div><div class="nm">' + d.name + '</div>' + dt +
-      '<div class="pr"><span class="g">' + fmt(d.cost.gold) + '💰</span><span class="p">免电量</span></div>' +
+      '<div class="pr"><span class="g">' + fmt(d.cost.gold) + '💰</span></div>' +
       '<div class="kb">' + d.key + '</div>';
-    c.title = d.name + '：' + d.desc;
+    c.title = d.name + '：' + d.desc + '（建造不消耗电力）';
     c.onclick = () => selectBuild(k);
     el.appendChild(c);
   });
   if (typeof updateBuildBarOverflow === 'function') updateBuildBarOverflow();
+  // 卡片是初始化之后才生成的，这里必须再跑一次宽度判定，否则永远不会进入 wide 均分模式
+  if (typeof applyCompactBar === 'function') applyCompactBar();
 }
 function buildSkillBar() {
   const el = $('skillBar'); el.innerHTML = '';
@@ -97,7 +102,6 @@ function updateHUD(dt) {
   if (hudT > 0) return;
   hudT = 0.08;
   updateDetail();
-  const pw = powerInfo();
   $('hudWave').textContent = G.wave;
   $('hudGold').textContent = G.admin ? '∞' : fmt(G.gold);
   $('hudRate').textContent = '+' + fmt1(totalGoldRate()) + '/s';
