@@ -1115,7 +1115,7 @@ const WAVE_STORY = [
   },
   {
     wave: 18, speaker: '旁白',
-    text: '整个屏幕开始像素化。梦魇们暂停了。一个光标出现，在你视野里打出一行字："第三十波之后，没有存档点。"',
+    text: '梦魇们同时停住了。它们没有看你，而是越过你的肩膀，一起望向屏幕外的某个方向。你下意识地回头——身后什么都没有，但它们的视线没有收回来。',
   },
   {
     wave: 19, speaker: '周默',
@@ -5268,6 +5268,8 @@ const DeepDream = {
    * 这里只做「编译」，避免规则文案和实际数值打架。
    */
   DEEP_LEVELS: (function () {
+    // 兜底副本：仅在 story.js 未加载（DEEP_DREAM_LEVELS 缺失）时生效，数值与 story.js 保持一致；
+    // 正常路径走下面的编译，改数值请改 story.js。
     const fallback = [
       { id: 'deep_1', name: '记忆走廊', icon: '🏛️', enterWave: 15, duration: 3,
         desc: '一切变得更加昏暗，某些敌人获得了强化',
@@ -8464,6 +8466,8 @@ function hideStoryDialog() {
   storyQueue = [];
   storyTyping = false;
   _resumeAfterStory();
+  // 剧情读完后，把排队等着的第四面墙演出放出来
+  _flushPendingFourthWall();
 }
 
 // === 日记面板 ===
@@ -8623,12 +8627,46 @@ function openFragmentDetail(id) {
 // === 第四面墙效果（引擎只广播，演出全部在这里） ===
 let fourthWallActive = false;
 let _fwCrashTimer = null, _fwChatTimer = null, _fwRevertTimer = null;
+/** 剧情框正展示时，全屏第四面墙演出先排队（避免盖住玩家正在读的剧情与选项） */
+let _fwPending = null;
+let _fwPendingTimer = null;
+
+/** 剧情框是否正在展示 */
+function _storyPanelOpen() {
+  const p = $('storyDialog');
+  return !!(p && p.style.display === 'flex');
+}
+
+/**
+ * 假崩溃：剧情进行中则排队，等剧情框收起再演
+ * （第 30 波「最后一夜」的选择做完之后，才轮到蓝屏）
+ * @param {object} [data] - { title, content }
+ */
+function showFakeCrash(data) {
+  if (_storyPanelOpen()) {
+    _fwPending = data || {};
+    clearTimeout(_fwPendingTimer);
+    // 兜底：玩家一直没点「继续」时，20 秒后仍把演出放出来，避免演出丢失
+    _fwPendingTimer = setTimeout(() => { _flushPendingFourthWall(); }, 20000);
+    return;
+  }
+  _playFakeCrash(data);
+}
+
+/** 释放排队的第四面墙演出 */
+function _flushPendingFourthWall() {
+  clearTimeout(_fwPendingTimer);
+  if (!_fwPending) return;
+  const d = _fwPending;
+  _fwPending = null;
+  _playFakeCrash(d);
+}
 
 /**
  * 假崩溃演出（蓝屏风格，多行文案完整展示）
  * @param {object} [data] - { title, content }
  */
-function showFakeCrash(data) {
+function _playFakeCrash(data) {
   const overlay = $('fourthWallOverlay');
   if (!overlay) return;
   fourthWallActive = true;

@@ -963,6 +963,8 @@ const DeepDream = {
    * 这里只做「编译」，避免规则文案和实际数值打架。
    */
   DEEP_LEVELS: (function () {
+    // 兜底副本：仅在 story.js 未加载（DEEP_DREAM_LEVELS 缺失）时生效，数值与 story.js 保持一致；
+    // 正常路径走下面的编译，改数值请改 story.js。
     const fallback = [
       { id: 'deep_1', name: '记忆走廊', icon: '🏛️', enterWave: 15, duration: 3,
         desc: '一切变得更加昏暗，某些敌人获得了强化',

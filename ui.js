@@ -1014,6 +1014,8 @@ function hideStoryDialog() {
   storyQueue = [];
   storyTyping = false;
   _resumeAfterStory();
+  // 剧情读完后，把排队等着的第四面墙演出放出来
+  _flushPendingFourthWall();
 }
 
 // === 日记面板 ===
@@ -1173,12 +1175,46 @@ function openFragmentDetail(id) {
 // === 第四面墙效果（引擎只广播，演出全部在这里） ===
 let fourthWallActive = false;
 let _fwCrashTimer = null, _fwChatTimer = null, _fwRevertTimer = null;
+/** 剧情框正展示时，全屏第四面墙演出先排队（避免盖住玩家正在读的剧情与选项） */
+let _fwPending = null;
+let _fwPendingTimer = null;
+
+/** 剧情框是否正在展示 */
+function _storyPanelOpen() {
+  const p = $('storyDialog');
+  return !!(p && p.style.display === 'flex');
+}
+
+/**
+ * 假崩溃：剧情进行中则排队，等剧情框收起再演
+ * （第 30 波「最后一夜」的选择做完之后，才轮到蓝屏）
+ * @param {object} [data] - { title, content }
+ */
+function showFakeCrash(data) {
+  if (_storyPanelOpen()) {
+    _fwPending = data || {};
+    clearTimeout(_fwPendingTimer);
+    // 兜底：玩家一直没点「继续」时，20 秒后仍把演出放出来，避免演出丢失
+    _fwPendingTimer = setTimeout(() => { _flushPendingFourthWall(); }, 20000);
+    return;
+  }
+  _playFakeCrash(data);
+}
+
+/** 释放排队的第四面墙演出 */
+function _flushPendingFourthWall() {
+  clearTimeout(_fwPendingTimer);
+  if (!_fwPending) return;
+  const d = _fwPending;
+  _fwPending = null;
+  _playFakeCrash(d);
+}
 
 /**
  * 假崩溃演出（蓝屏风格，多行文案完整展示）
  * @param {object} [data] - { title, content }
  */
-function showFakeCrash(data) {
+function _playFakeCrash(data) {
   const overlay = $('fourthWallOverlay');
   if (!overlay) return;
   fourthWallActive = true;
