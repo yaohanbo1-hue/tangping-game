@@ -3,13 +3,16 @@
 // ============================================================
 
 // ─── 0. 角色档案 ───────────────────────────────────────────
+// 唯一真相来源：对话框配色/头像（ui.js STORY_SPEAKERS）、角色档案面板都从这里取。
+// 新增说话人时只要在这里加一条即可，不要另外在 ui.js 里再写一份。
 const STORY_CHARACTERS = {
-  player: { name: '你', icon: '🛏️', desc: '一个普通的六年级学生，在梦境中保护自己的床铺。' },
-  xiaxia: { name: '林小夏', icon: '🌻', desc: '隔壁床的室友，永远精力充沛，即使在噩梦里也能笑出来。' },
-  zhoumo: { name: '周默', icon: '📚', desc: '靠窗床铺的室友，沉默寡言，但似乎对梦境有超乎常人的理解。' },
-  zhaolei: { name: '赵磊', icon: '😂', desc: '对面床铺的室友，即使身处绝境也要讲个冷笑话。' },
-  shadow: { name: '???', icon: '👁️', desc: '梦境深处的声音，时而引导时而恐吓，身份不明。' },
-  narrator: { name: '旁白', icon: '📖', desc: '讲述你所不知道的事。' },
+  player:   { name: '你',     icon: '🛏️', color: '#e2e8f0', glow: 'rgba(226,231,240,.08)', desc: '一个普通的六年级学生，在梦境中保护自己的床铺。' },
+  xiaxia:   { name: '林小夏', icon: '🌻', color: '#fbbf24', glow: 'rgba(251,191,36,.10)',  desc: '隔壁床的室友，永远精力充沛，即使在噩梦里也能笑出来。' },
+  zhoumo:   { name: '周默',   icon: '📚', color: '#60a5fa', glow: 'rgba(96,165,250,.10)',  desc: '靠窗床铺的室友，沉默寡言，但似乎对梦境有超乎常人的理解。' },
+  zhaolei:  { name: '赵磊',   icon: '😂', color: '#34d399', glow: 'rgba(52,211,153,.10)',  desc: '对面床铺的室友，即使身处绝境也要讲个冷笑话。' },
+  shadow:   { name: '???',    icon: '👁️', color: '#c77dff', glow: 'rgba(199,125,255,.15)', desc: '梦境深处的声音，时而引导时而恐吓，身份不明。' },
+  narrator: { name: '旁白',   icon: '📖', color: '#94a3b8', glow: 'rgba(148,163,184,.12)', desc: '讲述你所不知道的事。' },
+  nightmare:{ name: '梦魇',   icon: '💀', color: '#ef4444', glow: 'rgba(239,68,68,.12)',   desc: '你未曾消化的情绪。它们不是敌人，是回音。' },
 };
 
 // ─── 1. 波次剧情（密集版）─────────────────────────────────
@@ -449,37 +452,37 @@ const DREAM_FRAGMENTS = [
 // ─── 4. NPC 台词 ───────────────────────────────────────────
 const NPC_DIALOG = [
   {
-    id: 'npc_1', name: '守梦者·艾拉', role: '治疗师', icon: '🌙',
+    id: 'npc_1', name: '守梦者·艾拉', role: '治疗师', icon: '🌙', abilityId: 'healer_npc',
     intro: '你终于来了。我是艾拉，这片梦境的守望者。别怕——你不是第一个迷失在这里的人。',
     stationed: '建筑修复速度 +15%。我会守护你的防线，直到你找到回家的路。',
     quest: '在第 20 波之前，保持三扇铁门全部完好。我会奖励你一段被遗忘的记忆。',
   },
   {
-    id: 'npc_2', name: '记忆商人·摩伊拉', role: '道具商', icon: '🧶',
+    id: 'npc_2', name: '记忆商人·摩伊拉', role: '道具商', icon: '🧶', abilityId: 'merchant',
     intro: '记忆是有价格的，孩子。你想买回哪一段？还是想卖掉那些痛苦的？',
     stationed: '每波结束额外获得 5 金币。生意人总会找到赚钱的方式。',
     quest: '收集 10 个梦境碎片。我会用它们编织出一段完整的往事。',
   },
   {
-    id: 'npc_3', name: '梦行者·凯恩', role: '斥候', icon: '👁️',
+    id: 'npc_3', name: '梦行者·凯恩', role: '斥候', icon: '👁️', abilityId: 'scout',
     intro: '嘘……别出声。我能看见下一波梦魇的动向。让我留在这里，我能提前预警。',
     stationed: '提前 5 秒显示下一波敌人的类型和数量。知己知彼。',
     quest: '在不使用任何技能的情况下清空一波敌人。静默，是最强的武器。',
   },
   {
-    id: 'npc_4', name: '铁匠·赫淮斯托斯的残影', role: '强化师', icon: '🔨',
+    id: 'npc_4', name: '铁匠·赫淮斯托斯的残影', role: '强化师', icon: '🔨', abilityId: 'warrior_npc',
     intro: '我只是……一段残影。真正的赫淮斯托斯在你醒来之前就消散了。但我还记得怎么打铁。',
     stationed: '所有炮塔伤害 +8%。残影的力量虽弱，但足够锋利。',
     quest: '将任意一座建筑转职。让我看看你的决心。',
   },
   {
-    id: 'npc_5', name: '低语者·奈亚', role: '情报员', icon: '🌀',
+    id: 'npc_5', name: '低语者·奈亚', role: '情报员', icon: '🌀', abilityId: 'frost_mage',
     intro: '我知道你在想什么。"这个 NPC 是敌是友？"——好问题。答案是：看你怎么选。',
     stationed: '精英敌人出现时显示其词缀弱点。信息就是力量，也是诅咒。',
     quest: '击败一只带有 3 个词缀的精英敌人。那场面会很美。',
   },
   {
-    id: 'npc_6', name: '守床人·阿尔忒弥斯', role: '守护者', icon: '🏹',
+    id: 'npc_6', name: '守床人·阿尔忒弥斯', role: '守护者', icon: '🏹', abilityId: 'guardian',
     intro: '我的职责很简单：保护这张床。不管外面有什么东西——龙、虫群、还是你自己的影子——它们都别想碰到它。',
     stationed: '床铺最大生命 +20%。只要床还在，希望就在。',
     quest: '在床铺生命低于 10% 的情况下存活 3 波。绝境，是最好的老师。',
@@ -487,72 +490,119 @@ const NPC_DIALOG = [
 ];
 
 // ─── 5. 梦中梦数据 ─────────────────────────────────────────
+// 唯一真相来源：dream.js 的 DeepDream.DEEP_LEVELS 直接由这张表生成，波次/时长/数值都只在这里改。
+// rules 文案必须与 modifier 里的真实数值一致（否则玩家看到的规则和游戏行为会打架）。
 const DEEP_DREAM_LEVELS = [
   {
-    id: 'deep_1', triggerWave: 10, name: '记忆走廊', icon: '🏛️',
+    id: 'deep_1', triggerWave: 15, duration: 3, name: '记忆走廊', icon: '🏛️',
     description: '你坠入了更深层的梦境。这里是一条没有尽头的走廊，两侧的墙上挂满了你遗忘的记忆。',
-    rules: '所有敌人生命 -30%，但每 10 秒随机一面墙壁坍塌，释放一波额外敌人。走廊越走越窄，可建造格子每 30 秒减少 1 列。',
-    enemies: ['grunt', 'sprinter', 'phantom'],
-    goal: '在走廊完全坍塌前存活 120 秒。击败走廊尽头的「记忆守卫」即可返回浅层。',
-    reward: '获得 30 灵魂 + 稀有符文 ×1',
-    modifier: { hpMul: 0.7, extraSpawn: true, shrinkGrid: true },
+    rules: '梦魇生命 ×1.5、速度 ×1.2，并对火焰额外脆弱（弱点 +30%）；你的炮塔伤害降低 10%。时间流速不变。',
+    goal: '在深层梦境中存活 3 波，即可带着记忆返回浅层。',
+    reward: '30 灵魂 + 稀有符文 ×1',
+    rewardSpec: { souls: 30, rune: 'rare' },
+    modifier: {
+      enemyBuffs: { hpMul: 1.5, spdMul: 1.2 },
+      enemyNerfs: { fire: 0.3 },
+      buildingBonus: { dmgMul: 0.9 },
+      timeScale: 1.0,
+    },
   },
   {
-    id: 'deep_2', triggerWave: 20, name: '镜像迷宫', icon: '🪞',
+    id: 'deep_2', triggerWave: 30, duration: 3, name: '镜像迷宫', icon: '🪞',
     description: '无数面镜子组成的空间。每一面镜子里都是另一个版本的你——有的在哭，有的在笑，有的在尖叫。',
-    rules: '敌人被击杀时有 30% 概率在随机位置复活为「镜像体」（生命减半但速度翻倍）。炮塔有 15% 概率攻击镜像而非真实目标。',
-    enemies: ['mimic', 'phantom', 'wraith', 'adaptive'],
-    goal: '消灭 50 个敌人。注意：镜像体不计入击杀数，只有真实目标才算。',
-    reward: '获得 60 灵魂 + 史诗符文 ×1 + 解锁隐藏建筑「镜像塔」',
-    modifier: { mimicRevive: 0.3, confuseTowers: 0.15 },
+    rules: '梦魇生命 ×2.0、速度 ×0.8，全抗性 +20%，并对电磁额外脆弱（弱点 +40%）；你的炮塔射速 +15%，时间流速变慢（×0.85）。',
+    goal: '在深层梦境中存活 3 波。镜子很多，但只有一个你。',
+    reward: '60 灵魂 + 史诗符文 ×1',
+    rewardSpec: { souls: 60, rune: 'epic' },
+    modifier: {
+      enemyBuffs: { hpMul: 2.0, spdMul: 0.8, resAll: 0.2 },
+      enemyNerfs: { shock: 0.4 },
+      buildingBonus: { rateMul: 1.15 },
+      timeScale: 0.85,
+    },
   },
   {
-    id: 'deep_3', triggerWave: 30, name: '意识深渊', icon: '🕳️',
+    id: 'deep_3', triggerWave: 45, duration: 3, name: '意识深渊', icon: '🕳️',
     description: '最底层的梦境。这里没有形状，没有颜色，只有纯粹的意识在流动。你是这里唯一的实体——也是唯一的入侵者。',
-    rules: '所有建筑每秒损失 1% 最大生命（无法被维修台修复）。敌人击杀掉落的灵魂翻倍。时间在这里没有意义——你只有 90 秒。',
-    enemies: ['nullifier', 'colossus', 'reaper', 'necromancer', 'juggernaut'],
-    goal: '在 90 秒内击杀尽可能多的敌人。击杀数决定奖励等级：30+ S级 / 20+ A级 / 10+ B级。',
-    reward: 'S级：传说符文 ×2 + 100 灵魂。A级：史诗符文 ×2 + 60 灵魂。B级：稀有符文 ×1 + 30 灵魂。',
-    modifier: { decayHp: true, doubleSoul: true, timeLimit: 90 },
+    rules: '梦魇生命 ×2.8、攻击 ×1.5，并对能量额外脆弱（弱点 +50%）；你的炮塔伤害 +20%、射速 +10%，时间流速加快（×1.15）。',
+    goal: '在深层梦境中存活 3 波。深渊不会放你走，除非你自己走。',
+    reward: '100 灵魂 + 传说符文 ×1',
+    rewardSpec: { souls: 100, rune: 'legendary' },
+    modifier: {
+      enemyBuffs: { hpMul: 2.8, spdMul: 1.1, dmgMul: 1.5 },
+      enemyNerfs: { energy: 0.5 },
+      buildingBonus: { dmgMul: 1.2, rateMul: 1.1 },
+      timeScale: 1.15,
+    },
   },
 ];
 
 // ─── 6. 第四面墙数据 ───────────────────────────────────────
+// 唯一真相来源：dream.js 的 FourthWall.WAVE_EVENTS 直接读取这张表（不再各写一份）。
+// 字段约定必须与 FourthWall.applyEffect 一致：
+//   type:  'fakeCrash' | 'uiCorrupt' | 'chatMessage' | 'saveCorrupt'
+//   params.uiCorrupt: 'goldInvert' | 'buttonReplace' | 'colorInvert' | 'glitch'
+//   content: 展示给玩家的完整文案（可含 \n，聊天框按原样换行显示）
 const FOURTH_WALL_EVENTS = [
   {
-    wave: 7, type: 'fake_crash',
-    content: 'ERROR: NightmareOverflowException at sleep.core:404\n梦境渲染引擎崩溃。正在尝试恢复...\n\n别担心，这不是真的。继续吧。',
-    duration: 4.0,
+    wave: 7, type: 'chatMessage', title: '低语',
+    params: { msg: '你以为这样就能挡住我？' },
+    content: '你以为这样就能挡住我？\n\n（声音来自墙壁里面。）\n别担心，这不是真的。继续吧。',
   },
   {
-    wave: 13, type: 'ui_corrupt',
-    content: '金币数字开始倒着跳动。建筑图标短暂变成 ASCII 字符。HUD 上闪过一行字："有人在看着你。"',
-    duration: 6.0,
+    wave: 13, type: 'uiCorrupt', title: '数据错乱',
+    params: { type: 'goldInvert' },
+    content: '金币数字开始倒着跳动。\n建筑图标短暂变成 ASCII 字符。\nHUD 上闪过一行字："有人在看着你。"',
   },
   {
-    wave: 18, type: 'chat_message',
+    wave: 18, type: 'chatMessage', title: '未知玩家',
+    params: { msg: '你知道这不是游戏，对吧？' },
     content: '[系统] 玩家 "你真的在玩游戏吗？" 已加入房间。\n[你真的在玩游戏吗？] 你知道这不是游戏，对吧？\n[系统] 玩家 "你真的在玩游戏吗？" 已离开房间。',
-    duration: 8.0,
   },
   {
-    wave: 22, type: 'save_corrupt',
-    content: '存档损坏。\n数据：████████████\n恢复失败。\n\n……开玩笑的。存档好好的。但你刚才心跳加速了吧？',
-    duration: 5.0,
+    wave: 22, type: 'saveCorrupt', title: '存档损坏',
+    params: {},
+    content: '存档损坏。\n数据：████████████\n恢复失败。\n\n……开玩笑的。存档好好的。\n但你刚才心跳加速了吧？',
   },
   {
-    wave: 26, type: 'ui_corrupt',
-    content: '整个屏幕开始像素化。梦魇们暂停了。屏幕上出现一个光标，在你视野里打出一行字："第三十波之后，没有存档点。"',
-    duration: 7.0,
+    wave: 26, type: 'uiCorrupt', title: '像素化',
+    params: { type: 'glitch' },
+    content: '整个屏幕开始像素化。梦魇们暂停了。\n屏幕上出现一个光标，在你视野里打出一行字：\n"第三十波之后，没有存档点。"',
   },
   {
-    wave: 29, type: 'chat_message',
+    wave: 29, type: 'chatMessage', title: '脑电波异常',
+    params: { msg: '警告：玩家拒绝唤醒。' },
     content: '[梦境系统] 检测到异常脑电波。\n[梦境系统] 玩家意识清醒度：12%\n[梦境系统] 建议：立即唤醒。\n[梦境系统] 警告：玩家拒绝唤醒。\n[梦境系统] ……遵命。',
-    duration: 9.0,
   },
   {
-    wave: 30, type: 'fake_crash',
-    content: '蓝屏。\n\n:(  梦境遇到了问题，需要重新启动。\n\n错误代码：REALITY_NOT_FOUND\n\n正在收集错误信息……\n0%……15%……47%……\n\n你闭上了眼睛。\n你睁开了眼睛。\n哪个是真的？',
-    duration: 10.0,
+    wave: 30, type: 'fakeCrash', title: '梦境崩溃',
+    params: {},
+    content: '梦境遇到了问题，需要重新启动。\n错误代码：REALITY_NOT_FOUND\n\n你闭上了眼睛。\n你睁开了眼睛。\n哪个是真的？',
+  },
+  {
+    wave: 37, type: 'chatMessage', title: '崩塌',
+    params: { msg: '梦境正在崩塌……你感觉到了吗？' },
+    content: '梦境正在崩塌……你感觉到了吗？\n\n走廊尽头的那面镜子，裂开了一道缝。',
+  },
+  {
+    wave: 43, type: 'saveCorrupt', title: '幽灵存档',
+    params: {},
+    content: '检测到一份不属于本局的存档。\n写入时间：你第一次做这个梦的那天。\n\n它还在那里。',
+  },
+  {
+    wave: 49, type: 'fakeCrash', title: '循环',
+    params: {},
+    content: '梦境遇到了问题，需要重新启动。\n错误代码：DREAM_LOOP\n\n你以为你在前进吗？\n这是第 49 次了。',
+  },
+  {
+    wave: 55, type: 'uiCorrupt', title: '褪色',
+    params: { type: 'colorInvert' },
+    content: '世界失去了颜色。\n只剩下你和它们，在灰白的走廊里。\n\n第四面墙在变薄。',
+  },
+  {
+    wave: 59, type: 'chatMessage', title: '告别',
+    params: { msg: '最后一波了。祝你好运……真的。' },
+    content: '最后一波了。祝你好运……真的。\n\n（这次它没有笑。）',
   },
 ];
 
@@ -615,6 +665,7 @@ const SOUND_MELODIES = [
     sequence: ['bed', 'repair', 'shield'],
     hint: '床铺……修复……守护……',
     reward: '床铺回复至满血，获得 50 金币。',
+    rewardSpec: { healBed: true, gold: 50 },
     story: '一段模糊的旋律在脑海中响起——是妈妈唱过的摇篮曲。你已经很久没有想起这首歌了。',
   },
   {
@@ -622,6 +673,7 @@ const SOUND_MELODIES = [
     sequence: ['turret', 'tesla', 'laser'],
     hint: '子弹……闪电……光束……',
     reward: '所有炮塔伤害 +20%（持续 2 波）。',
+    rewardSpec: { dmgMul: 1.2, waves: 2 },
     story: '炮塔的射击声汇成了一首进行曲。这不是战争的喧嚣——是你第一次鼓起勇气开口说话时的心跳。',
   },
   {
@@ -629,20 +681,23 @@ const SOUND_MELODIES = [
     sequence: ['miner', 'generator', 'bank'],
     hint: '挖掘……能量……积累……',
     reward: '获得 200 金币 + 10 灵魂。',
+    rewardSpec: { gold: 200, souls: 10 },
     story: '金币碰撞的声音像风铃。你想起了小时候存零花钱买第一本书的那个下午。',
   },
   {
     id: 'melody_4', name: '冰与火之歌', icon: '❄️',
     sequence: ['frost', 'flame', 'frost'],
     hint: '冰……火……冰……',
-    reward: '触发元素共鸣：全场敌人受到一次冰火双重伤害。',
+    reward: '触发元素共鸣：全场梦魇受到一次冰霜 + 火焰双重伤害。',
+    rewardSpec: { nova: { frost: 90, fire: 90 } },
     story: '冰霜与火焰交织的瞬间，你看到了一幅画面——冬天的壁炉前，你在读一本关于冒险的书。',
   },
   {
     id: 'melody_5', name: '引力之舞', icon: '🌀',
     sequence: ['gravity', 'amp', 'tesla'],
     hint: '引力……增幅……电弧……',
-    reward: '触发「奇点风暴」：所有引力塔拉扯力 x3，持续 10 秒。',
+    reward: '触发「奇点风暴」：全场梦魇被引力定身 3 秒，并受到一次能量伤害。',
+    rewardSpec: { storm: { stun: 3, energy: 120 } },
     story: '宇宙的运转有它的韵律。你忽然理解了——噩梦也有它存在的理由。',
   },
   {
@@ -650,6 +705,7 @@ const SOUND_MELODIES = [
     sequence: ['generator', 'amp', 'laser', 'shield', 'bed'],
     hint: '能量……增幅……毁灭……守护……归宿……',
     reward: '全回复 + 全炮塔超频 15 秒 + 获得传说碎片 ×1。',
+    rewardSpec: { healAll: true, overclock: 15, fragment: 'legendary' },
     story: '所有声音汇聚成了一个音符——那个音符就是你。是你的恐惧、你的勇气、你的记忆、你的选择。全部在一起。这就是"你"。',
   },
 ];

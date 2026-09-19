@@ -651,40 +651,202 @@ function openBag() {
 function initDreamUI() {
   if (typeof EventBus === 'undefined') return;
 
-  // 剧情对话（由 DreamEngine 波次钩子触发）
+  // ---- 剧情对话（由 DreamEngine / core.js 波次钩子触发）----
   EventBus.on('story:dialog', (data) => {
     if (data && data.text) showStoryDialog(data);
   });
 
-  // 记忆碎片掉落动画
+  // ---- 记忆碎片 ----
   EventBus.on('fragment:collect', (data) => showFragmentPopup(data));
 
-  // NPC招募通知
+  // ---- NPC 招募 ----
   EventBus.on('npc:recruit', (data) => {
-    if (typeof addText === 'function') addText(640, 300, '👥 ' + (data.name || data.def?.name || '梦境居民') + ' 加入！', '#4ade80', true);
+    const nm = (data.def && data.def.name) || data.name || '梦境居民';
+    pushDreamToast('👥 梦境居民', nm + ' 已驻守防线', 'green');
+    if (typeof addText === 'function') addText(640, 300, '👥 ' + nm + ' 加入！', '#4ade80', true);
   });
 
-  // 理解路线对话
+  // ---- 第四面墙：四类演出统一由本层承担 ----
+  EventBus.on('fourthWall:fakeCrash', (data) => showFakeCrash(data));
+  EventBus.on('fourthWall:fakeCrashEnd', () => hideFakeCrash());
+  EventBus.on('fourthWall:uiCorrupt', (data) => applyUICorrupt(data));
+  EventBus.on('fourthWall:chatMessage', (data) => showChatMessage(data));
+  EventBus.on('fourthWall:saveCorrupt', (data) => showSaveCorrupt(data));
+  EventBus.on('fourthWall:revert', () => revertFourthWall());
+
+  // ---- 深层梦境 ----
+  EventBus.on('deepDream:enter', (level) => {
+    showDeepDreamTransition(level);
+    updateDeepHUD();
+  });
+  EventBus.on('deepDream:exit', () => {
+    hideDeepDreamTransition();
+    updateDeepHUD();
+  });
+  EventBus.on('deepDream:reward', (data) => {
+    const lv = data.level || {};
+    toggleDeepAtmosphere(true);
+    pushDreamToast('🎁 ' + (lv.name || '深层梦境') + ' 通关', (data.got || []).join('　'), 'gold', 6);
+    updateDeepHUD();
+  });
+  // 波次推进时刷新深层进度点
+  EventBus.on('dream:waveStart', () => { if (typeof DeepDream !== 'undefined' && DeepDream.isActive()) updateDeepHUD(); });
+  EventBus.on('dream:waveEnd', () => { if (typeof DeepDream !== 'undefined' && DeepDream.isActive()) updateDeepHUD(); });
+
+  // ---- 隐藏旋律 ----
+  EventBus.on('sound:secretMelody', (mel) => {
+    pushDreamToast((mel.icon || '🎵') + ' 发现旋律 · ' + mel.name, (mel.story || '') + (mel.hint ? '\n线索：' + mel.hint : ''), '', 7);
+  });
+  EventBus.on('sound:melodyReward', (data) => {
+    pushDreamToast('🎵 ' + (data.name || '旋律') + ' 回响', (data.got || []).join('　'), 'gold', 5);
+  });
+
+  // ---- 理解路线（不战而胜）：逐条台词对话 ----
   EventBus.on('mercy:start', (data) => showMercyDialog(data));
+  EventBus.on('mercy:complete', (data) => {
+    const nm = (data.encounter && data.encounter.name) || '梦境生物';
+    pushDreamToast('🕊 理解达成 · ' + nm, (data.got || []).join('　') || '它安静地离开了', 'green', 6);
+  });
+  EventBus.on('mercy:refuse', (data) => {
+    const nm = (data.encounter && data.encounter.name) || '梦境生物';
+    pushDreamToast('⚔️ 你选择了战斗', nm + ' 被激怒了（伤害 +25%）', 'red', 4);
+  });
+
+  // ---- 梦境日记 ----
+  EventBus.on('diary:add', () => { /* 日记面板打开时才渲染，无需实时刷新 */ });
 
   console.log('[DreamUI] 事件监听已初始化');
+}
+
+/* ============================================================
+ *  沉浸层辅助：暂停 / 提示 / 深层 HUD
+ * ============================================================ */
+
+/** 剧情是否由本层暂停了游戏（用于恢复时避免覆盖玩家手动暂停） */
+let _storyPausedByUI = false;
+
+/** 剧情阅读时暂停游戏（仅当游戏正在进行） */
+function _pauseForStory() {
+  if (typeof G === 'undefined' || typeof paused === 'undefined') return;
+  if (G.over || paused) return;
+  paused = true;
+  _storyPausedByUI = true;
+  const btn = $('btnPause');
+  if (btn) btn.textContent = '▶';
+}
+
+/** 剧情结束：只在「是本层暂停的」情况下恢复 */
+function _resumeAfterStory() {
+  if (!_storyPausedByUI) return;
+  _storyPausedByUI = false;
+  paused = false;
+  const btn = $('btnPause');
+  if (btn) btn.textContent = '⏸';
+}
+
+/**
+ * 右下角梦境提示（toast）
+ * @param {string} title - 标题
+ * @param {string} body - 正文（支持 \n）
+ * @param {string} [tone] - '' | 'gold' | 'green' | 'red'
+ * @param {number} [secs] - 停留秒数（默认 4.5）
+ */
+function pushDreamToast(title, body, tone, secs) {
+  const box = $('dreamToast');
+  if (!box) return;
+  const el = document.createElement('div');
+  el.className = 'dream-toast' + (tone ? ' ' + tone : '');
+  el.innerHTML = '<div class="tt"></div><div class="tb"></div>';
+  el.querySelector('.tt').textContent = title || '';
+  el.querySelector('.tb').textContent = body || '';
+  box.appendChild(el);
+  while (box.children.length > 4) box.removeChild(box.firstChild);
+  setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 420);
+  }, Math.max(1500, (secs || 4.5) * 1000));
+}
+
+/**
+ * 深层梦境氛围（遮罩 + 暗角 + 顶部横幅）
+ * @param {boolean} on - 是否处于深层
+ */
+function toggleDeepAtmosphere(on) {
+  ['deepDreamOverlay', 'deepDreamVignette'].forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    if (on) { el.style.display = ''; el.classList.add('on'); }
+    else { el.classList.remove('on'); el.style.display = 'none'; }
+  });
+}
+
+/** 刷新深层梦境 HUD 横幅（名称 / 进度点 / 目标） */
+function updateDeepHUD() {
+  const banner = $('deepBanner');
+  if (!banner) return;
+  const active = typeof DeepDream !== 'undefined' && DeepDream.isActive();
+  if (!active) {
+    banner.classList.remove('show');
+    banner.style.display = 'none';
+    toggleDeepAtmosphere(false);
+    return;
+  }
+  const prog = DeepDream.getProgress();
+  const lv = (prog && prog.level) || DeepDream.getCurrentLevel() || {};
+  toggleDeepAtmosphere(true);
+  const ico = banner.querySelector('.db-ico');
+  const name = banner.querySelector('.db-name');
+  const dots = banner.querySelector('.db-dots');
+  const goal = banner.querySelector('.db-goal');
+  if (ico) ico.textContent = lv.icon || '🕳️';
+  if (name) name.textContent = lv.name || '深层梦境';
+  if (dots) {
+    const total = (prog && prog.total) || lv.duration || 3;
+    const cur = (prog && prog.wave) || 1;
+    let html = '';
+    for (let i = 0; i < total; i++) html += '<i class="db-dot' + (i < cur ? ' on' : '') + '"></i>';
+    dots.innerHTML = html;
+  }
+  if (goal) {
+    const g = lv.goal || '';
+    goal.textContent = g ? ('目标：' + g) : '';
+    goal.title = (lv.rules || '') ? ('规则：' + lv.rules) : '';
+  }
+  banner.style.display = 'flex';
+  requestAnimationFrame(() => banner.classList.add('show'));
 }
 
 // === 剧情对话框（沉浸版）===
 let storyQueue = [];
 let storyTyping = false;
 let _storyTimer = null;
+let _storyAutoNext = null;
 
 // 角色配置：颜色 + 头像 + 氛围光
-const STORY_SPEAKERS = {
-  '旁白':    { color:'#94a3b8', icon:'📖', glow:'rgba(148,163,184,.12)' },
-  '???':     { color:'#c77dff', icon:'👁️', glow:'rgba(199,125,255,.15)' },
-  '梦魇':    { color:'#ef4444', icon:'💀', glow:'rgba(239,68,68,.12)' },
-  '林小夏':  { color:'#fbbf24', icon:'🌻', glow:'rgba(251,191,36,.10)' },
-  '周默':    { color:'#60a5fa', icon:'📚', glow:'rgba(96,165,250,.10)' },
-  '赵磊':    { color:'#34d399', icon:'😂', glow:'rgba(52,211,153,.10)' },
-  '你':      { color:'#e2e8f0', icon:'🛏️', glow:'rgba(226,231,240,.08)' },
-};
+// 唯一真相来源是 story.js 的 STORY_CHARACTERS（这里按「剧中人名」建索引），
+// 找不到的名字才落回下面的兜底表，避免两处配色打架。
+const STORY_SPEAKERS = (function () {
+  const table = {
+    '旁白':   { color: '#94a3b8', icon: '📖', glow: 'rgba(148,163,184,.12)' },
+    '???':    { color: '#c77dff', icon: '👁️', glow: 'rgba(199,125,255,.15)' },
+    '梦魇':   { color: '#ef4444', icon: '💀', glow: 'rgba(239,68,68,.12)' },
+    '你':     { color: '#e2e8f0', icon: '🛏️', glow: 'rgba(226,231,240,.08)' },
+    '系统':   { color: '#7dd3fc', icon: '🖥️', glow: 'rgba(125,211,252,.12)' },
+  };
+  if (typeof STORY_CHARACTERS !== 'undefined' && STORY_CHARACTERS) {
+    Object.keys(STORY_CHARACTERS).forEach(k => {
+      const c = STORY_CHARACTERS[k];
+      if (!c || !c.name) return;
+      table[c.name] = {
+        color: c.color || '#c4b5fd',
+        icon: c.icon || '💬',
+        glow: c.glow || 'rgba(167,139,250,.12)',
+        desc: c.desc || '',
+      };
+    });
+  }
+  return table;
+})();
 
 function showStoryDialog(data) {
   const panel = $('storyDialog');
@@ -697,81 +859,161 @@ function _processStoryQueue() {
   if (!storyQueue.length) { hideStoryDialog(); return; }
   const data = storyQueue.shift();
   const panel = $('storyDialog');
-  panel.style.display = '';
+  if (!panel) return;
+  panel.style.display = 'flex';
+  // 需要玩家做选择时暂停游戏，读完/选完再继续（避免「选着选着床没了」）
+  const hasChoices = !!(data.choices && data.choices.length);
+  if (hasChoices) _pauseForStory();
   // 暗角效果
   const vig = $('storyVignette');
   if (vig) { vig.style.display = ''; requestAnimationFrame(() => vig.style.opacity = '1'); }
   // 角色氛围
   const sp = STORY_SPEAKERS[data.speaker] || STORY_SPEAKERS['???'];
   const spEl = $('storySpeaker');
-  spEl.innerHTML = '<span style="margin-right:6px;font-size:22px;vertical-align:middle">' + sp.icon + '</span>' + (data.speaker || '???');
-  spEl.style.color = sp.color;
+  if (spEl) {
+    spEl.innerHTML = '<span style="margin-right:6px;font-size:22px;vertical-align:middle">' + sp.icon + '</span>' + (data.speaker || '???');
+    spEl.style.color = sp.color;
+  }
   panel.style.borderColor = sp.color.replace(')', ',.35)').replace('rgb', 'rgba');
   // 氛围光
   const deco = panel.querySelector('.story-deco');
   if (deco) deco.style.background = 'linear-gradient(90deg,' + sp.glow + ',transparent)';
-  $('storyText').textContent = '';
-  $('storyChoices').innerHTML = '';
-  $('storyNext').style.display = data.choices && data.choices.length ? 'none' : '';
+  // 角色小档案（来自 story.js，沉浸感：说话的人是谁）
+  if (deco && sp.desc) deco.title = (data.speaker || '') + '：' + sp.desc;
+  const textEl = $('storyText');
+  textEl.textContent = '';
+  textEl.scrollTop = 0;
+  const choicesEl = $('storyChoices');
+  choicesEl.innerHTML = '';
+  choicesEl.style.display = '';
+  const nextEl = $('storyNext');
+  nextEl.style.display = hasChoices ? 'none' : '';
   storyTyping = true;
 
-  // 打字机效果（加速到 22ms）
+  // 打字机效果
   const text = data.text || '';
   let i = 0;
+  if (_storyTimer) { clearInterval(_storyTimer); _storyTimer = null; }
   _storyTimer = setInterval(() => {
     if (i < text.length) {
-      $('storyText').textContent += text[i++];
+      textEl.textContent += text[i++];
+      // 追字时保持滚动到底部（长文案不再顶穿上沿）
+      textEl.scrollTop = textEl.scrollHeight;
     } else {
       clearInterval(_storyTimer); _storyTimer = null;
       storyTyping = false;
-      if (data.choices && data.choices.length) {
-        $('storyChoices').innerHTML = data.choices.map((c, idx) =>
-          '<button class="story-choice" data-idx="' + idx + '">' + c.text + '</button>'
-        ).join('');
-        $('storyChoices').querySelectorAll('.story-choice').forEach(btn => {
-          btn.onclick = () => {
-            const choice = data.choices[+btn.dataset.idx];
-            if (choice && choice.effect) setTip(choice.effect, 4);
-            _processStoryQueue();
-          };
-        });
-      } else {
-        $('storyNext').style.display = '';
-      }
+      if (hasChoices) _renderStoryChoices(data);
+      else nextEl.style.display = '';
     }
-  }, 35);
+  }, 32);
 
-  $('storyNext').onclick = () => {
+  nextEl.onclick = () => {
     if (storyTyping) {
       clearInterval(_storyTimer); _storyTimer = null;
-      $('storyText').textContent = text; storyTyping = false;
-      if (data.choices && data.choices.length) {
-        $('storyChoices').innerHTML = data.choices.map((c, idx) =>
-          '<button class="story-choice" data-idx="' + idx + '">' + c.text + '</button>'
-        ).join('');
-        $('storyNext').style.display = 'none';
-      }
+      storyTyping = false;
+      textEl.textContent = text;
+      textEl.scrollTop = textEl.scrollHeight;
+      if (hasChoices) _renderStoryChoices(data);
+      else nextEl.style.display = '';
     } else {
       _processStoryQueue();
     }
   };
 }
 
+/** 渲染剧情选项，并在点击时用统一解释器兑现选项承诺 */
+function _renderStoryChoices(data) {
+  const box = $('storyChoices');
+  const nextEl = $('storyNext');
+  if (!box) return;
+  box.style.display = '';
+  box.innerHTML = data.choices.map((c, idx) =>
+    '<button class="story-choice" data-idx="' + idx + '">' + (c.text || '…') + '</button>'
+  ).join('');
+  if (nextEl) nextEl.style.display = 'none';
+  box.querySelectorAll('.story-choice').forEach(btn => {
+    btn.onclick = () => {
+      const choice = data.choices[+btn.dataset.idx];
+      _applyStoryChoice(choice, data);
+    };
+  });
+}
+
+/**
+ * 执行剧情选项：把「选项文案里承诺的东西」真的发到玩家手上
+ * @param {object} choice - { text, effect }
+ * @param {object} data - 剧情数据（用于取说话人，判断好感度归属）
+ */
+function _applyStoryChoice(choice, data) {
+  if (!choice) { _processStoryQueue(); return; }
+  const eff = choice.effect || '';
+
+  // ---- 特殊抉择：理解 / 攻击（不是文案效果，走 MercyPath 的真实结算）----
+  if (eff.indexOf('__mercy_') === 0) {
+    const isComplete = eff.indexOf('__mercy_complete__') === 0;
+    const encId = eff.replace('__mercy_complete__', '').replace('__mercy_refuse__', '');
+    let line = '✦ 你做出了选择';
+    if (typeof MercyPath !== 'undefined') {
+      if (isComplete) {
+        const r = MercyPath.completeMercy(encId);
+        const got = (r && r.got) || [];
+        const nm = (r && r.encounter && r.encounter.name) || '梦境生物';
+        line = '🕊 理解达成：' + nm + (got.length ? '（' + got.join('　') + '）' : ' 安静地离开了');
+        pushDreamToast('🕊 理解 · ' + nm, got.join('　') || '它安静地离开了', 'green', 6);
+      } else {
+        const enc = MercyPath.refuseMercy();
+        line = '⚔️ 你选择了战斗；' + ((enc && enc.name) || '它') + ' 被激怒（伤害 +25%）';
+      }
+    }
+    _showChoiceResult(line, 2400);
+    return;
+  }
+
+  let got = [];
+  if (eff && typeof applyStoryEffect === 'function') {
+    try {
+      const r = applyStoryEffect(eff, { speaker: data && data.speaker });
+      got = (r && r.got) || [];
+    } catch (e) { console.warn('[story] effect failed:', e); }
+  }
+  _showChoiceResult(got.length ? '✓ 实际获得：' + got.join('　')
+    : (eff ? '✦ 已记入梦境日记：' + eff : '✦ 你做出了选择'), 2800);
+}
+
+/** 展示选择结果，并自动/手动继续对话 */
+function _showChoiceResult(line, autoMs) {
+  const box = $('storyChoices');
+  const nextEl = $('storyNext');
+  if (box) {
+    box.innerHTML = '<div class="story-result"></div>';
+    box.querySelector('.story-result').textContent = line;
+    box.style.display = '';
+  }
+  if (nextEl) {
+    nextEl.style.display = '';
+    nextEl.onclick = () => { clearTimeout(_storyAutoNext); _processStoryQueue(); };
+  }
+  clearTimeout(_storyAutoNext);
+  _storyAutoNext = setTimeout(() => _processStoryQueue(), autoMs || 2600);
+}
+
 function hideStoryDialog() {
   if (_storyTimer) { clearInterval(_storyTimer); _storyTimer = null; }
+  clearTimeout(_storyAutoNext);
   const panel = $('storyDialog');
   if (panel) {
     panel.style.display = 'none';
     panel.style.borderColor = '';
     panel.style.boxShadow = '';
     const d = panel.querySelector('.story-deco');
-    if (d) d.style.background = '';
+    if (d) { d.style.background = ''; d.title = ''; }
   }
   // 隐藏暗角
   const vig = $('storyVignette');
   if (vig) { vig.style.opacity = '0'; setTimeout(() => vig.style.display = 'none', 400); }
   storyQueue = [];
   storyTyping = false;
+  _resumeAfterStory();
 }
 
 // === 日记面板 ===
@@ -785,11 +1027,26 @@ function showDiaryPanel() {
     if (bar) bar.style.width = rate + '%';
     const list = $('diaryList');
     if (list) {
-      const entries = DreamDiary._entries || [];
-      list.innerHTML = entries.length ? entries.map(e =>
-        '<div class="diary-entry"><span class="diary-date">' + (e.wave ? '第' + e.wave + '波' : '') + '</span>' +
-        '<span class="diary-text">' + e.content + '</span></div>'
-      ).join('') : '<div class="diary-entry locked">还没有任何记录…去冒险吧。</div>';
+      // 最新在前，便于回看刚发生的事
+      const entries = (typeof DreamDiary !== 'undefined' && DreamDiary._entries ? DreamDiary._entries.slice() : []).reverse();
+      if (entries.length) {
+        list.innerHTML = entries.map(e => {
+          const td = e.typeDef || { name: '笔记', icon: '📝', color: '#94a3b8' };
+          return '<div class="diary-entry">' +
+            '<div class="diary-head">' +
+              '<span class="diary-badge" style="background:' + td.color + '1f;color:' + td.color + ';border:1px solid ' + td.color + '44">' + td.icon + ' ' + td.name + '</span>' +
+              '<span class="diary-date">' + (e.wave ? '第 ' + e.wave + ' 波' : '梦境之外') + '</span>' +
+            '</div>' +
+            '<div class="diary-text"></div></div>';
+        }).join('');
+        // 正文用 textContent 填充，避免剧情文案里的特殊字符破坏结构
+        list.querySelectorAll('.diary-entry').forEach((el, i) => {
+          const t = el.querySelector('.diary-text');
+          if (t && entries[i]) t.textContent = entries[i].content || '';
+        });
+      } else {
+        list.innerHTML = '<div class="diary-entry locked">还没有任何记录…去冒险吧。</div>';
+      }
     }
   }
   panel.style.display = '';
@@ -797,39 +1054,40 @@ function showDiaryPanel() {
   if (startPanel) startPanel.style.display = 'none';
 }
 
-// === NPC面板 ===
+// === NPC面板（人格名/职能 + 真实驻守状态） ===
 function showNPCPanel() {
   const panel = $('npcPanel');
   if (!panel) return;
-  if (typeof DreamEngine !== 'undefined') {
-    const snap = DreamEngine.getSnapshot();
+  if (typeof NPCGuardians !== 'undefined') {
     const list = $('npcList');
     if (list) {
-      const npcs = snap.npcs || [];
-      // 也显示未招募的NPC
-      const allNPCs = typeof NPCGuardians !== 'undefined' ? (NPCGuardians.NPC_DATA || []) : [];
-      const abilityNames = { heal:'治疗', atkBoost:'攻击', slowEnemy:'减速', goldGen:'产金', shield:'护盾', reveal:'侦测' };
+      const allNPCs = NPCGuardians.NPC_DATA || [];
+      const recruited = NPCGuardians.getRecruited();
+      const abilityNames = { heal: '治疗', atkBoost: '攻击增幅', slowEnemy: '减速', goldGen: '产金', shield: '护盾', reveal: '侦测' };
       list.innerHTML = allNPCs.map(npc => {
-        const recruited = npcs.find(n => n.id === npc.id);
-        return '<div class="npc-card' + (recruited ? ' stationed' : '') + '">' +
+        // 驻守判定必须用「定义 ID」比对实例，否则永远显示未招募
+        const inst = recruited.find(n => n.def && n.def.id === npc.id);
+        const dialog = (typeof NPC_DIALOG !== 'undefined') ? NPC_DIALOG.find(d => d && d.abilityId === npc.id) : null;
+        const persona = (dialog && dialog.name) || '';
+        const role = (dialog && dialog.role) || '';
+        return '<div class="npc-card' + (inst ? ' stationed' : '') + '">' +
           '<div class="npc-avatar">' + (npc.icon || '👤') + '</div>' +
-          '<div class="npc-name">' + npc.name + '</div>' +
-          '<div class="npc-role">' + (abilityNames[npc.ability] || npc.ability || '') + '</div>' +
-          '<div class="npc-ability">' + (npc.desc || '') + '</div>' +
-          (recruited ? '<div class="npc-room">驻守中</div>' :
+          '<div class="npc-name">' + npc.name + (persona ? '<span class="npc-persona">' + persona + '</span>' : '') + '</div>' +
+          '<div class="npc-role">' + (role ? role + ' · ' : '') + (abilityNames[npc.ability] || npc.ability || '') + '</div>' +
+          '<div class="npc-ability">' + (npc.desc || '') +
+            (dialog && dialog.stationed ? '<span class="npc-stationed">' + dialog.stationed + '</span>' : '') + '</div>' +
+          (inst ? '<div class="npc-room">驻守中</div>' :
             '<button class="npc-recruit-btn" data-id="' + npc.id + '">招募</button>') +
           '</div>';
       }).join('');
       list.querySelectorAll('.npc-recruit-btn').forEach(btn => {
         btn.onclick = () => {
-          if (typeof NPCGuardians !== 'undefined') {
-            // 分配到第一个可用房间
-            const rooms = ['lane_0', 'lane_1', 'lane_2'];
-            const usedRooms = NPCGuardians.getRecruited().map(n => n.roomId);
-            const freeRoom = rooms.find(r => !usedRooms.includes(r)) || 'lane_0';
-            NPCGuardians.recruitNPC(btn.dataset.id, freeRoom);
-            showNPCPanel(); // 刷新
-          }
+          const rooms = ['lane_0', 'lane_1', 'lane_2'];
+          const usedRooms = NPCGuardians.getRecruited().map(n => n.roomId);
+          const freeRoom = rooms.find(r => usedRooms.indexOf(r) < 0) || 'lane_0';
+          const npc = NPCGuardians.recruitNPC(btn.dataset.id, freeRoom);
+          if (npc) pushDreamToast('👥 招募成功', (npc.def && npc.def.name) + ' 已驻守防线', 'green');
+          showNPCPanel(); // 刷新
         };
       });
     }
@@ -839,35 +1097,47 @@ function showNPCPanel() {
   if (startPanel) startPanel.style.display = 'none';
 }
 
-// === 碎片画廊 ===
+// === 碎片画廊（卡片可点开读全文，长段落不再被 155px 卡片截断） ===
+const FRAG_RARITY_NAMES = { common: '普通', rare: '稀有', epic: '史诗', legendary: '传说' };
+const FRAG_RARITY_COLORS = { common: '#cbd5e1', rare: '#60a5fa', epic: '#a78bfa', legendary: '#fbbf24' };
+
 function showFragmentGallery() {
   const panel = $('fragmentGallery');
   if (!panel) return;
-  if (typeof DreamEngine !== 'undefined') {
-    const snap = DreamEngine.getSnapshot();
+  if (typeof DreamFragments !== 'undefined') {
+    const defs = DreamFragments.FRAGMENT_DEFS || [];
+    const collected = DreamFragments._collected;
     const list = $('fragmentList');
+    const sub = panel.querySelector('.dream-panel-sub');
+    const unlockedCount = defs.filter(f => collected && collected.has(f.id)).length;
+    if (sub) sub.textContent = '散落在梦境中的记忆 — ' + unlockedCount + '/' + defs.length + ' 已收集';
     if (list) {
-      const status = snap.fragments || { stories: [], total: 0, collected: 0, percentage: 0 };
-      const allFrags = status.stories || [];
-      const unlockedCount = allFrags.filter(f => f.unlocked).length;
-      const totalCount = allFrags.length || 1;
-      // 更新标题显示进度
-      const fragTitle = panel.querySelector('.dream-panel-sub');
-      if (fragTitle) fragTitle.textContent = '散落在梦境中的记忆 — ' + unlockedCount + '/' + totalCount + ' 已收集';
-      list.innerHTML = allFrags.map((f, idx) => {
-        const unlocked = f.unlocked;
-        // 根据 dropRate 推导稀有度
-        const fragDefs = typeof DreamFragments !== 'undefined' ? DreamFragments.FRAGMENT_DEFS : [];
-        const dr = (fragDefs[idx] && fragDefs[idx].dropRate) || 0.05;
-        const rarity = dr >= 0.08 ? 'common' : dr >= 0.04 ? 'rare' : dr >= 0.02 ? 'epic' : 'legendary';
-        const rarityNames = {common:'普通',rare:'稀有',epic:'史诗',legendary:'传说'};
-        return '<div class="fragment-card ' + (unlocked ? rarity : 'locked') + '">' +
+      list.innerHTML = defs.map(f => {
+        const unlocked = !!(collected && collected.has(f.id));
+        const rarity = unlocked ? DreamFragments.rarityOf(f) : 'locked';
+        const rc = FRAG_RARITY_COLORS[rarity] || '#cbd5e1';
+        return '<div class="fragment-card ' + rarity + '" data-id="' + f.id + '">' +
           '<div class="fico">' + (unlocked ? (f.icon || '💎') : '❓') + '</div>' +
-          '<div class="fname">' + (unlocked ? (f.name || f.title) : '???') + '</div>' +
-          '<div class="fdesc">' + (unlocked ? (f.story || f.desc || f.text) : '未解锁') + '</div>' +
-          (unlocked ? '<span class="frag-rarity">' + (rarityNames[rarity] || rarity) + '</span>' : '') +
+          '<div class="fname">' + (unlocked ? (f.name || '') : '???') + '</div>' +
+          '<div class="fdesc"></div>' +
+          (unlocked
+            ? '<span class="frag-rarity" style="background:' + rc + '22;color:' + rc + '">' + (FRAG_RARITY_NAMES[rarity] || rarity) + '</span>' +
+              '<span class="fmore">点击读全文</span>'
+            : '<span class="fmore">尚未拾得</span>') +
           '</div>';
       }).join('');
+      // 正文用 textContent 填充（碎片文案里有引号等字符）
+      const cards = list.querySelectorAll('.fragment-card');
+      defs.forEach((f, i) => {
+        const d = cards[i] && cards[i].querySelector('.fdesc');
+        if (!d) return;
+        const unlocked = !!(collected && collected.has(f.id));
+        d.textContent = unlocked ? (f.story || f.desc || '') : '未解锁';
+      });
+      cards.forEach(card => {
+        if (card.classList.contains('locked')) return;
+        card.onclick = () => openFragmentDetail(card.dataset.id);
+      });
     }
   }
   panel.style.display = '';
@@ -875,82 +1145,191 @@ function showFragmentGallery() {
   if (startPanel) startPanel.style.display = 'none';
 }
 
-// === 第四面墙效果 ===
-let fourthWallActive = false;
+/**
+ * 打开碎片全文浮层
+ * @param {string} id - 碎片 ID
+ */
+function openFragmentDetail(id) {
+  const box = $('fragmentDetail');
+  if (!box || typeof DreamFragments === 'undefined') return;
+  const f = (DreamFragments.FRAGMENT_DEFS || []).find(x => x.id === id);
+  if (!f) return;
+  const rarity = DreamFragments.rarityOf(f);
+  const rc = FRAG_RARITY_COLORS[rarity] || '#cbd5e1';
+  box.innerHTML =
+    '<div class="fd-ico"></div>' +
+    '<div class="fd-name"></div>' +
+    '<span class="fd-rar" style="background:' + rc + '22;color:' + rc + '">' + (FRAG_RARITY_NAMES[rarity] || rarity) + ' 记忆碎片</span>' +
+    '<div class="fd-text"></div>' +
+    '<button class="fd-close">关 闭</button>';
+  box.querySelector('.fd-ico').textContent = f.icon || '💎';
+  box.querySelector('.fd-name').textContent = f.name || '';
+  box.querySelector('.fd-text').textContent = (f.story || f.desc || '') +
+    (f.desc && f.story ? '\n\n—— ' + f.desc : '');
+  box.querySelector('.fd-close').onclick = () => box.classList.remove('show');
+  box.classList.add('show');
+}
 
-function showFakeCrash() {
+// === 第四面墙效果（引擎只广播，演出全部在这里） ===
+let fourthWallActive = false;
+let _fwCrashTimer = null, _fwChatTimer = null, _fwRevertTimer = null;
+
+/**
+ * 假崩溃演出（蓝屏风格，多行文案完整展示）
+ * @param {object} [data] - { title, content }
+ */
+function showFakeCrash(data) {
   const overlay = $('fourthWallOverlay');
   if (!overlay) return;
   fourthWallActive = true;
-  overlay.innerHTML = '<div class="bsod-icon">:(</div>' +
-    '<div class="bsod-title">你的电脑遇到问题，需要重新启动</div>' +
-    '<div class="bsod-code">' +
-    'Runtime Error: dream_core.dll<br>' +
-    'Memory access violation at 0x' + Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase() + '<br>' +
-    '梦境稳定性: CRITICAL<br>' +
-    '收集错误信息... ' + Math.floor(Math.random() * 100) + '% 完成</div>' +
+  overlay.innerHTML =
+    '<div class="bsod-icon">:(</div>' +
+    '<div class="bsod-title"></div>' +
+    '<div class="bsod-content"></div>' +
+    '<div class="bsod-bar"><i></i></div>' +
     '<div class="bsod-hint">这只是梦境在跟你开玩笑。</div>';
-  overlay.style.display = '';
-  setTimeout(() => {
-    overlay.style.display = 'none';
-    fourthWallActive = false;
-  }, 3000);
+  overlay.querySelector('.bsod-title').textContent = (data && data.title) || '梦境崩溃';
+  overlay.querySelector('.bsod-content').textContent =
+    (data && data.content) || '梦境遇到了问题，需要重新启动。\n错误代码：REALITY_NOT_FOUND';
+  overlay.style.display = 'flex';
+  // 进度条走满，像真的在「收集错误信息」
+  const bar = overlay.querySelector('.bsod-bar i');
+  requestAnimationFrame(() => { if (bar) bar.style.width = '100%'; });
+  clearTimeout(_fwCrashTimer);
+  _fwCrashTimer = setTimeout(() => hideFakeCrash(), 3400);
 }
 
+/** 收起假崩溃（引擎的 fakeCrashEnd 也会走到这里） */
+function hideFakeCrash() {
+  clearTimeout(_fwCrashTimer);
+  const overlay = $('fourthWallOverlay');
+  if (overlay) overlay.style.display = 'none';
+  fourthWallActive = false;
+}
+
+/**
+ * UI 篡改：金币倒置 / 按钮改名 / 全屏反色 / 故障抖动
+ * @param {object} data - { type|subType, title, content }
+ */
 function applyUICorrupt(data) {
-  if (!data || !data.type) return;
+  if (!data) return;
+  const type = data.subType || data.type;
+  if (!type) return;
   fourthWallActive = true;
-  const gameWrap = document.getElementById('wrap');
-  if (data.type === 'invert') {
-    if (gameWrap) gameWrap.style.filter = 'invert(1) hue-rotate(180deg)';
-  } else if (data.type === 'glitch') {
-    if (gameWrap) gameWrap.classList.add('fourth-wall-glitch');
-  } else if (data.type === 'text_replace') {
-    // 替换所有按钮文字
-    document.querySelectorAll('button').forEach(btn => {
-      if (!btn._originalText) btn._originalText = btn.textContent;
-      btn.textContent = data.text || '梦魇在看着你';
+  const wrap = document.getElementById('wrap');
+  if (type === 'goldInvert') {
+    const g = $('hudGold');
+    if (g) g.style.transform = 'scaleY(-1)';
+  } else if (type === 'colorInvert') {
+    if (wrap) wrap.style.filter = 'invert(1) hue-rotate(180deg)';
+  } else if (type === 'glitch') {
+    if (wrap) wrap.classList.add('fourth-wall-glitch');
+  } else if (type === 'buttonReplace') {
+    const cursed = ['逃跑', '投降', '放弃', '梦魇', '虚无', '混沌', '???', '错误', '迷失', '深渊', '绝望', '腐朽'];
+    document.querySelectorAll('#buildBar .card .nm').forEach((el, i) => {
+      if (!el._orig) el._orig = el.textContent;
+      el.textContent = cursed[i % cursed.length];
     });
   }
-  setTimeout(() => revertFourthWall(), 5000);
+  // 让玩家知道「这是梦在做怪」，而不是真的 bug
+  // （若同波剧情框已经讲过同一段话，就只保留视觉演出，不重复弹文案）
+  if (data.content && !data.silent) pushDreamToast('👁 ' + (data.title || '数据错乱'), data.content, 'red', 5.5);
+  // 15 秒后自动恢复（与引擎的 corruptTimer 对齐）
+  clearTimeout(_fwRevertTimer);
+  _fwRevertTimer = setTimeout(() => revertFourthWall(), 15100);
 }
 
+/**
+ * 梦魇在游戏画面里说话（长文案按长度延长停留时间）
+ * @param {object} data - { text, title }
+ */
 function showChatMessage(data) {
   const chat = $('fourthWallChat');
   if (!chat) return;
-  chat.innerHTML = '<div class="fw-sender">💀 梦魇</div><div class="fw-msg">' + (data.text || data.msg || '...') + '</div>';
+  // 同波剧情框已经讲过这段话 → 不再重复一次气泡
+  if (data && data.silent) return;
+  const text = (data && (data.text || data.msg)) || '...';
+  const sender = (data && data.title) || '梦魇';
+  chat.innerHTML = '<div class="fw-sender"></div><div class="fw-msg"></div>';
+  chat.querySelector('.fw-sender').textContent = '💀 ' + sender;
+  chat.querySelector('.fw-msg').textContent = text;
   chat.style.display = '';
-  chat.style.opacity = '1';
   chat.style.transition = '';
-  setTimeout(() => {
+  chat.style.opacity = '1';
+  clearTimeout(_fwChatTimer);
+  const hold = Math.min(12000, 2800 + text.length * 60);
+  _fwChatTimer = setTimeout(() => {
     chat.style.transition = 'opacity 1.2s ease-out';
     chat.style.opacity = '0';
-    setTimeout(() => { chat.style.display = 'none'; chat.style.transition = ''; }, 1200);
-  }, 4500);
+    _fwChatTimer = setTimeout(() => { chat.style.display = 'none'; chat.style.transition = ''; }, 1200);
+  }, hold);
 }
 
+/**
+ * 存档损坏演出：屏幕故障抖动 + 长文案提示
+ * @param {object} [data] - { title, content }
+ */
+function showSaveCorrupt(data) {
+  const wrap = document.getElementById('wrap');
+  if (wrap) {
+    wrap.classList.add('fourth-wall-glitch');
+    setTimeout(() => { if (!fourthWallActive) wrap.classList.remove('fourth-wall-glitch'); }, 1500);
+  }
+  if (typeof SFX !== 'undefined' && SFX.zap) { try { SFX.zap(); } catch (e) { /* 忽略音频错误 */ } }
+  if (!data || !data.silent) {
+    pushDreamToast('💾 ' + ((data && data.title) || '存档损坏'),
+      (data && data.content) || '存档损坏。\n数据：████████████\n恢复失败。', 'red', 8);
+  }
+}
+
+/** 恢复所有第四面墙篡改 */
 function revertFourthWall() {
+  clearTimeout(_fwRevertTimer);
   fourthWallActive = false;
-  const gameWrap = document.getElementById('wrap');
-  if (gameWrap) { gameWrap.style.filter = ''; gameWrap.classList.remove('fourth-wall-glitch'); }
+  const wrap = document.getElementById('wrap');
+  if (wrap) { wrap.style.filter = ''; wrap.classList.remove('fourth-wall-glitch'); }
+  const g = $('hudGold');
+  if (g) g.style.transform = '';
+  document.querySelectorAll('#buildBar .card .nm').forEach(el => {
+    if (el._orig) { el.textContent = el._orig; delete el._orig; }
+  });
   document.querySelectorAll('button').forEach(btn => {
     if (btn._originalText) { btn.textContent = btn._originalText; delete btn._originalText; }
   });
 }
 
-// === 梦中梦过渡 ===
+// === 梦中梦过渡（深层梦境入场，电影感） ===
+let _deepTransTimer = null;
+
+/**
+ * 坠入深层梦境的转场演出
+ * @param {object} data - 深层关卡定义（story.js DEEP_DREAM_LEVELS 编译而来）
+ */
 function showDeepDreamTransition(data) {
   const overlay = $('deepDreamTransition');
   if (!overlay) return;
-  overlay.style.display = '';
   const text = overlay.querySelector('.deep-dream-text');
   const sub = overlay.querySelector('.deep-dream-sub');
-  if (text && data && data.name) text.textContent = '正在坠入「' + data.name + '」...';
-  if (sub && data && data.desc) sub.textContent = data.desc;
-  setTimeout(() => { overlay.style.display = 'none'; }, 3500);
+  if (text) text.textContent = data && data.name ? ('正在坠入「' + data.name + '」…') : '正在坠入深层梦境…';
+  if (sub) sub.textContent = (data && data.desc) || '你感到意识在下沉';
+  // 规则与目标：让玩家入场就知道这层有什么不一样
+  let rules = overlay.querySelector('.deep-dream-rules');
+  if (!rules) {
+    rules = document.createElement('div');
+    rules.className = 'deep-dream-sub deep-dream-rules';
+    rules.style.cssText = 'font-size:11.5px;max-width:680px;text-align:center;line-height:2;color:#8b7fb8';
+    overlay.appendChild(rules);
+  }
+  rules.textContent = [data && data.rules, data && data.goal ? ('目标：' + data.goal) : '']
+    .filter(Boolean).join('\n');
+  overlay.style.display = 'flex';
+  clearTimeout(_deepTransTimer);
+  _deepTransTimer = setTimeout(() => { overlay.style.display = 'none'; }, 4200);
 }
 
+/** 收起深层转场（进入战斗或提前退出时） */
 function hideDeepDreamTransition() {
+  clearTimeout(_deepTransTimer);
   const overlay = $('deepDreamTransition');
   if (overlay) overlay.style.display = 'none';
 }
@@ -959,28 +1338,41 @@ function hideDeepDreamTransition() {
 function showFragmentPopup(data) {
   if (!data) return;
   if (typeof addText === 'function' && data.x != null && data.y != null) {
-    addText(data.x, data.y - 40, (data.icon || '💎') + ' ' + (data.name || '记忆碎片') + '！', '#fbbf24', true);
+    addText(data.x, data.y - 40, (data.icon || '💎') + ' ' + (data.name || data.title || '记忆碎片') + '！', '#fbbf24', true);
+  }
+  if (data.story || data.text) {
+    pushDreamToast('💎 拾得碎片 · ' + (data.name || data.title || ''), (data.story || data.text), 'gold', 6);
   }
 }
 
-// === 理解对话 ===
+// === 理解对话（不战而胜）：逐条播台词 → 由玩家决定理解或攻击 ===
 function showMercyDialog(data) {
-  if (!data) return;
-  const panel = $('storyDialog');
-  if (panel) {
-    panel.style.borderColor = 'rgba(74,222,128,.35)';
-    panel.style.boxShadow = '0 8px 40px rgba(0,0,0,.6),0 0 60px rgba(74,222,128,.1)';
-    const deco = panel.querySelector('.story-deco');
-    if (deco) deco.style.background = 'linear-gradient(90deg,transparent 5%,rgba(74,222,128,.5) 30%,rgba(110,231,183,.4) 50%,rgba(74,222,128,.5) 70%,transparent 95%)';
-    showStoryDialog({
-      speaker: data.encounter ? (data.encounter.name || '梦境生物') : '???',
-      text: data.encounter ? (data.encounter.dialogue || data.encounter.desc || '...') : '...',
-      choices: [
-        { text: '🙏 理解它', effect: data.encounter ? ('获得奖励：' + (data.encounter.reward || '记忆碎片')) : '获得奖励' },
-        { text: '⚔️ 攻击', effect: '继续战斗' }
-      ]
-    });
+  if (!data || typeof MercyPath === 'undefined') return;
+  const encounter = data.encounter || {};
+  const encId = encounter.id || '';
+  _pauseForStory();
+  let lines = [];
+  try { lines = MercyPath.getDialogueLines() || []; } catch (e) { lines = []; }
+  if (!lines.length) {
+    lines = [{ speaker: encounter.name || '???', text: encounter.dialogue || encounter.desc || '……' }];
   }
+  const parts = lines.map(l => ({
+    speaker: l.speaker || encounter.name || '???',
+    text: l.text || '……',
+  }));
+  // 前面的台词逐条入场（无选项），最后一条挂上抉择
+  parts.slice(0, -1).forEach(p => showStoryDialog({ speaker: p.speaker, text: p.text }));
+  const last = parts[parts.length - 1];
+  showStoryDialog({
+    speaker: last.speaker,
+    text: last.text + '\n\n（它停了下来，没有反抗。你打算怎么做？）',
+    choices: [
+      { text: '🕊 理解它 — ' + ((encounter.reward && encounter.reward.text) || '结束这场无意义的战斗'),
+        effect: '__mercy_complete__' + encId },
+      { text: '⚔️ 攻击它 — 继续把梦打碎',
+        effect: '__mercy_refuse__' + encId },
+    ],
+  });
 }
 
 // === 绑定梦境菜单按钮 ===

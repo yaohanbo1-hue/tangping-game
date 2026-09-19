@@ -496,13 +496,15 @@ const RUNE_AFFIX_KEYS = Object.keys(RUNE_AFFIXES);
 const RUNE_NAMES = ['梦境','深渊','星辰','雷霆','寒霜','烈焰','虚空','命运','永恒','混沌',
                     '曙光','黄昏','苍穹','幽冥','太初','玄黄','九霄','黄泉','碧落','洪荒'];
 let runeSeq = 1;
-function rollRune(wave) {
+function rollRune(wave, forceQ) {
   const boost = Math.min(3, Math.floor((wave || 1) / 12));
   const pool = RUNE_QUALITY.map(q => ({
     q, w: q.w * (q.id === 'common' ? Math.max(0.2, 1 - boost * 0.3) : 1 + boost * 0.55),
   }));
   let total = pool.reduce((a, b) => a + b.w, 0), r = Math.random() * total, q = RUNE_QUALITY[0];
   for (const p of pool) { r -= p.w; if (r <= 0) { q = p.q; break; } }
+  // forceQ：指定品质（深层梦境奖励等"保底符文"用），不传则按波次权重随机
+  if (forceQ) q = RUNE_QUALITY.find(x => x.id === forceQ) || q;
   const keys = RUNE_AFFIX_KEYS.slice(), affixes = [];
   for (let i = 0; i < q.n && keys.length; i++) {
     const k = keys.splice(Math.floor(Math.random() * keys.length), 1)[0];

@@ -471,6 +471,26 @@ const NPCGuardians = {
   },
 
   /**
+   * 按剧情里的人格名招募（story.js NPC_DIALOG 的 name → abilityId → NPC_DATA）
+   * 剧情选项写「守梦者·艾拉驻守」时由 applyStoryEffect 调用，保证「说到做到」
+   * @param {string} name - 剧情里的 NPC 名（可部分匹配）
+   * @returns {string|null} 实际驻守者的名字，或 null
+   */
+  recruitByName(name) {
+    if (!name || typeof NPC_DIALOG === 'undefined') return null;
+    const entry = NPC_DIALOG.find(d => d && d.name && (d.name === name || d.name.indexOf(name) >= 0 || name.indexOf(d.name) >= 0));
+    if (!entry || !entry.abilityId) return null;
+    const def = this.NPC_DATA.find(n => n.id === entry.abilityId);
+    if (!def) return null;
+    if (this._recruited.some(n => n.def.id === def.id)) return entry.name || def.name;
+    const rooms = ['lane_0', 'lane_1', 'lane_2'];
+    const used = this._recruited.map(n => n.roomId);
+    const room = rooms.find(r => used.indexOf(r) < 0) || 'lane_0';
+    const npc = this.recruitNPC(def.id, room);
+    return npc ? (entry.name || def.name) : null;
+  },
+
+  /**
    * 每帧处理 NPC 能力
    * @param {number} dt - 帧间隔（秒）
    */
@@ -657,19 +677,19 @@ const FourthWall = {
 
   /**
    * 第四面墙事件定义：波次 → 效果
+   * 唯一真相来源是 story.js 的 FOURTH_WALL_EVENTS（含文案），这里只做兜底，
+   * 避免出现「两份时间表」导致剧情冲突。
    */
-  WAVE_EVENTS: [
-    { wave: 7,  type: 'chatMessage', params: { msg: '你以为这样就能挡住我？' } },
-    { wave: 13, type: 'uiCorrupt',   params: { type: 'goldInvert' } },
-    { wave: 19, type: 'chatMessage', params: { msg: '你的金币…是我的了。' } },
-    { wave: 25, type: 'fakeCrash',   params: {} },
-    { wave: 31, type: 'uiCorrupt',   params: { type: 'buttonReplace' } },
-    { wave: 37, type: 'chatMessage', params: { msg: '梦境正在崩塌……你感觉到了吗？' } },
-    { wave: 43, type: 'saveCorrupt', params: {} },
-    { wave: 49, type: 'fakeCrash',   params: {} },
-    { wave: 55, type: 'uiCorrupt',   params: { type: 'colorInvert' } },
-    { wave: 59, type: 'chatMessage', params: { msg: '最后一波了。祝你好运……真的。' } },
-  ],
+  WAVE_EVENTS: (typeof FOURTH_WALL_EVENTS !== 'undefined')
+    ? FOURTH_WALL_EVENTS.map(e => ({
+        wave: e.wave, type: e.type, params: e.params || {},
+        title: e.title || '', content: e.content || '',
+      }))
+    : [
+        { wave: 7,  type: 'chatMessage', params: { msg: '你以为这样就能挡住我？' }, title: '低语', content: '你以为这样就能挡住我？' },
+        { wave: 25, type: 'fakeCrash',   params: {}, title: '梦境崩溃', content: '梦境遇到了问题，需要重新启动。' },
+        { wave: 31, type: 'uiCorrupt',   params: { type: 'buttonReplace' }, title: '数据错乱', content: '按钮上的字不再是字。' },
+      ],
 
   /**
    * 初始化第四面墙系统
@@ -693,47 +713,51 @@ const FourthWall = {
     for (const evt of this.WAVE_EVENTS) {
       if (evt.wave === waveNum && !this._triggeredWaves.has(waveNum)) {
         this._triggeredWaves.add(waveNum);
-        this.applyEffect({ type: evt.type, params: evt.params, wave: waveNum });
+        // 同一波次里 WAVE_STORY（剧情框）已经讲过同一段话时：
+        // 第四面墙只保留「视觉演出」，文字交给剧情框，避免同一句讲两遍
+        const silent = this._isDupWithWaveStory(evt);
+        this.applyEffect({ type: evt.type, params: evt.params, wave: waveNum, title: evt.title, content: evt.content, silent });
       }
     }
   },
 
   /**
-   * 假崩溃界面效果
+   * 判断某个第四面墙事件是否与同波的 WAVE_STORY 文案重复
+   * @param {object} evt - 第四面墙事件
+   * @returns {boolean}
    */
-  fakeCrash() {
+  _isDupWithWaveStory(evt) {
+    if (!evt || !evt.content || typeof WAVE_STORY === 'undefined') return false;
+    const s = WAVE_STORY.find(x => x.wave === evt.wave);
+    if (!s || !s.text) return false;
+    // 比对时忽略换行差异（story.js 里的 \n 是字面两字符）
+    const norm = t => String(t).replace(/\\n/g, '').replace(/[\s\n]+/g, '').slice(0, 12);
+    return norm(s.text) === norm(evt.content);
+  },
+
+  /**
+   * 假崩溃界面效果
+   * 演出交给 ui.js（showFakeCrash），这里只维护状态与广播。
+   * @param {object} [evt] - 事件对象，携带 story.js 的文案
+   */
+  fakeCrash(evt) {
     if (!this._state) return;
-    // 使用独立的 fourthWallOverlay 容器，不篡改游戏 overlay
-    const overlay = typeof document !== 'undefined' ? document.getElementById('fourthWallOverlay') : null;
-    if (!overlay) return;
-
-    overlay.innerHTML =
-      '<div style="text-align:center;color:#aaa;font-family:Consolas,monospace;padding:40px">' +
-      '<div style="font-size:64px;margin-bottom:24px">:(</div>' +
-      '<div style="font-size:24px;color:#f87171;margin-bottom:16px">APPLICATION ERROR</div>' +
-      '<div style="font-size:13px;color:#666;line-height:2">' +
-      'Runtime Error: dream_core.dll<br>' +
-      'Memory access violation at 0x' + Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase() + '<br>' +
-      '梦境稳定性: <span style="color:#f87171">CRITICAL</span><br><br>' +
-      '<span style="color:#444">正在尝试恢复...</span></div></div>';
-    overlay.style.display = '';
-
+    const text = (evt && evt.content) || '梦境遇到了问题，需要重新启动。\n错误代码：REALITY_NOT_FOUND';
     this._state.activeEffects.push({ type: 'fakeCrash', timer: 3 });
-    EventBus.emit('fourthWall:fakeCrash', null);
+    EventBus.emit('fourthWall:fakeCrash', { title: (evt && evt.title) || '梦境崩溃', content: text, silent: !!(evt && evt.silent) });
 
-    // 3 秒后恢复
+    // 3 秒后恢复（演出层自己也会收起浮层）
     setTimeout(() => {
-      overlay.style.display = 'none';
-      overlay.innerHTML = '';
       EventBus.emit('fourthWall:fakeCrashEnd', null);
     }, 3000);
   },
 
   /**
    * 篡改 UI 效果
-   * @param {string} type - 篡改类型：'goldInvert' | 'buttonReplace' | 'colorInvert'
+   * @param {string} type - 篡改类型：'goldInvert' | 'buttonReplace' | 'colorInvert' | 'glitch'
+   * @param {object} [evt] - 事件对象，携带 story.js 的文案
    */
-  uiCorrupt(type) {
+  uiCorrupt(type, evt) {
     if (!this._state) return;
     this._state.corruptTimer = 15; // 持续 15 秒
 
@@ -742,7 +766,6 @@ const FourthWall = {
         // 金币数字上下颠倒（通过 CSS transform）
         const goldEl = typeof document !== 'undefined' ? document.getElementById('hudGold') : null;
         if (goldEl) goldEl.style.transform = 'scaleY(-1)';
-        EventBus.emit('fourthWall:uiCorrupt', { type: 'goldInvert' });
         break;
       }
       case 'buttonReplace': {
@@ -753,45 +776,62 @@ const FourthWall = {
           el._originalText = el.textContent;
           el.textContent = cursedNames[i % cursedNames.length];
         });
-        EventBus.emit('fourthWall:uiCorrupt', { type: 'buttonReplace' });
         break;
       }
       case 'colorInvert': {
         const wrap = typeof document !== 'undefined' ? document.getElementById('wrap') : null;
         if (wrap) wrap.style.filter = 'invert(1) hue-rotate(180deg)';
-        EventBus.emit('fourthWall:uiCorrupt', { type: 'colorInvert' });
+        break;
+      }
+      case 'glitch': {
+        const wrap = typeof document !== 'undefined' ? document.getElementById('wrap') : null;
+        if (wrap) wrap.classList.add('fourth-wall-glitch');
         break;
       }
     }
 
+    EventBus.emit('fourthWall:uiCorrupt', {
+      type, subType: type,
+      title: (evt && evt.title) || '数据错乱',
+      content: (evt && evt.content) || '',
+      silent: !!(evt && evt.silent),
+    });
     this._state.activeEffects.push({ type: 'uiCorrupt', subType: type, timer: 15 });
   },
 
   /**
    * 在游戏画面显示"梦魇"的聊天消息
-   * @param {string} msg - 消息文本
+   * @param {string} msg - 消息文本（单行摘要）
+   * @param {object} [evt] - 事件对象，content 为完整多行文案
    */
-  chatMessage(msg) {
+  chatMessage(msg, evt) {
     if (!this._state) return;
+    const text = (evt && evt.content) || msg || '...';
     this._state.chatMessages.push({
-      text: msg,
+      text,
       timer: 6,
       y: 0.3 + Math.random() * 0.4, // 随机垂直位置
     });
-    // 使用游戏内浮动文字系统
-    if (typeof addText === 'function' && typeof ROOM_X0 !== 'undefined') {
-      addText(ROOM_X0 + 200, 200 + Math.random() * 200, '👁 ' + msg, '#b91c1c', true);
+    // 长文案交给 UI 的聊天气泡；短句额外飘一行字增加存在感（剧情框已讲过时不重复）
+    const silent = !!(evt && evt.silent);
+    if (!silent && text.length <= 24 && typeof addText === 'function' && typeof ROOM_X0 !== 'undefined') {
+      addText(ROOM_X0 + 200, 200 + Math.random() * 200, '👁 ' + text, '#b91c1c', true);
     }
-    EventBus.emit('fourthWall:chatMessage', msg);
+    EventBus.emit('fourthWall:chatMessage', { text, title: (evt && evt.title) || '梦魇', silent: !!(evt && evt.silent) });
   },
 
   /**
    * 下次读档时出现"幽灵建筑"
+   * @param {object} [evt] - 事件对象，携带 story.js 的文案
    */
-  saveCorrupt() {
+  saveCorrupt(evt) {
     if (!this._state) return;
     this._state.saveCorruptActive = true;
-    EventBus.emit('fourthWall:saveCorrupt', null);
+    EventBus.emit('fourthWall:saveCorrupt', {
+      title: (evt && evt.title) || '存档损坏',
+      content: (evt && evt.content) || '存档损坏。\n数据：████████████\n恢复失败。',
+      silent: !!(evt && evt.silent),
+    });
     // 在 localStorage 标记
     try {
       if (typeof localStorage !== 'undefined') {
@@ -805,21 +845,21 @@ const FourthWall = {
 
   /**
    * 应用第四面墙效果
-   * @param {object} effect - 效果描述 { type, params, wave }
+   * @param {object} effect - 效果描述 { type, params, wave, title, content }
    */
   applyEffect(effect) {
     switch (effect.type) {
       case 'fakeCrash':
-        this.fakeCrash();
+        this.fakeCrash(effect);
         break;
       case 'uiCorrupt':
-        this.uiCorrupt(effect.params.type);
+        this.uiCorrupt(effect.params.type, effect);
         break;
       case 'chatMessage':
-        this.chatMessage(effect.params.msg);
+        this.chatMessage(effect.params.msg, effect);
         break;
       case 'saveCorrupt':
-        this.saveCorrupt();
+        this.saveCorrupt(effect);
         break;
     }
     EventBus.emit('fourthWall:apply', effect);
@@ -848,6 +888,11 @@ const FourthWall = {
       case 'colorInvert': {
         const wrap = typeof document !== 'undefined' ? document.getElementById('wrap') : null;
         if (wrap) wrap.style.filter = '';
+        break;
+      }
+      case 'glitch': {
+        const wrap = typeof document !== 'undefined' ? document.getElementById('wrap') : null;
+        if (wrap) wrap.classList.remove('fourth-wall-glitch');
         break;
       }
     }
@@ -912,45 +957,42 @@ const FourthWall = {
  * ============================================================ */
 
 const DeepDream = {
-  /** 深层关卡定义 */
-  DEEP_LEVELS: [
-    {
-      id: 'abyss_1',
-      name: '深渊第一层',
-      icon: '🌑',
-      enterWave: 15,
-      duration: 3,            // 持续波数
-      desc: '一切变得更加昏暗，某些敌人获得了强化',
-      enemyBuffs: { hpMul: 1.5, spdMul: 1.2 },
-      enemyNerfs: { fireWeakBonus: 0.3 },   // 火焰弱点额外 +30%
-      buildingBonus: { dmgMul: 0.9 },        // 建筑伤害降低 10%
-      timeScale: 1.0,
-    },
-    {
-      id: 'abyss_2',
-      name: '深渊第二层',
-      icon: '🕳️',
-      enterWave: 30,
-      duration: 3,
-      desc: '时间开始扭曲，梦魇的护甲变得诡异',
-      enemyBuffs: { hpMul: 2.0, spdMul: 0.8, resAll: 0.2 },
-      enemyNerfs: { shockWeakBonus: 0.4 },
-      buildingBonus: { rateMul: 1.15 },      // 建筑射速 +15%
-      timeScale: 0.85,                        // 时间流速变慢
-    },
-    {
-      id: 'abyss_3',
-      name: '深渊第三层',
-      icon: '👁️',
-      enterWave: 45,
-      duration: 3,
-      desc: '梦中之梦，所有规则被重写',
-      enemyBuffs: { hpMul: 2.8, spdMul: 1.1, dmgMul: 1.5 },
-      enemyNerfs: { energyWeakBonus: 0.5 },
-      buildingBonus: { dmgMul: 1.2, rateMul: 1.1 }, // 攻防双增
-      timeScale: 1.15,                               // 时间加速
-    },
-  ],
+  /**
+   * 深层关卡定义
+   * 唯一真相来源是 story.js 的 DEEP_DREAM_LEVELS（名称/文案/波次/数值都在那里），
+   * 这里只做「编译」，避免规则文案和实际数值打架。
+   */
+  DEEP_LEVELS: (function () {
+    const fallback = [
+      { id: 'deep_1', name: '记忆走廊', icon: '🏛️', enterWave: 15, duration: 3,
+        desc: '一切变得更加昏暗，某些敌人获得了强化',
+        enemyBuffs: { hpMul: 1.5, spdMul: 1.2 }, enemyNerfs: { fire: 0.3 },
+        buildingBonus: { dmgMul: 0.9 }, timeScale: 1.0, rewardSpec: null, rewardText: '' },
+      { id: 'deep_2', name: '镜像迷宫', icon: '🪞', enterWave: 30, duration: 3,
+        desc: '时间开始扭曲，梦魇的护甲变得诡异',
+        enemyBuffs: { hpMul: 2.0, spdMul: 0.8, resAll: 0.2 }, enemyNerfs: { shock: 0.4 },
+        buildingBonus: { rateMul: 1.15 }, timeScale: 0.85, rewardSpec: null, rewardText: '' },
+      { id: 'deep_3', name: '意识深渊', icon: '🕳️', enterWave: 45, duration: 3,
+        desc: '梦中之梦，所有规则被重写',
+        enemyBuffs: { hpMul: 2.8, spdMul: 1.1, dmgMul: 1.5 }, enemyNerfs: { energy: 0.5 },
+        buildingBonus: { dmgMul: 1.2, rateMul: 1.1 }, timeScale: 1.15, rewardSpec: null, rewardText: '' },
+    ];
+    if (typeof DEEP_DREAM_LEVELS === 'undefined') return fallback;
+    return DEEP_DREAM_LEVELS.map((l, i) => {
+      const m = l.modifier || {};
+      return {
+        id: l.id || ('deep_' + (i + 1)),
+        name: l.name, icon: l.icon,
+        enterWave: l.triggerWave, duration: l.duration || 3,
+        desc: l.description, rules: l.rules || '', goal: l.goal || '',
+        rewardSpec: l.rewardSpec || null, rewardText: l.reward || '',
+        enemyBuffs: m.enemyBuffs || {},
+        enemyNerfs: m.enemyNerfs || {},   // 形如 { fire: 0.3 }：让对应属性弱点 +30%
+        buildingBonus: m.buildingBonus || {},
+        timeScale: m.timeScale === undefined ? 1.0 : m.timeScale,
+      };
+    });
+  })(),
 
   /** @type {object|null} 当前深层状态 */
   _active: null,
@@ -977,29 +1019,53 @@ const DeepDream = {
    * @returns {boolean} 是否成功进入
    */
   enterDeepDream(levelId) {
-    const level = this.DEEP_LEVELS.find(l => l.id === levelId);
+    const level = this.DEEP_LEVELS.find(l => l.id === levelId)
+      || this.DEEP_LEVELS.find(l => l.enterWave === (typeof G !== 'undefined' ? G.wave : -1));
     if (!level) return false;
     this._active = level;
     this._wavesInDeep = 0;
     EventBus.emit('deepDream:enter', level);
 
-    // 显示进入提示
-    if (typeof addText === 'function' && typeof ROOM_X0 !== 'undefined') {
-      addText(ROOM_X0 + 300, 250, level.icon + ' ' + level.name, '#b91c1c', true);
-      addText(ROOM_X0 + 300, 280, level.desc, '#64748b');
-    }
     if (typeof shakeBy === 'function') shakeBy(20);
     return true;
   },
 
   /**
-   * 返回浅层梦境
+   * 发放深层梦境通关奖励（必须与 story.js 里 reward 文案一致）
+   * @param {object} level - 关卡定义
    */
-  exitDeepDream() {
+  grantReward(level) {
+    const spec = level && level.rewardSpec;
+    if (!spec) return null;
+    const got = [];
+    if (typeof G === 'undefined') return null;
+    if (spec.souls) { G.souls += spec.souls; got.push('+' + spec.souls + ' 灵魂'); }
+    if (spec.rune && typeof rollRune === 'function') {
+      const r = rollRune(G.wave || 1, spec.rune);
+      if (r) {
+        r.fromDeep = level.id;
+        G.runeBag.push(r);
+        const qdef = (typeof RUNE_QUALITY !== 'undefined') ? RUNE_QUALITY.find(q => q.id === r.q) : null;
+        got.push((qdef ? qdef.name : r.q) + '「' + r.name + '」');
+      }
+    }
+    EventBus.emit('deepDream:reward', { level, spec, got });
+    if (typeof addText === 'function' && typeof ROOM_X0 !== 'undefined') {
+      addText(ROOM_X0 + 300, 300, '🎁 深层奖励：' + got.join(' + '), '#fbbf24', true);
+    }
+    return got;
+  },
+
+  /**
+   * 返回浅层梦境
+   * @param {boolean} [silent] - 为 true 时不发奖励（读档/中途重置用）
+   */
+  exitDeepDream(silent) {
     if (!this._active) return;
     const exited = this._active;
     this._active = null;
     this._wavesInDeep = 0;
+    if (!silent) this.grantReward(exited);
     EventBus.emit('deepDream:exit', exited);
 
     if (typeof addText === 'function' && typeof ROOM_X0 !== 'undefined') {
@@ -1013,6 +1079,15 @@ const DeepDream = {
    */
   isActive() {
     return this._active !== null;
+  },
+
+  /**
+   * 深层进度（第几波 / 共几波），供 HUD 显示
+   * @returns {object|null}
+   */
+  getProgress() {
+    if (!this._active) return null;
+    return { wave: this._wavesInDeep + 1, total: this._active.duration, level: this._active };
   },
 
   /**
@@ -1033,6 +1108,15 @@ const DeepDream = {
    */
   getEnemyModifiers() {
     return this._active ? this._active.enemyBuffs : null;
+  },
+
+  /**
+   * 获取当前深层关卡的「弱点强化」修正
+   * 形如 { fire: 0.3 }：该属性伤害对敌人额外 +30%（进 e.weak，与 typeMul 对齐）
+   * @returns {object|null}
+   */
+  getEnemyNerfs() {
+    return this._active ? this._active.enemyNerfs : null;
   },
 
   /**
@@ -1086,9 +1170,22 @@ const DreamSound = {
   _ambientGain: null,
 
   /**
-   * 隐藏旋律序列：依次点击「矿机→发电机→冰霜塔→激光塔→电磁塔→火焰塔」
+   * 隐藏旋律表
+   * 唯一真相来源是 story.js 的 SOUND_MELODIES（含 6 段旋律与奖励文案），这里只做编译。
+   * 每段旋律只触发一次；sequence 是建筑 key 的点击顺序。
    */
-  SECRET_MELODY: ['miner', 'generator', 'frost', 'laser', 'tesla', 'flame'],
+  MELODIES: (typeof SOUND_MELODIES !== 'undefined')
+    ? SOUND_MELODIES.map(m => ({
+        id: m.id, name: m.name, sequence: (m.sequence || []).slice(),
+        reward: m.reward || '', rewardSpec: m.rewardSpec || null,
+      }))
+    : [
+        { id: 'melody_secret', name: '隐藏旋律', sequence: ['miner', 'generator', 'frost', 'laser', 'tesla', 'flame'],
+          reward: '获得 500 金币 + 25 灵魂', rewardSpec: { gold: 500, souls: 25 } },
+      ],
+
+  /** @type {string[]} 已触发过的旋律 id */
+  _triggeredMelodies: [],
 
   /**
    * 不同伤害类型的音效参数
@@ -1103,18 +1200,40 @@ const DreamSound = {
   },
 
   /**
-   * 初始化音频上下文
+   * 初始化音频：复用游戏主音频上下文 SFX（这样静音开关有效，且不会开两个 AudioContext）
    */
   initSound() {
-    try {
-      this._ctx = new (window.AudioContext || window.webkitAudioContext)();
-    } catch (e) {
-      console.warn('[DreamSound] 音频上下文初始化失败:', e);
+    if (typeof SFX !== 'undefined' && typeof SFX.init === 'function') {
+      SFX.init();
+      this._ctx = SFX.ctx;
+    } else {
+      try {
+        this._ctx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {
+        console.warn('[DreamSound] 音频上下文初始化失败:', e);
+      }
     }
+    this._bindGestureResume();
   },
 
   /**
-   * 播放音调
+   * 浏览器要求「用户手势」之后音频才能真正出声：
+   * 首次点击/按键时恢复被挂起的上下文，否则深层环境音与打击音会一直静默。
+   */
+  _bindGestureResume() {
+    if (typeof document === 'undefined' || this._gestureBound) return;
+    this._gestureBound = true;
+    const resume = () => {
+      try {
+        if (typeof SFX !== 'undefined' && SFX.ctx && SFX.ctx.state === 'suspended') SFX.ctx.resume();
+      } catch (e) { /* 忽略 */ }
+    };
+    document.addEventListener('pointerdown', resume);
+    document.addEventListener('keydown', resume);
+  },
+
+  /**
+   * 播放音调（走 SFX，受静音开关控制）
    * @param {number} freq - 频率
    * @param {number} dur - 持续时间
    * @param {string} type - 波形类型
@@ -1123,6 +1242,10 @@ const DreamSound = {
    * @private
    */
   _tone(freq, dur, type, vol, slide) {
+    if (typeof SFX !== 'undefined' && typeof SFX.tone === 'function') {
+      SFX.tone(freq, dur, type, vol, slide);
+      return;
+    }
     if (!this._ctx) return;
     const t = this._ctx.currentTime;
     const o = this._ctx.createOscillator();
@@ -1139,12 +1262,15 @@ const DreamSound = {
   },
 
   /**
-   * 不同伤害类型播放不同音效
+   * 不同伤害类型播放不同音效（带节流：几十座塔同时开火时不糊成一团）
    * @param {string} type - 伤害类型（kinetic/frost/energy/shock/fire/toxic）
    */
   playDamageSound(type) {
-    const params = this.DMG_SOUNDS[type];
+    const params = this.DMG_SOUNDS[type] || this.DMG_SOUNDS.kinetic;
     if (!params) return;
+    const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    if (this._lastDmgSound && now - this._lastDmgSound < 80) return;
+    this._lastDmgSound = now;
     this._tone(params.freq, params.dur, params.type, params.vol, params.slide);
   },
 
@@ -1155,54 +1281,112 @@ const DreamSound = {
   recordClick(buildingType) {
     this._clickHistory.push(buildingType);
     // 只保留最近 N 次记录
-    if (this._clickHistory.length > 20) this._clickHistory.shift();
+    if (this._clickHistory.length > 24) this._clickHistory.shift();
     this.checkMelody();
   },
 
   /**
-   * 检查是否触发隐藏旋律
+   * 检查是否触发隐藏旋律（6 段独立判定，每段只触发一次）
    * @returns {boolean} 是否触发
    */
   checkMelody() {
-    if (this._melodyTriggered) return false;
-    const seq = this.SECRET_MELODY;
     const hist = this._clickHistory;
-    if (hist.length < seq.length) return false;
-
-    // 检查末尾是否匹配
-    const tail = hist.slice(hist.length - seq.length);
-    const match = seq.every((k, i) => k === tail[i]);
-    if (match) {
-      this._melodyTriggered = true;
-      this._playSecretMelody();
-      EventBus.emit('sound:secretMelody', null);
-      return true;
+    for (const mel of this.MELODIES) {
+      const seq = mel.sequence;
+      if (!seq || !seq.length || hist.length < seq.length) continue;
+      if (this._triggeredMelodies.indexOf(mel.id) >= 0) continue;
+      const tail = hist.slice(hist.length - seq.length);
+      if (seq.every((k, i) => k === tail[i])) {
+        this._triggeredMelodies.push(mel.id);
+        this._playMelody(mel);
+        EventBus.emit('sound:secretMelody', mel);
+        return true;
+      }
     }
     return false;
   },
 
   /**
-   * 播放隐藏旋律的音符序列
+   * 播放旋律音符序列，并按 rewardSpec 真实结算奖励
+   * @param {object} mel - 旋律定义
    * @private
    */
-  _playSecretMelody() {
+  _playMelody(mel) {
     const notes = [523, 587, 659, 698, 784, 880]; // C5 D5 E5 F5 G5 A5
     notes.forEach((f, i) => {
-      setTimeout(() => {
-        this._tone(f, 0.3, 'triangle', 0.12, 0);
-      }, i * 180);
+      setTimeout(() => { this._tone(f, 0.3, 'triangle', 0.12, 0); }, i * 180);
     });
-    // 奖励
     setTimeout(() => {
-      if (typeof G !== 'undefined') {
-        G.gold += 500;
-        G.souls += 25;
-      }
-      if (typeof addText === 'function' && typeof ROOM_X0 !== 'undefined') {
-        addText(ROOM_X0 + 300, 250, '🎵 隐藏旋律！+500💰 +25🔮', '#ffd166', true);
-      }
-      EventBus.emit('sound:melodyReward', { gold: 500, soul: 25 });
+      const got = this.grantMelodyReward(mel.rewardSpec, mel.name);
+      EventBus.emit('sound:melodyReward', { melody: mel.id, name: mel.name, got });
     }, notes.length * 180 + 200);
+  },
+
+  /**
+   * 结算旋律奖励（必须与 story.js 里 reward 文案一致）
+   * @param {object} spec - 奖励规格
+   * @param {string} name - 旋律名（提示用）
+   * @returns {string[]} 实际获得的内容
+   */
+  grantMelodyReward(spec, name) {
+    const got = [];
+    if (!spec || typeof G === 'undefined') {
+      return got;
+    }
+    // 金币 / 灵魂
+    if (spec.gold) { G.gold += spec.gold; got.push('+' + spec.gold + '💰'); }
+    if (spec.souls) { G.souls += spec.souls; got.push('+' + spec.souls + '🔮'); }
+    // 床铺回满
+    if (spec.healBed && G.bed) { G.bed.hp = G.bed.maxHp; got.push('床铺回满'); }
+    // 全体修复
+    if (spec.healAll) {
+      G.buildings.forEach(b => { b.hp = b.maxHp; });
+      G.doors.forEach(d => { d.hp = d.maxHp; d.broken = false; });
+      if (G.bed) { G.bed.hp = G.bed.maxHp; }
+      got.push('全建筑回满');
+    }
+    // 超频
+    if (spec.overclock) { G.buff.overclock = Math.max(G.buff.overclock || 0, spec.overclock); got.push('超频 ' + spec.overclock + 's'); }
+    // 持续若干波的炮塔增益
+    if (spec.dmgMul || spec.rateMul || spec.waves) {
+      G.melodyBuff = {
+        dmgMul: spec.dmgMul || 1,
+        rateMul: spec.rateMul || 1,
+        wavesLeft: spec.waves || 1,
+      };
+      if (spec.dmgMul) got.push('炮塔伤害 ×' + spec.dmgMul + '（' + (spec.waves || 1) + ' 波）');
+    }
+    // 元素共鸣：全场冰火双伤
+    if (spec.nova && typeof applyDamage === 'function' && G.enemies) {
+      G.enemies.slice().forEach(e => {
+        if (e.dead) return;
+        if (spec.nova.frost) applyDamage(e, spec.nova.frost, 'frost', null);
+        if (!e.dead && spec.nova.fire) applyDamage(e, spec.nova.fire, 'fire', null);
+      });
+      got.push('元素共鸣');
+    }
+    // 奇点风暴：全场定身 + 能量伤害
+    if (spec.storm && G.enemies) {
+      G.enemies.slice().forEach(e => {
+        if (e.dead) return;
+        e.stun = Math.max(e.stun || 0, spec.storm.stun || 3);
+        if (spec.storm.energy && typeof applyDamage === 'function') applyDamage(e, spec.storm.energy, 'energy', null);
+      });
+      if (typeof shakeBy === 'function') shakeBy(16);
+      got.push('奇点风暴');
+    }
+    // 指定品质的记忆碎片
+    if (spec.fragment && typeof DreamFragments !== 'undefined') {
+      const f = DreamFragments.grantRandomFragment(spec.fragment);
+      if (f) got.push('碎片「' + f.name + '」');
+    }
+
+    const line = '🎵 ' + (name || '隐藏旋律') + '：' + (got.length ? got.join(' + ') : '旋律回响');
+    if (typeof addText === 'function' && typeof ROOM_X0 !== 'undefined') {
+      addText(ROOM_X0 + 300, 250, line, '#ffd166', true);
+    }
+    if (got.length && typeof setTip === 'function') setTip(line, 4);
+    return got;
   },
 
   /**
@@ -1210,6 +1394,7 @@ const DreamSound = {
    * @param {number} depth - 深度（0=浅层，1/2/3=深层）
    */
   setAmbient(depth) {
+    if (!this._ctx) this._ctx = (typeof SFX !== 'undefined') ? SFX.ctx : null;
     if (!this._ctx) return;
     this._ambientDepth = depth;
 
@@ -1322,6 +1507,14 @@ const MercyPath = {
   /** @type {number} 当前对话步骤索引 */
   _dialogueStep: 0,
 
+  /** 触发前提：最早波次、单次触发概率、两次触发至少间隔波数 */
+  MIN_WAVE: 4,
+  CHANCE: 0.35,
+  WAVE_GAP: 4,
+
+  /** @type {number} 上次触发理解的波次 */
+  _lastMercyWave: -99,
+
   /**
    * 初始化
    */
@@ -1329,6 +1522,54 @@ const MercyPath = {
     this._completed = new Set();
     this._activeDialogue = null;
     this._dialogueStep = 0;
+    this._lastMercyWave = -99;
+    this.mergeStoryEncounters();
+  },
+
+  /**
+   * 把 story.js 的 MERCY_ENCOUNTERS 文案并入本表
+   * （story.js 只写文案，机制/分镜在这里；已有同类型敌人的保留本地完整分镜）
+   */
+  mergeStoryEncounters() {
+    if (typeof MERCY_ENCOUNTERS === 'undefined' || typeof ENEMY_DEFS === 'undefined') return;
+    const used = new Set(this.MERCY_ENCOUNTERS.map(m => m.enemyType));
+    MERCY_ENCOUNTERS.forEach((s, i) => {
+      if (!s || !s.enemyType || used.has(s.enemyType)) return;
+      if (!ENEMY_DEFS[s.enemyType]) return;
+      used.add(s.enemyType);
+      this.MERCY_ENCOUNTERS.push({
+        id: s.id || ('mercy_story_' + i),
+        enemyType: s.enemyType,
+        name: s.name,
+        desc: s.desc,
+        dialogue: [
+          { speaker: '旁白', text: s.dialogue || s.desc },
+          { speaker: '你', text: '……我理解你。你不用再战斗了。' },
+        ],
+        reward: { text: s.reward || '' },   // 文案型奖励：交给 applyStoryEffect 结算，保证「说到做到」
+        unlockText: s.unlockText || ('解锁剧情：' + s.name),
+      });
+    });
+  },
+
+  /**
+   * 运行时入口：敌人被削到残血时给它一次「被理解」的机会
+   * （由 core.js 的 applyDamage 调用；同一敌人只给一次机会）
+   * @param {object} enemy - 敌人对象
+   * @returns {boolean} 是否真的触发了理解
+   */
+  tryTrigger(enemy) {
+    if (!enemy || enemy.dead || enemy.mercyOffered || enemy.boss) return false;
+    if (this._activeDialogue) return false;
+    if (this._completed && this._completed.has('__all__')) return false;
+    const wave = (typeof G !== 'undefined') ? (G.wave || 1) : 1;
+    if (wave < this.MIN_WAVE) return false;
+    if (wave - this._lastMercyWave < this.WAVE_GAP) return false;
+    enemy.mercyOffered = true;
+    if (!this.checkMercy(enemy)) return false;
+    if (Math.random() > this.CHANCE) return false;
+    this._lastMercyWave = wave;
+    return this.startMercyDialogue(enemy);
   },
 
   /**
@@ -1359,21 +1600,44 @@ const MercyPath = {
   },
 
   /**
+   * 取当前遭遇的全部分镜台词（给 UI 逐条播放用）
+   * @returns {object[]} [{ speaker, text }]
+   */
+  getDialogueLines() {
+    if (!this._activeDialogue) return [];
+    return this._activeDialogue.encounter.dialogue || [];
+  },
+
+  /**
    * 推进对话到下一步
-   * @returns {object|null} 当前对话行 { speaker, text }，或 null 表示结束
+   * @returns {object|null} 当前对话行 { speaker, text }，或 null 表示已到结尾
    */
   advanceDialogue() {
     if (!this._activeDialogue) return null;
     const dlg = this._activeDialogue.encounter.dialogue;
-    if (this._dialogueStep >= dlg.length) {
-      // 对话结束，自动完成理解
-      const enc = this._activeDialogue.encounter;
-      this.completeMercy(enc.id);
-      return null;
-    }
+    if (this._dialogueStep >= dlg.length) return null;
     const line = dlg[this._dialogueStep];
     this._dialogueStep++;
     return line;
+  },
+
+  /**
+   * 拒绝理解（玩家选择攻击）：恢复战斗，不再给这只梦魇机会
+   * @returns {object|null} 被拒绝的遭遇
+   */
+  refuseMercy() {
+    if (!this._activeDialogue) return null;
+    const enc = this._activeDialogue.encounter;
+    const enemy = this._activeDialogue.enemy;
+    if (enemy) {
+      enemy.mercyOffered = true;
+      enemy.mercyAngry = true;   // 被拒绝后会狂暴一点，给玩家一点代价
+      enemy.dmg = (enemy.dmg || 0) * 1.25;
+    }
+    this._activeDialogue = null;
+    this._dialogueStep = 0;
+    EventBus.emit('mercy:refuse', { encounter: enc });
+    return enc;
   },
 
   /**
@@ -1387,24 +1651,32 @@ const MercyPath = {
     this._completed.add(encounterId);
 
     // 发放奖励
+    let got = [];
     if (typeof G !== 'undefined') {
-      if (encounter.reward.gold) G.gold += encounter.reward.gold;
-      if (encounter.reward.soul) G.souls += encounter.reward.soul;
+      if (encounter.reward.gold) { G.gold += encounter.reward.gold; got.push('+' + encounter.reward.gold + '💰'); }
+      if (encounter.reward.soul) { G.souls += encounter.reward.soul; got.push('+' + encounter.reward.soul + '🔮'); }
       // 特殊奖励：移除所有诅咒区域
       if (encounter.reward.bonus === 'removeCurses' && G.effects) {
         G.effects = G.effects.filter(e => e.type !== 'curse');
+        got.push('净化所有诅咒');
+      }
+      // 文案型奖励：由统一的效果解释器结算（未实现的部分会记进梦境日记，不会「说了不算」）
+      if (encounter.reward.text && typeof applyStoryEffect === 'function') {
+        const r = applyStoryEffect(encounter.reward.text);
+        if (r && r.got.length) got = got.concat(r.got);
       }
     }
 
     // 让对应的敌人消失（理解后离开）
     if (this._activeDialogue && this._activeDialogue.enemy) {
       this._activeDialogue.enemy.dead = true;
+      this._activeDialogue.enemy.understood = true;
     }
 
-    EventBus.emit('mercy:complete', { encounter, reward: encounter.reward });
+    EventBus.emit('mercy:complete', { encounter, reward: encounter.reward, got });
     this._activeDialogue = null;
     this._dialogueStep = 0;
-    return encounter.reward;
+    return { encounter, got };
   },
 
   /**
@@ -1516,6 +1788,33 @@ const DreamFragments = {
   },
 
   /**
+   * 碎片稀有度（按掉率推导，掉率越低越稀有）
+   * @param {object} f - 碎片定义
+   * @returns {string}
+   */
+  rarityOf(f) {
+    if (!f) return 'common';
+    if (f.rarity) return f.rarity;
+    if (f.dropRate >= 0.05) return 'common';
+    if (f.dropRate >= 0.03) return 'rare';
+    if (f.dropRate >= 0.02) return 'epic';
+    return 'legendary';
+  },
+
+  /**
+   * 直接授予一枚指定稀有度的碎片（旋律奖励 / 剧情奖励用）
+   * @param {string} rarity - 稀有度：common | rare | epic | legendary
+   * @returns {object|null} 碎片定义，或 null（该稀有度已全收集）
+   */
+  grantRandomFragment(rarity) {
+    const pool = this.FRAGMENT_DEFS.filter(f =>
+      (!rarity || this.rarityOf(f) === rarity) && !(this._collected && this._collected.has(f.id))
+    );
+    if (!pool.length) return null;
+    return this.collectFragment(pool[Math.floor(Math.random() * pool.length)].id);
+  },
+
+  /**
    * 获取已收集碎片列表
    * @returns {object[]}
    */
@@ -1603,10 +1902,9 @@ const DreamDiary = {
     EventBus.on('fourthWall:fakeCrash', () => {
       this.addEntry('fourth', '系统出现了异常……屏幕突然黑屏');
     });
-    EventBus.on('fourthWall:chatMessage', (msg) => {
-      if (msg) {
-        this.addEntry('fourth', '梦魇的声音："' + msg + '"');
-      }
+    EventBus.on('fourthWall:chatMessage', (data) => {
+      const t = (data && (data.text || data.msg)) || '';
+      if (t) this.addEntry('fourth', '梦魇的声音：' + t.replace(/\n+/g, ' '));
     });
     EventBus.on('fourthWall:saveCorrupt', () => {
       this.addEntry('fourth', '存档出现了奇怪的波动……');

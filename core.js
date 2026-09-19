@@ -170,6 +170,10 @@ function newGame(loadFrom) {
     bed: { hp: 420, maxHp: 420, lv: 1, shield: 0, shieldMax: 0 },
     grow: 0, growTimer: 0,
     buff: { overclock: 0, freeze: 0, goldBoost: 0, dmgBoost: 0 },
+    // 剧情/旋律带来的命运加成：fate = 本局永久，fateWave = 仅本波，melodyBuff = 限波次
+    fate: { dmg: 0, rate: 0, def: 0, crit: 0, critDmg: 0, notes: [], shield: 0, immune: false, bedRegen: 0, autoRebuild: 0, noSummonWave: false },
+    fateWave: { dmg: 0, rate: 0, def: 0, crit: 0, critDmg: 0 },
+    affection: {}, melodyBuff: null,
     lot: { ep: 0, lg: 0, n: 0 }, lastDraw: null,
     tech: {}, skills: {}, ach: {},
     event: EVENTS[0], eventTimer: 0,
@@ -283,17 +287,31 @@ function towerDmgMul(b) {
   // 血怒：建筑残血时伤害提升（此前写在 return 之后，从未生效）
   if (G.tech.berserk > 0 && b.hp < b.maxHp * 0.4) m *= 1 + G.tech.berserk * 0.25;
   if (b.resDmg) m *= b.resDmg;
+  // 剧情命运加成 + 旋律增益
+  m *= 1 + (G.fate.dmg || 0) + (G.fateWave.dmg || 0);
+  if (G.melodyBuff && G.melodyBuff.dmgMul) m *= G.melodyBuff.dmgMul;
+  // 深层梦境对建筑的影响（story.js DEEP_DREAM_LEVELS 里写的规则，此前没接线）
+  if (typeof DeepDream !== 'undefined' && DeepDream.isActive()) {
+    const bm = DeepDream.getBuildingModifiers();
+    if (bm && bm.dmgMul) m *= bm.dmgMul;
+  }
   return m;
 }
 function towerRateMulOn(b) {
   let m = 1;
   if ((b.freezeT || 0) > 0) m *= 0.4;
   if (b.resRate) m *= b.resRate;
+  if (typeof DeepDream !== 'undefined' && DeepDream.isActive()) {
+    const bm = DeepDream.getBuildingModifiers();
+    if (bm && bm.rateMul) m *= bm.rateMul;
+  }
   return m;
 }
 function towerRateMul() {
   let m = techVal('rapid', 0.05);
   if (G.buff.overclock > 0) m *= 1.8;
+  m *= 1 + (G.fate.rate || 0) + (G.fateWave.rate || 0);
+  if (G.melodyBuff && G.melodyBuff.rateMul) m *= G.melodyBuff.rateMul;
   return m;
 }
 function typeMul(e, dtype) {
@@ -459,10 +477,140 @@ function updateEconomy(dt) {
   });
 }
 function healTarget(t, v) { if (t.hp < t.maxHp) { t.hp = Math.min(t.maxHp, t.hp + v); return true; } return false; }
+/**
+ * 剧情承诺的统一解释器
+ * 剧情里写下的每一条选择/理解奖励都通过这里结算，避免「说了给却没给」的冲突。
+ * 无法量化的标记会写进命运印记（G.fate.notes）并同步到梦境日记，绝不明着骗玩家。
+ *
+ * @param {string} text - 来自 story.js 的效果文案
+ * @param {object} [ctx] - 上下文（如 { speaker: '林小夏' }），可选
+ * @returns {{ got: string[], notes: string[] }}
+ */
+function applyStoryEffect(text, ctx) {
+  const got = [], notes = [];
+  if (!text) return { got, notes };
+  const t = String(text);
+  const waveScoped = /本波/.test(t);           // 只在当前波生效
+  const bucket = waveScoped ? G.fateWave : G.fate;
+  const durLabel = waveScoped ? '本波' : '本局';
+
+  // 1) 金币 / 灵魂
+  const gold = t.match(/获得\s*(\d+)\s*金币/);
+  if (gold) { G.gold += +gold[1]; got.push('+' + gold[1] + '💰'); }
+  const soul = t.match(/获得\s*(\d+)\s*灵魂/);
+  if (soul) { G.souls += +soul[1]; got.push('+' + soul[1] + '🔮'); }
+  const goldMul = t.match(/金币(获取|收益)\s*\+(\d+)%/);
+  if (goldMul) { G.buff.goldBoost = Math.max(G.buff.goldBoost || 0, +goldMul[2] / 100); got.push('金币产出 +' + goldMul[2] + '%' + durLabel); }
+
+  // 2) 百分比加成：伤害 / 射速 / 防御 / 暴击 / 全属性
+  const all = t.match(/全属性\s*\+(\d+)%/) || t.match(/全属性提升\s*(\d+)%/);
+  if (all) {
+    const v = +all[1] / 100;
+    bucket.dmg += v; bucket.rate += v; bucket.def += v; bucket.crit += v * 0.5;
+    G.bed.maxHp *= 1 + v; G.bed.hp *= 1 + v;
+    G.doors.forEach(d => { d.maxHp *= 1 + v; d.hp *= 1 + v; });
+    G.buildings.forEach(b => { b.maxHp *= 1 + v; b.hp *= 1 + v; });
+    got.push('全属性 +' + all[1] + '%（含生命）' + durLabel);
+  } else {
+    const dmg = t.match(/(?:炮塔|全炮塔|所有炮塔|攻击力)[^%]{0,8}?\+(\d+)%/);
+    if (dmg && !/射速/.test(t)) { bucket.dmg += +dmg[1] / 100; got.push('炮塔伤害 +' + dmg[1] + '%' + durLabel); }
+  }
+  const rate = t.match(/射速[^%]{0,6}?\+(\d+)%/) || t.match(/攻速[^%]{0,6}?\+(\d+)%/);
+  if (rate) { bucket.rate += +rate[1] / 100; got.push('炮塔射速 +' + rate[1] + '%' + durLabel); }
+  const def = t.match(/(?:防御|护甲)[^%]{0,6}?\+(\d+)%/);
+  if (def && !/射速/.test(t)) { bucket.def += +def[1] / 100; got.push('建筑防御 +' + def[1] + '%' + durLabel); }
+  const crit = t.match(/暴击率\s*\+(\d+)%/);
+  if (crit) { bucket.crit += +crit[1] / 100; got.push('暴击率 +' + crit[1] + '%' + durLabel); }
+  const critDmg = t.match(/暴击伤害\s*\+(\d+)%/);
+  if (critDmg) { bucket.critDmg = (bucket.critDmg || 0) + +critDmg[1] / 100; got.push('暴击伤害 +' + critDmg[1] + '%' + durLabel); }
+
+  // 3) 回复类
+  if (/床铺?[^，。]{0,6}(满血|恢复至满|回复至满)|床铺回满|全回复|完全恢复|满血复活/.test(t)) {
+    G.bed.hp = G.bed.maxHp;
+    got.push('床铺回满');
+  } else if (/床铺|回复|恢复/.test(t)) {
+    const pct = t.match(/回复\s*(\d+)%/) || t.match(/恢复\s*(\d+)%/);
+    const flat = t.match(/回复\s*(\d+)\s*点/) || t.match(/每秒恢复\s*(\d+)\s*点/);
+    if (/每秒恢复\s*(\d+)\s*点/.test(t)) {
+      const v = +t.match(/每秒恢复\s*(\d+)\s*点/)[1];
+      G.fate.bedRegen = (G.fate.bedRegen || 0) + v; got.push('床铺每秒 +' + v + ' 生命（本局）');
+    } else if (pct) {
+      G.bed.hp = Math.min(G.bed.maxHp, G.bed.hp + G.bed.maxHp * (+pct[1] / 100)); got.push('床铺回复 ' + pct[1] + '%');
+    } else if (flat) {
+      G.bed.hp = Math.min(G.bed.maxHp, G.bed.hp + (+flat[1])); got.push('床铺回复 ' + flat[1] + ' 生命');
+    }
+  }
+
+  // 4) 记忆碎片
+  if (/碎片/.test(t) && typeof DreamFragments !== 'undefined') {
+    const rarity = /传说/.test(t) ? 'legendary' : /史诗/.test(t) ? 'epic' : /稀有/.test(t) ? 'rare' : 'common';
+    const f = DreamFragments.grantRandomFragment(rarity);
+    if (f) got.push('碎片「' + f.name + '」');
+  }
+
+  // 5) 特殊机制
+  if (/免疫(控制|恐惧|眩晕)/.test(t)) { G.fate.immune = true; got.push('免疫控制（本局）'); }
+  if (/永久护盾|护盾\s*\+(\d+)/.test(t)) {
+    const sh = t.match(/护盾\s*\+(\d+)/);
+    const v = sh ? +sh[1] : 300;
+    G.fate.shield = (G.fate.shield || 0) + v;
+    G.bed.maxHp += v; G.bed.hp += v;
+    got.push('永久护盾 +' + v);
+  }
+  if (/自动重建/.test(t)) { G.fate.autoRebuild = Math.max(G.fate.autoRebuild || 0, 0.2); got.push('建筑自动重建 20%（本局）'); }
+  if (/不再召唤额外敌人|停止召唤/.test(t)) { G.fate.noSummonWave = true; got.push('本波停止召唤'); }
+  if (/超频/.test(t)) {
+    const s = t.match(/超频\s*(\d+)\s*秒/);
+    G.buff.overclock = Math.max(G.buff.overclock || 0, s ? +s[1] : 8);
+    got.push('超频 ' + (s ? s[1] : 8) + ' 秒');
+  }
+  if (/免费|立刻免费/.test(t) && /升级/.test(t)) {
+    let n = 0;
+    G.buildings.forEach(b => { if (b.level < b.def.maxLv) { b.level++; b.maxHp = b.def.hp * (1 + (b.level - 1) * 0.35); b.hp = b.maxHp; n++; } });
+    if (n) got.push(n + ' 座建筑免费升级');
+  }
+
+  // 6) 深层梦境入口
+  if (/深层梦境/.test(t) && typeof DeepDream !== 'undefined' && !DeepDream.isActive()) {
+    const lv = DeepDream.DEEP_LEVELS[0];
+    if (lv) { DeepDream.enterDeepDream(lv.id); got.push('坠入' + lv.name); }
+  }
+
+  // 7) 好感度
+  const aff = t.match(/好感度\s*\+(\d+)/);
+  if (aff) {
+    const who = (ctx && ctx.speaker) || (t.match(/(林小夏|周默|赵磊|艾拉|摩伊拉|凯恩|奈亚|阿尔忒弥斯)/) || [, '???'])[1];
+    G.affection[who] = (G.affection[who] || 0) + +aff[1];
+    got.push(who + ' 好感度 +' + aff[1]);
+  }
+
+  // 8) NPC 相关
+  const npcName = t.match(/(守梦者·艾拉|记忆商人·摩伊拉|梦行者·凯恩|铁匠|低语者·奈亚|守床人·阿尔忒弥斯)/);
+  if (npcName && typeof NPCGuardians !== 'undefined' && typeof NPCGuardians.recruitByName === 'function') {
+    const n = NPCGuardians.recruitByName(npcName[1]);
+    if (n) got.push('驻守：' + n);
+  }
+
+  // 9) 兜底：无法量化的剧情标记 → 命运印记 + 梦境日记，绝不静默吞掉
+  if (!got.length) {
+    notes.push(t);
+    G.fate.notes.push(t);
+    if (typeof DreamDiary !== 'undefined' && typeof DreamDiary.addEntry === 'function') {
+      DreamDiary.addEntry('story', '命运印记：' + t);
+    }
+  } else if (typeof DreamDiary !== 'undefined' && typeof DreamDiary.addEntry === 'function') {
+    DreamDiary.addEntry('story', '选择回响：' + t + '（实际获得：' + got.join('、') + '）');
+  }
+  if (got.length) setTip('✓ ' + got.join('　'), 4);
+  return { got, notes };
+}
 function damageTarget(t, dmg) {
   if (G.admin && t && t.dead === undefined) return false;
   if (G.track && t && t.lane != null && t.y != null && t.def === undefined && !t.isBed)
     G.track.doorDmg = (G.track.doorDmg || 0) + Math.max(0, dmg);
+  // 剧情加成的防御：建筑受伤减免（最高 60%）
+  const defSum = (G.fate.def || 0) + (G.fateWave.def || 0);
+  if (defSum > 0) dmg *= Math.max(0.4, 1 - defSum);
   if (t.shield > 0) { const a = Math.min(t.shield, dmg); t.shield -= a; dmg -= a; }
   if (dmg > 0) t.hp -= dmg;
   return t.hp <= 0;
@@ -536,6 +684,12 @@ function spawnEnemy(type, wave, lane) {
       if (mods.spdMul) e.speed *= mods.spdMul;
       if (mods.dmgMul) e.dmg *= mods.dmgMul;
       if (mods.resAll) { for (const k in e.res) e.res[k] = Math.min(0.9, e.res[k] + mods.resAll); }
+    }
+    // 深层规则里写的「对某属性额外脆弱 +N%」，进 e.weak（typeMul 会算进去）
+    const nerfs = DeepDream.getEnemyNerfs();
+    if (nerfs) {
+      e.weak = e.weak || {};
+      for (const k in nerfs) e.weak[k] = (e.weak[k] || 0) + nerfs[k];
     }
   }
   return e;
@@ -611,7 +765,7 @@ function updateEnemies(dt) {
         e.empT = sp_.emp.cd;
         let n = 0;
         G.buildings.forEach(b => {
-          if (b.def.tower && dist(b, e) <= sp_.emp.range) { b.empT = Math.max(b.empT || 0, sp_.emp.dur); n++; }
+          if (b.def.tower && !G.fate.immune && dist(b, e) <= sp_.emp.range) { b.empT = Math.max(b.empT || 0, sp_.emp.dur); n++; }
         });
         if (n) {
           addEffect({ type: 'boom', x: e.x, y: e.y, r: 0, max: sp_.emp.range, life: 0.4, maxLife: 0.4 });
@@ -625,7 +779,7 @@ function updateEnemies(dt) {
       if (e.fzT <= 0) {
         e.fzT = sp_.freezeTower.cd;
         G.buildings.forEach(b => {
-          if (b.def.tower && dist(b, e) <= sp_.freezeTower.r) b.freezeT = Math.max(b.freezeT || 0, sp_.freezeTower.dur);
+          if (b.def.tower && !G.fate.immune && dist(b, e) <= sp_.freezeTower.r) b.freezeT = Math.max(b.freezeT || 0, sp_.freezeTower.dur);
         });
         addEffect({ type: 'boom', x: e.x, y: e.y, r: 0, max: sp_.freezeTower.r, life: 0.35, maxLife: 0.35 });
       }
@@ -935,7 +1089,12 @@ function updateTowers(dt) {
     fire_(b, t, s);
   }
 }
-function critRoll() { return Math.random() < G.tech.crit * 0.04 ? (2.2 + G.tech.critmaster * 0.4) : 1; }
+function critRoll() {
+  // 剧情加成（暴击率 +N%）也计入：基础来自灵魂科技树
+  const chance = G.tech.crit * 0.04 + (G.fate.crit || 0) + (G.fateWave.crit || 0);
+  const extra = (G.fate.critDmg || 0) + (G.fateWave.critDmg || 0);
+  return Math.random() < chance ? (2.2 + G.tech.critmaster * 0.4 + extra) : 1;
+}
 function fire_(b, t, s) {
   const mul = towerDmgMul(b);
   const dtype = b.def.dmgType;
@@ -1113,6 +1272,13 @@ function applyDamage(e, dmg, dtype, src, chain) {
   e.inCombatT = 2;
   e.hitFlash = 0.12; // 受击白色闪烁
   G.stats.dmg += d;
+  // 打击音效（按伤害属性区分，内部已做节流）
+  if (typeof DreamSound !== 'undefined' && DreamSound.playDamageSound) DreamSound.playDamageSound(dtype);
+  // 理解之路：残血的梦魇可能突然停下（由 MercyPath 决定是否触发；触发时走剧情对话）
+  if (e.hp > 0 && !e.mercyOffered && e.maxHp > 0 && e.hp / e.maxHp <= 0.15
+      && typeof MercyPath !== 'undefined' && MercyPath.tryTrigger) {
+    try { MercyPath.tryTrigger(e); } catch (err) { console.warn('MercyPath:', err); }
+  }
   const crit = tm > 1.05 || tm < 0.95;
   // 大伤害数字使用更醒目的颜色
   const dmgColor = d > 200 ? '#ff4d6d' : (d > 80 ? '#ffa500' : (tm > 1.05 ? '#ffe066' : (tm < 0.95 ? '#94a3b8' : '#ffffff')));
@@ -1257,6 +1423,15 @@ function endWave() {
   G.challenge = null;
   G.state = 'build';
   G.buff.goldBoost = 0; G.buff.dmgBoost = 0;
+  // 本波限定加成到期；旋律增益按波数递减
+  G.fateWave = { dmg: 0, rate: 0, def: 0, crit: 0, critDmg: 0 };
+  if (G.melodyBuff) {
+    G.melodyBuff.wavesLeft--;
+    if (G.melodyBuff.wavesLeft <= 0) {
+      G.melodyBuff = null;
+      addText(ROOM_X0 + 300, DOOR_MID_Y() - 230, '🎵 旋律增益结束', '#94a3b8');
+    }
+  }
   G.prepTimer = Math.max(12, 24 - G.wave * 0.16) * diffCfg().prepMul * ((G.prize && G.prize.prep) || 1);
   let interest = 0, soulsFromBank = 0;
   G.buildings.forEach(b => {
@@ -1483,6 +1658,12 @@ function gameWin() {
 function step(dt) {
   // 击杀停顿：精英/BOSS 击杀时短暂冻结时间
   if (hitStop > 0) { hitStop -= dt; return; }
+  // 深层梦境的时间流速（story.js 里写的 ×0.85 / ×1.15，此前没有接线）
+  if (typeof DeepDream !== 'undefined' && DeepDream.isActive()) {
+    const ts = DeepDream.getTimeScale();
+    if (ts && ts !== 1) dt *= ts;
+  }
+  if (G.fate.bedRegen) G.bed.hp = Math.min(G.bed.maxHp, G.bed.hp + G.fate.bedRegen * dt);
   if (G.resDirty) { computeResonance(); G.resDirty = false; }
   updateWave(dt);
   updateEconomy(dt);
