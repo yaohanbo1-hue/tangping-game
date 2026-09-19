@@ -676,6 +676,12 @@ function spawnEnemy(type, wave, lane) {
     e.elite = true;
   }
   G.enemies.push(e);
+  // BOSS 出场演出：震屏 + 警戒飘字 + 冲击环（纯视觉，数值零改动；x 有偏移避免被左缘裁切）
+  if (e.boss) {
+    shakeBy(12); SFX.boom();
+    addText(e.x + 70, e.y - 34, '⚠️ ' + d.name + ' 现身', '#ff4d6d', true);
+    addEffect({ type: 'ring', x: e.x + 34, y: e.y, r: 110, color: '#ff4d6d', life: 0.7, maxLife: 0.7 });
+  }
   // 深层梦境修正
   if (typeof DeepDream !== 'undefined' && DeepDream.isActive()) {
     const mods = DeepDream.getEnemyModifiers();
@@ -1310,7 +1316,7 @@ function updateBullets(dt) {
         }
         if (b.slow) { t.slow = b.slow; t.slowT = 2.0; }
         if (b.freezeChance && Math.random() < b.freezeChance) t.stun = Math.max(t.stun || 0, 0.9);
-        spawnParts(b.tx, b.ty, 5, b.color, 2, 0.3);
+        spawnParts(b.tx, b.ty, b.crit > 1 ? 9 : 5, b.crit > 1 ? '#fff' : b.color, 2, 0.3);
       }
       G.bullets.splice(i, 1); continue;
     }

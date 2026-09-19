@@ -63,6 +63,14 @@ function buildAchPanel() {
   });
 }
 function selectBuild(k) {
+  // 费用不足：不选中，抖动 + 错误音 + 提示（判定与 tryBuild/灰显一致：建造只比金币）
+  if (selectedBuildKey !== k && !G.admin && G.gold < BUILD_DEFS[k].cost.gold) {
+    SFX.err();
+    setTip('资源不足：' + BUILD_DEFS[k].name + ' 需要 ' + fmt(BUILD_DEFS[k].cost.gold) + '💰', 3);
+    const card = $('buildBar').querySelector('.card[data-k="' + k + '"]');
+    if (card) { card.classList.remove('deny'); void card.offsetWidth; card.classList.add('deny'); }
+    return;
+  }
   selectedBuildKey = (selectedBuildKey === k) ? null : k;
   selected = null;
   syncCards();
@@ -96,6 +104,31 @@ function buyTech(k) {
     d2.hp += nh - d2.maxHp; d2.maxHp = nh;
   });
   setTip(d.name + ' 提升至 Lv.' + G.tech[k], 3);
+}
+// HUD 数值脉冲：缓存上一帧数值，仅在「金币突增 / 灵魂增加 / 床·门掉血」时短暂切 class
+// （金币按阈值判定突增，避免自然产出导致 8Hz 常闪；class 0.65s 后自动移除，不在每帧写 DOM）
+let _hudPrev = null;
+const _hudFlashT = {};
+function _hudFlash(id, cls) {
+  const b = $(id); if (!b) return;
+  const el = b.parentElement; if (!el || !el.classList || el.classList.contains(cls)) return;
+  el.classList.remove('flash-gold', 'flash-red', 'flash-soul');
+  void el.offsetWidth; // 强制 reflow 让动画可重新触发
+  el.classList.add(cls);
+  clearTimeout(_hudFlashT[id]);
+  _hudFlashT[id] = setTimeout(() => el.classList.remove(cls), 650);
+}
+function _hudPulseCheck() {
+  const doorHp = G.doors.reduce((s, d) => s + d.hp, 0);
+  const cur = { gold: G.gold, souls: G.souls, bedHp: G.bed.hp, doorHp: doorHp };
+  if (_hudPrev) {
+    const surge = Math.max(50, totalGoldRate() * 0.5);
+    if (cur.gold - _hudPrev.gold >= surge) _hudFlash('hudGold', 'flash-gold');
+    if (cur.souls > _hudPrev.souls) _hudFlash('hudSouls', 'flash-soul');
+    if (cur.bedHp < _hudPrev.bedHp - 0.5) _hudFlash('hudBed', 'flash-red');
+    if (cur.doorHp < _hudPrev.doorHp - 0.5) _hudFlash('hudDoor', 'flash-red');
+  }
+  _hudPrev = cur;
 }
 function updateHUD(dt) {
   hudT -= dt;
@@ -138,6 +171,7 @@ function updateHUD(dt) {
     } else { chEl.style.display = 'none'; }
   }
   $('btnSkip').style.display = G.state === 'build' ? '' : 'none';
+  _hudPulseCheck();
   $('buildBar').querySelectorAll('.card').forEach(c => {
     const d = BUILD_DEFS[c.dataset.k];
     const ok = G.gold >= d.cost.gold;
@@ -384,7 +418,15 @@ function updateRunePanel() {
 }
 function togglePanel(id) {
   ['techPanel', 'achPanel', 'helpPanel'].forEach(p => { if (p !== id) $(p).classList.remove('open'); });
-  $(id).classList.toggle('open');
+  const el = $(id);
+  el.classList.toggle('open');
+  // 修复线上现存 bug：runePanel 是内联 display 结构（非 .slide 滑出面板），
+  // 仅切 class 永远无法显示；同步 display 并在打开时刷新内容（此前 🔮符文 按钮与 G 键失效）
+  if (id === 'runePanel') {
+    const open = el.classList.contains('open');
+    el.style.display = open ? '' : 'none';
+    if (open) updateRunePanel();
+  }
 }
 function buildLottery() {
   const el = $('lotPool');
@@ -889,6 +931,7 @@ function _processStoryQueue() {
   const nextEl = $('storyNext');
   nextEl.style.display = hasChoices ? 'none' : '';
   storyTyping = true;
+  textEl.classList.add('typing');
 
   // 打字机效果
   const text = data.text || '';
@@ -902,6 +945,7 @@ function _processStoryQueue() {
     } else {
       clearInterval(_storyTimer); _storyTimer = null;
       storyTyping = false;
+      textEl.classList.remove('typing');
       if (hasChoices) _renderStoryChoices(data);
       else nextEl.style.display = '';
     }
@@ -911,6 +955,7 @@ function _processStoryQueue() {
     if (storyTyping) {
       clearInterval(_storyTimer); _storyTimer = null;
       storyTyping = false;
+      textEl.classList.remove('typing');
       textEl.textContent = text;
       textEl.scrollTop = textEl.scrollHeight;
       if (hasChoices) _renderStoryChoices(data);
