@@ -542,7 +542,6 @@ canvas{display:block;width:1280px;height:720px}
 @keyframes crashIn{from{opacity:0}to{opacity:1}}
 .fourth-wall-crash .bsod-icon{font-size:64px;margin-bottom:24px;filter:grayscale(1)}
 .fourth-wall-crash .bsod-title{font-size:24px;color:#fff;margin-bottom:16px}
-.fourth-wall-crash .bsod-code{font-size:13px;color:#aaa;line-height:2}
 .fourth-wall-crash .bsod-hint{font-size:11px;color:#555;margin-top:32px;letter-spacing:1px}
 .fourth-wall-glitch{animation:glitch .3s infinite}
 @keyframes glitch{
@@ -698,12 +697,13 @@ canvas{display:block;width:1280px;height:720px}
 .deep-dream-overlay.on{display:block;animation:deepFadeIn .8s ease-out both}
 .deep-dream-vignette.on{display:block;animation:deepFadeIn .8s ease-out both}
 @keyframes deepFadeIn{from{opacity:0}to{opacity:1}}
-#deepBanner{position:absolute;left:50%;top:62px;transform:translateX(-50%) translateY(-16px);z-index:31;
-  display:none;align-items:center;gap:10px;padding:7px 16px;border-radius:999px;
+/* 常驻状态条：贴右上角，避开居中的剧情框与顶部 HUD */
+#deepBanner{position:absolute;right:14px;top:62px;transform:translateY(-16px);z-index:31;
+  display:none;align-items:center;gap:10px;padding:7px 16px;border-radius:999px;max-width:470px;
   background:linear-gradient(180deg,rgba(24,14,48,.93),rgba(13,9,28,.95));
   border:1px solid rgba(167,139,250,.45);box-shadow:0 6px 26px rgba(0,0,0,.55),0 0 30px rgba(147,51,234,.18);
   color:#c4b5fd;font-size:12.5px;letter-spacing:1px;opacity:0;transition:opacity .45s,transform .45s;pointer-events:none}
-#deepBanner.show{display:flex;opacity:1;transform:translateX(-50%) translateY(0)}
+#deepBanner.show{display:flex;opacity:1;transform:translateY(0)}
 #deepBanner .db-ico{font-size:17px;filter:drop-shadow(0 0 8px rgba(167,139,250,.7))}
 #deepBanner .db-name{font-weight:800;color:#ddd6fe;letter-spacing:2px}
 #deepBanner .db-dots{display:flex;gap:4px;margin:0 2px}
@@ -1348,106 +1348,46 @@ const BOSS_DIALOG = {
 
 // ─── 3. 梦境碎片 ───────────────────────────────────────────
 const DREAM_FRAGMENTS = [
-  {
-    id: 'frag_1', title: '失眠的夜晚',
-    text: '凌晨三点，你盯着天花板数绵羊。数到第一百只的时候，你意识到它们都长着你的脸。',
-    rarity: 'common',
-  },
-  {
-    id: 'frag_2', title: '闹钟的诅咒',
-    text: '闹钟响了。你伸手去按，手指穿过了它。你还在梦里。今天是周几？你已经不记得了。',
-    rarity: 'common',
-  },
-  {
-    id: 'frag_3', title: '褪色的照片',
-    text: '一张全家福，但所有人的脸都是模糊的。只有你自己的脸清晰——在笑，但眼睛里没有光。',
-    rarity: 'common',
-  },
-  {
-    id: 'frag_4', title: '未接来电',
-    text: '手机屏幕上显示：27 个未接来电，来自"妈妈"。你打了回去，听筒里只有雨声。',
-    rarity: 'common',
-  },
-  {
-    id: 'frag_5', title: '空教室',
-    text: '考试铃响了，但教室里只有你一个人。试卷上的题目你从未学过，而窗外是无尽的黑夜。',
-    rarity: 'common',
-  },
-  {
-    id: 'frag_6', title: '追逐',
-    text: '你在跑，身后有什么东西在追。你看不清它，但你知道——它没有形状，因为它就是"恐惧"本身。',
-    rarity: 'rare',
-  },
-  {
-    id: 'frag_7', title: '镜中人',
-    text: '镜子里的你没有在模仿你的动作。它在摇头。它在说："回去。"',
-    rarity: 'rare',
-  },
-  {
-    id: 'frag_8', title: '消失的房间',
-    text: '你回到童年的卧室，但一切都缩小了。书桌上的作业本翻开——上面写满了同一个字："逃"。',
-    rarity: 'rare',
-  },
-  {
-    id: 'frag_9', title: '失声',
-    text: '你想呼救，但嘴巴一张一合，发不出任何声音。你周围的人都在正常地说话、笑，没有人注意到你。',
-    rarity: 'rare',
-  },
-  {
-    id: 'frag_10', title: '倒流的河',
-    text: '河水向上游流去。岸边的树在倒着长，落叶飞回枝头。时间在倒退——但只有你注意到了。',
-    rarity: 'rare',
-  },
-  {
-    id: 'frag_11', title: '永恒的走廊',
-    text: '走廊没有尽头。每扇门后面都是另一条走廊。你开始怀疑——也许"出口"这个概念本身就是个梦。',
-    rarity: 'epic',
-  },
-  {
-    id: 'frag_12', title: '被遗忘的名字',
-    text: '有人在叫你的名字。但你想不起那是谁的声音。你甚至开始怀疑——那真的是你的名字吗？',
-    rarity: 'epic',
-  },
-  {
-    id: 'frag_13', title: '天台的风',
-    text: '你站在天台边缘。风很大。不是要跳下去——只是想感受一下"真实"的东西。风是真实的吗？',
-    rarity: 'epic',
-  },
-  {
-    id: 'frag_14', title: '最后一课',
-    text: '老师说："人生的考试没有标准答案。"你醒了，发现自己泪流满面，但想不起为什么。',
-    rarity: 'epic',
-  },
-  {
-    id: 'frag_15', title: '碎片拼图',
-    text: '你把所有记忆碎片拼在一起，看到了一幅画——一个人躺在无数面镜子组成的房间里，每面镜子映出不同年龄的自己。',
-    rarity: 'epic',
-  },
-  {
-    id: 'frag_16', title: '创造者的独白',
-    text: '"我创造了这个梦境来保护你。但保护太久，就变成了囚禁。对不起。"——一段不知来源的自言自语。',
-    rarity: 'legendary',
-  },
-  {
-    id: 'frag_17', title: '第一道光',
-    text: '在所有噩梦的最深处，有一扇小小的窗。窗外是黎明。你从没走到过那里——因为你总是在半路就建起了防线。',
-    rarity: 'legendary',
-  },
-  {
-    id: 'frag_18', title: '闹钟',
-    text: '闹钟。很简单的一个闹钟。但在梦境里，它是一个禁忌之物。因为闹钟意味着——梦要结束了。',
-    rarity: 'legendary',
-  },
-  {
-    id: 'frag_19', title: '两条路',
-    text: '一条路通向醒来，路上铺满了刺。另一条路通向永恒的安睡，路上开满了花。你站在分岔口，发现自己其实知道该走哪条。',
-    rarity: 'legendary',
-  },
-  {
-    id: 'frag_20', title: '写给自己的信',
-    text: '"亲爱的我：如果你正在读这封信，说明你已经足够勇敢了。梦魇不是你的敌人，它们是你未曾消化的情绪。不要消灭它们——理解它们。然后，醒来。"',
-    rarity: 'legendary',
-  },
+  { id:'frag_1', title:'失眠的夜晚', desc:'凌晨三点的失眠', icon:'🌙', rarity:'common',
+    text:'凌晨三点，你盯着天花板数绵羊。数到第一百只的时候，你意识到它们都长着你的脸。' },
+  { id:'frag_2', title:'闹钟的诅咒', desc:'醒不来的循环', icon:'⏰', rarity:'common',
+    text:'闹钟响了。你伸手去按，手指穿过了它。你还在梦里。今天是周几？你已经不记得了。' },
+  { id:'frag_3', title:'褪色的照片', desc:'模糊的记忆', icon:'📷', rarity:'common',
+    text:'一张全家福，但所有人的脸都是模糊的。只有你自己的脸清晰——在笑，但眼睛里没有光。' },
+  { id:'frag_4', title:'未接来电', desc:'错过的声音', icon:'📱', rarity:'common',
+    text:'手机屏幕上显示：27 个未接来电，来自"妈妈"。你打了回去，听筒里只有雨声。' },
+  { id:'frag_5', title:'空教室', desc:'独自面对', icon:'🏫', rarity:'common',
+    text:'考试铃响了，但教室里只有你一个人。试卷上的题目你从未学过，而窗外是无尽的黑夜。' },
+  { id:'frag_6', title:'追逐', desc:'逃不掉的恐惧', icon:'🏃', rarity:'common',
+    text:'你在跑，身后有什么东西在追。你看不清它，但你知道——它没有形状，因为它就是"恐惧"本身。' },
+  { id:'frag_7', title:'镜中人', desc:'另一个自己', icon:'🪞', rarity:'common',
+    text:'镜子里的你没有在模仿你的动作。它在摇头。它在说："回去。"' },
+  { id:'frag_8', title:'消失的房间', desc:'回不去的地方', icon:'🚪', rarity:'rare',
+    text:'你回到童年的卧室，但一切都缩小了。书桌上的作业本翻开——上面写满了同一个字："逃"。' },
+  { id:'frag_9', title:'失声', desc:'发不出的声音', icon:'🔇', rarity:'rare',
+    text:'你想呼救，但嘴巴一张一合，发不出任何声音。你周围的人都在正常地说话、笑，没有人注意到你。' },
+  { id:'frag_10', title:'倒流的河', desc:'逆转的时间', icon:'🌊', rarity:'rare',
+    text:'河水向上游流去。岸边的树在倒着长，落叶飞回枝头。时间在倒退——但只有你注意到了。' },
+  { id:'frag_11', title:'永恒的走廊', desc:'走不到尽头', icon:'🏛️', rarity:'rare',
+    text:'走廊没有尽头。每扇门后面都是另一条走廊。你开始怀疑——也许"出口"这个概念本身就是个梦。' },
+  { id:'frag_12', title:'被遗忘的名字', desc:'失去的自我', icon:'📝', rarity:'rare',
+    text:'有人在叫你的名字。但你想不起那是谁的声音。你甚至开始怀疑——那真的是你的名字吗？' },
+  { id:'frag_13', title:'天台的风', desc:'真实的感觉', icon:'🌬️', rarity:'rare',
+    text:'你站在天台边缘。风很大。不是要跳下去——只是想感受一下"真实"的东西。风是真实的吗？' },
+  { id:'frag_14', title:'最后一课', desc:'未完的告别', icon:'📝', rarity:'epic',
+    text:'老师说："人生的考试没有标准答案。"你醒了，发现自己泪流满面，但想不起为什么。' },
+  { id:'frag_15', title:'碎片拼图', desc:'拼凑的自己', icon:'🧩', rarity:'epic',
+    text:'你把所有记忆碎片拼在一起，看到了一幅画——一个人躺在无数面镜子组成的房间里，每面镜子映出不同年龄的自己。' },
+  { id:'frag_16', title:'创造者的独白', desc:'造梦者的歉意', icon:'🎭', rarity:'epic',
+    text:'"我创造了这个梦境来保护你。但保护太久，就变成了囚禁。对不起。"——一段不知来源的自言自语。' },
+  { id:'frag_17', title:'第一道光', desc:'从未到达的黎明', icon:'🌅', rarity:'legendary',
+    text:'在所有噩梦的最深处，有一扇小小的窗。窗外是黎明。你从没走到过那里——因为你总是在半路就建起了防线。' },
+  { id:'frag_18', title:'闹钟', desc:'梦的终结者', icon:'🔔', rarity:'legendary',
+    text:'闹钟。很简单的一个闹钟。但在梦境里，它是一个禁忌之物。因为闹钟意味着——梦要结束了。' },
+  { id:'frag_19', title:'两条路', desc:'分岔口的选择', icon:'🛤️', rarity:'legendary',
+    text:'一条路通向醒来，路上铺满了刺。另一条路通向永恒的安睡，路上开满了花。你站在分岔口，发现自己其实知道该走哪条。' },
+  { id:'frag_20', title:'写给自己的信', desc:'来自内心的声音', icon:'💌', rarity:'legendary',
+    text:'"亲爱的我：如果你正在读这封信，说明你已经足够勇敢了。梦魇不是你的敌人，它们是你未曾消化的情绪。不要消灭它们——理解它们。然后，醒来。"' },
 ];
 
 // ─── 4. NPC 台词 ───────────────────────────────────────────
@@ -6081,29 +6021,48 @@ const MercyPath = {
  * ============================================================ */
 
 const DreamFragments = {
-  /** 碎片定义（来自 story.js DREAM_FRAGMENTS，共 20 个） */
-  FRAGMENT_DEFS: [
-    { id:'frag_1', name:'失眠的夜晚', icon:'🌙', desc:'凌晨三点的失眠', story:'凌晨三点，你盯着天花板数绵羊。数到第一百只的时候，你意识到它们都长着你的脸。', dropRate:0.08, dropFrom:'grunt' },
-    { id:'frag_2', name:'闹钟的诅咒', icon:'⏰', desc:'醒不来的循环', story:'闹钟响了。你伸手去按，手指穿过了它。你还在梦里。今天是周几？你已经不记得了。', dropRate:0.07, dropFrom:'grunt' },
-    { id:'frag_3', name:'褪色的照片', icon:'📷', desc:'模糊的记忆', story:'一张全家福，但所有人的脸都是模糊的。只有你自己的脸清晰——在笑，但眼睛里没有光。', dropRate:0.07, dropFrom:'brute' },
-    { id:'frag_4', name:'未接来电', icon:'📱', desc:'错过的声音', story:'手机屏幕上显示：27 个未接来电，来自"妈妈"。你打了回去，听筒里只有雨声。', dropRate:0.06, dropFrom:'healer' },
-    { id:'frag_5', name:'空教室', icon:'🏫', desc:'独自面对', story:'考试铃响了，但教室里只有你一个人。试卷上的题目你从未学过，而窗外是无尽的黑夜。', dropRate:0.06, dropFrom:'brute' },
-    { id:'frag_6', name:'追逐', icon:'🏃', desc:'逃不掉的恐惧', story:'你在跑，身后有什么东西在追。你看不清它，但你知道——它没有形状，因为它就是"恐惧"本身。', dropRate:0.05, dropFrom:'phantom' },
-    { id:'frag_7', name:'镜中人', icon:'🪞', desc:'另一个自己', story:'镜子里的你没有在模仿你的动作。它在摇头。它在说："回去。"', dropRate:0.05, dropFrom:'phantom' },
-    { id:'frag_8', name:'消失的房间', icon:'🚪', desc:'回不去的地方', story:'你回到童年的卧室，但一切都缩小了。书桌上的作业本翻开——上面写满了同一个字："逃"。', dropRate:0.04, dropFrom:'berserker' },
-    { id:'frag_9', name:'失声', icon:'🔇', desc:'发不出的声音', story:'你想呼救，但嘴巴一张一合，发不出任何声音。你周围的人都在正常地说话、笑，没有人注意到你。', dropRate:0.04, dropFrom:'phantom' },
-    { id:'frag_10', name:'倒流的河', icon:'🌊', desc:'逆转的时间', story:'河水向上游流去。岸边的树在倒着长，落叶飞回枝头。时间在倒退——但只有你注意到了。', dropRate:0.04, dropFrom:'healer' },
-    { id:'frag_11', name:'永恒的走廊', icon:'🏛️', desc:'走不到尽头', story:'走廊没有尽头。每扇门后面都是另一条走廊。你开始怀疑——也许"出口"这个概念本身就是个梦。', dropRate:0.03, dropFrom:'summoner' },
-    { id:'frag_12', name:'被遗忘的名字', icon:'📝', desc:'失去的自我', story:'有人在叫你的名字。但你想不起那是谁的声音。你甚至开始怀疑——那真的是你的名字吗？', dropRate:0.03, dropFrom:'summoner' },
-    { id:'frag_13', name:'天台的风', icon:'🌬️', desc:'真实的感觉', story:'你站在天台边缘。风很大。不是要跳下去——只是想感受一下"真实"的东西。风是真实的吗？', dropRate:0.03, dropFrom:'vampire' },
-    { id:'frag_14', name:'最后一课', icon:'📝', desc:'未完的告别', story:'老师说："人生的考试没有标准答案。"你醒了，发现自己泪流满面，但想不起为什么。', dropRate:0.025, dropFrom:'vampire' },
-    { id:'frag_15', name:'碎片拼图', icon:'🧩', desc:'拼凑的自己', story:'你把所有记忆碎片拼在一起，看到了一幅画——一个人躺在无数面镜子组成的房间里，每面镜子映出不同年龄的自己。', dropRate:0.02, dropFrom:'boss' },
-    { id:'frag_16', name:'创造者的独白', icon:'🎭', desc:'造梦者的歉意', story:'"我创造了这个梦境来保护你。但保护太久，就变成了囚禁。对不起。"——一段不知来源的自言自语。', dropRate:0.02, dropFrom:'boss' },
-    { id:'frag_17', name:'第一道光', icon:'🌅', desc:'从未到达的黎明', story:'在所有噩梦的最深处，有一扇小小的窗。窗外是黎明。你从没走到过那里——因为你总是在半路就建起了防线。', dropRate:0.015, dropFrom:'boss' },
-    { id:'frag_18', name:'闹钟', icon:'🔔', desc:'梦的终结者', story:'闹钟。很简单的一个闹钟。但在梦境里，它是一个禁忌之物。因为闹钟意味着——梦要结束了。', dropRate:0.015, dropFrom:'boss' },
-    { id:'frag_19', name:'两条路', icon:'🛤️', desc:'分岔口的选择', story:'一条路通向醒来，路上铺满了刺。另一条路通向永恒的安睡，路上开满了花。你站在分岔口，发现自己其实知道该走哪条。', dropRate:0.01, dropFrom:'boss' },
-    { id:'frag_20', name:'写给自己的信', icon:'💌', desc:'来自内心的声音', story:'"亲爱的我：如果你正在读这封信，说明你已经足够勇敢了。梦魇不是你的敌人，它们是你未曾消化的情绪。不要消灭它们——理解它们。然后，醒来。"', dropRate:0.01, dropFrom:'boss' },
-  ],
+  /**
+   * 碎片定义
+   * 文案唯一真相在 story.js 的 DREAM_FRAGMENTS；这里只叠加引擎侧的掉落参数
+   * （哪类敌人掉、掉率），避免同一份碎片在两处各写一遍。
+   */
+  FRAGMENT_DEFS: (function () {
+    const DROPS = {
+      frag_1: ['grunt', 0.08],
+      frag_2: ['grunt', 0.07],
+      frag_3: ['brute', 0.07],
+      frag_4: ['healer', 0.06],
+      frag_5: ['brute', 0.06],
+      frag_6: ['phantom', 0.05],
+      frag_7: ['phantom', 0.05],
+      frag_8: ['berserker', 0.04],
+      frag_9: ['phantom', 0.04],
+      frag_10: ['healer', 0.04],
+      frag_11: ['summoner', 0.03],
+      frag_12: ['summoner', 0.03],
+      frag_13: ['vampire', 0.03],
+      frag_14: ['vampire', 0.025],
+      frag_15: ['boss', 0.02],
+      frag_16: ['boss', 0.02],
+      frag_17: ['boss', 0.015],
+      frag_18: ['boss', 0.015],
+      frag_19: ['boss', 0.01],
+      frag_20: ['boss', 0.01],
+    };
+    return (typeof DREAM_FRAGMENTS !== 'undefined' ? DREAM_FRAGMENTS : []).map(f => {
+      const d = DROPS[f.id] || ['any', 0.02];
+      return {
+        id: f.id,
+        name: f.title,
+        icon: f.icon || '💎',
+        desc: f.desc || '',
+        story: f.text,
+        rarity: f.rarity,
+        dropFrom: d[0],
+        dropRate: d[1],
+      };
+    });
+  })(),
 
   /** @type {Set<string>} 已收集的碎片 ID */
   _collected: null,
