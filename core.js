@@ -2,6 +2,7 @@ const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const rnd = (a, b) => a + Math.random() * (b - a);
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const pick = arr => arr[(Math.random() * arr.length) | 0];
+const cellRect = (c, r) => ({ x: ROOM_X0 + c * CW, y: ARENA_TOP + r * CH, w: CW, h: CH });
 const cellCenter = (c, r) => ({ x: ROOM_X0 + c * CW + CW / 2, y: ARENA_TOP + r * CH + CH / 2 });
 const inBed = (c, r) => BED_CELLS.some(b => b[0] === c && b[1] === r);
 const FMT_UNITS = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc', 'Ud', 'Dd'];
@@ -150,7 +151,8 @@ function jumpToWave(n) {
   return true;
 }
 let G = null;
-let selected = null, selectedBuildKey = null;
+let mouse = { x: -999, y: -999 };
+let hoverCell = null, selected = null, selectedBuildKey = null;
 let shake = 0, flash = 0, hitStop = 0, timeScale = 1, paused = false;
 function newGame(loadFrom) {
   EventBus.clear(); // 清理上一局事件监听，防止累积
