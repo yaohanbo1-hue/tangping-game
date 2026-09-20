@@ -25,7 +25,7 @@ cv.addEventListener('click', e => {
   const occ = G.grid[cell.r * COLS + cell.c];
   if (occ && occ !== 'bed') { selected = occ; selectedBuildKey = null; syncCards(); return; }
   if (selectedBuildKey) {
-    if (tryBuild(selectedBuildKey, cell.c, cell.r)) {
+    if (Cmd.build(selectedBuildKey, cell.c, cell.r)) {   // 经命令层派发（联机时客机只发意图）
       if (!canAfford(BUILD_DEFS[selectedBuildKey].cost)) { selectedBuildKey = null; syncCards(); }
     }
     return;
@@ -36,23 +36,32 @@ cv.addEventListener('contextmenu', e => { e.preventDefault(); selectedBuildKey =
 const SKILL_MAP = { q: 'meteor', w: 'freeze', e: 'overclock', r: 'mend', t: 'repel', f: 'siphon' };
 window.addEventListener('keydown', e => {
   const k = e.key;
-  if (k === 'Escape') { selectedBuildKey = null; selected = null; syncCards(); ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => $(p).classList.remove('open')); return; }
-  if (k === ' ') { e.preventDefault(); skipPrep(); return; }
+  if (k === 'Escape') {
+    selectedBuildKey = null; selected = null; syncCards();
+    ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => $(p).classList.remove('open'));
+    if ($('itemDetail') && $('itemDetail').classList.contains('show')) { closeQuestItem(); return; }
+    ['questPanel', 'runePanel'].forEach(p => { if ($(p) && $(p).classList.contains('open')) togglePanel(p); });
+    return;
+  }
+  if (k === ' ') { e.preventDefault(); Cmd.skipPrep(); return; }
   if (k === 'p' || k === 'P') { paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸'; return; }
   const sk = SKILL_MAP[k.toLowerCase()];
-  if (sk) { useSkill(sk); return; }
+  if (sk) { Cmd.skill(sk); return; }
   const bk = BUILD_KEYS.find(key => BUILD_DEFS[key].key === k);
   if (bk) { selectBuild(bk); return; }
-  if (k === 'u' || k === 'U') { if (selected && selected.def) tryUpgrade(selected); else if (selected && selected.isBed) upgradeBed(); else if (selected && selected.isDoor) upgradeDoor(selected.door); return; }
-  if (k === 'x' || k === 'X') { if (selected && selected.def) sellBuilding(selected); return; }
+  if (k === 'u' || k === 'U') { Cmd.upgradeSelection(selected); return; }
+  if (k === 'x' || k === 'X') { Cmd.sellSelection(selected); return; }
   if (k === 'b' || k === 'B') { togglePanel('lotPanel'); return; }
-  if (k === 'g') { togglePanel('runePanel'); return; }
-  if (k === 'm') { if (selected) upgradeMaxSelected(selected); return; }
-  if (k === 'M') { upgradeAllMax(); return; }
+  if (k === 'g' || k === 'G') { togglePanel('runePanel'); return; }
+  if (k === 'l' || k === 'L') { togglePanel('questPanel'); return; }
+  if (k === 'k' || k === 'K') { toggleSavePanel(); return; }
+  if (k === 's' || k === 'S') { if (saveGame(0)) { setTip('💾 已保存到自动存档', 3); SFX.coin(); } return; }
+  if (k === 'm') { Cmd.maxSelection(selected); return; }
+  if (k === 'M') { Cmd.upgradeAllMax(); return; }
 });
 function bindUI() {
-  $('btnSkip').onclick = () => skipPrep();
-  $('btnSkip2').onclick = () => skipPrep();
+  $('btnSkip').onclick = () => Cmd.skipPrep();
+  $('btnSkip2').onclick = () => Cmd.skipPrep();
   $('btnTech').onclick = () => togglePanel('techPanel');
   $('btnTech2').onclick = () => togglePanel('techPanel');
   $('btnAch').onclick = () => togglePanel('achPanel');
@@ -63,17 +72,43 @@ function bindUI() {
   $('btnDraw1').onclick = () => doDraw(1, 'gold');
   $('btnDraw10').onclick = () => doDraw(10, 'gold');
   $('btnDrawS').onclick = () => doDraw(1, 'soul');
-  $('btnUpAll').onclick = () => upgradeAllBuildings(false);
+  $('btnUpAll').onclick = () => Cmd.upgradeAll(false);
   $('runeClose').onclick = () => togglePanel('runePanel');
+  if ($('btnQuest')) $('btnQuest').onclick = () => togglePanel('questPanel');
+  if ($('questClose')) $('questClose').onclick = () => togglePanel('questPanel');
+  if ($('itemClose')) $('itemClose').onclick = () => closeQuestItem();
+  if ($('hudQuest')) $('hudQuest').onclick = () => togglePanel('questPanel');
   $('btnRune').onclick = () => togglePanel('runePanel');
-  $('btnMaxSel').onclick = () => { if (selected) upgradeMaxSelected(selected); else setTip('请先点击一个建筑、床或门', 3); };
-  $('btnMaxAll').onclick = () => upgradeAllMax();
-  $('btnUpTower').onclick = () => upgradeAllBuildings(true);
+  $('btnMaxSel').onclick = () => { if (selected) Cmd.maxSelection(selected); else setTip('请先点击一个建筑、床或门', 3); };
+  $('btnMaxAll').onclick = () => Cmd.upgradeAllMax();
+  $('btnUpTower').onclick = () => Cmd.upgradeAll(true);
   $('btnHelp2').onclick = () => togglePanel('helpPanel');
   $('btnPause').onclick = () => { paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸'; };
   $('btnSound').onclick = () => { SFX.on = !SFX.on; $('btnSound').textContent = SFX.on ? '🔊' : '🔇'; };
   $('btnSpeed').onclick = () => { timeScale = timeScale === 1 ? 2 : timeScale === 2 ? 3 : 1; $('btnSpeed').textContent = timeScale + '×'; };
-  $('btnSave').onclick = () => { saveGame(); setTip('进度已保存', 3); SFX.coin(); };
+  $('btnSave').onclick = () => toggleSavePanel();
+  if ($('saveClose')) $('saveClose').onclick = () => closeSavePanel();
+  if ($('svImport')) $('svImport').onclick = () => { const f = $('svFile'); if (f) f.click(); };
+  if ($('svFile')) $('svFile').onchange = (ev) => {
+    const file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    // 导到第一个空的手动槽，满了就覆盖槽 1
+    let slot = 1;
+    const list = SaveSystem.list();
+    const empty = list.find(s => s.slot >= 1 && !s.info);
+    if (empty) slot = empty.slot;
+    SaveSystem.importFile(file, slot, r => {
+      if (r.ok) { renderSavePanel(); svToast('📥 已导入到槽 ' + slot + '（第 ' + (r.meta ? r.meta.wave : '?') + ' 波）'); SFX.achieve(); }
+      else svToast('❌ 导入失败：' + (r.reason === 'invalid' ? '存档结构异常' : r.reason === 'json' ? '不是合法 JSON' : '文件不可读'), 'err');
+    });
+    ev.target.value = '';
+  };
+  if ($('svWipe')) $('svWipe').onclick = () => {
+    if (!window.__svWipeArmed) { window.__svWipeArmed = 1; svToast('⚠️ 再点一次确认清空全部槽位', 'warn'); setTimeout(() => window.__svWipeArmed = 0, 4000); return; }
+    window.__svWipeArmed = 0;
+    for (let s = 0; s <= SaveSystem.SLOTS; s++) SaveSystem.remove(s);
+    renderSavePanel(); svToast('🗑 已清空全部槽位');
+  };
   $('techClose').onclick = () => $('techPanel').classList.remove('open');
   $('achClose').onclick = () => $('achPanel').classList.remove('open');
   $('helpClose').onclick = () => $('helpPanel').classList.remove('open');
@@ -114,6 +149,7 @@ function buildHelp() {
     '</div>' +
     '<h4>炮塔共鸣</h4><div class="afflist">' +
     '<span class="aff">🎵 <b>相邻不同元素炮塔互相增幅</b>：2 种 +12% 伤害；3 种 +26% 伤害/射速 +10%；最高 6 种 +85% 伤害/射速 +34%</span>' +
+    '<span class="aff">📍 <b>怎么看出来</b>：正在共鸣的炮塔会亮起一圈<b>虚线光环</b>，格子左上角显示 <b>🎵元素种类数</b>；点开建筑详情可看到具体倍率与附加效果</span>' +
     '<span class="aff">🔥 <b>爆燃弹药</b>：动能 + 火焰 → 攻击附加灼烧</span>' +
     '<span class="aff">⚡ <b>导电冰霜</b>：冰霜 + 电磁 → 攻击附带小范围溅射</span>' +
     '<span class="aff">🧬 <b>腐蚀光斑</b>：能量 + 剧毒 → 攻击削减敌人抗性</span>' +
@@ -235,13 +271,31 @@ window.addEventListener('resize', function () { fit(); fitHUD(); updateBuildBarO
 fit(); fitHUD(); updateBuildBarOverflow(); applyCompactBar();
 
 let last = performance.now();
+const FIXED_DT = 1 / 60;   // 固定模拟步长（联机/复现的前提：模拟结果与帧率无关）
+let simAcc = 0;
 function loop(now) {
-  let dt = (now - last) / 1000; last = now;
-  dt = Math.min(dt, 0.05);
-  T += dt;
-  if (G && !G.over && !paused) { for (let i = 0; i < timeScale; i++) step(dt); }
-  if (G) { render(); updateHUD(dt); }
+  // 先把下一帧排上：任何一帧里抛出的异常都不会再让主循环「静默死掉」——
+  // 之前 render() 里一个 NaN 半径（过载爆轰的 boom 缺 max 字段）就能把整个游戏永久冻结。
   requestAnimationFrame(loop);
+  let dt = (now - last) / 1000; last = now;
+  if (!isFinite(dt) || dt < 0) dt = 0;
+  dt = Math.min(dt, 0.25);          // 切后台回来不要一次追几百帧
+  T += dt;
+  // 面板属性缓存按帧失效：一帧内（含 2×/3× 倍速的多次 step）bstat 只算一次
+  statFrame++;
+  try {
+    // 固定步长累加器：无论 30/60/144Hz，模拟都按 1/60 秒推进，帧率只影响画面平滑度
+    if (G && !G.over && !paused) {
+      simAcc += dt * timeScale;
+      let n = 0;
+      while (simAcc >= FIXED_DT && n < 15) { step(FIXED_DT); simAcc -= FIXED_DT; n++; }
+      if (n >= 15) simAcc = 0;      // 追不上就丢掉欠帧，避免雪崩
+    } else simAcc = 0;
+    if (G) { render(); updateHUD(dt); }
+  } catch (err) {
+    if (G) G.loopErrors = (G.loopErrors || 0) + 1;
+    console.error('[loop]', err);
+  }
 }
 let LAST_SAVE = null;
 function init() {

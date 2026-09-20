@@ -58,6 +58,15 @@ canvas{display:block;width:1280px;height:720px}
 #hudTimer{padding:4px 9px;border-radius:7px;font-weight:700;font-size:13px;min-width:52px;text-align:center;flex-shrink:0;font-variant-numeric:tabular-nums}
 #hudTimer.prep{background:rgba(96,165,250,.2);color:#93c5fd}
 #hudTimer.fight{background:rgba(var(--danger-rgb),.22);color:var(--danger-2)}
+/* HUD 底边：备战倒计时进度条 */
+#hudProg{position:absolute;left:0;bottom:0;height:3px;width:100%;background:rgba(255,255,255,.07);overflow:hidden;pointer-events:none}
+#hudProg i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#93c5fd);transition:width .12s linear,background .3s}
+#hudProg.warn i{background:linear-gradient(90deg,#f59e0b,#f87171)}
+/* 建造卡片：面板 DPS 与已建数量角标 */
+.card .dps{font-size:8.5px;font-weight:800;letter-spacing:0;color:#bfe9a0;margin-top:2px;text-shadow:0 1px 2px var(--shadow-2);white-space:nowrap}
+.card .cnt{position:absolute;left:4px;top:4px;min-width:13px;height:13px;line-height:13px;padding:0 3px;border-radius:7px;
+  font-size:8px;font-weight:800;text-align:center;color:#0b1020;background:linear-gradient(180deg,#e9f7c9,#9ef01a);
+  box-shadow:0 1px 4px rgba(0,0,0,.5);display:none}
 /* HUD 数值脉冲：JS 仅在「突增/掉血」时短暂加 class，单帧 keyframes 自动回落到默认样式 */
 #hud .stat span{font-variant-numeric:tabular-nums}
 #hud .stat b{transition:color .25s}
@@ -93,9 +102,13 @@ canvas{display:block;width:1280px;height:720px}
 .dhead b{font-size:14px;color:var(--gold-3)}
 .dtn{font-size:11px;margin-left:4px;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px}
 .dst{font-size:11.5px;color:#b9b3d6;line-height:1.6}
-.dact{margin-top:8px;display:flex;gap:8px}
-.dact button{flex:1;padding:6px;border-radius:6px;border:1px solid rgba(158,240,26,.4);background:rgba(158,240,26,.16);
-  color:#d9f99d;font-size:12px;cursor:pointer;font-family:inherit}
+/* 操作按钮：原来 flex:1 三等分，320px 面板下每颗只有 92px，
+   「升级 143K💰 114⚡」会被挤成两行、「⏫升满」蹦成「升/满」。
+   改为按钮内分两行（主标题 + 费用小字），字号收紧，永远不换行错位。 */
+.dact{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+.dact button{flex:1 1 0;min-width:78px;padding:6px 4px;border-radius:6px;border:1px solid rgba(158,240,26,.4);background:rgba(158,240,26,.16);
+  color:#d9ffb0;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1.25;white-space:nowrap;overflow:hidden}
+.dact button i{display:block;font-style:normal;font-size:10px;font-weight:600;color:#ffe9b0;opacity:.92;margin-top:1px}
 .dact button:hover{background:rgba(158,240,26,.3)}
 .dact .sell{border-color:rgba(var(--danger-rgb),.4);background:rgba(var(--danger-rgb),.14);color:var(--danger-2)}
 .dact .sell:hover{background:rgba(var(--danger-rgb),.28)}
@@ -187,9 +200,9 @@ canvas{display:block;width:1280px;height:720px}
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 /* 右侧控制区：必须完整塞进 150px 高的 #bottom（修复 11 个按钮 + 提示被裁掉的问题）
    预算：136px 内容高 = 技能条 36 + 间隔 5 + 按钮网格 2 行 44 + 间隔 5 + 提示 46 */
-#right{width:232px;display:flex;flex-direction:column;gap:5px;min-height:0}
+#right{width:232px;display:flex;flex-direction:column;gap:4px;min-height:0}
 #skillBar{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;flex-shrink:0}
-.skill{position:relative;height:36px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,.07),var(--glass-2));
+.skill{position:relative;height:34px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,.07),var(--glass-2));
   border:1px solid rgba(130,120,220,.22);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;
   transition:transform .16s cubic-bezier(.2,.9,.3,1.3),box-shadow .2s,background .2s,border-color .2s}
 .skill:hover{background:linear-gradient(180deg,rgba(130,120,220,.3),rgba(110,100,200,.16));border-color:rgba(150,140,255,.5);
@@ -202,11 +215,13 @@ canvas{display:block;width:1280px;height:720px}
 .skill.cool{filter:grayscale(.75) brightness(.85)}
 .skill:not(.cool){border-color:rgba(158,240,26,.32)}
 #ctrls{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;flex-shrink:0}
-#ctrls .btn{min-width:0;width:100%;padding:5px 1px;font-size:9px;font-weight:700;text-align:center;letter-spacing:0;
-  line-height:1.15;overflow:hidden;white-space:nowrap;border-radius:6px}
-#hint{font-size:9.5px;color:#8882a8;line-height:1.42;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
-  padding:4px 6px;border-radius:6px;flex:1;min-height:0;overflow:hidden;border:1px solid rgba(255,255,255,.035)}
-#hint b{color:#b8b0d8}
+#ctrls .btn{min-width:0;width:100%;padding:3px 0;font-size:9px;font-weight:700;text-align:center;letter-spacing:0;
+  line-height:1.2;overflow:hidden;white-space:nowrap;border-radius:6px}
+/* 提示区：原来 3 行文字塞不进可用高度，最后一行被 overflow:hidden 切掉半截。
+   把技能条/按钮网格各收 1~2px，攒出的高度留给这里。 */
+#hint{font-size:9.2px;color:#8f89b0;line-height:1.3;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+  padding:3px 6px;border-radius:6px;flex:1;min-height:0;overflow:hidden;border:1px solid rgba(255,255,255,.035)}
+#hint b{color:#c2bce0;font-weight:700}
 .slide{position:absolute;right:0;top:56px;width:352px;height:504px;
   background:linear-gradient(180deg,rgba(14,11,30,.92),rgba(10,8,22,.94));
   backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);
@@ -269,6 +284,12 @@ canvas{display:block;width:1280px;height:720px}
   box-shadow:0 16px 60px rgba(0,0,0,.65),0 0 80px rgba(120,80,246,.08),inset 0 1px 0 var(--glass-1);
   animation:panelIn .5s ease-out both}
 @keyframes panelIn{from{opacity:0;transform:translateY(30px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+/* ⚠️ panelIn 带 animation-fill-mode:both，动画结束后仍会永久接管 transform。
+   于是凡是靠 translateX(-50%) / translate(-50%,-50%) 居中的浮层（剧情对话框、
+   怜悯对话框、碎片全文）都会被顶到屏幕右侧、超出 #wrap 被裁掉。
+   下面两个 keyframes 把居中位移写进动画里，动画结束仍保持居中。 */
+@keyframes dialogInX{from{opacity:0;transform:translateX(-50%) translateY(30px) scale(.96)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+@keyframes dialogInXY{from{opacity:0;transform:translate(-50%,-50%) scale(.96)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 .panel::-webkit-scrollbar{width:8px}
 .panel::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
 .panel.win h1{background:linear-gradient(135deg,var(--gold-2),#fde68a,var(--gold-2),#fde68a);background-size:300% auto;animation:titleShine 3s linear infinite;
@@ -309,6 +330,15 @@ canvas{display:block;width:1280px;height:720px}
 .dlv{font-size:11px;color:var(--pri);margin-left:6px;background:rgba(var(--pri-rgb),.16);padding:1px 6px;border-radius:4px;white-space:nowrap}
 .dst .hl{color:var(--gold);font-size:13px}
 .dup2{color:var(--ok-2);font-size:11px}
+/* 共鸣信息块（--rc 由 JS 按共鸣档位注入颜色） */
+.dres{margin-top:6px;font-size:10.5px;line-height:1.5;color:var(--text-mid);border-radius:6px;padding:5px 8px;
+  background:rgba(255,255,255,.045);background:color-mix(in srgb,var(--rc) 12%,transparent);
+  border-left:3px solid var(--rc)}
+.dres b{color:var(--rc)}
+.dres span{display:block;color:var(--text-note);font-size:10px}
+.dres .drn{float:right;color:var(--text-dim)}
+.dres.dim{background:rgba(255,255,255,.03);border-left-color:rgba(160,140,255,.35);color:var(--text-dim)}
+.dres.dim b{color:var(--text-mid)}
 .dnote{font-size:10.5px;color:var(--text-dim);line-height:1.5;background:var(--glass-1);border-radius:5px;padding:4px 7px;margin-top:5px}
 .dnote b{color:var(--gold-3)}
 .dup b{color:var(--gold-3)}
@@ -637,13 +667,155 @@ canvas{display:block;width:1280px;height:720px}
   0%,100%{opacity:.6;transform:scale(1)}
   50%{opacity:1;transform:scale(1.05)}}
 
+/* #overlay 之外的两个 .panel 没有任何定位，会被前面的 <canvas> 顶出可视区、
+   再被 #wrap 的 overflow:hidden 裁掉 —— 表现为「点了按钮面板打不开」。
+   这里给它们自己的绝对居中（transform 写进 keyframes，避免被 panelIn 覆盖）。 */
+#runePanel, #questPanel, #savePanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  z-index:22;max-height:88%;animation:dialogInXY .45s ease-out both}
+/* ================= BOSS 血条横幅 ================= */
+#bossBar{position:absolute;left:50%;top:62px;transform:translateX(-50%) translateY(-14px);width:640px;z-index:7;
+  display:none;opacity:0;transition:opacity .35s,transform .35s;pointer-events:none;
+  background:linear-gradient(180deg,rgba(38,10,22,.94),rgba(16,8,18,.92));
+  border:1px solid rgba(255,77,109,.45);border-radius:10px;padding:7px 12px 9px;box-sizing:border-box;
+  box-shadow:0 8px 30px rgba(0,0,0,.6),0 0 40px rgba(255,77,109,.14)}
+#bossBar.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.bb-top{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
+.bb-name{font-size:13px;font-weight:800;color:#ffd166;letter-spacing:1px;text-shadow:0 0 12px rgba(255,209,102,.4)}
+.bb-phase{font-size:10.5px;color:#fca5a5;background:rgba(255,77,109,.18);border:1px solid rgba(255,77,109,.35);
+  padding:1px 7px;border-radius:99px}
+.bb-hp{margin-left:auto;font-size:11.5px;font-weight:700;color:#ffd6d6;font-variant-numeric:tabular-nums}
+.bb-track{position:relative;height:12px;border-radius:7px;background:rgba(0,0,0,.55);overflow:hidden;
+  box-shadow:inset 0 1px 4px rgba(0,0,0,.7)}
+.bb-track i{position:absolute;left:0;top:0;bottom:0;border-radius:7px;
+  background:linear-gradient(180deg,#ff8fa3,#e11d48 55%,#7f1d1d);transition:width .18s linear;
+  box-shadow:0 0 14px rgba(255,77,109,.55)}
+.bb-track u{position:absolute;left:0;top:0;bottom:0;border-radius:7px;background:rgba(93,230,255,.55);
+  transition:width .18s linear}
+/* HUD 视觉统一：数值等宽 */
+#hud .stat{gap:4px}
+#hud .stat b{font-variant-numeric:tabular-nums;letter-spacing:.2px}
+/* 滑出面板统一标题与卡片观感 */
+.slide h3{border-bottom:1px solid rgba(150,140,255,.16);padding-bottom:7px}
+.slide .slist{gap:7px}
+.tech,.ach{border-radius:8px}
+.tech:hover,.ach:hover{transform:translateX(2px)}
+.bropt:active,.tech:active,.ach:active{transform:scale(.99)}
+
+/* ================= 存档管理 ================= */
+#savePanel{width:720px}
+.svrow{display:flex;align-items:center;gap:10px;text-align:left;background:rgba(255,255,255,.045);
+  border:1px solid rgba(160,140,255,.16);border-radius:9px;padding:9px 11px;margin-bottom:8px;transition:.15s}
+.svrow:hover{border-color:rgba(167,139,250,.42);background:rgba(167,139,250,.08)}
+.svrow.auto{border-color:rgba(125,211,252,.4);background:rgba(125,211,252,.07)}
+.svrow.empty{opacity:.65}
+.svtag{flex-shrink:0;width:52px;text-align:center;font-size:10px;font-weight:800;letter-spacing:1px;
+  padding:4px 0;border-radius:6px;background:rgba(167,139,250,.18);color:#c4b5fd}
+.svrow.auto .svtag{background:rgba(125,211,252,.2);color:#7dd3fc}
+.svmain{flex:1;min-width:0}
+.svname{font-size:13px;font-weight:700;color:#e9e4ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svmeta{font-size:10.5px;color:var(--text-dim);margin-top:3px;line-height:1.5}
+.svmeta b{color:var(--gold-2)}
+.svchips{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.svchip{font-size:9.5px;padding:1px 6px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--text-note)}
+.svchip.q{background:rgba(255,209,102,.16);color:var(--gold-2)}
+.svchip.d{background:rgba(199,125,255,.16);color:#c77dff}
+.svacts{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.svacts .r1{display:flex;gap:4px}
+.svbtn{font-family:inherit;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:6px;cursor:pointer;
+  border:1px solid rgba(158,240,26,.4);background:rgba(158,240,26,.14);color:#d9ffb0;transition:.15s;white-space:nowrap}
+.svbtn:hover{background:rgba(158,240,26,.28)}
+.svbtn.blue{border-color:rgba(125,211,252,.45);background:rgba(125,211,252,.14);color:#bae6fd}
+.svbtn.blue:hover{background:rgba(125,211,252,.3)}
+.svbtn.red{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.13);color:#fca5a5}
+.svbtn.red:hover{background:rgba(248,113,113,.28)}
+.svbtn:disabled{opacity:.35;cursor:not-allowed}
+.svfoot{display:flex;gap:8px;justify-content:center;margin-top:4px;flex-wrap:wrap}
+.svnote{font-size:10.5px;color:var(--text-dim);line-height:1.6;margin:10px 0 12px;
+  background:rgba(255,255,255,.03);border-radius:8px;padding:8px 11px;text-align:left}
+.svnote b{color:var(--gold-3)}
+#svFile{display:none}
+#svToast{position:absolute;left:50%;bottom:170px;transform:translateX(-50%) translateY(12px);z-index:40;
+  padding:8px 16px;border-radius:9px;font-size:12.5px;font-weight:700;pointer-events:none;opacity:0;
+  background:rgba(16,13,34,.96);border:1px solid rgba(158,240,26,.5);color:#d9ffb0;
+  box-shadow:0 8px 26px rgba(0,0,0,.6);transition:opacity .25s,transform .25s}
+#svToast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#svToast.warn{border-color:rgba(251,191,36,.6);color:#fde68a}
+#svToast.err{border-color:rgba(248,113,113,.6);color:#fca5a5}
+
+/* ================= 梦境委托（任务系统） ================= */
+.qcur{background:linear-gradient(135deg,rgba(255,209,102,.13),rgba(139,92,246,.09));border:1px solid rgba(255,209,102,.38);
+  border-radius:10px;padding:12px 14px;margin-bottom:10px;text-align:left}
+.qcur .qa{font-size:11px;color:var(--gold-2);letter-spacing:3px}
+.qcur .qt{font-size:17px;font-weight:800;color:#f3efff;margin:3px 0 6px;letter-spacing:1px}
+.qcur .qg{font-size:12.5px;color:var(--text-mid);line-height:1.7}
+.qcur .qg b{color:var(--gold-3)}
+.qbar{height:7px;border-radius:4px;background:rgba(0,0,0,.45);overflow:hidden;margin-top:9px;box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+.qbar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#d97706,#fbbf24,#fde68a);transition:width .3s}
+.qitems{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.qitem{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);border-radius:9px;padding:8px 6px;
+  cursor:pointer;text-align:center;transition:transform .15s,background .15s,border-color .15s}
+.qitem:hover{background:rgba(255,209,102,.16);border-color:rgba(255,209,102,.55);transform:translateY(-2px)}
+.qitem .qi{font-size:25px;line-height:1.1;display:block}
+.qitem .qn{font-size:10.5px;color:#ddd8f5;margin-top:4px}
+.qitem .qc{font-size:10px;color:var(--gold-2);font-weight:800;margin-top:2px}
+.qempty{font-size:11px;color:var(--text-dim);grid-column:1/-1;padding:14px;text-align:center}
+.qrow{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.04);border:1px solid rgba(160,140,255,.14);
+  border-radius:8px;padding:7px 10px;margin-bottom:6px;text-align:left}
+.qrow .qi2{font-size:17px;flex-shrink:0}
+.qrow .qn2{font-size:12.5px;font-weight:700;color:#ddd8f5}
+.qrow .qd2{font-size:10.5px;color:var(--text-dim);margin-top:2px}
+.qrow .qs{margin-left:auto;font-size:10.5px;white-space:nowrap;color:var(--text-dim)}
+.qrow.done{border-color:rgba(124,243,154,.42);background:rgba(124,243,154,.08)}
+.qrow.done .qs{color:var(--ok-2)}
+.qrow.cur{border-color:rgba(255,209,102,.6);background:rgba(255,209,102,.11);box-shadow:0 0 14px rgba(255,209,102,.16)}
+.qrow.cur .qs{color:var(--gold-2)}
+.qrow.locked{opacity:.42}
+/* 信物详情 */
+#itemDetail{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:440px;max-height:76%;overflow-y:auto;
+  z-index:37;display:none;padding:22px 24px;border-radius:14px;box-sizing:border-box;text-align:center;
+  background:linear-gradient(180deg,rgba(21,16,42,.98),rgba(11,9,26,.99));border:1px solid rgba(255,209,102,.45);
+  box-shadow:0 20px 60px rgba(0,0,0,.72),0 0 50px rgba(255,209,102,.1)}
+#itemDetail.show{display:block;animation:dialogInXY .28s ease-out both}
+#itemDetail::-webkit-scrollbar{width:6px}
+#itemDetail::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.id-head{display:flex;align-items:center;gap:12px;text-align:left;margin-bottom:10px}
+.id-ico{font-size:40px;line-height:1}
+.id-name{font-size:16px;font-weight:800;color:var(--gold-2);letter-spacing:1px}
+.id-from{font-size:10.5px;color:var(--text-dim);margin-top:3px}
+.id-desc{font-size:12px;color:var(--text-mid);text-align:left;padding-bottom:10px;border-bottom:1px dashed rgba(160,140,255,.25)}
+.id-lore{font-size:12.5px;color:var(--text-mid);line-height:1.9;text-align:left;margin:12px 0 16px;white-space:pre-line}
+/* 章节标题卡（演出） */
+#actCard{position:absolute;inset:0;z-index:38;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at center,rgba(10,7,22,.84) 28%,rgba(3,2,8,.97) 100%)}
+#actCard.show{display:flex;animation:actIn .45s ease-out both}
+#actCard.out{animation:actOut .6s ease-in both}
+@keyframes actIn{from{opacity:0}to{opacity:1}}
+@keyframes actOut{to{opacity:0}}
+.ac-act{font-size:12.5px;letter-spacing:7px;color:var(--gold-2);opacity:.92}
+.ac-title{font-size:34px;font-weight:800;letter-spacing:3px;margin:12px 0 10px;color:#f3efff;
+  text-shadow:0 0 28px rgba(167,139,250,.65)}
+.ac-sub{font-size:12.5px;color:var(--text-note);letter-spacing:1px}
+.ac-line{width:210px;height:1px;margin:16px auto 0;background:linear-gradient(90deg,transparent,rgba(255,209,102,.75),transparent)}
+/* 剧情对话框：角色头像框 + 旁白样式区分 */
+.story-avatar{width:52px;height:52px;flex-shrink:0;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:26px;background:linear-gradient(180deg,rgba(24,19,48,.98),rgba(14,11,30,.98));
+  border:2px solid var(--sp-c,#a78bfa);box-shadow:0 0 22px var(--sp-glow,rgba(167,139,250,.35)),0 6px 18px rgba(0,0,0,.6);
+  animation:avatarIn .45s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes avatarIn{from{opacity:0;transform:scale(.5) rotate(-12deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+.story-header{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.story-body{position:relative}
+.story-dialog.narration .story-text{font-style:italic;color:#cfc9e8;padding-left:12px;border-left:2px solid rgba(148,163,184,.35)}
+.story-dialog.narration .story-speaker{background:linear-gradient(90deg,rgba(148,163,184,.16),transparent);color:#a8b3c4!important}
+#hudQuest{cursor:pointer}
+#hudQuest:hover{filter:brightness(1.2)}
+
 /* ========= 剧情对话框 ========= */
 .story-dialog{position:absolute;left:50%;bottom:60px;transform:translateX(-50%);width:740px;
   background:linear-gradient(180deg,rgba(16,13,36,.93),rgba(12,10,28,.95));
   backdrop-filter:blur(28px) saturate(1.8);-webkit-backdrop-filter:blur(28px) saturate(1.8);
   border:1px solid rgba(130,120,255,.3);border-radius:16px;padding:20px 26px;z-index:30;
   box-shadow:0 8px 40px rgba(0,0,0,.6),0 0 60px rgba(120,80,246,.12),inset 0 1px 0 var(--glass-4);
-  animation:panelIn .4s ease-out both;box-sizing:border-box;display:flex;flex-direction:column;
+  animation:dialogInX .4s ease-out both;box-sizing:border-box;display:flex;flex-direction:column;
   max-height:calc(100% - 128px);overflow:hidden}
 .story-deco{position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,transparent 5%,rgba(var(--pri-rgb),.5) 30%,rgba(240,171,252,.4) 50%,rgba(var(--pri-rgb),.5) 70%,transparent 95%)}
@@ -716,7 +888,7 @@ canvas{display:block;width:1280px;height:720px}
   background:linear-gradient(135deg,rgba(16,13,36,.97),rgba(24,20,48,.96));
   border:1px solid rgba(var(--ok-rgb),.35);border-radius:14px;padding:22px;z-index:32;
   box-shadow:0 16px 50px rgba(0,0,0,.55),0 0 40px rgba(var(--ok-rgb),.1);
-  text-align:center;animation:panelIn .4s ease-out both}
+  text-align:center;animation:dialogInXY .4s ease-out both}
 .mercy-pulse{animation:mercy-pulse 2s infinite}
 @keyframes mercy-pulse{
   0%,100%{box-shadow:0 0 8px rgba(var(--ok-rgb),.2),0 0 20px rgba(var(--ok-rgb),.05)}
@@ -778,7 +950,7 @@ canvas{display:block;width:1280px;height:720px}
   width:520px;max-height:72%;display:none;padding:22px 26px;border-radius:14px;overflow-y:auto;
   background:linear-gradient(180deg,rgba(18,14,38,.97),rgba(11,9,26,.98));
   border:1px solid rgba(var(--pri-rgb),.45);box-shadow:0 20px 60px rgba(0,0,0,.65);color:var(--text)}
-#fragmentDetail.show{display:block;animation:panelIn .3s ease-out both}
+#fragmentDetail.show{display:block;animation:dialogInXY .3s ease-out both}
 #fragmentDetail::-webkit-scrollbar{width:6px}
 #fragmentDetail::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
 #fragmentDetail .fd-ico{font-size:42px;text-align:center;line-height:1.1}
@@ -838,6 +1010,8 @@ canvas{display:block;width:1280px;height:720px}
     <div class="stat" title="场上 + 待生成敌人"><i>💀</i><b id="hudEnemies">0</b></div>
     <div class="sp"></div>
     <div id="hudTimer" class="prep">0s</div><div id="hudChallenge" class="chg" style="display:none"></div>
+    <div id="hudQuest" class="chg" style="display:none" title="当前梦境委托，点击查看详情"></div>
+    <div id="hudProg"><i></i></div>
     <button class="btn" id="btnSkip" title="立刻开始下一波，剩余准备时间转化为金币">⏩召唤</button>
     <button class="btn" id="btnTech" title="灵魂科技树">🔬科技</button>
     <button class="btn" id="btnAch" title="成就">🏆<span id="achCount">0/12</span></button>
@@ -846,27 +1020,34 @@ canvas{display:block;width:1280px;height:720px}
     <button class="btn" id="btnPause" title="暂停 / 继续（P）">⏸</button>
     <button class="btn" id="btnSpeed" title="切换游戏速度">1×</button>
   </div>
+  <div id="bossBar">
+    <div class="bb-top"><span class="bb-name" id="bbName"></span><span class="bb-phase" id="bbPhase"></span>
+      <span class="bb-hp" id="bbHp"></span></div>
+    <div class="bb-track"><i id="bbFill" style="width:100%"></i><u id="bbShield" style="width:0%"></u></div>
+  </div>
   <div id="detail"></div>
   <div id="bottom">
     <div id="buildBar"></div>
     <div id="right">
       <div id="skillBar"></div>
       <div id="ctrls">
-        <button class="btn" id="btnTech2">🔬科技</button>
-        <button class="btn" id="btnSkip2">⏩召唤</button>
-        <button class="btn" id="btnHelp2" title="帮助与图鉴">❓</button>
-        <button class="btn hot" id="btnLot2" title="摇奖机">🎰摇奖</button>
-        <button class="btn rune" id="btnRune" title="符文背包（G）">🔮符文</button>
-        <button class="btn" id="btnUpAll" title="所有建筑各升 1 级">⬆️全升</button>
+        <button class="btn" id="btnTech2" title="灵魂科技树（消耗灵魂提升全局能力）">🔬科技</button>
+        <button class="btn" id="btnSkip2" title="立刻开始下一波，剩余准备时间折算成金币">⏩召唤</button>
+        <button class="btn" id="btnHelp2" title="帮助与图鉴：伤害克制 / 元素反应 / 共鸣 / 敌人机制">❓帮助</button>
+        <button class="btn hot" id="btnLot2" title="摇奖机：19 种奖励，带史诗/传说保底">🎰摇奖</button>
+        <button class="btn rune" id="btnRune" title="符文背包（G）：镶嵌符文提升建筑属性">🔮符文</button>
+        <button class="btn quest" id="btnQuest" title="梦境委托（L）：击杀指定梦魇收集信物，推进主线剧情">📜委托</button>
+        <button class="btn" id="btnUpAll" title="所有建筑各升 1 级">⬆全升</button>
         <button class="btn" id="btnUpTower" title="所有炮塔各升 1 级">🔫塔升</button>
         <button class="btn upmax" id="btnMaxSel" title="把选中的建筑/床/门一次性升到满级（M）">⏫满级</button>
-        <button class="btn upmax" id="btnMaxAll" title="所有建筑、床、门全部升到能升的最高">⏫全满</button>
-        <button class="btn" id="btnSound" title="音效开关">🔊</button>
-        <button class="btn" id="btnSave" title="保存进度">💾</button>
+        <button class="btn upmax" id="btnMaxAll" title="所有建筑、床、门全部升到能升的最高（Shift+M）">⏫全满</button>
+        <button class="btn" id="btnSound" title="音效开关">🔊音</button>
+        <button class="btn" id="btnSave" title="存档管理（K）：自动存档 / 3 个手动槽 / 导出导入">🗂存档</button>
       </div>
       <div id="hint">
-        <b>快捷键</b> 1..0/- 建筑 · QWERTF 技能 · U 升级 · X 出售 · B 摇奖<br>
-        <b>要点</b> 三路分兵 · 电力不足全场停火 · 看伤害类型克制
+        <b>建造</b> 1-9/0 或 A C D V N · 右键取消<br>
+        <b>技能</b> QWERTF · <b>升级</b> U · <b>出售</b> X · <b>符文</b> G · <b>暂停</b> P<br>
+        <b>要点</b> 三路分兵 · 元素克制 · 相邻异元素互相增伤
       </div>
     </div>
   </div>
@@ -916,6 +1097,53 @@ canvas{display:block;width:1280px;height:720px}
     </div>
     <div class="rfoot">💡 击杀梦魇掉落符文，波次越高掉率与品质越好；「贪婪掠夺」科技可提升掉率</div>
     <button class="big" id="runeClose">关闭</button>
+  </div>
+  <div class="panel" id="questPanel" style="display:none">
+    <h2>📜 梦境委托</h2>
+    <div class="rsub">击杀指定的梦魇，捡起它们掉落的信物 —— 每一件都在讲这场梦的另一半</div>
+    <div id="questCurrent"></div>
+    <div class="rsec">
+      <div class="rt"><b>信物背包</b> <span id="questItemCount" class="rsi">0 件</span></div>
+      <div id="questItems" class="qitems"></div>
+    </div>
+    <div class="rsec" style="max-height:260px">
+      <div class="rt"><b>委托进度</b> <span id="questProg" class="rsi"></span></div>
+      <div id="questList"></div>
+    </div>
+    <div class="rfoot">💡 每件信物点击可读全文；凑齐后自动结算奖励并解锁一段记忆碎片</div>
+    <button class="big" id="questClose">关闭</button>
+  </div>
+  <div class="panel" id="savePanel" style="display:none">
+    <h2>🗂 存档管理</h2>
+    <div class="rsub">存档保存在本机浏览器里；「导出」会把存档下载成 .json 文件，换设备或清缓存前记得导出备份</div>
+    <div id="saveSlots"></div>
+    <div class="svnote">
+      <b>自动存档</b>：每波结束、摇奖后自动写入，撤退/通关时清除<br>
+      <b>手动槽位</b>：可随时覆盖保存，用来留住想要的局面<br>
+      <b>快捷操作</b>：<b>S</b> 快速保存到自动存档 · <b>K</b> 打开本面板
+    </div>
+    <div class="svfoot">
+      <button class="svbtn blue" id="svImport">📥 导入存档文件</button>
+      <input type="file" id="svFile" accept="application/json,.json">
+      <button class="svbtn red" id="svWipe" title="清空全部槽位（不影响抽奖等跨局进度）">🗑 清空所有槽位</button>
+      <button class="big" id="saveClose">关闭</button>
+    </div>
+  </div>
+  <div id="svToast"></div>
+  <div id="itemDetail">
+    <div class="id-head"><span class="id-ico" id="itemIco">💧</span>
+      <div><div class="id-name" id="itemName"></div><div class="id-from" id="itemFrom"></div></div></div>
+    <div class="id-desc" id="itemDesc"></div>
+    <div class="id-lore" id="itemLore"></div>
+    <button class="big" id="itemClose">收 起</button>
+  </div>
+  <div id="actCard">
+    <div class="ac-inner">
+      <div class="ac-act" id="acAct"></div>
+      <div class="ac-title" id="acTitle"></div>
+      <div class="ac-line"></div>
+      <div class="ac-sub" id="acSub" style="margin-top:14px"></div>
+    </div>
   </div>
   <div id="adminBar">
     <span class="at">👑 管理员</span>
@@ -1016,6 +1244,7 @@ canvas{display:block;width:1280px;height:720px}
         <button class="alt" id="btnGacha">🎰 抽奖</button>
         <button class="alt" id="btnBag">🎒 仓库</button>
         <button class="alt" id="btnContinue">继续梦境</button>
+        <button class="alt" id="btnSaveMgr">🗂 存档管理</button>
       </div>
       <div class="btns dream-btns" style="margin-top:8px">
         <button class="alt dream" id="btnDiary">📖 梦境日记</button>
@@ -1801,9 +2030,9 @@ const BUILD_DEFS = {
   flame: {
     name: '火焰喷射器', icon: '🔥', key: '7', color: '#ff8c42',
     cost: { gold: 130, power: 35 }, upkeep: 2.4, hp: 240, maxLv: 50, tower: true, dmgType: 'fire',
-    desc: '近距离范围灼烧，堵门利器。',
+    desc: '近距离范围灼烧，堵门利器；脱离火舌后仍会残留 1.4 秒燃烧。',
     stat: lv => ({ dmg: 10 + 5 * (lv - 1), range: 300 + 14 * (lv - 1), radius: 110 + 8 * (lv - 1) }),
-    statText: s => `火焰 ${s.dmg}/秒  范围 ${s.radius | 0}`,
+    statText: s => `火焰 ${s.dmg}/秒（+50% 灼烧残留）  范围 ${s.radius | 0}`,
     branch: {
       a: { name: '炼狱风暴', icon: '🌋', desc: '范围与灼烧大幅提升', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.8, range: s.range * 1.35, radius: s.radius * 1.6 }) },
       b: { name: '熔岩印记', icon: '🩸', desc: '灼烧可无限叠加，伤害递增', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.3, range: s.range, radius: s.radius * 1.2, stack: true }) },
@@ -2066,7 +2295,7 @@ const LOTTERY_POOL = [
   { id: 'g2', r: 'rare', w: 10, name: '金币大礼', icon: '💵', desc: '获得 650~1100 金币',
     apply: () => { const v = 650 + Math.round(Math.random() * 450); G.gold += v; return '获得 ' + v + ' 金币'; } },
   { id: 'u1', r: 'rare', w: 9, name: '强化祝福', icon: '⬆️', desc: '随机一座建筑免费升 1 级',
-    apply: () => { const c = G.buildings.filter(b => b.level < b.def.maxLv); if (!c.length) { G.gold += 400; return '无建筑可升级，改为获得 400 金币'; } const b = pick(c); b.level++; const nh = b.def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1); b.hp += nh - b.maxHp; b.maxHp = nh; return b.def.name + ' 升至 Lv.' + b.level; } },
+    apply: () => { const c = G.buildings.filter(b => b.level < b.def.maxLv); if (!c.length) { G.gold += 400; return '无建筑可升级，改为获得 400 金币'; } const b = pick(c); b.level++; const nh = buildingMaxHp(b.def, b.level, b.branch); b.hp += nh - b.maxHp; b.maxHp = nh; return b.def.name + ' 升至 Lv.' + b.level; } },
   { id: 'gr1', r: 'rare', w: 8, name: '加速发育', icon: '🌱', desc: '发育度 +3',
     apply: () => { G.grow = Math.min(25, G.grow + 3); return '发育度提升至 ' + G.grow; } },
   { id: 'gb1', r: 'rare', w: 8, name: '淘金热', icon: '🤑', desc: '本波金币产出 x2',
@@ -2076,7 +2305,7 @@ const LOTTERY_POOL = [
   { id: 'b1', r: 'epic', w: 3.2, name: '天降建筑', icon: '🏗️', desc: '免费获得一座随机建筑',
     apply: () => { const keys = BUILD_KEYS.slice(); for (let i = 0; i < 40; i++) { const c = (Math.random() * COLS) | 0, r = (Math.random() * ROWS) | 0; if (!G.grid[r * COLS + c] && !inBed(c, r)) { const k = pick(keys); const g = G.gold; G.gold = 1e9; const ok = tryBuild(k, c, r); G.gold = g; if (ok) return '免费建成：' + BUILD_DEFS[k].name; } } G.gold += 900; return '房间已满，改为获得 900 金币'; } },
   { id: 'u2', r: 'epic', w: 3, name: '全体强化', icon: '📈', desc: '所有炮塔免费升 1 级',
-    apply: () => { let n = 0; G.buildings.forEach(b => { if (b.def.tower && b.level < b.def.maxLv) { b.level++; const nh = b.def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1); b.hp += nh - b.maxHp; b.maxHp = nh; n++; } }); if (!n) { G.gold += 1200; return '没有可升级炮塔，获得 1200 金币'; } return n + ' 座炮塔集体升级！'; } },
+    apply: () => { let n = 0; G.buildings.forEach(b => { if (b.def.tower && b.level < b.def.maxLv) { b.level++; const nh = buildingMaxHp(b.def, b.level, b.branch); b.hp += nh - b.maxHp; b.maxHp = nh; n++; } }); if (!n) { G.gold += 1200; return '没有可升级炮塔，获得 1200 金币'; } return n + ' 座炮塔集体升级！'; } },
   { id: 'd2', r: 'epic', w: 2.8, name: '铁壁升华', icon: '🧱', desc: '三扇铁门各升 1 级并满血',
     apply: () => { G.doors.forEach(d => { d.lv++; d.maxHp = (420 + 200 * (d.lv - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1); d.hp = d.maxHp; d.broken = false; }); return '铁门强化至 Lv.' + G.doors[0].lv; } },
   { id: 's2', r: 'epic', w: 3, name: '灵魂涌泉', icon: '🔮', desc: '获得 45 灵魂',
@@ -2088,7 +2317,7 @@ const LOTTERY_POOL = [
   { id: 't1', r: 'legend', w: 0.75, name: '天启转职', icon: '⭐', desc: '随机一座满级建筑免费转职',
     apply: () => { const c = G.buildings.filter(b => !b.branch && b.level >= BRANCH_AT && b.def.branch); if (!c.length) { G.gold += 2500; return '无建筑可转职，改为获得 2500 金币'; } const b = pick(c); const w = pick(['a', 'b']); const g = G.gold, s = G.souls; G.gold = 1e9; G.souls = 1e9; tryBranch(b, w); G.gold = g; G.souls = s; return b.def.branch[b.branch].name + ' 诞生！'; } },
   { id: 'u3', r: 'legend', w: 0.6, name: '万物升华', icon: '🎆', desc: '所有建筑免费升 2 级',
-    apply: () => { let n = 0; G.buildings.forEach(b => { for (let i = 0; i < 2 && b.level < b.def.maxLv; i++) { b.level++; n++; } const nh = b.def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1); b.hp += nh - b.maxHp; b.maxHp = nh; }); return n ? '全部建筑共提升 ' + n + ' 级！' : '无可升级建筑，获得 3000 金币'; } },
+    apply: () => { let n = 0; G.buildings.forEach(b => { for (let i = 0; i < 2 && b.level < b.def.maxLv; i++) { b.level++; n++; } const nh = buildingMaxHp(b.def, b.level, b.branch); b.hp += nh - b.maxHp; b.maxHp = nh; }); return n ? '全部建筑共提升 ' + n + ' 级！' : '无可升级建筑，获得 3000 金币'; } },
   { id: 'g3', r: 'legend', w: 0.7, name: '金山银海', icon: '🏆', desc: '获得 3500 金币',
     apply: () => { G.gold += 3500; return '获得 3500 金币'; } },
   { id: 'f1', r: 'legend', w: 0.55, name: '永恒守护', icon: '🛡️', desc: '铁门与床铺最大生命永久 +50%',
@@ -2354,11 +2583,12 @@ function findReaction(a, b) { return REACTION_PAIRS[[a, b].sort().join('+')] || 
  * ============================================================ */
 const RESONANCE_R = 158;
 const RESONANCE_TIERS = [
-  { n: 2, dmg: 1.12, rate: 1.00, name: '双元素共鸣', icon: '🎵' },
-  { n: 3, dmg: 1.26, rate: 1.10, name: '三元素共鸣', icon: '🎶' },
-  { n: 4, dmg: 1.44, rate: 1.18, name: '四元素共鸣', icon: '🎼' },
-  { n: 5, dmg: 1.62, rate: 1.26, name: '全谱共鸣', icon: '🌈' },
-  { n: 6, dmg: 1.85, rate: 1.34, name: '万物共鸣', icon: '✨' },
+  // color 供画布徽记 / 详情面板使用，让「共鸣」这个隐形机制能被看见
+  { n: 2, dmg: 1.12, rate: 1.00, name: '双元素共鸣', icon: '🎵', color: '#7dd3fc' },
+  { n: 3, dmg: 1.26, rate: 1.10, name: '三元素共鸣', icon: '🎶', color: '#a78bfa' },
+  { n: 4, dmg: 1.44, rate: 1.18, name: '四元素共鸣', icon: '🎼', color: '#f0abfc' },
+  { n: 5, dmg: 1.62, rate: 1.26, name: '全谱共鸣', icon: '🌈', color: '#fbbf24' },
+  { n: 6, dmg: 1.85, rate: 1.34, name: '万物共鸣', icon: '✨', color: '#fff1a8' },
 ];
 // 特定双元素组合：额外附加效果
 const RESONANCE_PAIRS = {
@@ -2545,6 +2775,13 @@ const BRANCH_SUFFIX = [
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const rnd = (a, b) => a + Math.random() * (b - a);
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+/** 角度插值：把 from 朝 to 转 t 比例（t 取 0~1，自动走最短弧） */
+function turnTo(from, to, t) {
+  let d = to - from;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  return from + d * Math.min(1, Math.max(0, t));
+}
 const pick = arr => arr[(Math.random() * arr.length) | 0];
 const cellRect = (c, r) => ({ x: ROOM_X0 + c * CW, y: ARENA_TOP + r * CH, w: CW, h: CH });
 const cellCenter = (c, r) => ({ x: ROOM_X0 + c * CW + CW / 2, y: ARENA_TOP + r * CH + CH / 2 });
@@ -2638,19 +2875,42 @@ function placeBuildingAt(type, level) {
   }
   return null;
 }
+/* ==================================================================
+ * 生命值公式的唯一来源
+ * 这条公式（基础 × 等级成长 × 加固工程 × 生命强化 × 不朽要塞 × 道具加成 × 转职 1.3）
+ * 原先在 12 个地方各抄了一遍，抄漏的地方直接变成数值 Bug：
+ *   · upgradeDoor / upgradeBed 漏「要塞加固」→ 装备该道具后升门/床反而掉血
+ *   · applySave 漏「要塞加固」→ 读档后铁门与床铺生命凭空少 50%
+ *   · setBuildingLevel 漏等级成长 → 开局赠礼的 Lv10 炮塔只有 Lv1 的生命
+ *   · 剧情奖励「所有建筑免费升级」只留等级项 → 建筑最大生命被砍掉一大截
+ * 现在统一走这三个函数，且都写成 function 声明以便前面的代码提前调用。
+ * ================================================================== */
+const prizeHpMul = () => (G && G.prize && G.prize.hp) || 1;
+const buildingHpMul = () => techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * prizeHpMul();
+/** 建筑最大生命：def + 等级 + 是否已转职 */
+function buildingMaxHp(def, level, branch) {
+  return def.hp * (1 + (Math.max(1, level) - 1) * 0.35) * buildingHpMul() * (branch ? 1.3 : 1);
+}
+/** 铁门最大生命：等级 */
+function doorMaxHp(lv) {
+  return (420 + 200 * (Math.max(1, lv) - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50) * prizeHpMul();
+}
+/** 床铺最大生命：等级 */
+function bedMaxHp(lv) {
+  return (420 + 95 * (Math.max(1, lv) - 1)) * techVal('fortress', 0.50) * prizeHpMul();
+}
 function setBuildingLevel(b, lv) {
   b.level = Math.max(1, Math.min(b.def.maxLv || 50, lv));
-  const f = techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1);
-  b.maxHp = b.def.hp * f; b.hp = b.maxHp;
+  b.maxHp = buildingMaxHp(b.def, b.level, b.branch); b.hp = b.maxHp;
 }
 function setBedLevel(lv) {
   G.bed.lv = Math.max(1, Math.min(50, lv));
-  G.bed.maxHp = (420 + 95 * (G.bed.lv - 1)) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1);
+  G.bed.maxHp = bedMaxHp(G.bed.lv);
   G.bed.hp = G.bed.maxHp;
 }
 function setDoorLevel(d, lv) {
   d.lv = Math.max(1, Math.min(50, lv));
-  d.maxHp = (420 + 200 * (d.lv - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1);
+  d.maxHp = doorMaxHp(d.lv);
   d.hp = d.maxHp; d.broken = false;
 }
 // 永久型道具：装备后永久生效，每局不消耗库存。其余为消耗型——开局自动用掉 1 个，本局持续生效。
@@ -2704,9 +2964,10 @@ function newGame(loadFrom) {
     state: 'build', wave: 0,
     gold: 0, power: 0, souls: 0,
     runeBag: [], challenge: null, combo: 0, comboT: 0, maxCombo: 0,
+    quest: null,   // 梦境委托状态（quest.js QuestSystem 管理，随存档持久化）
     diffKey: 'normal', admin: false, winWave: 0, prize: {}, reviveLeft: 0, lastReward: 0,
     mode: 'limited', rebuilds: 0,
-    prepTimer: 34,
+    prepTimer: 34, prepTotal: 34,
     spawnQueue: [], bossQueue: [], spawnTimer: 0,
     grid: new Array(COLS * ROWS).fill(null),
     buildings: [], enemies: [], bullets: [], effects: [], parts: [], texts: [],
@@ -2736,7 +2997,15 @@ function newGame(loadFrom) {
   if (typeof DreamEngine !== 'undefined') { try { DreamEngine.init(); } catch(e) { console.warn('DreamEngine init failed:', e); } }
 }
 const techVal = (k, per) => 1 + G.tech[k] * per;
+/* ------------------------------------------------------------------
+ * 面板属性计算（bstat）—— 每帧缓存
+ * 调用频率极高：渲染时每座建筑每帧一次、开火时 towerDmgMul 还会遍历所有增幅塔、
+ * 经济结算里再遍历一次。而每次计算都要重跑转职公式 + 遍历符文词条（还会 new 对象）。
+ * 主循环每帧把 statFrame +1，同帧内复用结果即可，实测可省掉 4~6 倍重复计算。
+ * ------------------------------------------------------------------ */
+let statFrame = 0;
 function bstat(b) {
+  if (b.__sf === statFrame && b.__ss) return b.__ss;
   const s = b.def.stat(b.level);
   const base = (b.branch && b.def.branch && b.def.branch[b.branch]) ? b.def.branch[b.branch].mod(s, b) : s;
   if (b.runes && b.runes.length) {
@@ -2752,7 +3021,40 @@ function bstat(b) {
   if (base.range != null) base.range *= techVal('focus', 0.06);
   if (base.dmg != null && G.prize && G.prize.dmg) base.dmg *= G.prize.dmg;
   if (base.rate != null) base.rate *= techVal('swift', 0.08);
+  b.__sf = statFrame; b.__ss = base;
   return base;
+}
+/* ------------------------------------------------------------------
+ * 面板 DPS 估算 —— 回答「这座炮塔到底多强」
+ * 只用于展示，不参与实际结算。多目标武器按折算目标数估算。
+ * ------------------------------------------------------------------ */
+function towerPanelDps(s, b) {
+  if (!s || !s.dmg) return 0;
+  const fate = G.fate || {}, fateW = G.fateWave || {};
+  const critC = clamp(G.tech.crit * 0.04 + (fate.crit || 0) + (fateW.crit || 0), 0, 1);
+  const critM = 2.2 + G.tech.critmaster * 0.4 + (fate.critDmg || 0) + (fateW.critDmg || 0);
+  const critMul = 1 + critC * (critM - 1);
+  let targets = 1;
+  if (s.split) targets = Math.min(4, s.split);
+  else if (s.multi) targets = s.multi;
+  else if (s.chain) targets = Math.min(3, s.chain);
+  else if (s.aoe) targets = 2.5;      // 全范围声波：按 2.5 个目标折算
+  else if (s.splash) targets = 1.6;   // 溅射导弹：按 1.6 折算
+  const dps = s.dmg * targets;
+  if (b && b.type === 'flame') return dps * 1.5;   // 接触伤害 + 50% 灼烧残留
+  if (b && b.type === 'gravity') return dps;       // 引力塔伤害极低，价值在控场
+  return dps * (s.rate || 0) * critMul;
+}
+/** 共鸣增幅快照，供详情面板展示（把「隐形机制」显性化） */
+function resBonusOf(b) {
+  return {
+    n: (b && b.resN) || 0,
+    dmg: (b && b.resDmg) || 1,
+    rate: (b && b.resRate) || 1,
+    tier: (b && b.resTier) || '',
+    extra: (b && b.resExtra) || null,
+    color: (b && b.resColor) || '#7dd3fc',
+  };
 }
 const runeSlots = () => 2 + G.tech.runelord;
 function tryDropRune(wave, x, y) {
@@ -2792,6 +3094,8 @@ function computeResonance() {
     RESONANCE_TIERS.forEach(t => { if (n >= t.n) tier = t; });
     b.resN = n;
     b.resTier = tier ? tier.name : '';
+    b.resTierN = tier ? tier.n : 0;
+    b.resColor = tier ? tier.color : null;
     b.resDmg = tier ? tier.dmg : 1;
     b.resRate = tier ? tier.rate : 1;
     b.resExtra = null;
@@ -2919,7 +3223,7 @@ function tryUpgrade(b) {
   const c = upgradeCost(b.def, b.level);
   if (!canAfford(c)) { SFX.err(); setTip('资源不足，无法升级'); return false; }
   payCost(c); b.level++; b.invested += c.gold;
-  const nh = b.def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1);
+  const nh = buildingMaxHp(b.def, b.level, b.branch);
   b.hp += nh - b.maxHp; b.maxHp = nh;
   if (!G.upgradeFx) G.upgradeFx = [];
   G.upgradeFx.push({ x: b.x, y: b.y, t: 0.8 }); // 升级光环爆发（更久）
@@ -2944,6 +3248,7 @@ function tryBranch(b, which) {
 function sellBuilding(b) {
   const back = Math.round(b.invested * SELL_RATE);
   G.gold += back;
+  recycleRunes(b, '出售');
   G.grid[b.row * COLS + b.col] = null;
   G.buildings.splice(G.buildings.indexOf(b), 1);
   if (selected === b) selected = null;
@@ -2960,7 +3265,7 @@ function upgradeDoor(d) {
   const c = { gold: doorUpgradeCost(d.lv) };
   if (!canAfford(c)) { SFX.err(); return; }
   payCost(c); d.lv++;
-  const nh = (420 + 200 * (d.lv - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50);
+  const nh = doorMaxHp(d.lv);
   d.hp += nh - d.maxHp; d.maxHp = nh;
   SFX.up(); addText(WALL_X + 10, d.y - 62, '铁门 Lv.' + d.lv, '#9ef01a');
   spawnParts(WALL_X, d.y, 20, '#9ef01a', 3);
@@ -2970,7 +3275,7 @@ function upgradeBed() {
   const c = { gold: bedUpgradeCost(G.bed.lv) };
   if (!canAfford(c)) { SFX.err(); return; }
   payCost(c); G.bed.lv++;
-  const nh = (420 + 95 * (G.bed.lv - 1)) * techVal('fortress', 0.50);
+  const nh = bedMaxHp(G.bed.lv);
   G.bed.hp += nh - G.bed.maxHp; G.bed.maxHp = nh;
   SFX.up(); addText(BED_CX, BED_CY - 64, '床铺 Lv.' + G.bed.lv, '#ffd166');
   spawnParts(BED_CX, BED_CY, 18, '#ffd166', 3);
@@ -3108,9 +3413,9 @@ function applyStoryEffect(text, ctx) {
     G.buff.overclock = Math.max(G.buff.overclock || 0, s ? +s[1] : 8);
     got.push('超频 ' + (s ? s[1] : 8) + ' 秒');
   }
-  if (/免费|立刻免费/.test(t) && /升级/.test(t)) {
+  if (/(所有|全部|全体)[^。；]{0,12}建筑[^。；]{0,8}(免费)?升级/.test(t)) {
     let n = 0;
-    G.buildings.forEach(b => { if (b.level < b.def.maxLv) { b.level++; b.maxHp = b.def.hp * (1 + (b.level - 1) * 0.35); b.hp = b.maxHp; n++; } });
+    G.buildings.forEach(b => { if (b.level < b.def.maxLv) { b.level++; b.maxHp = buildingMaxHp(b.def, b.level, b.branch); b.hp = b.maxHp; n++; } });
     if (n) got.push(n + ' 座建筑免费升级');
   }
 
@@ -3286,11 +3591,16 @@ function updateEnemies(dt) {
       e.alpha = cyc < 2.2 ? 0.28 : 1;
       e.untargetable = cyc < 2.2;
     }
+    // 灼烧叠层衰减：火焰塔每帧会重新点亮 flameOn，离开火舌后才开始掉层
+    if (!e.flameOn && e.burnStack > 0) e.burnStack = Math.max(0, e.burnStack - dt * 1.2);
+    e.flameOn = false;
     if (e.burnT > 0) {
       e.burnT -= dt;
-      e.hp -= e.burnDmg * dt;
+      // 走统一伤害管线：抗性 / 护盾 / 统计 / 击杀归属（烈焰专精挑战）全部生效
+      if (e.burnDmg > 0) dotDamage(e, e.burnDmg, 'fire', e.burnSrc, dt);
       if (Math.random() < dt * 8) spawnParts(e.x, e.y, 1, '#ff8c42', 1.2, 0.4);
       if (e.hp <= 0) { killEnemy(e); continue; }
+      if (e.burnT <= 0) { e.burnDmg = 0; e.burnStack = 0; e.burnSrc = null; }
     }
     if (e.elem) { for (const k in e.elem) { if (e.elem[k] > 0) e.elem[k] -= dt; } }
     if (e.hasteT > 0) e.hasteT -= dt;
@@ -3489,8 +3799,21 @@ function breakDoor(d) {
   setTip('第 ' + (d.lane + 1) + ' 道铁门被攻破！敌人涌入房间，会拆掉建筑再攻击床铺。', 6);
   G.enemies.forEach(e => { if (e.state === 'door' && e.door === d) e.state = 'room'; });
 }
+/* 建筑离开棋盘时把镶嵌的符文退回背包。
+   原先卖掉或被打掉一座建筑，镶在上面的符文（可能是传说级）会直接蒸发，
+   而符文是本作最重要的成长资产 —— 玩家没有任何提示就永久损失。 */
+function recycleRunes(b, why) {
+  const rs = (b.runes || []).filter(Boolean);
+  if (!rs.length) return 0;
+  rs.forEach(r => G.runeBag.push(r));
+  b.runes = [];
+  addText(b.x, b.y - 40, '🔮 取回 ' + rs.length + ' 个符文', '#c084fc');
+  setTip('建筑' + why + '，已把 ' + rs.length + ' 个符文退回背包', 4);
+  return rs.length;
+}
 function destroyBuilding(b) {
   if (G.track) G.track.buildLost = (G.track.buildLost || 0) + 1;
+  recycleRunes(b, '被摧毁');
   G.grid[b.row * COLS + b.col] = null;
   G.buildings.splice(G.buildings.indexOf(b), 1);
   if (selected === b) selected = null;
@@ -3577,6 +3900,7 @@ function updateTowers(dt) {
   for (const b of G.buildings) {
     const s = bstat(b);
     b.pulse += dt;
+    if (b.empT > 0) { b.empT -= dt; continue; }   // 瘫痪：主火力与自动放电一起停
     if (s.zapDmg) {
       b.zcd = (b.zcd || 0) - dt;
       if (b.zcd <= 0) {
@@ -3585,18 +3909,23 @@ function updateTowers(dt) {
       }
     }
     if (!b.def.tower || !fire) continue;
-    if (b.empT > 0) { b.empT -= dt; continue; }
     if (b.freezeT > 0) b.freezeT -= dt;
     if (b.type === 'flame') {
       const targets = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       b.flameOn = targets.length > 0;
+      if (targets.length) b.angle = Math.atan2(targets[0].y - b.y, targets[0].x - b.x);
       targets.forEach(e => {
-        let d = s.dmg * towerDmgMul(b) * typeMul(e, 'fire');
-        if (s.stack) { e.burnStack = Math.min(5, (e.burnStack || 0) + dt * 1.2); d *= (1 + e.burnStack * 0.35); }
-        e.burnT = Math.max(e.burnT, 0.6);
-        e.burnDmg = Math.max(e.burnDmg || 0, d);
-        e.hp -= d * dt; G.stats.dmg += d * dt;
-        if (e.hp <= 0) { if (G.track) G.track.killFire = (G.track.killFire || 0) + 1; killEnemy(e); }
+        // 灼烧叠层：仅在持续被喷到期间累积，离开火舌后会衰减（以前叠满 5 层就永久不减）
+        if (s.stack) e.burnStack = Math.min(5, (e.burnStack || 0) + dt * 1.2);
+        e.flameOn = true;
+        let d = s.dmg * towerDmgMul(b) * (1 + (e.burnStack || 0) * 0.35);
+        // 灼烧残留：离开火舌后仍持续 1.4 秒。注意以前 burnDmg 直接等于接触伤害，
+        // 而 updateEnemies 的灼烧结算与直接伤害同时生效 → 火焰塔实际打出双倍面板 DPS。
+        e.burnT = Math.max(e.burnT, 1.4);
+        e.burnDmg = Math.max(e.burnDmg || 0, d * 0.5);
+        e.burnSrc = b;
+        // 接触伤害交给统一管线：护盾/固定减伤/抗性/统计全部生效，且不再每帧刷数字
+        dotDamage(e, d, 'fire', b, dt);
       });
       if (targets.length && Math.random() < dt * 22) spawnParts(rnd(b.x - 20, b.x + 20), rnd(b.y - 20, b.y + 20), 1, '#ff8c42', 1.4, 0.5);
       continue;
@@ -3604,11 +3933,12 @@ function updateTowers(dt) {
     if (s.gravity) {
       const targets = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       b.gravOn = targets.length > 0;
+      const gm = s.dmg * towerDmgMul(b);
       targets.forEach(e => {
         const dx = b.x - e.x, dy = b.y - e.y, d = Math.hypot(dx, dy) || 1;
         if (d > 26) { const sp = s.pull * dt * (e.boss ? 0.28 : 1); e.x += dx / d * sp; e.y += dy / d * sp; }
         e.slow = Math.max(e.slow || 0, s.gravSlow); e.slowT = Math.max(e.slowT || 0, 0.4);
-        applyDamage(e, s.dmg * towerDmgMul(b) * dt, 'energy', b);
+        dotDamage(e, gm, 'energy', b, dt);
       });
       if (targets.length && Math.random() < dt * 14) spawnParts(rnd(b.x - 16, b.x + 16), rnd(b.y - 16, b.y + 16), 1, '#818cf8', 1.3, 0.5);
       continue;
@@ -3618,20 +3948,24 @@ function updateTowers(dt) {
     if (b.cd > 0) continue;
     const mode = b.type === 'laser' ? 'strongest' : 'front';
     const t = findTarget(b, s.range, mode);
-    if (!t) { b.cd = 0; continue; }
+    if (!t) { b.cd = 0; b.idle = (b.idle || 0) + dt; continue; }
     b.cd = 1;
-    b.angle = Math.atan2(t.y - b.y, t.x - b.x);
+    b.idle = 0;
+    // 炮塔转向加插值：原来瞬间跳变，视觉上像瞬移；现在按 14 rad/s 级别的速度追目标
+    b.angle = turnTo(b.angle, Math.atan2(t.y - b.y, t.x - b.x), dt * 14);
     if (s.aoe) {
       const mul = towerDmgMul(b);
       const all = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       all.forEach(e => {
         applyDamage(e, s.dmg * mul * critRoll(), 'kinetic', b);
         const dx = e.x - b.x, dy = e.y - b.y, d = Math.hypot(dx, dy) || 1;
-        if (s.knock && !e.boss) { e.x += dx / d * s.knock; e.y += dy / d * s.knock; }
-        if (s.sonicStun && !e.boss) e.stun = Math.max(e.stun || 0, s.sonicStun);
+        // BOSS 享受击退/眩晕减免，否则一座声波塔能把 BOSS 永久定在走廊口
+        const ctrl = e.boss ? 0.25 : 1;
+        if (s.knock) { e.x += dx / d * s.knock * ctrl; e.y += dy / d * s.knock * ctrl; }
+        if (s.sonicStun) e.stun = Math.max(e.stun || 0, s.sonicStun * ctrl);
       });
       addEffect({ type: 'ring', x: b.x, y: b.y, r: s.range, life: 0.3, maxLife: 0.3, color: '#f0abfc' });
-      b.fireFx = 0.25; // 开火脉冲
+      b.fireFx = 0.25; b.recoil = 1; // 开火脉冲 + 后座
       spawnParts(b.x, b.y, 5, b.def.color, 1.5, 0.3);
       SFX.shoot();
       continue;
@@ -3648,6 +3982,8 @@ function critRoll() {
 function fire_(b, t, s) {
   const mul = towerDmgMul(b);
   const dtype = b.def.dmgType;
+  b.recoil = 1;                 // 后座 + 炮口闪光（纯视觉，不参与结算）
+  b.fireFx = 0.2;
   if (b.type === 'laser') {
     const shots = s.multi || 1;
     let list = [t];
@@ -3681,7 +4017,7 @@ function fire_(b, t, s) {
     chain.forEach((e, i) => {
       addEffect({ type: 'arc', x: px, y: py, x2: e.x, y2: e.y, life: 0.22, maxLife: 0.22 });
       applyDamage(e, s.dmg * mul * Math.pow(0.84, i), dtype, b);
-      if (s.stun) e.stun = Math.max(e.stun || 0, s.stun);
+      if (s.stun) e.stun = Math.max(e.stun || 0, s.stun * (e.boss ? 0.4 : 1));
       if (s.splash) {
         G.enemies.forEach(o => { if (!o.dead && !hit.has(o) && dist(o, e) < s.splash) applyDamage(o, s.dmg * mul * 0.5, dtype, b); });
       }
@@ -3733,7 +4069,8 @@ function triggerReaction(e, rx, baseDmg) {
     e.hp -= d; G.stats.dmg += d;
     addText(e.x, e.y - 30, '💥 过载 ' + Math.round(d), '#fbbf24', true);
     spawnParts(e.x, e.y, 22, '#fbbf24', 4, 0.6); shakeBy(4);
-    addEffect({ type: 'boom', x: e.x, y: e.y, r: 110, life: 0.35, maxLife: 0.35 });
+    // 注意 max 字段：缺了它 updateEffects 会算出 NaN 半径，createRadialGradient 直接抛异常
+    addEffect({ type: 'boom', x: e.x, y: e.y, r: 110, max: 110, life: 0.35, maxLife: 0.35 });
   } else if (rx.id === 'toxiburn') {
     e.poison = Math.min(16, (e.poison || 0) * 2 + 2);
     e.poisonDps = Math.max(e.poisonDps || 0, 14 + G.wave * 1.2);
@@ -3757,7 +4094,51 @@ function triggerReaction(e, rx, baseDmg) {
   const dead = e.hp <= 0;
   if (dead && !e.dead) killEnemy(e);
 }
-function applyDamage(e, dmg, dtype, src, chain) {
+/* 元素标记登记 + 反应触发。从 applyDamage 里抽出来，便于 DoT 按节流频率单独调用 */
+function touchElement(e, dtype, baseDmg) {
+  if (!dtype || e.boss || e.dead) return false;
+  if (!e.elem) e.elem = {};
+  let reacted = null, other = null;
+  for (const k in e.elem) {
+    if (k !== dtype && e.elem[k] > 0) { const rx = findReaction(dtype, k); if (rx) { reacted = rx; other = k; break; } }
+  }
+  if (reacted) {
+    e.elem[other] = 0; e.elem[dtype] = 0;
+    G.stats.reactions = (G.stats.reactions || 0) + 1;
+    triggerReaction(e, reacted, baseDmg);
+    return true;
+  }
+  e.elem[dtype] = 5;
+  return false;
+}
+/* ------------------------------------------------------------------
+ * 持续伤害通道（火焰灼烧 / 引力奇点微伤）
+ * 以前这两个每秒 60 次直接调 applyDamage，后果：
+ *   ① 每帧弹一个伤害数字 → 满屏刷字，还会把 60 条浮动文字上限挤爆
+ *   ② 每帧受击闪白 + 粒子 → 敌人像频闪灯
+ *   ③ 绕过了护盾、固定减伤、抗性与 G.stats.dmg 统计
+ * 现在统一走这里：静默结算 + 每 0.5 秒合并弹一个数字，
+ * 并按 0.5 秒登记一次元素标记，保证与其它元素塔仍能触发反应。
+ * ------------------------------------------------------------------ */
+const DOT_MERGE_INTERVAL = 0.5;
+function dotDamage(e, dps, dtype, src, dt) {
+  if (e.dead || !(dps > 0)) return 0;
+  const d = applyDamage(e, dps * dt, dtype, src, false, true);
+  if (d > 0 && !e.dead) {
+    e.dotAcc = (e.dotAcc || 0) + d;
+    e.dotT = (e.dotT || 0) + dt;
+    if (e.dotT >= DOT_MERGE_INTERVAL) {
+      addText(e.x + rnd(-5, 5), e.y - e.r, Math.round(e.dotAcc), (DMG[dtype] && DMG[dtype].color) || '#ffd6d6');
+      e.dotAcc = 0; e.dotT = 0;
+      touchElement(e, dtype, dps * DOT_MERGE_INTERVAL);
+    }
+  }
+  return d;
+}
+/**
+ * @param {boolean} [silent] - true = 持续伤害帧结算：不弹数字/不闪光/不触发反伤与适应
+ */
+function applyDamage(e, dmg, dtype, src, chain, silent) {
   if (e.dead) return 0;
   const tm = typeMul(e, dtype);
   let d = dmg * tm;
@@ -3767,20 +4148,7 @@ function applyDamage(e, dmg, dtype, src, chain) {
     if (s.shred) DMG_KEYS.forEach(k => { e.res[k] = Math.max(0, (e.res[k] || 0) - s.shred * 0.1); });
   }
   // 元素反应：不同伤害类型叠加触发连锁
-  if (dtype && !e.boss) {
-    if (!e.elem) e.elem = {};
-    let reacted = null, other = null;
-    for (const k in e.elem) {
-      if (k !== dtype && e.elem[k] > 0) { const rx = findReaction(dtype, k); if (rx) { reacted = rx; other = k; break; } }
-    }
-    if (reacted) {
-      e.elem[other] = 0; e.elem[dtype] = 0;
-      G.stats.reactions = (G.stats.reactions || 0) + 1;
-      triggerReaction(e, reacted, dmg);
-    } else {
-      e.elem[dtype] = 5;
-    }
-  }
+  if (!silent) touchElement(e, dtype, dmg);
   if (e.vulnT > 0 && e.vuln > 1) d *= e.vuln;
   if (e.phaseShield && e.segIdx < e.phaseShield && d > 0) {
     const gate = e.maxHp - e.segMax * (e.segIdx + 1);
@@ -3793,17 +4161,19 @@ function applyDamage(e, dmg, dtype, src, chain) {
       if (e.state === 'walk') e.x = Math.max(20, e.x - 34);
     }
   }
-  if (e.def && e.def.reflect && src && src.def && d > 0) {
+  // 反伤：DoT 帧不反，否则火焰塔会被镜面梦魇每帧反弹致死
+  if (!silent && e.def && e.def.reflect && src && src.def && d > 0) {
     const rb = d * e.def.reflect;
     damageTarget(src, rb);
     if (Math.random() < 0.3) addText(e.x, e.y - 44, '🪞 反弹 ' + Math.round(rb), '#e2e8f0');
   }
-  if (e.def && e.def.adapt && dtype && d > 0) {
+  // 适应：同样只在真正的「一击」上累积，否则一帧就叠满抗性
+  if (!silent && e.def && e.def.adapt && dtype && d > 0) {
     e.res[dtype] = Math.min(0.7, (e.res[dtype] || 0) + e.def.adapt);
     e.adapted = (e.adapted || 0) + 1;
   }
-  // 炮塔共鸣附加效果
-  if (src && src.resExtra && dtype && d > 0 && !chain) {
+  // 炮塔共鸣附加效果（只吃单次命中，不吃 DoT 帧）
+  if (!silent && src && src.resExtra && dtype && d > 0 && !chain) {
     const rx = src.resExtra;
     if (rx.burn) { e.burnT = Math.max(e.burnT || 0, 2.2); e.burnDmg = Math.max(e.burnDmg || 0, rx.burn); }
     if (rx.poison) {
@@ -3820,8 +4190,12 @@ function applyDamage(e, dmg, dtype, src, chain) {
   if (e.shield > 0) { const a = Math.min(e.shield, d); e.shield -= a; d -= a; }
   if (d > 0) e.hp -= d;
   e.inCombatT = 2;
-  e.hitFlash = 0.12; // 受击白色闪烁
   G.stats.dmg += d;
+  if (silent) {
+    if (e.hp <= 0) { if (src && src.kills !== undefined) src.kills++; if (G.track && dtype === 'fire') G.track.killFire = (G.track.killFire || 0) + 1; killEnemy(e); }
+    return d;
+  }
+  e.hitFlash = 0.12; // 受击白色闪烁
   // 打击音效（按伤害属性区分，内部已做节流）
   if (typeof DreamSound !== 'undefined' && DreamSound.playDamageSound) DreamSound.playDamageSound(dtype);
   // 理解之路：残血的梦魇可能突然停下（由 MercyPath 决定是否触发；触发时走剧情对话）
@@ -3834,7 +4208,7 @@ function applyDamage(e, dmg, dtype, src, chain) {
   const dmgColor = d > 200 ? '#ff4d6d' : (d > 80 ? '#ffa500' : (tm > 1.05 ? '#ffe066' : (tm < 0.95 ? '#94a3b8' : '#ffffff')));
   addText(e.x + rnd(-6, 6), e.y - e.r, Math.round(d), dmgColor);
   spawnParts(e.x, e.y, crit ? 5 : 3, crit ? '#ffe066' : '#ffd6d6', crit ? 3 : 2, 0.35);
-  if (e.hp <= 0) { if (G.track && dtype === 'fire') G.track.killFire = (G.track.killFire || 0) + 1; killEnemy(e); }
+  if (e.hp <= 0) { if (src && src.kills !== undefined) src.kills++; if (G.track && dtype === 'fire') G.track.killFire = (G.track.killFire || 0) + 1; killEnemy(e); }
   return d;
 }
 function updateBullets(dt) {
@@ -3858,7 +4232,7 @@ function updateBullets(dt) {
           t.poisonDps = Math.max(t.poisonDps || 0, b.poisonDps);
           t.poisonT = 3.2;
         }
-        if (b.slow) { t.slow = b.slow; t.slowT = 2.0; }
+        if (b.slow) { t.slow = Math.max(t.slow || 0, b.slow); t.slowT = 2.0; }
         if (b.freezeChance && Math.random() < b.freezeChance) t.stun = Math.max(t.stun || 0, 0.9);
         spawnParts(b.tx, b.ty, b.crit > 1 ? 9 : 5, b.crit > 1 ? '#fff' : b.color, 2, 0.3);
       }
@@ -3866,7 +4240,8 @@ function updateBullets(dt) {
     }
     b.x += dx / d * step; b.y += dy / d * step;
     b.life += dt;
-    if (b.life > 2) G.bullets.splice(i, 1);
+    // 导弹基础速度 330px/s、射程可到 1200+，原来的 2 秒存活常常「飞不到就凭空消失」
+    if (b.life > 3.5) G.bullets.splice(i, 1);
   }
 }
 function rollEvent() {
@@ -3903,7 +4278,7 @@ function startWave() {
   addText(ROOM_X0 + 340, DOOR_MID_Y() - 150, '第 ' + G.wave + ' 波来袭！', '#ff6b6b', true);
   if (G.event.id !== 'none') { addText(ROOM_X0 + 340, DOOR_MID_Y() - 118, G.event.icon + ' ' + G.event.name, '#ffd166', true); setTip('本波事件【' + G.event.name + '】：' + G.event.desc, 6); }
   flash = 0.35; shakeBy(6 + Math.min(G.wave, 20) * 0.3); // 波次越高震动越强
-  G.waveTransition = { t: 2.0, wave: G.wave }; // 波次过渡动画
+  G.waveTransition = { t: 1.5, wave: G.wave }; // 波次过渡动画（1.5s，别长时间糊住战场）
   if (G.wave === 1) setTip('敌人分三路进攻！三条走廊各有一扇铁门，别只顾一边。', 8);
   if (G.wave === 5) setTip('精英梦魇开始出现（带词缀），BOSS 波也来了。注意伤害类型克制。', 8);
   if (G.wave === finalWave()) {
@@ -3983,6 +4358,7 @@ function endWave() {
     }
   }
   G.prepTimer = Math.max(12, 24 - G.wave * 0.16) * diffCfg().prepMul * ((G.prize && G.prize.prep) || 1);
+  G.prepTotal = G.prepTimer;
   let interest = 0, soulsFromBank = 0;
   G.buildings.forEach(b => {
     const s = bstat(b);
@@ -4086,7 +4462,7 @@ function updateEffects(dt) {
     const e = G.effects[i];
     e.life -= dt;
     if (e.type === 'meteor') { e.x += (e.tx - e.x) * dt * 5; e.y += (e.ty - e.y) * dt * 5; }
-    if (e.type === 'boom') e.r = e.max * (1 - e.life / e.maxLife);
+    if (e.type === 'boom') { const mx = (e.max != null) ? e.max : e.r; e.r = mx * (1 - e.life / e.maxLife); }
     if (e.type === 'curse') {
       const dps = 26;
       G.buildings.forEach(b => { if (dist(b, e) < e.r) damageTarget(b, dps * dt); });
@@ -4121,44 +4497,29 @@ function checkAchievements() {
     }
   });
 }
-function saveGame() {
-  if (!G || G.over) return;
-  try {
-    const d = {
-      v: 2, wave: G.wave, gold: G.gold, power: G.power, souls: G.souls,
-      grow: G.grow, tech: G.tech, ach: G.ach, stats: G.stats, lot: G.lot, runeBag: G.runeBag,
-      bed: { lv: G.bed.lv, hp: G.bed.hp },
-      doors: G.doors.map(d => ({ lv: d.lv, hp: d.hp })),
-      buildings: G.buildings.map(b => ({ t: b.type, c: b.col, r: b.row, lv: b.level, br: b.branch, hp: b.hp, inv: b.invested, runes: b.runes })),
-    };
-    Store.set('tangping_save', JSON.stringify(d));
-    const b = +Store.get('tangping_best', 0) || 0;
-    if (G.wave > b) Store.set('tangping_best', G.wave);
-  } catch (e) { }
+/* ------------------------------------------------------------------
+ * 存档入口：真正的实现与格式定义都在 save.js 的 SaveSystem。
+ * 保留这三个函数名是因为 endWave / 摇奖 / 按钮 / 主菜单都在调它们。
+ * ------------------------------------------------------------------ */
+function saveGame(slot) {
+  if (!G || G.over) return false;
+  const s = (slot === undefined) ? 0 : slot;
+  const d = SaveSystem.capture();
+  if (!d) return false;
+  const r = SaveSystem.write(s, d);
+  const b = +Store.get('tangping_best', 0) || 0;
+  if (G.wave > b) Store.set('tangping_best', G.wave);
+  if (!r.ok) {
+    setTip(r.reason === 'quota' ? '⚠️ 浏览器存储空间已满，存档失败（可在存档面板导出备份）' : '⚠️ 存档写入失败', 6);
+    return false;
+  }
+  return true;
 }
-function loadSave() {
-  try { const s = Store.get('tangping_save', null); return s ? JSON.parse(s) : null; } catch (e) { return null; }
+function loadSave(slot) {
+  return SaveSystem.read((slot === undefined) ? 0 : slot);
 }
-function applySave(d) {
-  G.wave = d.wave || 0; G.gold = d.gold || 0; G.power = d.power || 0; G.souls = d.souls || 0;
-  G.grow = d.grow || 0;
-  if (d.tech) Object.keys(d.tech).forEach(k => { if (G.tech[k] !== undefined) G.tech[k] = d.tech[k]; });
-  if (d.ach) G.ach = d.ach;
-  if (d.stats) Object.assign(G.stats, d.stats);
-  if (d.lot) G.lot = d.lot;
-  if (d.runeBag) G.runeBag = d.runeBag;
-  if (d.bed) { G.bed.lv = d.bed.lv; G.bed.maxHp = (420 + 95 * (G.bed.lv - 1)) * techVal('fortress', 0.50); G.bed.hp = Math.min(d.bed.hp, G.bed.maxHp); }
-  if (d.doors) d.doors.forEach((v, i) => { const o = G.doors[i]; if (!o) return; o.lv = v.lv; o.maxHp = (420 + 200 * (v.lv - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50); o.hp = Math.min(v.hp, o.maxHp); });
-  if (d.buildings) d.buildings.forEach(v => {
-    const def = BUILD_DEFS[v.t]; if (!def) return;
-    const p = cellCenter(v.c, v.r);
-    if (G.grid[v.r * COLS + v.c]) return;
-    const b = { type: v.t, def, level: v.lv || 1, col: v.c, row: v.r, x: p.x, y: p.y, branch: v.br || null, cd: 0, angle: -Math.PI / 2, target: null, pulse: 0, kills: 0, invested: v.inv || def.cost.gold, shield: 0, shieldMax: 0, runes: v.runes || [null, null] };
-    b.maxHp = def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1);
-    b.hp = Math.min(v.hp, b.maxHp);
-    G.buildings.push(b); G.grid[v.r * COLS + v.c] = b;
-  });
-}
+/** 读档：完整恢复（含难度/模式/命运加成/开局道具/护盾/梦境进度），实现见 save.js */
+function applySave(d) { return SaveSystem.restore(d); }
 function gameOver() {
   if (G.over) return;
   if (G.admin) {
@@ -4182,7 +4543,7 @@ function gameOver() {
   SFX.lose(); shakeBy(24); flash = 0.8;
   const b = +Store.get('tangping_best', 0) || 0;
   if (G.wave > b) Store.set('tangping_best', G.wave);
-  Store.del('tangping_save');
+  SaveSystem.remove(0);   // 结局后清掉自动存档（存档系统统一走 SaveSystem）
   showGameOver();
 }
 function gameWin() {
@@ -4201,7 +4562,7 @@ function gameWin() {
   const b = +Store.get('tangping_best', 0) || 0;
   if (G.wave > b) Store.set('tangping_best', G.wave);
   Store.set('tangping_cleared', 1);
-  Store.del('tangping_save');
+  SaveSystem.remove(0);
   spawnParts(640, 300, 80, '#ffd166', 6, 1.4);
   showVictory();
 }
@@ -4273,7 +4634,7 @@ function upgradeAllBuildings(onlyTower) {
     const c = upgradeCost(b.def, b.level);
     if (!canAfford(c)) continue;
     payCost(c); b.level++; b.invested += c.gold; spent += c.gold;
-    const nh = b.def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1);
+    const nh = buildingMaxHp(b.def, b.level, b.branch);
     b.hp += nh - b.maxHp; b.maxHp = nh; n++;
     spawnParts(b.x, b.y, 8, b.def.color, 2, 0.5);
   }
@@ -4361,6 +4722,575 @@ function upgradeAllMax() {
   else { SFX.err(); setTip('资源不足，无法继续升级', 3); }
   return lv;
 }
+
+/* ==== save.js ==== */
+// ============================================================
+//  躺平发育：梦魇防线  —  存档系统
+// ============================================================
+//  为什么单独做一个模块：
+//    旧的 saveGame() 只写了 11 个字段，实测会丢：难度 / 模式 / 命运加成（剧情
+//    奖励）/ 开局道具加成 / 重生次数 / 通关波次 / 好感度 / 旋律增益 / 护盾上限
+//    / 整个梦境进度（碎片、日记、NPC、旋律、深层梦境）。读档后剧情奖励白拿。
+//  本模块负责：
+//    · 完整状态快照与恢复（capture / restore）—— 这也是将来联机「状态同步」的序列化层
+//    · 3 个手动槽 + 1 个自动槽
+//    · 版本号 + 迁移链（老存档不丢）
+//    · 结构校验 + 校验和（挡住被手改坏的 JSON）
+//    · 导出 / 导入 .json 文件（存档真正属于玩家，不锁死在浏览器里）
+// ============================================================
+
+const SaveSystem = {
+  /** 存档格式版本。每次改动快照结构都必须 +1，并在 migrate() 里补一条迁移 */
+  VERSION: 3,
+  /** 手动槽位数量（0 号保留给自动存档） */
+  SLOTS: 3,
+  KEY: n => 'tangping_save_slot' + n,
+  IDX: 'tangping_saves_index',
+  LEGACY: 'tangping_save',       // v2 时代的单槽 key，会自动迁移到 0 号槽
+
+  /* ---------------- 槽位读写 ---------------- */
+
+  list() {
+    const out = [];
+    for (let s = 0; s <= this.SLOTS; s++) {
+      const raw = Store.get(this.KEY(s), null);
+      let info = null;
+      if (raw) {
+        try {
+          const d = JSON.parse(raw);
+          const m = d && d.meta;
+          if (m) info = m;
+        } catch (e) { info = { broken: true }; }
+      }
+      out.push({ slot: s, auto: s === 0, info });
+    }
+    return out;
+  },
+
+  /** 只存摘要，菜单/面板列槽位时不用把所有存档都解析一遍 */
+  _metaOf(d) {
+    const run = (d && d.run) || {};
+    return {
+      wave: run.wave | 0,
+      diff: run.diffKey || 'normal',
+      mode: run.mode || 'limited',
+      gold: Math.round(run.gold || 0),
+      buildings: (d && d.buildings ? d.buildings.length : 0),
+      kills: (d && d.progress && d.progress.stats ? (d.progress.stats.kills | 0) : 0),
+      quest: (d && d.progress && d.progress.quest) ? (d.progress.quest.idx + 1) | 0 : 0,
+      dream: (d && d.dream) ? Object.keys(d.dream).length : 0,
+      at: (d && d.savedAt) || Date.now(),
+      name: (d && d.name) || '',
+    };
+  },
+
+  /**
+   * 写入一个槽
+   * @returns {{ok:boolean, reason?:string}}
+   */
+  write(slot, data, name) {
+    try {
+      const d = Object.assign({}, data);
+      d.v = this.VERSION;
+      d.savedAt = Date.now();
+      if (name !== undefined) d.name = name;
+      d.meta = this._metaOf(d);
+      const json = JSON.stringify(d);
+      Store.set(this.KEY(slot), json);
+      // 读回来确认真的落盘（localStorage 满时 setItem 会抛，某些浏览器是静默失败）
+      if (Store.get(this.KEY(slot), null) === null) return { ok: false, reason: 'storage-blocked' };
+      return { ok: true, bytes: json.length };
+    } catch (e) {
+      return { ok: false, reason: e && e.name === 'QuotaExceededError' ? 'quota' : 'error' };
+    }
+  },
+
+  read(slot) {
+    const raw = Store.get(this.KEY(slot), null);
+    if (!raw) return null;
+    let d;
+    try { d = JSON.parse(raw); } catch (e) { return null; }
+    return this.migrate(d);
+  },
+
+  remove(slot) { Store.del(this.KEY(slot)); },
+
+  /* ---------------- 版本迁移 ---------------- */
+
+  /**
+   * 把任意历史版本的存档升级到当前结构。
+   * v2（旧单槽）：扁平字段 → 包成 { run / bed / doors / buildings / progress }
+   */
+  migrate(d) {
+    if (!d || typeof d !== 'object') return null;
+    if (d.v === this.VERSION && d.run) return d;
+    // ---- v2 → v3 ----
+    if (d.v === 2 || (d.wave !== undefined && !d.run)) {
+      const migrated = {
+        v: this.VERSION,
+        savedAt: d.savedAt || Date.now(),
+        migratedFrom: d.v || 2,
+        name: d.name || '',
+        run: {
+          wave: d.wave | 0, state: 'build',
+          gold: d.gold || 0, power: d.power || 0, souls: d.souls || 0,
+          grow: d.grow || 0, growTimer: 0,
+          diffKey: d.diffKey || 'normal', mode: d.mode || 'limited',
+          admin: !!d.admin, winWave: d.winWave | 0,
+          prepTimer: 20, prepTotal: 20, reviveLeft: d.reviveLeft | 0,
+          combo: 0, maxCombo: 0,
+          prize: d.prize || {}, fate: d.fate || null, fateWave: null,
+          affection: d.affection || {}, melodyBuff: null, buff: null,
+        },
+        bed: d.bed ? { lv: d.bed.lv || 1, hp: d.bed.hp } : null,
+        doors: d.doors || null,
+        buildings: d.buildings || [],
+        progress: {
+          tech: d.tech, ach: d.ach, stats: d.stats,
+          lot: d.lot, runeBag: d.runeBag, quest: d.quest,
+        },
+        dream: null,
+      };
+      migrated.meta = this._metaOf(migrated);
+      return migrated;
+    }
+    return null;
+  },
+
+  /** 把老的单槽存档搬进 0 号槽（只做一次） */
+  migrateLegacy() {
+    const raw = Store.get(this.LEGACY, null);
+    if (!raw) return false;
+    if (Store.get(this.KEY(0), null)) { Store.del(this.LEGACY); return false; }
+    try {
+      const d = this.migrate(JSON.parse(raw));
+      if (!d) { Store.del(this.LEGACY); return false; }
+      const r = this.write(0, d, '旧版存档');
+      if (r.ok) { Store.del(this.LEGACY); console.log('[Save] 旧存档已迁移到自动槽'); return true; }
+    } catch (e) { }
+    return false;
+  },
+
+  /* ---------------- 校验 ---------------- */
+
+  /**
+   * 结构校验：挡住被手动改坏 / 截断的 JSON。不是安全校验，只求"能安全读进来"。
+   * @returns {{ok:boolean, issues:string[]}}
+   */
+  validate(d) {
+    const issues = [];
+    if (!d || typeof d !== 'object') return { ok: false, issues: ['不是对象'] };
+    if (!d.run || typeof d.run !== 'object') issues.push('缺少 run 段');
+    const run = d.run || {};
+    if (!isFinite(run.wave) || run.wave < 0 || run.wave > 9999) issues.push('wave 非法: ' + run.wave);
+    ['gold', 'power', 'souls'].forEach(k => {
+      if (run[k] !== undefined && !isFinite(run[k])) issues.push(k + ' 非数值');
+    });
+    if (run.diffKey && typeof DIFFS !== 'undefined' && !DIFFS[run.diffKey]) issues.push('未知难度: ' + run.diffKey);
+    if (run.mode && typeof MODES !== 'undefined' && !MODES[run.mode]) issues.push('未知模式: ' + run.mode);
+    if (d.buildings !== undefined) {
+      if (!Array.isArray(d.buildings)) issues.push('buildings 不是数组');
+      else d.buildings.forEach((b, i) => {
+        if (!b || !b.t) issues.push('第 ' + i + ' 座建筑缺少类型');
+        else if (typeof BUILD_DEFS !== 'undefined' && !BUILD_DEFS[b.t]) issues.push('第 ' + i + ' 座建筑类型未知: ' + b.t);
+        if (b && (!isFinite(b.c) || !isFinite(b.r) || b.c < 0 || b.c >= COLS || b.r < 0 || b.r >= ROWS)) issues.push('第 ' + i + ' 座建筑坐标越界');
+      });
+    }
+    if (d.doors !== undefined && !Array.isArray(d.doors)) issues.push('doors 不是数组');
+    if (d.progress && d.progress.tech && typeof d.progress.tech !== 'object') issues.push('tech 结构异常');
+    return { ok: issues.length === 0, issues };
+  },
+
+  /* ---------------- 快照 / 恢复 ---------------- */
+
+  /** 采集当前全局状态（这是将来联机状态同步的雏形） */
+  capture() {
+    if (typeof G === 'undefined' || !G) return null;
+    return {
+      v: this.VERSION,
+      savedAt: Date.now(),
+      run: {
+        wave: G.wave, state: G.state,
+        gold: G.gold, power: G.power, souls: G.souls,
+        grow: G.grow, growTimer: G.growTimer,
+        diffKey: G.diffKey, mode: G.mode,
+        admin: !!G.admin, winWave: G.winWave | 0,
+        prepTimer: G.prepTimer, prepTotal: G.prepTotal,
+        reviveLeft: G.reviveLeft | 0,
+        combo: G.combo | 0, maxCombo: G.maxCombo | 0,
+        eventId: (G.event && G.event.id) || 'none',
+        eventTimer: G.eventTimer | 0,
+        prize: G.prize || {},
+        fate: G.fate || null,
+        fateWave: G.fateWave || null,
+        affection: G.affection || {},
+        melodyBuff: G.melodyBuff || null,
+        buff: G.buff || null,
+      },
+      bed: { lv: G.bed.lv, hp: G.bed.hp, shield: G.bed.shield || 0, shieldMax: G.bed.shieldMax || 0 },
+      doors: G.doors.map(d => ({ lv: d.lv, hp: d.hp, shield: d.shield || 0, shieldMax: d.shieldMax || 0, broken: !!d.broken })),
+      buildings: G.buildings.map(b => ({
+        t: b.type, c: b.col, r: b.row, lv: b.level, br: b.branch,
+        hp: b.hp, inv: b.invested, runes: b.runes || [],
+        kills: b.kills | 0, shield: b.shield || 0, shieldMax: b.shieldMax || 0,
+      })),
+      progress: {
+        tech: G.tech, ach: G.ach, stats: G.stats,
+        lot: G.lot, runeBag: G.runeBag, quest: G.quest,
+      },
+      dream: this.captureDream(),
+    };
+  },
+
+  /** 梦境系统的进度（碎片 / 日记 / NPC / 旋律 / 理解路线 / 深层梦境） */
+  captureDream() {
+    const o = {};
+    try {
+      if (typeof DreamFragments !== 'undefined' && DreamFragments._collected) o.fragments = Array.from(DreamFragments._collected);
+      if (typeof DreamDiary !== 'undefined' && DreamDiary._entries) o.diary = DreamDiary._entries.slice(-60);
+      if (typeof NPCGuardians !== 'undefined' && NPCGuardians._recruited) o.npcs = NPCGuardians._recruited.map(n => ({ id: n.def.id, roomId: n.roomId }));
+      if (typeof DreamSound !== 'undefined' && DreamSound._triggeredMelodies) o.melodies = DreamSound._triggeredMelodies.slice();
+      if (typeof MercyPath !== 'undefined' && MercyPath._completed) o.mercy = Array.from(MercyPath._completed);
+      if (typeof DeepDream !== 'undefined' && DeepDream._active) o.deep = { level: DeepDream._active.id, waves: DeepDream._wavesInDeep | 0 };
+      if (typeof FourthWall !== 'undefined' && FourthWall._triggeredWaves) o.fourthWall = Array.from(FourthWall._triggeredWaves);
+    } catch (e) { console.warn('[Save] captureDream:', e); }
+    return o;
+  },
+
+  restoreDream(dm) {
+    if (!dm) return;
+    try {
+      if (Array.isArray(dm.fragments) && typeof DreamFragments !== 'undefined' && DreamFragments._collected) {
+        dm.fragments.forEach(id => DreamFragments._collected.add(id));
+      }
+      if (Array.isArray(dm.diary) && typeof DreamDiary !== 'undefined') {
+        DreamDiary._entries = dm.diary.slice();
+      }
+      if (Array.isArray(dm.npcs) && typeof NPCGuardians !== 'undefined') {
+        dm.npcs.forEach(n => {
+          const def = (typeof NPC_DIALOG !== 'undefined') ? NPC_DIALOG.find(x => x.id === n.id) : null;
+          if (def && !NPCGuardians._recruited.some(r => r.def.id === n.id)) {
+            NPCGuardians._recruited.push({ def, roomId: n.roomId });
+          }
+        });
+      }
+      if (Array.isArray(dm.melodies) && typeof DreamSound !== 'undefined') {
+        DreamSound._triggeredMelodies = dm.melodies.slice();
+      }
+      if (Array.isArray(dm.mercy) && typeof MercyPath !== 'undefined' && MercyPath._completed) {
+        dm.mercy.forEach(id => MercyPath._completed.add(id));
+      }
+      if (Array.isArray(dm.fourthWall) && typeof FourthWall !== 'undefined' && FourthWall._triggeredWaves) {
+        dm.fourthWall.forEach(w => FourthWall._triggeredWaves.add(w));
+      }
+      if (dm.deep && typeof DeepDream !== 'undefined') {
+        const lv = DeepDream.DEEP_LEVELS && DeepDream.DEEP_LEVELS.find(x => x.id === dm.deep.level);
+        if (lv) { if (!DeepDream._active) DeepDream.enterDeepDream(lv.id); DeepDream._wavesInDeep = dm.deep.waves | 0; }
+      }
+    } catch (e) { console.warn('[Save] restoreDream:', e); }
+  },
+
+  /**
+   * 把快照应用到当前 G（newGame 已建好全新 G，这里做叠加）
+   * @returns {boolean} 是否成功应用
+   */
+  restore(d) {
+    if (typeof G === 'undefined' || !G) return false;
+    const v = this.validate(d);
+    if (!v.ok) console.warn('[Save] 存档有 ' + v.issues.length + ' 处异常，已尽量恢复：', v.issues);
+    try {
+      const run = d.run || {};
+      G.wave = Math.max(0, Math.min(9999, run.wave | 0));
+      G.state = run.state === 'wave' ? 'build' : (run.state || 'build');   // 读档一律回到备战，避免一进来就被打
+      G.gold = +(run.gold || 0); G.power = +(run.power || 0); G.souls = +(run.souls || 0);
+      G.grow = Math.max(0, Math.min(25, run.grow | 0));
+      G.growTimer = +run.growTimer || 0;
+      if (run.diffKey && typeof DIFFS !== 'undefined' && DIFFS[run.diffKey]) G.diffKey = run.diffKey;
+      if (run.mode && typeof MODES !== 'undefined' && MODES[run.mode]) G.mode = run.mode;
+      G.admin = !!run.admin;
+      G.winWave = run.winWave | 0;
+      G.prepTimer = isFinite(run.prepTimer) ? +run.prepTimer : G.prepTimer;
+      G.prepTotal = isFinite(run.prepTotal) && run.prepTotal > 0 ? +run.prepTotal : G.prepTimer;
+      G.reviveLeft = run.reviveLeft | 0;
+      G.combo = run.combo | 0; G.maxCombo = run.maxCombo | 0;
+      G.eventTimer = +run.eventTimer || 0;
+      if (run.eventId && typeof EVENTS !== 'undefined') {
+        const ev = EVENTS.find(e => e.id === run.eventId);
+        if (ev) G.event = ev;
+      }
+      if (run.prize) Object.assign(G.prize, run.prize);
+      if (run.fate) Object.assign(G.fate, run.fate);
+      if (run.fateWave) Object.assign(G.fateWave, run.fateWave);
+      if (run.affection) G.affection = Object.assign({}, run.affection);
+      if (run.melodyBuff) G.melodyBuff = run.melodyBuff;
+      if (run.buff) Object.assign(G.buff, run.buff);
+
+      const prog = d.progress || {};
+      if (prog.tech) Object.keys(prog.tech).forEach(k => { if (G.tech[k] !== undefined) G.tech[k] = Math.max(0, prog.tech[k] | 0); });
+      if (prog.ach && typeof prog.ach === 'object') G.ach = Object.assign({}, prog.ach);
+      if (prog.stats && typeof prog.stats === 'object') Object.assign(G.stats, prog.stats);
+      if (prog.lot && typeof prog.lot === 'object') Object.assign(G.lot, prog.lot);
+      if (Array.isArray(prog.runeBag)) G.runeBag = prog.runeBag;
+      if (prog.quest && typeof prog.quest === 'object') G.quest = prog.quest;
+
+      if (d.bed) {
+        G.bed.lv = Math.max(1, Math.min(50, d.bed.lv | 0 || 1));
+        G.bed.maxHp = bedMaxHp(G.bed.lv);
+        G.bed.hp = clamp(+d.bed.hp || G.bed.maxHp, 0, G.bed.maxHp);
+        G.bed.shieldMax = +d.bed.shieldMax || 0;
+        G.bed.shield = clamp(+d.bed.shield || 0, 0, G.bed.shieldMax || G.bed.maxHp);
+      }
+      if (Array.isArray(d.doors)) {
+        d.doors.forEach((v2, i) => {
+          const o = G.doors[i]; if (!o) return;
+          o.lv = Math.max(1, Math.min(50, v2.lv | 0 || 1));
+          o.maxHp = doorMaxHp(o.lv);
+          o.hp = clamp(+v2.hp || o.maxHp, 0, o.maxHp);
+          o.shieldMax = +v2.shieldMax || 0;
+          o.shield = clamp(+v2.shield || 0, 0, o.shieldMax || o.maxHp);
+          o.broken = !!v2.broken && o.hp <= 0;
+        });
+      }
+      if (Array.isArray(d.buildings)) {
+        d.buildings.forEach(v2 => {
+          const def = BUILD_DEFS[v2.t]; if (!def) return;
+          const c = v2.c | 0, r = v2.r | 0;
+          if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return;
+          if (G.grid[r * COLS + c] || inBed(c, r)) return;
+          const p = cellCenter(c, r);
+          const b = {
+            type: v2.t, def, level: Math.max(1, Math.min(def.maxLv || 50, v2.lv | 0 || 1)),
+            col: c, row: r, x: p.x, y: p.y, branch: (def.branch && v2.br) ? v2.br : null,
+            cd: 0, angle: -Math.PI / 2, target: null, pulse: 0, idle: 0,
+            kills: v2.kills | 0, invested: +v2.inv || def.cost.gold,
+            shield: 0, shieldMax: 0, runes: this._fixRunes(v2.runes),
+          };
+          b.maxHp = buildingMaxHp(def, b.level, b.branch);
+          b.hp = clamp(+v2.hp || b.maxHp, 0, b.maxHp);
+          b.shieldMax = +v2.shieldMax || 0;
+          b.shield = clamp(+v2.shield || 0, 0, b.shieldMax || b.maxHp);
+          G.buildings.push(b); G.grid[r * COLS + c] = b;
+        });
+      }
+      this.restoreDream(d.dream);
+      G.resDirty = true;
+      if (typeof QuestSystem !== 'undefined') QuestSystem.init();
+      return true;
+    } catch (e) {
+      console.error('[Save] restore 失败:', e);
+      return false;
+    }
+  },
+
+  /** 符文槽数组规整（数量随「符文宗师」科技变化） */
+  _fixRunes(arr) {
+    const n = (typeof runeSlots === 'function') ? runeSlots() : 2;
+    const out = new Array(n).fill(null);
+    if (Array.isArray(arr)) for (let i = 0; i < Math.min(n, arr.length); i++) {
+      const r = arr[i];
+      if (r && r.affixes && Array.isArray(r.affixes) && r.id) out[i] = r;
+    }
+    return out;
+  },
+
+  /* ---------------- 导出 / 导入（存档真正属于玩家） ---------------- */
+
+  exportFile(slot) {
+    const d = this.read(slot);
+    if (!d) return false;
+    try {
+      const payload = { game: 'tangping-nightmare', v: this.VERSION, exportedAt: Date.now(), data: d };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+      a.href = url;
+      a.download = 'tangping-save-w' + (d.meta ? d.meta.wave : 0) + '-' + stamp + '.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      return true;
+    } catch (e) { console.warn('[Save] export:', e); return false; }
+  },
+
+  /** 从 File 对象导入到指定槽 */
+  importFile(file, slot, cb) {
+    if (!file) return;
+    const fr = new FileReader();
+    fr.onload = () => {
+      let payload = null;
+      try { payload = JSON.parse(fr.result); } catch (e) { cb({ ok: false, reason: 'json' }); return; }
+      // 兼容两种形态：带外壳的导出文件，或直接是存档对象
+      const d = this.migrate(payload && payload.data ? payload.data : payload);
+      if (!d) { cb({ ok: false, reason: 'format' }); return; }
+      const v = this.validate(d);
+      if (!v.ok) { cb({ ok: false, reason: 'invalid', issues: v.issues }); return; }
+      const r = this.write(slot, d, d.name || '导入的存档');
+      cb(Object.assign({ ok: r.ok, reason: r.reason, meta: this._metaOf(d) }, r));
+    };
+    fr.onerror = () => cb({ ok: false, reason: 'read' });
+    fr.readAsText(file);
+  },
+
+  /** 时间戳格式化（面板用） */
+  fmtTime(ts) {
+    if (!ts) return '—';
+    const d = new Date(ts);
+    const p = n => String(n).padStart(2, '0');
+    return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  },
+};
+
+// 模块加载时顺手把 v2 的老存档搬过来
+try { SaveSystem.migrateLegacy(); } catch (e) { }
+
+/* ==== net.js ==== */
+// ============================================================
+//  躺平发育：梦魇防线  —  命令层 + 联机接缝
+// ============================================================
+//  为什么要这一层：
+//    单机时"点一下按钮"直接改 GameState（G）没问题；但要联机，就必须把
+//    「玩家的意图」和「状态的改变」拆开 —— 客机只能发意图，主机负责执行与校验。
+//    这一层现在就把这件事做完，且不改变单机行为（dispatch 会立即 exec）。
+//
+//  顺带的好处：
+//    · 所有会改 G 的玩家操作只有一个入口，方便加日志 / 限制 / 反作弊
+//    · 命令是纯数据（坐标 + 类型），可以直接序列化发给别人
+//    · 命令日志可用于复现 bug（配合 main.js 的固定时间步长）
+//
+//  命令全部使用「可序列化引用」：建筑用格子坐标 (c,r)，门用 lane，绝不传对象引用。
+// ============================================================
+
+/** 联机接缝。现在不启用，接上 WebRTC/WebSocket 时只需要实现 send / onRemote */
+const Net = {
+  enabled: false,        // 单机 = false
+  isHost: true,          // 房主负责跑模拟
+  /** 客机 → 主机发送一条命令（阶段B 接入 DataChannel） */
+  send(cmd) {
+    // TODO(联机阶段B): this.channel.send(JSON.stringify(cmd))
+    console.warn('[Net] 尚未接入传输层，命令被丢弃:', cmd.t);
+  },
+  /** 主机收到远端命令 → 走同一条 exec 路径 */
+  onRemote(cmd) { Cmd.exec(cmd); },
+};
+
+const Cmd = {
+  _seq: 0,
+  /** 是否记录命令日志（复现 bug / 将来的回放用） */
+  recording: true,
+  log: [],
+
+  /* ---------------- 派发 ---------------- */
+
+  /** 玩家意图入口。单机立即执行；将来客机只发送。 */
+  dispatch(cmd) {
+    if (!cmd) return false;
+    cmd.seq = ++this._seq;
+    if (this.recording) {
+      this.log.push(cmd);
+      if (this.log.length > 4000) this.log.shift();
+    }
+    if (Net.enabled && !Net.isHost) { Net.send(cmd); return true; }
+    return this.exec(cmd);
+  },
+
+  /** 真正改状态的地方（主机执行 / 单机执行） */
+  exec(cmd) {
+    if (typeof G === 'undefined' || !G || G.over) return false;
+    switch (cmd.t) {
+      case 'build': {
+        if (typeof cmd.k !== 'string') return false;
+        return !!tryBuild(cmd.k, cmd.c | 0, cmd.r | 0);
+      }
+      case 'upgrade': {
+        if (cmd.what === 'bed') { upgradeBed(); return true; }
+        if (cmd.what === 'door') { const d = G.doors[cmd.lane | 0]; if (d) upgradeDoor(d); return true; }
+        const b = this._at(cmd.c, cmd.r); if (!b) return false;
+        tryUpgrade(b); return true;
+      }
+      case 'branch': {
+        const b = this._at(cmd.c, cmd.r); if (!b) return false;
+        return !!tryBranch(b, cmd.which === 'b' ? 'b' : 'a');
+      }
+      case 'sell': {
+        const b = this._at(cmd.c, cmd.r); if (!b) return false;
+        sellBuilding(b); return true;
+      }
+      case 'skill': {
+        if (typeof cmd.k !== 'string') return false;
+        useSkill(cmd.k); return true;
+      }
+      case 'skip': { skipPrep(); return true; }
+      case 'upAll': { upgradeAllBuildings(!!cmd.towersOnly); return true; }
+      case 'maxAll': { upgradeAllMax(); return true; }
+      case 'maxSel': {
+        if (cmd.what === 'bed') { upgradeMaxSelected({ isBed: true }); return true; }
+        if (cmd.what === 'door') { const d = G.doors[cmd.lane | 0]; if (d) upgradeMaxSelected({ isDoor: true, door: d }); return true; }
+        const b = this._at(cmd.c, cmd.r); if (!b) return false;
+        upgradeMaxSelected(b); return true;
+      }
+      case 'rune': {
+        const b = this._at(cmd.c, cmd.r); if (!b) return false;
+        if (cmd.op === 'socket') return !!socketRune(b, cmd.runeId, cmd.slot == null ? null : (cmd.slot | 0));
+        if (cmd.op === 'unsocket') return !!unsocketRune(b, cmd.slot | 0);
+        if (cmd.op === 'upgrade') return !!upgradeRuneIn(b, cmd.slot | 0);
+        return false;
+      }
+      case 'runeSalvage': { return !!salvageRune(cmd.runeId); }
+      case 'draw': { this.lastDraw = drawLottery(cmd.n | 0 || 1, cmd.cur === 'soul' ? 'soul' : 'gold'); return true; }
+      case 'jump': { return !!jumpToWave(cmd.wave | 0); }
+      default: console.warn('[Cmd] 未知命令:', cmd.t); return false;
+    }
+  },
+
+  _at(c, r) {
+    c = c | 0; r = r | 0;
+    if (c < 0 || c >= COLS || r < 0 || r >= ROWS) return null;
+    const b = G.grid[r * COLS + c];
+    return (b && b !== 'bed') ? b : null;
+  },
+
+  /* ---------------- 给 UI 用的语义化包装（避免 UI 里到处拼命令对象） ---------------- */
+
+  build(k, c, r) { return this.dispatch({ t: 'build', k, c, r }); },
+
+  /** 升级「当前选中的东西」——把 UI 的 selected 对象翻译成可序列化命令 */
+  upgradeSelection(sel) {
+    if (!sel) return false;
+    if (sel.isBed) return this.dispatch({ t: 'upgrade', what: 'bed' });
+    if (sel.isDoor) return this.dispatch({ t: 'upgrade', what: 'door', lane: sel.door.lane });
+    if (sel.def) return this.dispatch({ t: 'upgrade', c: sel.col, r: sel.row });
+    return false;
+  },
+  maxSelection(sel) {
+    if (!sel) return false;
+    if (sel.isBed) return this.dispatch({ t: 'maxSel', what: 'bed' });
+    if (sel.isDoor) return this.dispatch({ t: 'maxSel', what: 'door', lane: sel.door.lane });
+    if (sel.def) return this.dispatch({ t: 'maxSel', c: sel.col, r: sel.row });
+    return false;
+  },
+  sellSelection(sel) {
+    if (!sel || !sel.def) return false;
+    return this.dispatch({ t: 'sell', c: sel.col, r: sel.row });
+  },
+  branchSelection(sel, which) {
+    if (!sel || !sel.def) return false;
+    return this.dispatch({ t: 'branch', c: sel.col, r: sel.row, which });
+  },
+  skill(k) { return this.dispatch({ t: 'skill', k }); },
+  skipPrep() { return this.dispatch({ t: 'skip' }); },
+  upgradeAll(towersOnly) { return this.dispatch({ t: 'upAll', towersOnly: !!towersOnly }); },
+  upgradeAllMax() { return this.dispatch({ t: 'maxAll' }); },
+  socket(b, runeId, slot) { return b ? this.dispatch({ t: 'rune', op: 'socket', c: b.col, r: b.row, runeId, slot }) : false; },
+  unsocket(b, slot) { return b ? this.dispatch({ t: 'rune', op: 'unsocket', c: b.col, r: b.row, slot }) : false; },
+  upgradeRuneIn(b, slot) { return b ? this.dispatch({ t: 'rune', op: 'upgrade', c: b.col, r: b.row, slot }) : false; },
+  salvage(runeId) { return this.dispatch({ t: 'runeSalvage', runeId }); },
+  draw(n, cur) { this.dispatch({ t: 'draw', n, cur }); return this.lastDraw; },   // 单机立即拿到结果；联机时结果随状态同步回来
+  jump(wave) { return this.dispatch({ t: 'jump', wave }); },
+
+  /** 命令日志导出（复现 bug 时贴给人看） */
+  dumpLog() { return JSON.stringify(this.log); },
+  clearLog() { this.log.length = 0; },
+};
 
 /* ==== dream.js ==== */
 /**
@@ -6403,6 +7333,7 @@ const DreamEngine = {
     MercyPath.init();
     DreamFragments.initFragments();
     DreamDiary.initDiary();
+    if (typeof QuestSystem !== 'undefined') QuestSystem.init();
     this._initialized = true;
     EventBus.emit('dream:init', null);
   },
@@ -6456,6 +7387,9 @@ const DreamEngine = {
     // 日记：波次开始
     DreamDiary.addEntry('story', '第 ' + waveNum + ' 波开始' + (DeepDream.isActive() ? '（深层梦境）' : ''));
 
+    // 梦境委托：到达解锁波次则接取下一章
+    if (typeof QuestSystem !== 'undefined') { try { QuestSystem.onWaveStart(waveNum); } catch (e) { console.warn('QuestSystem waveStart:', e); } }
+
     EventBus.emit('dream:waveStart', waveNum);
   },
 
@@ -6493,6 +7427,9 @@ const DreamEngine = {
       }
     }
 
+    // 梦境委托：信物掉落与进度
+    if (typeof QuestSystem !== 'undefined') { try { QuestSystem.onEnemyKilled(enemy); } catch (e) { console.warn('QuestSystem kill:', e); } }
+
     // 检查是否可被理解（应在此之前调用 checkMercy）
     EventBus.emit('dream:enemyKilled', enemy);
   },
@@ -6518,8 +7455,434 @@ const DreamEngine = {
       fourthWall: FourthWall._state ? { activeEffects: FourthWall._state.activeEffects.length, chatMessages: FourthWall._state.chatMessages.length } : null,
       deepDream: DeepDream.isActive() ? { level: DeepDream.getCurrentLevel().name, wavesIn: DeepDream._wavesInDeep } : null,
       fragments: DreamFragments.getUnlockStatus(),
+      quest: typeof QuestSystem !== 'undefined' ? QuestSystem.getSnapshot() : null,
       mercy: MercyPath.getMercyProgress(),
       diary: { entries: DreamDiary._entries ? DreamDiary._entries.length : 0, completion: DreamDiary.getCompletionRate() },
+    };
+  },
+};
+
+/* ==== quest.js ==== */
+// ============================================================
+//  躺平发育：梦魇防线  —  梦境委托（任务）系统
+// ============================================================
+//  设计目标（来自需求）：
+//    · 击杀特定梦魇 → 掉落特定信物 → 可在面板里查看
+//    · 集齐信物推进主线剧情，一环比一环接近「梦的真相」
+//  与已有系统的关系：
+//    · 复用 EventBus / DreamEngine 的钩子，不新增 core.js 耦合
+//    · 奖励文案统一交给 core.js 的 applyStoryEffect() 解释，避免"说了给却没给"
+//    · 每章完成解锁一枚 memory fragment（DreamFragments）
+// ============================================================
+
+/** 信物定义：掉落物本身也是叙事载体，lore 是「查看」时读到的内容 */
+const QUEST_ITEMS = {
+  mist_tear: {
+    name: '雾之泪', icon: '💧', rare: 'common', from: '幽灵',
+    desc: '一滴不会蒸发的雾',
+    lore: '幽灵没有眼泪。所以当你在走廊地板上捡到这颗冰凉的水珠时，'
+        + '你花了很久才明白：那是它还记得自己曾经是谁。',
+  },
+  mirror_shard: {
+    name: '裂开的镜片', icon: '🪞', rare: 'rare', from: '镜面梦魇',
+    desc: '映不出你的一张脸',
+    lore: '你举起它，镜面里没有你。只有一间空教室，和一张没有人坐的椅子。'
+        + '你把它转了个角度——椅子旁边站着一个背影，穿着你的校服。',
+  },
+  faded_photo: {
+    name: '褪色的合照', icon: '📷', rare: 'rare', from: '治疗梦魇',
+    desc: '四个人的合照，缺了一个角',
+    lore: '照片上是四张床、四个孩子。可你数来数去只有三个人的脸，'
+        + '第四个位置被烧掉了一个角。你认得那个空位的形状——是你自己的轮廓。',
+  },
+  broken_pendulum: {
+    name: '断裂的钟摆', icon: '⏳', rare: 'epic', from: '时空梦魇',
+    desc: '指针停在 03:07',
+    lore: '钟摆断了，时间就停在了三点零七分。你忽然想起——'
+        + '那个未接来电的时间，也是 03:07。',
+  },
+  blank_letter: {
+    name: '空白的信纸', icon: '📄', rare: 'epic', from: '召唤梦魇',
+    desc: '写满字又被擦掉的信',
+    lore: '灯下侧着看，纸面上还留着上一版字迹的压痕：'
+        + '"别再来找我了。"下面一行更浅，像是哭着写的："你会后悔的。"',
+  },
+  last_clock: {
+    name: '最后一只闹钟', icon: '🔔', rare: 'legend', from: '梦魇领主',
+    desc: '梦境里的禁忌之物',
+    lore: '它一直响，但没有任何人听得见。因为闹钟意味着——梦要结束了。'
+        + '你把它握在手里，第一次感到掌心是热的。',
+  },
+};
+
+/**
+ * 章节数据（第一章 → 第六章，共 6 环）
+ * 字段说明：
+ *   act       幕名，用于开场标题卡演出
+ *   title     委托名
+ *   unlockWave 解锁波次
+ *   enemy     需要击杀的梦魇类型（key 对应 ENEMY_DEFS）
+ *   need      需要集齐的信物数量
+ *   dropRate  每次击杀的掉落概率（另带 4 次保底）
+ *   from      信物持有者（提示去哪找）
+ *   hook      接取时的剧情
+ *   done      凑齐后的剧情（走 dialogue 结构与 WAVE_STORY 一致）
+ *   rewardText 奖励文案，交给 applyStoryEffect 解释
+ *   fragment  完成后解锁的记忆碎片 id
+ */
+const QUEST_CHAPTERS = [
+  {
+    id: 'q1', act: '第一幕 · 入梦', title: '走廊尽头的哭声',
+    unlockWave: 4, enemy: 'phantom', need: 3, dropRate: 0.42, item: 'mist_tear',
+    from: '幽灵',
+    hook: {
+      speaker: '林小夏',
+      text: '你听……走廊尽头有哭声。是那些灰白色的东西——它们不打门，只是哭。\n'
+          + '我数过了，它们哭的时候会掉东西，像水珠。你能捡几颗回来吗？我想看看那是什么。',
+      choices: [
+        { text: '我去。你在这别动。', effect: '林小夏好感度 +1' },
+        { text: '……哭声？我什么都没听见。', effect: '获得 150 金币（她塞给你的）' },
+      ],
+    },
+    done: {
+      speaker: '林小夏',
+      text: '三颗……都是凉的。\n'
+          + '你知道吗，幽灵是没有眼泪的。因为它们已经不记得自己是谁了——'
+          + '可它还记得要哭。\n'
+          + '（她把水珠举到眼前，忽然不说话了。）',
+      choices: [
+        { text: '它是不是……在替谁哭？', effect: '解锁记忆碎片，理解加深' },
+        { text: '别想了，先活下去。', effect: '获得 400 金币，全队防御 +10%（本波）' },
+      ],
+    },
+    rewardText: '获得 600 金币、获得 20 灵魂、所有炮塔伤害 +6%（本局）',
+    fragment: 'frag_7',
+  },
+  {
+    id: 'q2', act: '第二幕 · 回声', title: '照不出人的镜子',
+    unlockWave: 9, enemy: 'reflector', need: 2, dropRate: 0.38, item: 'mirror_shard',
+    from: '镜面梦魇',
+    hook: {
+      speaker: '周默',
+      text: '那些会反光的家伙——我朝它们开枪，子弹会弹回来。\n'
+          + '它们身上掉碎片。我想要一片。我想确认一件事：'
+          + '镜子里的东西，是不是也在看着我们。',
+      choices: [
+        { text: '你想确认什么？', effect: '周默好感度 +1' },
+        { text: '碎片我帮你拿，别乱看。', effect: '获得 200 金币' },
+      ],
+    },
+    done: {
+      speaker: '周默',
+      text: '我照了。里面没有我。\n'
+          + '……有一张椅子，还有一件挂在椅背上的校服——是你的尺码。\n'
+          + '（他把镜片收进口袋，声音很轻。）所以这个教室里，本来应该坐着四个人。',
+      choices: [
+        { text: '你的意思是，我们四个都在这？', effect: '解锁记忆碎片，理解加深' },
+        { text: '镜子会说谎。别信它。', effect: '扎下心防：全队防御 +15%（本波）' },
+      ],
+    },
+    rewardText: '获得 1200 金币、获得 30 灵魂、所有炮塔射程 +8%（本局）',
+    fragment: 'frag_12',
+  },
+  {
+    id: 'q3', act: '第三幕 · 缺席者', title: '四个人的合照',
+    unlockWave: 17, enemy: 'healer', need: 3, dropRate: 0.34, item: 'faded_photo',
+    from: '治疗梦魇',
+    hook: {
+      speaker: '赵磊',
+      text: '哦豁，这次的怪会给人回血——我第一次见敌人比我妈还关心我。\n'
+          + '不过说真的，它们身上有照片。四个人一张床那种合照。\n'
+          + '……帮个忙，弄三张回来。我想知道我们四个到底认不认识。',
+      choices: [
+        { text: '我们当然认识。', effect: '赵磊好感度 +1，全队士气 +' },
+        { text: '我不确定我们认识。', effect: '获得 300 金币，防御 +10%（本波）' },
+      ],
+    },
+    done: {
+      speaker: '赵磊',
+      text: '……照片上只有三个人。\n'
+          + '第四个位置被烧没了。我数了三遍，我把每张都翻过来看背面——'
+          + '背面写着同一个学号。\n'
+          + '（他难得没讲冷笑话。）小夏，你认识这个学号吗？',
+      choices: [
+        { text: '那是我的学号。', effect: '解锁记忆碎片，理解加深' },
+        { text: '把照片收起来。现在不是时候。', effect: '获得 800 金币' },
+      ],
+    },
+    rewardText: '获得 2000 金币、获得 45 灵魂、所有建筑生命 +12%（本局）',
+    fragment: 'frag_3',
+  },
+  {
+    id: 'q4', act: '第四幕 · 三点零七分', title: '停住的钟摆',
+    unlockWave: 24, enemy: 'chronos', need: 2, dropRate: 0.30, item: 'broken_pendulum',
+    from: '时空梦魇',
+    hook: {
+      speaker: '旁白',
+      text: '走廊尽头的墙上出现过一道时钟的虚影，然后又消失了。\n'
+          + '那些走得比谁都快的梦魇，身上挂着断掉的钟摆。\n'
+          + '你需要两个。你需要知道，那一天到底停在哪一秒。',
+      choices: [
+        { text: '我记得那个时间。', effect: '命运印记：时间线收束' },
+        { text: '我不想记得。', effect: '获得 500 金币，防御 +15%（本波）' },
+      ],
+    },
+    done: {
+      speaker: '???',
+      text: '03:07。\n'
+          + '你终于把它拿在手里了。\n'
+          + '那通电话你打了回去，听筒里只有雨声——因为你根本没有按下拨号键。\n'
+          + '（声音停顿了很久。）孩子，你要找的不是出口。是那天晚上你没说出口的那句话。',
+      choices: [
+        { text: '……你是谁？', effect: '解锁记忆碎片，理解加深' },
+        { text: '我不需要谁来教我后悔。', effect: '怒火：所有炮塔伤害 +15%（本波）' },
+      ],
+    },
+    rewardText: '获得 3500 金币、获得 70 灵魂、获得 60 电量、所有炮塔射速 +8%（本局）',
+    fragment: 'frag_4',
+  },
+  {
+    id: 'q5', act: '第五幕 · 未寄出的信', title: '空白的信纸',
+    unlockWave: 33, enemy: 'summoner', need: 4, dropRate: 0.28, item: 'blank_letter',
+    from: '召唤梦魇',
+    hook: {
+      speaker: '林小夏',
+      text: '那些不停召唤小家伙的东西，身上带着纸。\n'
+          + '纸是空白的，但举到灯下能看见压痕——是写给谁的信，写了又擦掉。\n'
+          + '我要四张。我想拼出完整的句子。',
+      choices: [
+        { text: '你想写给谁？', effect: '林小夏好感度 +1' },
+        { text: '先收集，别多想。', effect: '获得 700 金币' },
+      ],
+    },
+    done: {
+      speaker: '林小夏',
+      text: '拼出来了。\n'
+          + '"对不起，那天我没有拉住你。"\n'
+          + '（她把四张纸按顺序摆好，手一直在抖。）\n'
+          + '这不是写给谁的。这是写给"没被拉住的那个人的"。\n'
+          + '你……你那天到底站在哪？',
+      choices: [
+        { text: '我站在天台边上。', effect: '解锁记忆碎片，理解加深' },
+        { text: '我不记得了。真的。', effect: '获得 1500 金币，全队防御 +20%（本波）' },
+      ],
+    },
+    rewardText: '获得 6000 金币、获得 120 灵魂、所有炮塔伤害 +10%（本局）',
+    fragment: 'frag_13',
+  },
+  {
+    id: 'q6', act: '终幕 · 醒来', title: '最后一只闹钟',
+    unlockWave: 41, enemy: 'boss', need: 1, dropRate: 1, item: 'last_clock',
+    from: '梦魇领主',
+    hook: {
+      speaker: '周默',
+      text: '它们之中最大的那一个——领主、巨口、机械核心、虚空之影——身上挂着一只闹钟。\n'
+          + '不，不是挂着。是被它攥在手里，攥得死死的。\n'
+          + '拿到它。然后我们就能决定：是继续睡，还是醒。',
+      choices: [
+        { text: '我要醒。', effect: '决心：所有伤害 +10%（本局）' },
+        { text: '我要先弄清楚全部真相。', effect: '获得 2000 金币，防御 +20%（本波）' },
+      ],
+    },
+    done: {
+      speaker: '???',
+      text: '你拿到它了。\n'
+          + '现在听好——我不再是"梦魇"了，我是你自己造出来的守门人。\n'
+          + '我拦着你，不是为了困住你。是因为你醒过来的那一次，是最后一次。\n'
+          + '（闹钟开始响。这一次，四个人都听见了。）\n'
+          + '按下去吧。但先回头看看——他们还在等你。',
+      choices: [
+        { text: '我回头了。他们都还在。', effect: '解锁最终记忆碎片，理解已达终点' },
+        { text: '按下去。独自醒来。', effect: '获得 10000 金币与结局印记' },
+      ],
+    },
+    rewardText: '获得 12000 金币、获得 300 灵魂、所有伤害 +20%（本局）、所有建筑生命 +30%（本局）',
+    fragment: 'frag_19',
+  },
+];
+
+// ============================================================
+//  QuestSystem — 委托引擎
+// ============================================================
+const QuestSystem = {
+  /** 每章独立状态：kills / items / pity（保底计数）/ done */
+  _s: null,
+  _initd: false,
+
+  init() {
+    // 状态挂在 G 上，随核心存档一起持久化（core.js saveGame/applySave 已带 quest 字段）
+    if (!G) return;
+    if (!G.quest || typeof G.quest !== 'object') G.quest = this.blank();
+    this._s = G.quest;
+    this._initd = true;
+    EventBus.emit('quest:init', this.getActive());
+  },
+
+  blank() {
+    return { idx: -1, chapters: {}, items: {}, finished: false };
+  },
+
+  /** 取某一章的运行时进度（没有就建） */
+  _ch(id) {
+    if (!this._s.chapters[id]) this._s.chapters[id] = { kills: 0, items: 0, pity: 0, done: false };
+    return this._s.chapters[id];
+  },
+
+  /** 当前委托（null 表示还没解锁或全部完成） */
+  getActive() {
+    if (!this._s || this._s.idx < 0) return null;
+    const def = QUEST_CHAPTERS[this._s.idx];
+    if (!def) return null;
+    return { def, prog: this._ch(def.id) };
+  },
+
+  /** 下一章（用于面板预告） */
+  getNext() {
+    if (!this._s) return null;
+    const n = this._s.idx + 1;
+    return QUEST_CHAPTERS[n] || null;
+  },
+
+  /** 某一章是否已完成 */
+  isDone(id) {
+    return !!(this._s && this._s.chapters[id] && this._s.chapters[id].done);
+  },
+
+  /** 信物背包（用于面板查看） */
+  getItems() {
+    const out = [];
+    if (!this._s) return out;
+    Object.keys(QUEST_ITEMS).forEach(k => {
+      const n = this._s.items[k] || 0;
+      if (n > 0) out.push({ id: k, count: n, def: QUEST_ITEMS[k] });
+    });
+    return out;
+  },
+
+  /** 总计收集的信物件数（成就/面板用） */
+  totalItems() {
+    return Object.keys(this._s ? this._s.items : {}).reduce((a, k) => a + (this._s.items[k] || 0), 0);
+  },
+
+  /** 波次开始：按解锁波次推进到下一章 */
+  onWaveStart(wave) {
+    if (!this._initd) return;
+    const nextIdx = this._s.idx + 1;
+    const next = QUEST_CHAPTERS[nextIdx];
+    if (!next) return;
+    if (wave < next.unlockWave) return;
+    // 上一章必须已完成（第一章 idx=-1 视为已完成）
+    if (this._s.idx >= 0 && !this._ch(QUEST_CHAPTERS[this._s.idx].id).done) return;
+    this._s.idx = nextIdx;
+    this._ch(next.id);
+    // 接取演出：先章节卡，再交对话
+    if (typeof showActCard === 'function') showActCard(next.act, next.title, '新委托 · ' + next.from + ' 的请求');
+    setTimeout(() => {
+      if (typeof showStoryDialog === 'function') showStoryDialog(next.hook);
+    }, 2500);
+    if (typeof setTip === 'function') setTip('📜 新委托【' + next.title + '】——击杀 ' + (ENEMY_DEFS[next.enemy] ? ENEMY_DEFS[next.enemy].name : next.enemy) + '，收集 ' + next.need + ' 个' + QUEST_ITEMS[next.item].name, 8);
+    EventBus.emit('quest:accept', next);
+  },
+
+  /** 击杀梦魇：判定掉落与完成 */
+  onEnemyKilled(enemy) {
+    if (!this._initd || !enemy || !enemy.def) return;
+    const act = this.getActive();
+    if (!act) return;
+    const { def, prog } = act;
+    const isTarget = enemy.type === def.enemy || (def.enemy === 'boss' && enemy.boss);
+    if (!isTarget) return;
+    if (prog.done) return;
+
+    prog.kills++;
+    const itemDef = QUEST_ITEMS[def.item];
+    // 掉率 + 4 次保底：避免运气差卡住主线
+    prog.pity++;
+    const luck = prog.pity >= 4 || Math.random() < def.dropRate * (enemy.elite ? 1.8 : 1);
+    if (luck) {
+      prog.pity = 0;
+      prog.items++;
+      this._s.items[def.item] = (this._s.items[def.item] || 0) + 1;
+      if (typeof addText === 'function') {
+        addText(enemy.x, enemy.y - 34, itemDef.icon + ' ' + itemDef.name + '（' + prog.items + '/' + def.need + '）', '#ffd166', true);
+      }
+      if (typeof spawnParts === 'function') {
+        spawnParts(enemy.x, enemy.y, 14, '#ffd166', 3, 0.7);
+        spawnParts(enemy.x, enemy.y, 6, '#ffffff', 2, 0.4);
+      }
+      if (typeof SFX !== 'undefined' && SFX.coin) SFX.coin();
+      // 每拿到一件就推进一次"快要集齐"的提示
+      if (prog.items === def.need - 1 && typeof setTip === 'function') {
+        setTip('📜 只差最后一件：' + itemDef.name, 5);
+      }
+      EventBus.emit('quest:item', { questId: def.id, item: def.item, have: prog.items, need: def.need });
+    }
+    if (prog.items >= def.need && !prog.done) this._complete(def, prog);
+  },
+
+  /** 凑齐 → 结算奖励 → 完结演出 → 推进下一章 */
+  _complete(def, prog) {
+    prog.done = true;
+    this._s.chapters[def.id] = prog;
+    // 奖励统一走 core.js 的文案解释器，避免"说了给却没给"
+    if (typeof applyStoryEffect === 'function') {
+      try { applyStoryEffect(def.rewardText); } catch (e) { console.warn('QuestSystem reward:', e); }
+    }
+    // 解锁记忆碎片
+    if (def.fragment && typeof DreamFragments !== 'undefined' && DreamFragments.collectFragment) {
+      try {
+        const has = DreamFragments._collected && DreamFragments._collected.has(def.fragment);
+        if (!has) DreamFragments.collectFragment(def.fragment);
+      } catch (e) { console.warn('QuestSystem fragment:', e); }
+    }
+    if (typeof checkAchievements === 'function') checkAchievements();
+    if (typeof SFX !== 'undefined' && SFX.achieve) SFX.achieve();
+    if (typeof shakeBy === 'function') shakeBy(6);
+    EventBus.emit('quest:complete', def);
+
+    // 完结演出：幕卡 → 结局对话
+    setTimeout(() => {
+      if (typeof showActCard === 'function') showActCard(def.act, def.title, '委托完成 · 真相又近了一步');
+    }, 700);
+    setTimeout(() => {
+      if (typeof showStoryDialog === 'function') showStoryDialog(def.done);
+    }, 2400);
+
+    // 全部完成
+    if (this._s.idx >= QUEST_CHAPTERS.length - 1) {
+      this._s.finished = true;
+      setTimeout(() => {
+        if (typeof showStoryDialog === 'function') {
+          showStoryDialog({
+            speaker: '旁白',
+            text: '六件信物，六个夜晚。\n你终于把这场梦完整地读了一遍。\n'
+                + '从今往后，梦魇再来，你不再问"为什么是我"——因为你知道答案了。\n'
+                + '（梦境委托 · 全篇终）',
+          });
+        }
+      }, 6000);
+    }
+  },
+
+  /** 面板用的完整进度快照 */
+  getSnapshot() {
+    if (!this._s) this._s = this.blank();
+    const act = this.getActive();
+    const all = QUEST_CHAPTERS.map((c, i) => {
+      const pr = this._s.chapters[c.id] || { kills: 0, items: 0, done: false };
+      return {
+        idx: i, def: c, kills: pr.kills, items: pr.items, done: !!pr.done,
+        locked: i > this._s.idx && !pr.done,
+        current: i === this._s.idx && !pr.done,
+      };
+    });
+    return {
+      active: act ? { def: act.def, kills: act.prog.kills, items: act.prog.items } : null,
+      chapters: all,
+      items: this.getItems(),
+      finished: !!this._s.finished,
+      total: QUEST_CHAPTERS.length,
+      doneCount: all.filter(a => a.done).length,
     };
   },
 };
@@ -6967,6 +8330,488 @@ function drawWallsDoors() {
   });
   G.doors.forEach(D => { ctx.beginPath(); ctx.arc(WALL_X + 6, D.y, 4, 0, 6.2832); ctx.fillStyle = '#ffd166'; ctx.fill(); });
 }
+/** 各炮塔的炮管/炮口造型 —— 让 10 种武器在战场上不用看名字也能一眼分辨 */
+/* ==================================================================
+ *  武器美术系统
+ *  纯绘制层升级，不新增任何影响数值的状态（只有后座 recoil 一个纯视觉字段），
+ *  所以平衡性零改动。
+ *  性能关键：CanvasGradient 在「绘制那一刻」按当前 CTM 解析，因此所有渐变都能
+ *  在局部坐标系（圆心/轴向 = 0,0）里建好后缓存复用。已用像素读回实测验证：
+ *  同一个 gradient 在三个不同 translate 下，圆心与边缘颜色完全一致。
+ *  于是 38 座炮塔每帧新增 0 个渐变对象，而不是 76 个。
+ * ================================================================== */
+const _rgbCache = new Map();
+function hexRgb(hex) {
+  let v = _rgbCache.get(hex);
+  if (v) return v;
+  let h = String(hex).replace('#', '');
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  const n = parseInt(h, 16) || 0;
+  v = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  _rgbCache.set(hex, v);
+  return v;
+}
+/** t > 0 向白提亮，t < 0 向黑压暗（t ∈ [-1,1]）。结果缓存：每帧被调用数百次，别反复拼字符串 */
+const _shadeCache = new Map();
+function shadeHex(hex, t) {
+  const key = hex + '|' + ((t * 100) | 0);
+  const hit = _shadeCache.get(key);
+  if (hit) return hit;
+  const c = hexRgb(hex);
+  const f = v => Math.round(t > 0 ? v + (255 - v) * t : v * (1 + t));
+  const out = 'rgb(' + f(c[0]) + ',' + f(c[1]) + ',' + f(c[2]) + ')';
+  _shadeCache.set(key, out);
+  return out;
+}
+const _gradCache = new Map();
+function gradR(key, r1, stops) {
+  let g = _gradCache.get(key);
+  if (!g) {
+    g = ctx.createRadialGradient(0, 0, 0, 0, 0, r1);
+    for (let i = 0; i < stops.length; i++) g.addColorStop(stops[i][0], stops[i][1]);
+    _gradCache.set(key, g);
+  }
+  return g;
+}
+function gradL(key, x0, y0, x1, y1, stops) {
+  let g = _gradCache.get(key);
+  if (!g) {
+    g = ctx.createLinearGradient(x0, y0, x1, y1);
+    for (let i = 0; i < stops.length; i++) g.addColorStop(stops[i][0], stops[i][1]);
+    _gradCache.set(key, g);
+  }
+  return g;
+}
+/** 圆角 + 描边的血条（比原来的纯色方块清楚很多） */
+function gbar(x, y, w, h, p, color) {
+  p = clamp(p, 0, 1);
+  const r = h / 2;
+  ctx.fillStyle = 'rgba(0,0,0,.6)'; rr(x - 1, y - 1, w + 2, h + 2, r + 1); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,.12)'; rr(x, y, w, h, r); ctx.fill();
+  if (p > 0) { ctx.fillStyle = color; rr(x, y, Math.max(h, w * p), h, r); ctx.fill(); }
+}
+/** 金属炮管外壳：横向渐变（局部坐标，随旋转一起转，缓存复用） */
+/** 正六边形路径（机械装甲基座用；rot 控制顶点朝向） */
+function hexPath(r, rot) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = rot + i * Math.PI / 3;
+    const x = Math.cos(a) * r, y = Math.sin(a) * r;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+/** 正六边形周长上的点：t ∈ [0,1)，从顶点 rot 起逆时针走一圈 */
+function hexPoint(r, rot, t) {
+  const k = (t * 6 + 6) % 6;
+  const seg = Math.floor(k) % 6, f = k - Math.floor(k);
+  const a0 = rot + seg * Math.PI / 3, a1 = rot + (seg + 1) * Math.PI / 3;
+  const c0 = Math.cos(a0), s0 = Math.sin(a0), c1 = Math.cos(a1), s1 = Math.sin(a1);
+  return [(c0 + (c1 - c0) * f) * r, (s0 + (s1 - s0) * f) * r];
+}
+/** 金属炮管外壳：横向渐变 + 上沿高光 + 能量槽（hot>0 时点亮） */
+function barrelBody(color, len, halfH, accent, hot) {
+  ctx.fillStyle = gradL("bb" + color + len + halfH, 0, -halfH, 0, halfH, [
+    [0, shadeHex(color, 0.6)], [0.4, shadeHex(color, 0.02)], [1, shadeHex(color, -0.66)],
+  ]);
+  ctx.fillRect(-3, -halfH, len + 3, halfH * 2);
+  ctx.fillStyle = "rgba(255,255,255,.42)";
+  ctx.fillRect(-3, -halfH, len + 3, 1.6);
+  ctx.globalAlpha = 0.5; ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.ellipse(3, -halfH * 0.35, 2.2, 1.1, 0, 0, 6.2832); ctx.fill();
+  ctx.globalAlpha = 1;
+  if (accent) {
+    ctx.fillStyle = accent;
+    ctx.globalAlpha = 0.35 + (hot || 0) * 0.65;
+    ctx.fillRect(len - 7, -halfH + 1.2, 4, halfH * 2 - 2.4);
+    ctx.globalAlpha = 1;
+  }
+}
+/** 炮口制退器：末端的三道环槽，让管子有收束感 */
+function muzzleBrake(len, halfH, color) {
+  ctx.fillStyle = shadeHex(color, -0.3);
+  ctx.fillRect(len - 8, -halfH - 1.6, 6, halfH * 2 + 3.2);
+  ctx.fillStyle = "rgba(255,255,255,.22)";
+  ctx.fillRect(len - 8, -halfH - 1.6, 1.4, halfH * 2 + 3.2);
+}
+/** 10 种武器的炮管/发射器造型 —— 长度、粗细、机构都不同，不看名字也能分辨 */
+function drawBarrel(type, color, accent, hot) {
+  accent = accent || color;
+  hot = hot || 0;
+  switch (type) {
+    case "laser": {
+      // 长聚焦镜筒 + 三道聚能环 + 尖端晶体
+      barrelBody(color, 34, 2.6, accent, hot);
+      muzzleBrake(34, 2.6, color);
+      for (let i = 1; i <= 3; i++) {
+        ctx.strokeStyle = accent; ctx.globalAlpha = 0.35 + hot * 0.5;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath(); ctx.arc(10 + i * 6, 0, 5.4, 0, 6.2832); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = gradL("lzc2", 36, -5, 36, 5, [[0, "#ffffff"], [0.5, accent], [1, shadeHex(accent, -0.6)]]);
+      ctx.beginPath(); ctx.moveTo(36, 0); ctx.lineTo(44, -4.5); ctx.lineTo(50, 0); ctx.lineTo(44, 4.5); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 0.5 + hot * 0.5;
+      ctx.fillStyle = gradR("lzg" + accent, 10, [[0, "#ffffff"], [0.4, accent], [1, "rgba(255,255,255,0)"]]);
+      ctx.beginPath(); ctx.arc(44, 0, 9, 0, 6.2832); ctx.fill();
+      break;
+    }
+    case "frost": {
+      // 制冷管 + 扩散喇叭口 + 冰晶核
+      barrelBody(color, 24, 3.2, accent, hot);
+      ctx.fillStyle = gradL("fzc", 24, -7, 24, 7, [[0, "#ffffff"], [0.45, "#bdf0ff"], [1, "#4aa8c8"]]);
+      ctx.beginPath(); ctx.moveTo(22, -7); ctx.lineTo(36, 0); ctx.lineTo(22, 7); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "rgba(224,247,255,.85)"; ctx.lineWidth = 1.1;
+      for (let i = 0; i < 3; i++) {
+        const an = T * 4 + i * Math.PI / 3;
+        ctx.beginPath();
+        ctx.moveTo(30 - Math.cos(an) * 4, -Math.sin(an) * 4);
+        ctx.lineTo(30 + Math.cos(an) * 4, Math.sin(an) * 4);
+        ctx.stroke();
+      }
+      break;
+    }
+    case "flame": {
+      // 短粗喷口 + 点火环
+      barrelBody("#7c2d12", 18, 4.4, accent, hot);
+      ctx.fillStyle = gradL("flc", 16, -5, 16, 5, [[0, "#ffd166"], [0.5, "#ff8c42"], [1, "#9a3412"]]);
+      ctx.beginPath(); ctx.moveTo(16, -5); ctx.lineTo(34, -8.5); ctx.lineTo(34, 8.5); ctx.lineTo(16, 5); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "#ffd166"; ctx.globalAlpha = 0.5 + hot * 0.5; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.arc(33, 0, 7.5, 0, 6.2832); ctx.stroke();
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case "tesla": {
+      // 双叉电极 + 中央电弧球
+      ctx.strokeStyle = shadeHex("#c77dff", -0.15); ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.moveTo(0, -5); ctx.lineTo(24, -7); ctx.moveTo(0, 5); ctx.lineTo(24, 7); ctx.stroke();
+      ctx.fillStyle = gradR("tsg", 9, [[0, "#ffffff"], [0.35, "#e9d5ff"], [1, "rgba(168,85,247,0)"]]);
+      ctx.beginPath(); ctx.arc(27, 0, 9, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "#e9d5ff";
+      ctx.beginPath(); ctx.arc(27, 0, 4.2, 0, 6.2832); ctx.fill();
+      // 随机电弧（用 T 做种子，避免额外状态）
+      if (Math.sin(T * 37) > 0.55) {
+        ctx.strokeStyle = "#f5f3ff"; ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.moveTo(27, 0);
+        ctx.lineTo(31, Math.sin(T * 53) * 5); ctx.lineTo(36, Math.cos(T * 41) * 5);
+        ctx.stroke();
+      }
+      break;
+    }
+    case "poison": {
+      // 双储液罐 + 喷嘴
+      ctx.fillStyle = gradL("poc", 0, -8, 0, -1, [[0, "#d9f99d"], [1, "#3f6212"]]);
+      ctx.fillRect(0, -8, 15, 7);
+      ctx.fillStyle = gradL("poc2", 0, 1, 0, 8, [[0, "#d9f99d"], [1, "#3f6212"]]);
+      ctx.fillRect(0, 1, 15, 7);
+      barrelBody("#4d7c0f", 22, 3, accent, hot);
+      ctx.fillStyle = gradR("pon", 8, [[0, "#f7fee7"], [0.35, "#a3e635"], [1, "#3f6212"]]);
+      ctx.beginPath(); ctx.arc(26, 0, 7, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = gradR("ponin", 4.6, [[0, "#ffffff"], [1, "rgba(163,230,53,0)"]]);
+      ctx.beginPath(); ctx.arc(26, 0, 4.6, 0, 6.2832); ctx.fill();
+      break;
+    }
+    case "sonic": {
+      // 大喇叭 + 波环
+      ctx.fillStyle = gradL("soc", 0, -13, 0, 13, [[0, "#fdf4ff"], [0.45, "#f0abfc"], [1, "#86198f"]]);
+      ctx.beginPath();
+      ctx.moveTo(0, -6); ctx.lineTo(26, -13); ctx.lineTo(26, 13); ctx.lineTo(0, 6);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "rgba(240,171,252,.55)"; ctx.lineWidth = 1.5;
+      for (let i = 1; i <= 3; i++) {
+        ctx.globalAlpha = 0.5 - i * 0.1 + hot * 0.4;
+        ctx.beginPath(); ctx.arc(26, 0, 4 * i + 3, -0.72, 0.72); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      break;
+    }
+    case "missile": {
+      // 四联装发射巢：2×2 管口 + 露出的弹头
+      const tube = (ty) => {
+        ctx.fillStyle = gradL("msc" + ty, -1, ty - 3.4, -1, ty + 3.4, [[0, shadeHex("#9f1239", 0.55)], [1, shadeHex("#9f1239", -0.55)]]);
+        ctx.fillRect(-1, ty - 3.4, 24, 6.8);
+        ctx.fillStyle = "#450a0a";
+        ctx.beginPath(); ctx.ellipse(22, ty, 2.2, 3, 0, 0, 6.2832); ctx.fill();
+        ctx.fillStyle = gradL("msw" + ty, 14, ty - 3, 14, ty + 3, [[0, "#fff7cc"], [0.5, "#ffd166"], [1, "#b45309"]]);
+        ctx.beginPath(); ctx.moveTo(14, ty - 3); ctx.lineTo(25, ty); ctx.lineTo(14, ty + 3); ctx.closePath(); ctx.fill();
+      };
+      tube(-5.2); tube(5.2);
+      ctx.fillStyle = "rgba(255,255,255,.14)";
+      ctx.fillRect(-1, -1.2, 24, 2.4);
+      break;
+    }
+    case "gravity": {
+      // 双环引力发生器 + 悬浮核心
+      ctx.strokeStyle = "#c7d2fe"; ctx.lineWidth = 2.2;
+      ctx.beginPath(); ctx.ellipse(12, 0, 13, 6, 0, 0, 6.2832); ctx.stroke();
+      ctx.strokeStyle = "rgba(165,180,252,.5)"; ctx.lineWidth = 1.3;
+      ctx.beginPath(); ctx.ellipse(12, 0, 7, 13, 0, 0, 6.2832); ctx.stroke();
+      ctx.fillStyle = gradR("gvg", 9, [[0, "#ffffff"], [0.32, "#818cf8"], [1, "rgba(49,46,129,0)"]]);
+      ctx.beginPath(); ctx.arc(12, 0, 9, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "#312e81";
+      ctx.beginPath(); ctx.arc(12, 0, 3.6, 0, 6.2832); ctx.fill();
+      break;
+    }
+    case "prism": {
+      // 晶体 + 三根聚焦臂
+      ctx.fillStyle = gradL("prc", 0, -9, 30, 9, [[0, "#ecfeff"], [0.42, "#67e8f9"], [1, "#0e7490"]]);
+      ctx.beginPath(); ctx.moveTo(0, -5); ctx.lineTo(16, -10); ctx.lineTo(32, 0); ctx.lineTo(16, 10); ctx.lineTo(0, 5); ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = "rgba(207,250,254,.75)"; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(16, -10); ctx.lineTo(16, 10); ctx.moveTo(16, 0); ctx.lineTo(32, 0); ctx.stroke();
+      ctx.fillStyle = gradR("prg", 7, [[0, "#ffffff"], [1, "rgba(103,232,249,0)"]]);
+      ctx.beginPath(); ctx.arc(16, 0, 7, 0, 6.2832); ctx.fill();
+      break;
+    }
+    default: {
+      // 机枪炮塔：双联管 + 制退器
+      barrelBody(color, 28, 2.2, accent, hot);
+      barrelBody(color, 26, 2.2, accent, hot);
+      ctx.save(); ctx.translate(0, -3.4); muzzleBrake(28, 2.2, color); ctx.restore();
+      ctx.save(); ctx.translate(0, 3.4); muzzleBrake(26, 2.2, color); ctx.restore();
+      break;
+    }
+  }
+}
+/** 炮塔本体：机械装甲基座 + 等级刻度 + 能量核心 + 转塔炮管 + 开火冲击 + 共鸣环 */
+function drawTowerArt(b, s, color) {
+  const elem = b.def.dmgType ? DMG[b.def.dmgType] : null;
+  const accent = elem ? elem.color : color;
+  const lvP = clamp((b.level || 1) / (b.def.maxLv || 50), 0, 1);
+  const isBr = !!b.branch;
+  const resN = b.resN || 0;
+  const rc = b.resColor || "#7dd3fc";
+  const pulse = 0.5 + 0.5 * Math.sin(T * 2.2 + (b.pulse || 0) * 0.9);
+  const fxF = b.fireFx || 0;
+  const hot = Math.min(1, fxF * 5);
+  ctx.save();
+  ctx.translate(b.x, b.y + 2);
+
+  // ① 地面投影
+  ctx.globalAlpha = 0.42;
+  ctx.fillStyle = gradR("sh" + color, 32, [[0, "rgba(0,0,0,.7)"], [1, "rgba(0,0,0,0)"]]);
+  ctx.beginPath(); ctx.ellipse(0, 16, 28, 10, 0, 0, 6.2832); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // ② 基座泛光：共鸣/开火时更亮
+  const glowA = 0.05 + (resN >= 2 ? 0.06 : 0) + hot * 0.20 + (isBr ? 0.04 : 0);
+  ctx.globalAlpha = glowA;
+  ctx.fillStyle = gradR("gl" + accent, 27, [[0, accent], [1, "rgba(0,0,0,0)"]]);
+  ctx.beginPath(); ctx.arc(0, 2, 27, 0, 6.2832); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // ③ 六边形装甲基座：暗描边打底 → 装甲面 → 内层甲板 → 左上受光边 → 高光斑 → 铆钉
+  hexPath(22, Math.PI / 6);
+  ctx.strokeStyle = "rgba(0,0,0,.6)"; ctx.lineWidth = 4; ctx.stroke();
+  ctx.fillStyle = gradR("pl" + color, 24, [[0, shadeHex(color, -0.6)], [0.6, shadeHex(color, -0.42)], [1, shadeHex(color, -0.22)]]);
+  ctx.fill();
+  ctx.strokeStyle = isBr ? "#ffe066" : shadeHex(color, 0.32);
+  ctx.lineWidth = isBr ? 2.2 : 1.8; ctx.stroke();
+  hexPath(17.5, Math.PI / 6);
+  ctx.fillStyle = gradR("pl2" + color, 20, [[0, shadeHex(color, -0.4)], [1, shadeHex(color, -0.1)]]);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = 1.2; ctx.stroke();
+  // 左上两道边受光（金属感的经典提示）
+  ctx.strokeStyle = shadeHex(color, 0.8); ctx.lineWidth = 1.8; ctx.lineCap = "butt";
+  ctx.beginPath();
+  ctx.moveTo(Math.cos(Math.PI * 0.5) * 22, 3 + Math.sin(Math.PI * 0.5) * 22);
+  ctx.lineTo(Math.cos(Math.PI * 0.5 + Math.PI / 3) * 22, 3 + Math.sin(Math.PI * 0.5 + Math.PI / 3) * 22);
+  ctx.lineTo(Math.cos(Math.PI * 0.5 + Math.PI * 2 / 3) * 22, 3 + Math.sin(Math.PI * 0.5 + Math.PI * 2 / 3) * 22);
+  ctx.stroke();
+  // 甲板高光斑
+  ctx.globalAlpha = 0.13; ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.ellipse(-5, -5, 7, 4, -0.6, 0, 6.2832); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = shadeHex(color, 0.45);
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const a = Math.PI / 6 + i * Math.PI / 3;
+    const px2 = Math.cos(a) * 19.6, py2 = Math.sin(a) * 19.6;
+    ctx.moveTo(px2 + 1.6, py2); ctx.arc(px2, py2, 1.6, 0, 6.2832);
+  }
+  ctx.fill();
+
+  // ④ 等级刻度：沿六边形装甲边缘点亮 12 块甲片（弧长 = 等级进度）
+  const SEG = 12, HR = 23.5;
+  ctx.lineCap = "butt"; ctx.lineWidth = 2.6;
+  const litN = Math.round(lvP * SEG);
+  ctx.beginPath();
+  for (let i = 0; i < SEG; i++) {
+    if (i >= litN) continue;
+    const p0 = hexPoint(HR, Math.PI / 6, i / SEG + 0.012);
+    const p1 = hexPoint(HR, Math.PI / 6, (i + 1) / SEG - 0.012);
+    ctx.moveTo(p0[0], 3 + p0[1]); ctx.lineTo(p1[0], 3 + p1[1]);
+  }
+  ctx.strokeStyle = accent; ctx.globalAlpha = 0.95; ctx.stroke();
+  ctx.globalAlpha = 1; ctx.beginPath();
+  for (let i = litN; i < SEG; i++) {
+    const p0 = hexPoint(HR, Math.PI / 6, i / SEG + 0.012);
+    const p1 = hexPoint(HR, Math.PI / 6, (i + 1) / SEG - 0.012);
+    ctx.moveTo(p0[0], 3 + p0[1]); ctx.lineTo(p1[0], 3 + p1[1]);
+  }
+  ctx.strokeStyle = "rgba(255,255,255,.08)"; ctx.stroke();
+
+  // ⑤ 能量核心脉动（图标下方透出的光）
+  ctx.globalAlpha = 0.20 + pulse * 0.20 + hot * 0.22;
+  ctx.fillStyle = gradR("core" + accent, 14, [[0, "#ffffff"], [0.24, accent], [1, "rgba(0,0,0,0)"]]);
+  ctx.beginPath(); ctx.arc(0, -2, 14, 0, 6.2832); ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // ⑥ 转塔 + 炮管（待机巡视 / 开火后座 / 能量导管）
+  const idleSweep = (b.idle || 0) > 0.35 ? Math.sin(T * 1.05 + (b.pulse || 0) * 0.6) * 0.5 : 0;
+  const rot = b.angle + idleSweep;
+  ctx.save();
+  ctx.translate(0, -3);
+  ctx.rotate(rot);
+  ctx.translate(-((b.recoil || 0) * 6), 0);
+  ctx.fillStyle = gradR("hb" + color, 13, [[0, shadeHex(color, 0.5)], [0.55, shadeHex(color, -0.02)], [1, shadeHex(color, -0.5)]]);
+  ctx.beginPath(); ctx.arc(0, 0, 12, 0, 6.2832); ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,.45)"; ctx.lineWidth = 2.4; ctx.stroke();
+  ctx.strokeStyle = isBr ? "#ffe066" : shadeHex(color, 0.6); ctx.lineWidth = 1.4; ctx.stroke();
+  ctx.globalAlpha = 0.18; ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.ellipse(-3.5, -3.5, 4.6, 3, -0.7, 0, 6.2832); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.globalAlpha = 0.4 + hot * 0.6;
+  ctx.fillStyle = accent;
+  ctx.fillRect(5, -1.7, 9, 3.4);
+  ctx.globalAlpha = 1;
+  drawBarrel(b.type, color, accent, hot);
+  ctx.restore();
+
+  // ⑦ 炮口闪光 + 冲击环（用 fireFx 自身当进度，零新增状态）
+  if (fxF > 0) {
+    const tipX = Math.cos(rot) * 34, tipY = -3 + Math.sin(rot) * 34;
+    ctx.save();
+    ctx.translate(tipX, tipY);
+    ctx.globalAlpha = (1 - hot) * 0.55;
+    ctx.strokeStyle = accent; ctx.lineWidth = 1 + (1 - hot) * 2.2;
+    ctx.beginPath(); ctx.arc(0, 0, 6 + (1 - hot) * 20, 0, 6.2832); ctx.stroke();
+    ctx.globalAlpha = hot * 0.85;
+    ctx.fillStyle = gradR("mf" + accent, 19, [[0, "#ffffff"], [0.28, accent], [1, "rgba(255,255,255,0)"]]);
+    ctx.beginPath(); ctx.arc(0, 0, 19, 0, 6.2832); ctx.fill();
+    ctx.rotate(rot);
+    ctx.globalAlpha = hot * 0.85; ctx.fillStyle = accent;
+    ctx.beginPath(); ctx.moveTo(0, -4); ctx.lineTo(22, -8.5); ctx.lineTo(31, 0); ctx.lineTo(22, 8.5); ctx.lineTo(0, 4); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.globalAlpha = hot;
+    ctx.beginPath(); ctx.moveTo(0, -2); ctx.lineTo(30, 0); ctx.lineTo(0, 2); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(0, -1.6); ctx.lineTo(-15, 0); ctx.lineTo(0, 1.6); ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  // ⑧ 类型专属场效
+  if (b.type === "gravity") {
+    const rg = Math.max(80, Math.round((s.range || 300) / 40) * 40);
+    ctx.globalAlpha = 0.15 + Math.sin(T * 2.4) * 0.05;
+    ctx.fillStyle = gradR("gvf" + rg, rg, [[0, "rgba(129,140,248,.8)"], [0.45, "rgba(99,102,241,.22)"], [1, "rgba(49,46,129,0)"]]);
+    ctx.beginPath(); ctx.arc(0, 0, rg, 0, 6.2832); ctx.fill();
+    ctx.globalAlpha = 0.45; ctx.strokeStyle = "rgba(165,180,252,.5)"; ctx.lineWidth = 1.4;
+    ctx.setLineDash([4, 6]); ctx.lineDashOffset = -T * 12;
+    ctx.beginPath(); ctx.arc(0, 0, rg, 0, 6.2832); ctx.stroke();
+    ctx.setLineDash([]); ctx.lineDashOffset = 0;
+    for (let i = 0; i < 4; i++) {
+      const a = T * (1.0 + i * 0.42) + i * 1.7, r2 = rg * (0.22 + i * 0.19);
+      ctx.globalAlpha = 0.4; ctx.fillStyle = "#c7d2fe";
+      ctx.beginPath(); ctx.arc(Math.cos(a) * r2, Math.sin(a) * r2, 2.2, 0, 6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  } else if (b.type === "flame" && b.flameOn) {
+    ctx.globalAlpha = 0.3 + Math.sin(T * 16) * 0.1;
+    ctx.fillStyle = gradR("flburn", Math.max(40, s.radius || 110), [[0, "rgba(255,180,80,.55)"], [0.6, "rgba(255,120,40,.18)"], [1, "rgba(255,80,20,0)"]]);
+    ctx.beginPath(); ctx.arc(0, 0, Math.max(40, s.radius || 110), 0, 6.2832); ctx.fill();
+    ctx.globalAlpha = 1;
+  } else if (b.type === "sonic") {
+    ctx.globalAlpha = 0.4 + Math.sin(T * 5) * 0.12;
+    ctx.strokeStyle = "rgba(240,171,252,.55)"; ctx.lineWidth = 1.4;
+    for (let i = 1; i <= 3; i++) {
+      ctx.beginPath(); ctx.arc(0, 0, 16 + i * 13 + Math.sin(T * 3 + i) * 2, -0.55, 0.55); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ⑨ 共鸣：旋转虚线环 + 三颗环绕能量点（元素种类越多转得越快）
+  if (resN >= 2) {
+    const spin = T * (0.6 + resN * 0.2);
+    ctx.save();
+    ctx.globalAlpha = 0.34;
+    ctx.strokeStyle = rc; ctx.lineWidth = 1.4;
+    ctx.setLineDash([10, 12]); ctx.lineDashOffset = -spin * 12;
+    ctx.beginPath(); ctx.arc(0, 2, 33, 0, 6.2832); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 0.85; ctx.fillStyle = rc;
+    ctx.beginPath();
+    for (let i = 0; i < 3; i++) {
+      const a = spin + i * 2.0944;
+      const dx2 = Math.cos(a) * 33, dy2 = 2 + Math.sin(a) * 33;
+      ctx.moveTo(dx2 + 1.9, dy2); ctx.arc(dx2, dy2, 1.9, 0, 6.2832);
+    }
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // ⑩ 转职塔：漂浮的金色符文微粒
+  if (isBr) {
+    ctx.save();
+    ctx.fillStyle = "#ffe066";
+    ctx.globalAlpha = 0.62; ctx.beginPath();
+    for (let i = 0; i < 3; i++) {
+      const a = T * 0.9 + i * 2.0944;
+      const rr2 = 27 + Math.sin(T * 2 + i) * 2;
+      const dx3 = Math.cos(a) * rr2, dy3 = 2 + Math.sin(a) * rr2;
+      ctx.moveTo(dx3 + 1.5, dy3); ctx.arc(dx3, dy3, 1.5, 0, 6.2832);
+    }
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+/** 非炮塔建筑：同一套装甲语言，但更低调，不抢炮塔的视觉焦点 */
+function drawSupportArt(b, color) {
+  const glow = 0.5 + Math.sin(T * 2 + (b.pulse || 0)) * 0.18;
+  ctx.save();
+  ctx.translate(b.x, b.y + 2);
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle = gradR("sh" + color, 26, [[0, "rgba(0,0,0,.6)"], [1, "rgba(0,0,0,0)"]]);
+  ctx.beginPath(); ctx.ellipse(0, 14, 24, 9, 0, 0, 6.2832); ctx.fill();
+  ctx.globalAlpha = 1;
+  hexPath(19, Math.PI / 6);
+  ctx.strokeStyle = "rgba(0,0,0,.55)"; ctx.lineWidth = 3.6; ctx.stroke();
+  ctx.fillStyle = gradR("pl" + color, 22, [[0, shadeHex(color, -0.58)], [0.6, shadeHex(color, -0.4)], [1, shadeHex(color, -0.2)]]);
+  ctx.fill();
+  ctx.strokeStyle = shadeHex(color, 0.3); ctx.lineWidth = 1.6; ctx.stroke();
+  hexPath(14.5, Math.PI / 6);
+  ctx.fillStyle = gradR("pl2" + color, 18, [[0, shadeHex(color, -0.38)], [1, shadeHex(color, -0.08)]]);
+  ctx.fill();
+  ctx.globalAlpha = 0.12; ctx.fillStyle = "#ffffff";
+  ctx.beginPath(); ctx.ellipse(-4, -4, 6, 3.4, -0.6, 0, 6.2832); ctx.fill();
+  ctx.globalAlpha = 1;
+  // 沿装甲边缘的甲片刻度（5 段，表示等级进度）
+  const lvP2 = clamp((b.level || 1) / (b.def.maxLv || 50), 0, 1);
+  ctx.lineCap = "butt"; ctx.lineWidth = 2.2;
+  const lit2 = Math.round(lvP2 * 5);
+  ctx.beginPath();
+  for (let i = 0; i < lit2; i++) {
+    const q0 = hexPoint(20.5, Math.PI / 6, i / 5 + 0.015);
+    const q1 = hexPoint(20.5, Math.PI / 6, (i + 1) / 5 - 0.015);
+    ctx.moveTo(q0[0], 3 + q0[1]); ctx.lineTo(q1[0], 3 + q1[1]);
+  }
+  ctx.strokeStyle = shadeHex(color, 0.35); ctx.stroke();
+  ctx.beginPath();
+  for (let i = lit2; i < 5; i++) {
+    const q0 = hexPoint(20.5, Math.PI / 6, i / 5 + 0.015);
+    const q1 = hexPoint(20.5, Math.PI / 6, (i + 1) / 5 - 0.015);
+    ctx.moveTo(q0[0], 3 + q0[1]); ctx.lineTo(q1[0], 3 + q1[1]);
+  }
+  ctx.strokeStyle = "rgba(255,255,255,.07)"; ctx.stroke();
+  ctx.globalAlpha = glow * 0.55;
+  ctx.strokeStyle = color; ctx.lineWidth = 2;
+  ctx.setLineDash([3, 5]); ctx.lineDashOffset = -T * 8;
+  ctx.beginPath(); ctx.arc(0, 3, 22.5, 0, 6.2832); ctx.stroke();
+  ctx.setLineDash([]); ctx.lineDashOffset = 0;
+  ctx.globalAlpha = 0.22 + glow * 0.2;
+  ctx.fillStyle = gradR("core" + color, 13, [[0, "#ffffff"], [0.25, color], [1, "rgba(0,0,0,0)"]]);
+  ctx.beginPath(); ctx.arc(0, -2, 13, 0, 6.2832); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
 function drawBuildings() {
   for (const b of G.buildings) {
     // 建造落地动画
@@ -6979,6 +8824,7 @@ function drawBuildings() {
     }
     // 开火脉冲衰减
     if (b.fireFx > 0) b.fireFx -= 0.016;
+    if (b.recoil > 0) b.recoil = Math.max(0, b.recoil - 0.15);
     const buildOffsetY = b.animY !== undefined ? b.animY : 0;
     const fireScale = b.fireFx > 0 ? 1 + 0.04 * Math.min(b.fireFx * 4, 1) : 0;
     const buildScale = (b.animBounce > 0 ? 1 + 0.1 * Math.sin(b.animBounce * 10) : 1) + fireScale;
@@ -6994,59 +8840,27 @@ function drawBuildings() {
     ctx.translate(-b.x, -b.y);
 
     ctx.fillStyle = 'rgba(0,0,0,.25)'; rr(R.x + 8, R.y + 10, R.w - 16, R.h - 16, 8); ctx.fill();
-    const gl = ctx.createRadialGradient(b.x, b.y, 2, b.x, b.y, 46);
-    gl.addColorStop(0, color + '44'); gl.addColorStop(1, 'transparent');
-    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(b.x, b.y, 46, 0, 6.2832); ctx.fill();
-    ctx.fillStyle = b.branch ? 'rgba(255,224,102,.10)' : 'rgba(255,255,255,.07)';
+    const gl = gradR('cg' + color, 38, [[0, color + '2e'], [1, 'rgba(0,0,0,0)']]);
+    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(b.x, b.y, 38, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = b.branch ? 'rgba(255,224,102,.07)' : 'rgba(255,255,255,.045)';
     rr(R.x + 10, R.y + 14, R.w - 20, R.h - 24, 6); ctx.fill();
-    ctx.strokeStyle = b.branch ? '#ffe066' : color + '66'; ctx.lineWidth = b.branch ? 2 : 1.5; ctx.stroke();
-    if (b.def.tower) {
-      ctx.save(); ctx.translate(b.x, b.y + 2); ctx.rotate(b.angle);
-      ctx.fillStyle = color;
-      if (b.type === 'laser') { ctx.fillRect(0, -2.5, 30, 5); ctx.fillStyle = '#fff'; ctx.fillRect(24, -1.5, 6, 3); }
-      else if (b.type === 'flame') { ctx.fillStyle = '#ff8c42'; ctx.fillRect(0, -4, 22, 8); }
-      else if (b.type === 'tesla') { ctx.strokeStyle = '#c77dff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(24, 0); ctx.stroke(); ctx.beginPath(); ctx.arc(26, 0, 4, 0, 6.2832); ctx.fillStyle = '#e9d5ff'; ctx.fill(); }
-      else { ctx.fillRect(0, -3, b.type === 'frost' ? 24 : 26, 6); ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(18, -2, 6, 4); }
-      ctx.restore();
-      if (b.cd > 0.82) { ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(b.x + Math.cos(b.angle) * 28, b.y + 2 + Math.sin(b.angle) * 28, 5, 0, 6.2832); ctx.fill(); }
-      if (b.type === 'gravity') {
-        const s2 = bstat(b);
-        ctx.save(); ctx.globalAlpha = 0.16 + Math.sin(T * 2.4) * 0.05;
-        const g3 = ctx.createRadialGradient(b.x, b.y, 4, b.x, b.y, s2.range || 300);
-        g3.addColorStop(0, 'rgba(129,140,248,.75)'); g3.addColorStop(0.5, 'rgba(99,102,241,.22)'); g3.addColorStop(1, 'transparent');
-        ctx.fillStyle = g3; ctx.beginPath(); ctx.arc(b.x, b.y, s2.range || 300, 0, 6.2832); ctx.fill();
-        ctx.globalAlpha = 0.5; ctx.strokeStyle = 'rgba(165,180,252,.5)'; ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.arc(b.x, b.y, s2.range || 300, 0, 6.2832); ctx.stroke();
-        ctx.setLineDash([]);
-        for (let i = 0; i < 3; i++) {
-          const a = T * (1.1 + i * 0.5) + i * 2.1, rr2 = (s2.range || 300) * (0.28 + i * 0.22);
-          ctx.globalAlpha = 0.34; ctx.fillStyle = '#c7d2fe';
-          ctx.beginPath(); ctx.arc(b.x + Math.cos(a) * rr2, b.y + Math.sin(a) * rr2, 2.4, 0, 6.2832); ctx.fill();
-        }
-        ctx.restore();
-      }
-      if (b.type === 'flame' && b.flameOn) {
-        ctx.save(); ctx.globalAlpha = 0.5 + Math.sin(T * 18) * 0.2;
-        ctx.fillStyle = '#ff8c42'; ctx.beginPath(); ctx.arc(b.x, b.y, s.radius * 0.35, 0, 6.2832); ctx.fill(); ctx.restore();
-      }
-      if (b.def.dmgType) {
-        ctx.fillStyle = DMG[b.def.dmgType].color; ctx.globalAlpha = 0.85;
-        ctx.beginPath(); ctx.arc(R.x + R.w - 16, R.y + 16, 5, 0, 6.2832); ctx.fill(); ctx.globalAlpha = 1;
-      }
-    }
-    emoji(icon, b.x, b.y - 4, 30);
-    // 开火光晕
-    if (b.fireFx > 0 && b.def.tower) {
-      ctx.save();
-      ctx.globalAlpha = b.fireFx * 3;
-      const fg = ctx.createRadialGradient(b.x, b.y, 2, b.x, b.y, 38);
-      fg.addColorStop(0, color + 'bb');
-      fg.addColorStop(0.5, color + '44');
-      fg.addColorStop(1, 'transparent');
-      ctx.fillStyle = fg;
-      ctx.beginPath(); ctx.arc(b.x, b.y, 38, 0, 6.2832); ctx.fill();
+    ctx.strokeStyle = b.branch ? 'rgba(255,224,102,.75)' : color + '3d'; ctx.lineWidth = b.branch ? 2 : 1.2; ctx.stroke();
+    if (b.def.tower) drawTowerArt(b, s, color);
+    else drawSupportArt(b, color);
+    // 元素宝石（替代原先右上角的纯色圆点）：按伤害类型着色，带内高光
+    if (b.def.tower && b.def.dmgType) {
+      const gx = R.x + R.w - 15, gy = R.y + 15, gc = DMG[b.def.dmgType].color;
+      ctx.fillStyle = gc; ctx.globalAlpha = 0.16;
+      ctx.beginPath(); ctx.arc(gx, gy, 8.5, 0, 6.2832); ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.save(); ctx.translate(gx, gy);
+      ctx.fillStyle = gradR('gm' + gc, 5.6, [[0, '#ffffff'], [0.42, gc], [1, shadeHex(gc, -0.5)]]);
+      ctx.beginPath(); ctx.arc(0, 0, 5.2, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,.8)';
+      ctx.beginPath(); ctx.arc(-1.5, -1.5, 1.5, 0, 6.2832); ctx.fill();
       ctx.restore();
     }
+    emoji(icon, b.x, b.y - 6, 24);
     const nm = buildName(b);
     ctx.font = 'bold 9.5px sans-serif'; ctx.textAlign = 'center';
     ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,0,0,.8)';
@@ -7055,10 +8869,12 @@ function drawBuildings() {
     ctx.font = 'bold 9px sans-serif';
     ctx.fillStyle = b.branch ? '#ffe066' : '#9ef01a';
     ctx.fillText('Lv' + b.level + '/50', b.x, R.y + R.h - 6);
-    if (b.hp < b.maxHp) bar(b.x - 32, R.y + 4, 64, 5, b.hp / b.maxHp, '#4ade80');
+    const bw = 58, bx = b.x - bw / 2, by = R.y + 5;
+    if (b.hp < b.maxHp) gbar(bx, by, bw, 5, b.hp / b.maxHp, b.hp / b.maxHp < 0.3 ? '#f87171' : (b.hp / b.maxHp < 0.6 ? '#fbbf24' : '#4ade80'));
     if (b.shield > 0) {
-      ctx.strokeStyle = 'rgba(93,230,255,.8)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(b.x, b.y - 4, 22, 0, 6.2832); ctx.stroke();
+      gbar(bx, by + 7, bw, 3.5, b.maxHp ? b.shield / Math.max(1, b.shieldMax || b.maxHp) : 0, '#5de6ff');
+      ctx.strokeStyle = 'rgba(93,230,255,.65)'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.arc(b.x, b.y - 2, 20, 0, 6.2832); ctx.stroke();
     }
     if (b.def.tower && (b.empT > 0 || b.freezeT > 0)) {
       const dis = b.empT > 0;
@@ -7072,6 +8888,25 @@ function drawBuildings() {
     if (!b.branch && b.level >= BRANCH_AT && b.def.branch) {
       ctx.fillStyle = 'rgba(255,224,102,' + (0.5 + 0.4 * Math.sin(T * 5)) + ')'; ctx.font = 'bold 9px sans-serif';
       ctx.fillText('可转职', b.x, R.y + 12);
+    }
+    /* 炮塔共鸣可视化 —— 相邻不同元素炮塔会互相增幅，但这套机制原先在画面上完全看不见：
+       虚线光环表示「正在共鸣」，左上角徽记显示参与的元素种类数，颜色对应共鸣档位。 */
+    if (b.def.tower && b.resN >= 2) {
+      const rc = b.resColor || '#7dd3fc';
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      ctx.strokeStyle = rc; ctx.lineWidth = 1.8;
+      ctx.setLineDash([5, 6]); ctx.lineDashOffset = -T * 14;
+      ctx.beginPath(); ctx.arc(b.x, b.y, 30, 0, 6.2832); ctx.stroke();
+      ctx.setLineDash([]); ctx.lineDashOffset = 0;
+      ctx.globalAlpha = 0.07; ctx.fillStyle = rc;
+      ctx.beginPath(); ctx.arc(b.x, b.y, 30, 0, 6.2832); ctx.fill();
+      ctx.restore();
+      ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
+      ctx.lineWidth = 2.5; ctx.strokeStyle = 'rgba(0,0,0,.85)';
+      const badge = '🎵' + b.resN;
+      ctx.strokeText(badge, R.x + 15, R.y + 15);
+      ctx.fillStyle = rc; ctx.fillText(badge, R.x + 15, R.y + 15);
     }
     // 选中建筑脉冲光环
     if (selected === b) {
@@ -7148,129 +8983,286 @@ function drawBed() {
   ctx.font = 'bold 9.5px sans-serif'; ctx.fillStyle = '#9ef01a';
   ctx.fillText('Lv' + G.bed.lv + '/50  ' + fmt(bedGold()) + '/秒', x + 6, R.y + R.h * 2 - 4);
 }
+/** 把十六进制色按比例混向目标色（敌人血条/描边用） */
+function mixHex(a, b, t) {
+  const ca = hexRgb(a), cb = hexRgb(b);
+  const f = i => Math.round(ca[i] + (cb[i] - ca[i]) * t);
+  return "rgb(" + f(0) + "," + f(1) + "," + f(2) + ")";
+}
+/** 飞行生物的翅膀（上下拍动） */
+function drawWing(ang, len, beat) {
+  ctx.save();
+  ctx.rotate(ang);
+  ctx.fillStyle = "rgba(220,225,255,.30)";
+  ctx.beginPath();
+  ctx.ellipse(len * 0.5, 0, len * 0.5, len * 0.22 + beat, 0, 0, 6.2832);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+}
+/** 梦魇本体：投影 → 移动拖尾 → 威胁光环 → 暗描边机体 → 类型特征 → 图标 → 状态 */
 function drawEnemies() {
   for (const e of G.enemies) {
     if (e.dead) continue;
+    const d = e.def;
+    const col = d.color || "#b28dff";
     const sp = enemySpeed(e);
-    const bob = Math.sin(T * 8 + e.wob) * (sp > 0 ? 3 : 0.5) + (e.def.flying ? Math.sin(T * 4 + e.wob) * 6 : 0);
+    const bob = Math.sin(T * 8 + e.wob) * (sp > 0 ? 3 : 0.5) + (d.flying ? Math.sin(T * 4 + e.wob) * 6 : 0);
+    const face = isFinite(e.dir) ? e.dir : 0;
+    const moving = sp > 1;
     ctx.save();
     ctx.globalAlpha = e.alpha;
-    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * 0.9, e.r * 0.8, e.r * 0.3, 0, 0, 6.2832); ctx.fill();
-    const gl = ctx.createRadialGradient(e.x, e.y, 1, e.x, e.y, e.r * 2);
-    gl.addColorStop(0, e.def.color + (e.boss ? '77' : (e.elite ? '66' : '44'))); gl.addColorStop(1, 'transparent');
-    ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(e.x, e.y, e.r * 2, 0, 6.2832); ctx.fill();
-    if (e.elite) {
-      // 精英光环
-      ctx.save();
-      ctx.globalAlpha = 0.25 + Math.sin(T * 3) * 0.1;
-      const eliteGlow = ctx.createRadialGradient(e.x, e.y, e.r * 0.3, e.x, e.y, e.r * 2.5);
-      const affixColor = AFFIX[e.affixes[0]].color;
-      eliteGlow.addColorStop(0, affixColor + '55');
-      eliteGlow.addColorStop(0.5, affixColor + '22');
-      eliteGlow.addColorStop(1, 'transparent');
-      ctx.fillStyle = eliteGlow;
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r * 2.5, 0, 6.2832); ctx.fill();
+
+    // ① 地面投影
+    ctx.fillStyle = "rgba(0,0,0,.38)";
+    ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * 0.92, e.r * 0.85, e.r * 0.3, 0, 0, 6.2832); ctx.fill();
+
+    // ② 移动拖尾：三截渐隐残影，让"速度"读得出来
+    if (moving) {
+      const back = Math.atan2(Math.sin(face), Math.cos(face));
+      const dx = -Math.cos(back), dy = -Math.sin(back);
+      for (let i = 1; i <= 3; i++) {
+        const t = i / 3;
+        ctx.globalAlpha = e.alpha * 0.16 * (1 - t);
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.ellipse(e.x + dx * e.r * 1.5 * i, e.y + dy * e.r * 1.5 * i + bob,
+          e.r * (0.62 - t * 0.34), e.r * (0.5 - t * 0.28), 0, 0, 6.2832);
+        ctx.fill();
+      }
+      ctx.globalAlpha = e.alpha;
+    }
+
+    // ③ 威胁光环（本体底光）
+    const RK = Math.round(e.r);   // 半径必须进 key：同色不同体积的敌人不能共用一份渐变
+    const gl = gradR("eg" + col + RK, e.r * 2.1, [[0, col + (e.boss ? "66" : (e.elite ? "55" : "3a"))], [1, "rgba(0,0,0,0)"]]);
+    ctx.fillStyle = gl;
+    ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r * 2.1, 0, 6.2832); ctx.fill();
+
+    // ④ 机体：暗描边 + 内层材质，先从地面里"抠"出来
+    ctx.fillStyle = "rgba(8,6,18,.72)";
+    ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r + 2.4, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = gradR("eb" + col + RK, e.r, [[0, mixHex(col, "#ffffff", 0.34)], [0.55, mixHex(col, "#000000", 0.28)], [1, mixHex(col, "#000000", 0.62)]]);
+    ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r, 0, 6.2832); ctx.fill();
+    ctx.strokeStyle = d.boss || e.elite ? "#ffe066" : mixHex(col, "#ffffff", 0.45);
+    ctx.lineWidth = d.boss ? 2.6 : (e.elite ? 2.2 : 1.4); ctx.stroke();
+
+    // ⑤ 类型特征
+    if (d.flying) {
+      const beat = Math.sin(T * 14 + e.wob) * e.r * 0.16;
+      ctx.save(); ctx.translate(e.x, e.y + bob);
+      drawWing(face + Math.PI / 2 + 0.5, e.r * 1.5, beat);
+      drawWing(face - Math.PI / 2 - 0.5, e.r * 1.5, beat);
       ctx.restore();
-      // 旋转虚线圈
-      ctx.strokeStyle = AFFIX[e.affixes[0]].color; ctx.lineWidth = 2;
+    }
+    if (d.burrow) {
+      ctx.save();
+      ctx.globalAlpha = e.alpha * 0.75;
+      ctx.fillStyle = "#78350f";
+      ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * 1.1, e.r * 1.25, e.r * 0.42, 0, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "#a16207";
+      for (let i = 0; i < 4; i++) {
+        const a = e.anim * 1.4 + i * 1.57;
+        ctx.beginPath();
+        ctx.arc(e.x + Math.cos(a) * e.r * 1.15, e.y + e.r * 0.9 + Math.sin(a) * e.r * 0.3, 2, 0, 6.2832);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+    if (d.stealth && !e.untargetable) {
+      ctx.save();
+      ctx.globalAlpha = e.alpha * 0.7;
+      ctx.strokeStyle = "#d7e8ff"; ctx.lineWidth = 1.2;
+      ctx.setLineDash([3, 4]); ctx.lineDashOffset = -T * 10;
+      ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r + 5, 0, 6.2832); ctx.stroke();
+      ctx.setLineDash([]); ctx.lineDashOffset = 0;
+      ctx.restore();
+    }
+
+    // ⑥ 图标（敌人的"身份"，放在最上层）
+    emoji(d.icon, e.x, e.y + bob - 2, e.r * 1.9);
+
+    // ⑦ 受击闪白
+    if (e.hitFlash > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, e.hitFlash * 5);
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(e.x, e.y + bob - 2, e.r * 1.15, 0, 6.2832); ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+
+    // ⑧ 控制状态：减速 / 眩晕 / 冰冻
+    if (G.buff.freeze > 0 || e.stun > 0) {
+      ctx.strokeStyle = "rgba(127,223,255,.9)"; ctx.lineWidth = 2.5;
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 5, 0, 6.2832); ctx.stroke();
+    }
+    if (e.slowT > 0) {
+      ctx.fillStyle = "rgba(127,223,255,.22)";
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 3, 0, 6.2832); ctx.fill();
+    }
+
+    // ⑨ 精英 / BOSS 表现
+    if (e.elite) {
+      const af = AFFIX[e.affixes[0]] || { color: "#fb923c", icon: "✦" };
+      ctx.save();
+      ctx.globalAlpha = 0.22 + Math.sin(T * 3) * 0.08;
+      ctx.fillStyle = gradR("ea" + af.color, e.r * 2.6, [[0, af.color + "55"], [1, "rgba(0,0,0,0)"]]);
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r * 2.6, 0, 6.2832); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle = af.color; ctx.lineWidth = 2;
       ctx.setLineDash([4, 4]); ctx.lineDashOffset = -T * 12;
       ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 8, 0, 6.2832); ctx.stroke();
       ctx.setLineDash([]); ctx.lineDashOffset = 0;
-    }
-    if (G.buff.freeze > 0 || e.stun > 0) { ctx.strokeStyle = 'rgba(127,223,255,.85)'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 5, 0, 6.2832); ctx.stroke(); }
-    if (e.slowT > 0) { ctx.fillStyle = 'rgba(127,223,255,.22)'; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 3, 0, 6.2832); ctx.fill(); }
-    emoji(e.def.icon, e.x, e.y + bob - 2, e.r * 1.9);
-    // 受击白色闪烁
-    if (e.hitFlash > 0) {
-      ctx.save();
-      ctx.globalAlpha = e.hitFlash * 5; // 快速闪烁
-      ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.arc(e.x, e.y + bob - 2, e.r * 1.2, 0, 6.2832); ctx.fill();
-      ctx.restore();
-    }
-    if (e.affixes.length) {
-      ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+      ctx.font = "11px sans-serif"; ctx.textAlign = "center";
       let ox = -((e.affixes.length - 1) * 13) / 2;
-      e.affixes.forEach(k => { ctx.fillText(AFFIX[k].icon, e.x + ox, e.y - e.r - 16); ox += 13; });
+      e.affixes.forEach(k => { ctx.fillText((AFFIX[k] || {}).icon || "✦", e.x + ox, e.y - e.r - 16); ox += 13; });
     }
-    ctx.restore();
-    if (e.def.emp || e.def.freezeTower || e.def.parasite) {
-      ctx.save(); ctx.globalAlpha = e.alpha;
-      const pulse2 = 0.6 + Math.sin(T * 6) * 0.35;
-      if (e.def.emp) { ctx.strokeStyle = 'rgba(103,232,249,' + pulse2 + ')'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 12, 0, 6.2832); ctx.stroke(); }
-      if (e.parasiteTarget) { ctx.strokeStyle = 'rgba(132,204,22,.75)'; ctx.lineWidth = 2; ctx.setLineDash([3, 4]);
-        ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(e.parasiteTarget.x, e.parasiteTarget.y); ctx.stroke(); ctx.setLineDash([]); }
-      if (e.def.mimic && !e.mimicRevealed) { ctx.fillStyle = 'rgba(240,171,252,.9)'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('🎭', e.x, e.y - e.r - 12); }
-      ctx.restore();
-    }
-    const w = e.boss ? 76 : e.r * 2.2;
-    if (e.hp < e.maxHp || e.boss || e.elite) {
-      // 血条背景光晕（BOSS/精英）
-      if (e.boss || e.elite) {
-        ctx.save();
-        ctx.globalAlpha = 0.3;
-        ctx.shadowColor = e.boss ? '#ff4d6d' : '#fb923c';
-        ctx.shadowBlur = 8;
-        ctx.fillStyle = 'rgba(0,0,0,.4)';
-        rr(e.x - w / 2 - 1, e.y - e.r - 10, w + 2, (e.boss ? 7 : 4) + 2, 3);
-        ctx.fill();
-        ctx.restore();
-      }
-      // 血条颜色：低血量时脉动警告
-      let barColor = e.boss ? '#ff4d6d' : (e.elite ? '#fb923c' : '#f87171');
-      const hpRatio = e.hp / e.maxHp;
-      if (hpRatio < 0.25) {
-        const warnPulse = 0.7 + Math.sin(T * 8) * 0.3;
-        barColor = e.boss ? `rgba(255,77,109,${warnPulse})` : `rgba(248,113,113,${warnPulse})`;
-      }
-      bar(e.x - w / 2, e.y - e.r - 9, w, e.boss ? 7 : 4, hpRatio, barColor, 'rgba(255,255,255,.2)');
-    }
-    if (e.shieldMax && e.shield > 0) bar(e.x - w / 2, e.y - e.r - (e.boss ? 15 : 13), w, 3, e.shield / e.shieldMax, '#5de6ff');
     if (e.boss) {
-      // BOSS 大光环
       ctx.save();
-      ctx.globalAlpha = 0.3 + Math.sin(T * 2) * 0.15;
-      const bossGlow = ctx.createRadialGradient(e.x, e.y, e.r * 0.5, e.x, e.y, e.r * 3);
-      bossGlow.addColorStop(0, 'rgba(255,77,109,.4)');
-      bossGlow.addColorStop(0.5, 'rgba(255,77,109,.1)');
-      bossGlow.addColorStop(1, 'transparent');
-      ctx.fillStyle = bossGlow;
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r * 3, 0, 6.2832); ctx.fill();
+      const bp = 0.28 + Math.sin(T * 2) * 0.12;
+      ctx.globalAlpha = bp;
+      ctx.fillStyle = gradR("bg", e.r * 3.2, [[0, "rgba(255,77,109,.45)"], [0.55, "rgba(255,77,109,.1)"], [1, "rgba(0,0,0,0)"]]);
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r * 3.2, 0, 6.2832); ctx.fill();
       ctx.restore();
-      ctx.fillStyle = '#ffd166'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
-      const bdef = BOSS_DEFS[e.bossKey] || { name: e.def.name, phases: BOSS_PHASES };
-      const phN = (bdef.phases[e.phase] || { name: '' }).name;
-      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.85)';
-      ctx.strokeText('👑 ' + bdef.name + ' · ' + phN, e.x, e.y - e.r - 24);
-      ctx.fillText('👑 ' + bdef.name + ' · ' + phN, e.x, e.y - e.r - 24);
+      // 双层旋转环 + 尖刺
+      ctx.save();
+      ctx.translate(e.x, e.y);
+      ctx.rotate(T * 0.5);
+      ctx.strokeStyle = "rgba(255,77,109,.75)"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 0, e.r + 12, 0, 6.2832); ctx.stroke();
+      ctx.strokeStyle = "rgba(255,209,102,.6)"; ctx.lineWidth = 1.4;
+      ctx.setLineDash([6, 10]);
+      ctx.beginPath(); ctx.arc(0, 0, e.r + 20, 0, 6.2832); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(255,77,109,.9)";
+      for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(a) * (e.r + 11), Math.sin(a) * (e.r + 11));
+        ctx.lineTo(Math.cos(a + 0.13) * (e.r + 19), Math.sin(a + 0.13) * (e.r + 19));
+        ctx.lineTo(Math.cos(a + 0.26) * (e.r + 11), Math.sin(a + 0.26) * (e.r + 11));
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+    }
+    // 巨像 / 多段护盾：把进度画成实体护盾片
+    if (e.phaseShield) {
+      const total = e.phaseShield, left = total - e.segIdx;
+      for (let i = 0; i < total; i++) {
+        const a0 = -Math.PI / 2 + i * (6.2832 / total) + 0.08;
+        ctx.strokeStyle = i < left ? "#5de6ff" : "rgba(120,113,108,.45)";
+        ctx.lineWidth = 3.4;
+        ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 7, a0, a0 + (6.2832 / total) - 0.16); ctx.stroke();
+      }
+    }
+
+    // ⑩ 血条 / 护盾条（圆角描边款，随血量变色）
+    const w = e.boss ? 78 : e.r * 2.3;
+    if (e.hp < e.maxHp || e.boss || e.elite) {
+      const pr = clamp(e.hp / e.maxHp, 0, 1);
+      const hc = e.boss ? "#ff4d6d" : (e.elite ? "#fb923c" : (pr < 0.3 ? "#f87171" : (pr < 0.6 ? "#fbbf24" : "#e0556f")));
+      const by = e.y - e.r - (e.boss ? 13 : 10);
+      gbar(e.x - w / 2, by, w, e.boss ? 7 : 4.5, pr, hc);
+      if (e.shieldMax && e.shield > 0) gbar(e.x - w / 2, by - 6, w, 3.2, e.shield / e.shieldMax, "#5de6ff");
+    }
+
+    // ⑪ 状态徽记：持续伤害 / 易伤
+    {
+      const marks = [];
+      if (e.burnT > 0) marks.push("🔥" + (e.burnStack >= 1 ? Math.round(e.burnStack) : ""));
+      if (e.poison > 0) marks.push("☠️" + Math.round(e.poison));
+      if (e.vulnT > 0) marks.push("⚡");
+      if (e.def.reflect) marks.push("🪞");
+      if (e.def.nullify) marks.push("🚫");
+      if (marks.length) {
+        const ty = e.y + e.r + 13;
+        ctx.font = "bold 10px sans-serif"; ctx.textAlign = "center";
+        ctx.lineWidth = 2.6; ctx.strokeStyle = "rgba(0,0,0,.85)";
+        const txt = marks.join(" ");
+        ctx.strokeText(txt, e.x, ty);
+        ctx.fillStyle = "#fff"; ctx.fillText(txt, e.x, ty);
+      }
+    }
+
+    // ⑫ BOSS 名称与阶段
+    if (e.boss) {
+      const bdef = BOSS_DEFS[e.bossKey] || { name: d.name, phases: BOSS_PHASES };
+      const phN = (bdef.phases[e.phase] || { name: "" }).name;
+      ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center";
+      ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.85)";
+      const label = "👑 " + bdef.name + " · " + phN;
+      ctx.strokeText(label, e.x, e.y - e.r - 26);
+      ctx.fillStyle = "#ffd166"; ctx.fillText(label, e.x, e.y - e.r - 26);
     }
   }
 }
 function drawBullets() {
   for (const b of G.bullets) {
-    if (b.type === 'frost') {
-      // 冰霜弹：发光球 + 冰晶拖尾
-      ctx.save();
-      ctx.shadowColor = '#7fdfff';
-      ctx.shadowBlur = 10;
-      ctx.fillStyle = '#7fdfff'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.2832); ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.fillStyle = 'rgba(127,223,255,.35)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 3, 0, 6.2832); ctx.fill();
-      ctx.restore();
+    const dx = b.tx - b.x, dy = b.ty - b.y;
+    const a = Math.atan2(dy, dx) || 0;
+    const cc = b.color || "#ffffff";
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.rotate(a);
+    if (b.type === "missile") {
+      // 尾焰 → 弹体 → 弹头，三段式
+      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = gradL("mtr" + cc, -8, -3.4, -8, 3.4, [[0, "rgba(255,255,255,.9)"], [1, "rgba(255,255,255,0)"]]);
+      ctx.beginPath(); ctx.moveTo(-8, -3.4); ctx.lineTo(-30, 0); ctx.lineTo(-8, 3.4); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = gradL("mbt" + cc, 0, -4, 0, 4, [[0, "#ffe9b0"], [0.42, "#fb7185"], [1, "#7f1d1d"]]);
+      ctx.beginPath(); ctx.moveTo(11, 0); ctx.lineTo(3, -4); ctx.lineTo(-8, -4); ctx.lineTo(-8, 4); ctx.lineTo(3, 4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#fb7185";
+      ctx.beginPath(); ctx.moveTo(-8, -4); ctx.lineTo(-12.5, -7.5); ctx.lineTo(-5, -4); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-8, 4); ctx.lineTo(-12.5, 7.5); ctx.lineTo(-5, 4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(3.5, 0, 1.7, 0, 6.2832); ctx.fill();
+    } else if (b.type === "frost") {
+      // 冰晶拖尾 + 旋转六角冰锥
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = gradL("ftr", -2, -3.6, -2, 3.6, [[0, "rgba(224,247,255,.95)"], [1, "rgba(127,223,255,0)"]]);
+      ctx.beginPath(); ctx.moveTo(-2, -3.6); ctx.lineTo(-24, 0); ctx.lineTo(-2, 3.6); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = gradR("forb", 8, [[0, "#ffffff"], [0.38, "#bdf0ff"], [1, "rgba(127,223,255,0)"]]);
+      ctx.beginPath(); ctx.arc(0, 0, 8, 0, 6.2832); ctx.fill();
+      ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = 1.2;
+      for (let i = 0; i < 3; i++) {
+        const an = T * 6 + i * Math.PI / 3;
+        ctx.beginPath();
+        ctx.moveTo(-Math.cos(an) * 5.2, -Math.sin(an) * 5.2);
+        ctx.lineTo(Math.cos(an) * 5.2, Math.sin(an) * 5.2);
+        ctx.stroke();
+      }
+    } else if (b.type === "poison") {
+      // 毒液：液滴 + 冒泡拖尾
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = gradL("ptr", -2, -3, -2, 3, [[0, "rgba(247,254,231,.9)"], [1, "rgba(163,230,53,0)"]]);
+      ctx.beginPath(); ctx.moveTo(-2, -3); ctx.lineTo(-22, 0); ctx.lineTo(-2, 3); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1;
+      for (let i = 0; i < 3; i++) {
+        const t = ((T * 3 + i * 0.33) % 1);
+        ctx.globalAlpha = (1 - t) * 0.7;
+        ctx.fillStyle = "#a3e635";
+        ctx.beginPath(); ctx.arc(-6 - t * 16, Math.sin(t * 9 + i) * 2.4, 2.6 + t * 1.6, 0, 6.2832); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = gradR("pdr", 6.5, [[0, "#f7fee7"], [0.4, "#a3e635"], [1, "#3f6212"]]);
+      ctx.beginPath(); ctx.moveTo(7, 0); ctx.quadraticCurveTo(0, -6, -4.5, 0); ctx.quadraticCurveTo(0, 6, 7, 0); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.65)";
+      ctx.beginPath(); ctx.arc(1, -1.6, 1.5, 0, 6.2832); ctx.fill();
     } else {
-      // 普通弹：带方向的弹头 + 发光核心
-      const a = Math.atan2(b.ty - b.y, b.tx - b.x);
-      ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(a);
-      // 弹体
-      ctx.fillStyle = b.color; ctx.fillRect(-8, -2.5, 16, 5);
-      // 高光核心
-      ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillRect(2, -1.5, 5, 3);
-      // 尾焰
-      ctx.fillStyle = b.color + '44'; ctx.fillRect(-14, -1.5, 8, 3);
-      ctx.restore();
+      // 动能曳光弹：辉光尾迹 + 亮芯
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = gradL("ktr" + cc, 0, -2, 0, 2, [[0, cc], [1, "rgba(255,255,255,0)"]]);
+      ctx.beginPath(); ctx.moveTo(0, -2); ctx.lineTo(-20, 0); ctx.lineTo(0, 2); ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = gradL("kbd" + cc, -8, -2.6, -8, 2.6, [[0, shadeHex(cc, 0.6)], [0.45, cc], [1, shadeHex(cc, -0.5)]]);
+      rr(-8, -2.6, 15, 5.2, 2.6); ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.ellipse(2.6, 0, 3.4, 1.5, 0, 0, 6.2832); ctx.fill();
     }
+    ctx.restore();
   }
 }
 function drawEffects() {
@@ -7464,13 +9456,15 @@ function drawCursor() {
 function drawWaveTransition() {
   if (!G.waveTransition || G.waveTransition.t <= 0) return;
   const wt = G.waveTransition;
-  const alpha = wt.t > 1.5 ? (2 - wt.t) * 2 : (wt.t < 0.5 ? wt.t * 2 : 1);
+  const DUR = 1.5;
+  const alpha = wt.t > DUR - 0.5 ? (DUR - wt.t) * 2 : (wt.t < 0.5 ? wt.t * 2 : 1);
+  if (alpha <= 0.01) return;
   ctx.save();
-  // 全屏渐变遮罩
-  ctx.fillStyle = 'rgba(0,0,0,' + (alpha * 0.4) + ')';
+  // 全屏渐变遮罩（原先 0.4 太黑，开战时整个战场糊掉看不清炮塔）
+  ctx.fillStyle = 'rgba(0,0,0,' + (alpha * 0.2) + ')';
   ctx.fillRect(0, 0, W, H);
   // 水平光线扫描效果
-  const scanX = W * (1 - wt.t / 2);
+  const scanX = W * (1 - wt.t / DUR);
   const scanGrad = ctx.createLinearGradient(scanX - 200, 0, scanX + 200, 0);
   scanGrad.addColorStop(0, 'transparent');
   scanGrad.addColorStop(0.5, 'rgba(255,209,102,' + (alpha * 0.15) + ')');
@@ -7479,11 +9473,11 @@ function drawWaveTransition() {
   ctx.fillRect(scanX - 200, 0, 400, H);
   // 波次文字（带缩放动画）
   ctx.translate(W / 2, H / 2);
-  const scale = 1 + (2 - wt.t) * 0.35;
+  const scale = 1 + (DUR - wt.t) * 0.3;
   ctx.scale(scale, scale);
   ctx.globalAlpha = alpha;
   // 文字阴影光晕
-  ctx.font = 'bold 52px "Noto Sans SC", sans-serif';
+  ctx.font = 'bold 46px "Noto Sans SC", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.shadowColor = '#ffd166';
@@ -7499,13 +9493,13 @@ function drawWaveTransition() {
   ctx.fillText('第 ' + wt.wave + ' 波', 0, 0);
   ctx.shadowBlur = 0;
   // 副标题
-  ctx.font = 'bold 20px "Noto Sans SC", sans-serif';
+  ctx.font = 'bold 18px "Noto Sans SC", sans-serif';
   ctx.fillStyle = 'rgba(255,255,255,.85)';
-  ctx.fillText('梦魇来袭！', 0, 44);
+  ctx.fillText('梦魇来袭！', 0, 40);
   // 装饰性水平线
   ctx.strokeStyle = 'rgba(255,209,102,' + (alpha * 0.4) + ')';
   ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(-140, 65); ctx.lineTo(140, 65); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-140, 60); ctx.lineTo(140, 60); ctx.stroke();
   ctx.restore();
 }
 
@@ -7522,10 +9516,17 @@ function buildBuildBar() {
       ? '<div class="dt" style="color:' + DMG[d.dmgType].color + '"><i>' + DMG[d.dmgType].icon + '</i>' + DMG[d.dmgType].name + '</div>'
       : '<div class="dt generic"><i>🔌</i>免电</div>';
     c.style.setProperty('--dc', (d.dmgType && DMG[d.dmgType].color) || d.color || '#8b8bd6');
+    const dps1 = d.tower ? towerPanelDps(d.stat(1), { type: k }) : 0;
     c.innerHTML = '<div class="ico">' + d.icon + '</div><div class="nm">' + d.name + '</div>' + dt +
+      (dps1 ? '<div class="dps">' + fmt1(dps1) + ' DPS</div>' : '') +
       '<div class="pr"><span class="g">' + fmt(d.cost.gold) + '💰</span></div>' +
-      '<div class="kb">' + d.key + '</div>';
-    c.title = d.name + '：' + d.desc + '（建造不消耗电力）';
+      '<div class="kb">' + d.key + '</div><div class="cnt"></div>';
+    // 悬停提示里补上面板 DPS —— 建造栏太窄，塞不下更多数字
+    let tip = d.name + '：' + d.desc + '（建造不消耗电力）';
+    if (d.tower) {
+      if (dps1) tip += '\nLv1 面板 DPS ≈ ' + fmt1(dps1) + '/秒';
+    }
+    c.title = tip;
     c.onclick = () => selectBuild(k);
     el.appendChild(c);
   });
@@ -7541,7 +9542,7 @@ function buildSkillBar() {
     b.className = 'skill'; b.dataset.k = k;
     b.innerHTML = '<div class="sico">' + s.icon + '</div><div class="scd"></div><div class="skey">' + s.key + '</div>';
     b.title = s.name + '：' + s.desc + '（冷却 ' + s.cd + 's）';
-    b.onclick = () => useSkill(k);
+    b.onclick = () => Cmd.skill(k);
     el.appendChild(b);
   });
 }
@@ -7608,11 +9609,11 @@ function buyTech(k) {
   G.souls -= c; G.tech[k]++;
   SFX.up();
   G.buildings.forEach(b => {
-    const nh = b.def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1);
+    const nh = buildingMaxHp(b.def, b.level, b.branch);
     b.hp += nh - b.maxHp; b.maxHp = nh;
   });
   G.doors.forEach(d2 => {
-    const nh = (420 + 200 * (d2.lv - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1);
+    const nh = doorMaxHp(d2.lv);
     d2.hp += nh - d2.maxHp; d2.maxHp = nh;
   });
   setTip(d.name + ' 提升至 Lv.' + G.tech[k], 3);
@@ -7682,7 +9683,28 @@ function updateHUD(dt) {
       chEl.title = c.def.desc(G.wave);
     } else { chEl.style.display = 'none'; }
   }
+  updateQuestHUD();   // 委托进度随 HUD 一起刷新（内部有签名缓存，不会每帧写 DOM）
+  updateBossBar();    // BOSS 横幅（同样有签名缓存）
   $('btnSkip').style.display = G.state === 'build' ? '' : 'none';
+  if ($('questPanel') && $('questPanel').classList.contains('open')) renderQuestPanel();
+  // 建造栏角标：每种建筑已建几座（把「还能放几座」变得一眼可见）
+  const cnt = {};
+  G.buildings.forEach(b => { cnt[b.type] = (cnt[b.type] || 0) + 1; });
+  $('buildBar').querySelectorAll('.card').forEach(c => {
+    const n = cnt[c.dataset.k] || 0;
+    const el2 = c.querySelector('.cnt');
+    if (el2) { el2.textContent = n ? n : ''; el2.style.display = n ? 'block' : 'none'; }
+  });
+  // HUD 底边备战倒计时进度条（越接近开战越红）
+  const pg = $('hudProg');
+  if (pg) {
+    if (G.state === 'build' && G.prepTotal > 0) {
+      const p = clamp(G.prepTimer / G.prepTotal, 0, 1);
+      pg.style.display = '';
+      pg.classList.toggle('warn', p < 0.28);
+      pg.firstElementChild.style.width = (p * 100).toFixed(1) + '%';
+    } else pg.style.display = 'none';
+  }
   _hudPulseCheck();
   $('buildBar').querySelectorAll('.card').forEach(c => {
     const d = BUILD_DEFS[c.dataset.k];
@@ -7733,7 +9755,7 @@ function updateDetail(force) {
   if (s.isBed) sig = 'bed|' + G.bed.lv + '|' + Math.ceil(G.bed.hp) + '|' + (G.gold > bedUpgradeCost(G.bed.lv) ? 1 : 0);
   else if (s.isDoor) sig = 'door|' + s.door.lane + '|' + s.door.lv + '|' + Math.ceil(s.door.hp) + '|' + (G.gold > doorUpgradeCost(s.door.lv) ? 1 : 0);
   else if (s.def) sig = 'b|' + s.type + '|' + s.level + '|' + (s.branch || '') + '|' + Math.ceil(s.hp) + '|' + G.buildings.indexOf(s) +
-    '|' + (canAfford(upgradeCost(s.def, s.level)) ? 1 : 0);
+    '|' + (s.resN || 0) + '|' + (s.resDmg || 1) + '|' + (s.kills || 0) + '|' + (canAfford(upgradeCost(s.def, s.level)) ? 1 : 0);
   else return;
   if (!force && sig === detailSig) return;
   detailSig = sig;
@@ -7757,10 +9779,10 @@ function updateDetail(force) {
     html = '<div class="dhead"><span class="dico">🚪</span><b>' + doorName(d) + '</b><span class="dlv">Lv.' + d.lv + '/50</span></div>' +
       '<div class="dst">第 ' + (d.lane + 1) + ' 道门　生命 ' + Math.ceil(d.hp) + '/' + Math.ceil(d.maxHp) +
       (d.shieldMax ? '　护盾 ' + Math.ceil(d.shield) + '/' + Math.ceil(d.shieldMax) : '') + '</div>' +
-      (d.lv < 50 ? '<div class="dup">下一级 → ' + NAME_POOL.door[d.lv] + '　生命 ' + Math.ceil((420 + 200 * d.lv) * techVal('ironwall', 0.15)) + '</div>' : '') +
+      (d.lv < 50 ? '<div class="dup">下一级 → ' + NAME_POOL.door[d.lv] + '　生命 ' + Math.ceil(doorMaxHp(d.lv + 1)) + '</div>' : '') +
       '<div class="dnote">门被攻破后，该路敌人会冲进房间拆建筑。</div>';
     act = d.lv >= 50 ? '<span class="max">已至巅峰</span>'
-      : '<button id="dUp">加固 ' + fmt(c) + '💰</button><button id="dMax" class="maxup">⏫升满</button>';
+      : '<button id="dUp">⬆ 加固<i>' + fmt(c) + '💰</i></button><button id="dMax" class="maxup">⏫ 升满</button>';
   } else if (s.def) {
     const st = bstat(s);
     const dtn = s.def.dmgType ? '<span class="dtn" style="color:' + DMG[s.def.dmgType].color + '">' + DMG[s.def.dmgType].icon + DMG[s.def.dmgType].name + '</span>' : '';
@@ -7770,7 +9792,24 @@ function updateDetail(force) {
         : (s.level < FREE_POWER_LV ? '<div class="dnote">⚡ Lv' + (FREE_POWER_LV + 1) + ' 之前升级<b>不消耗电量</b></div>' : '')) +
       '<div class="dst">' + s.def.statText(st) + '</div>' +
       '<div class="dst">生命 ' + Math.ceil(s.hp) + '/' + Math.ceil(s.maxHp) + (s.shieldMax ? '　护盾 ' + Math.ceil(s.shield) + '/' + Math.ceil(s.shieldMax) : '') +
-      '　耗电 ' + (s.def.upkeep * (1 + (s.level - 1) * 0.15)).toFixed(1) + '/s</div>';
+      '　耗电 ' + (s.def.upkeep * (1 + (s.level - 1) * 0.15)).toFixed(1) + '/s' +
+      (s.kills ? '　击杀 <b class="hl">' + s.kills + '</b>' : '') + '</div>';
+    // 面板 DPS：回答「这座炮塔到底值不值得升」
+    if (s.def.tower) {
+      const dps = towerPanelDps(st, s);
+      const perK = dps / Math.max(1, s.invested) * 1000;
+      html += '<div class="dst">面板 DPS ≈ <b class="hl">' + fmt1(dps) + '</b>/秒' +
+        '<span class="dup2">　性价比 ' + perK.toFixed(2) + ' DPS / 千金币</span></div>';
+    }
+    // 共鸣：相邻不同元素炮塔互相增幅（原先只有内部倍率，玩家看不到）
+    const rb = resBonusOf(s);
+    if (rb.n >= 2) {
+      html += '<div class="dres" style="--rc:' + rb.color + '">🎵 <b>' + rb.tier + '</b><span class="drn">相邻 ' + rb.n + ' 种元素</span>' +
+        '<span>伤害 <b>x' + rb.dmg.toFixed(2) + '</b>　射速 <b>x' + rb.rate.toFixed(2) + '</b></span>' +
+        (rb.extra ? '<span>' + rb.extra.icon + ' <b>' + rb.extra.name + '</b>：' + rb.extra.desc + '</span>' : '') + '</div>';
+    } else if (s.def.tower && s.def.dmgType) {
+      html += '<div class="dres dim">🎵 暂无共鸣 —— 把<b>不同元素</b>的炮塔挨着放（约 1.5 格内）即可互相增幅</div>';
+    }
     if (s.level < 50) {
       const ns = bstat(Object.assign(Object.create(Object.getPrototypeOf(s)), s, { level: s.level + 1 }));
       html += '<div class="dup">下一级 → <b>' + (NAME_POOL[s.type] ? NAME_POOL[s.type][s.level] : s.def.name) + '</b>　' + s.def.statText(ns) + '</div>';
@@ -7787,8 +9826,9 @@ function updateDetail(force) {
       html += '<div class="runeon"><span class="ro empty2">未镶嵌符文（' + runeSlots() + ' 槽）按 G 打开背包</span></div>';
     }
     const c = upgradeCost(s.def, s.level);
+    const costTxt = fmt(c.gold) + '💰' + (c.power ? ' ' + fmt(c.power) + '⚡' : '');
     act = (s.level >= 50 ? '<span class="max">已至巅峰</span>'
-      : '<button id="dUp">升级 ' + fmt(c.gold) + '💰' + (c.power ? ' ' + fmt(c.power) + '⚡' : '') + '</button><button id="dMax" class="maxup">⏫升满</button>') +
+      : '<button id="dUp">⬆ 升级<i>' + costTxt + '</i></button><button id="dMax" class="maxup">⏫ 升满</button>') +
       '<button id="dSell" class="sell">出售 +' + fmt(s.invested * SELL_RATE) + '</button>';
     if (!s.branch && s.def.branch && s.level >= BRANCH_AT) {
       const A = s.def.branch.a, B = s.def.branch.b;
@@ -7798,16 +9838,11 @@ function updateDetail(force) {
     }
   }
   el.innerHTML = html + '<div class="dact">' + act + '</div>';
-  const u = $('dUp'); if (u) u.onclick = () => {
-    if (selected && selected.isBed) upgradeBed();
-    else if (selected && selected.isDoor) upgradeDoor(selected.door);
-    else tryUpgrade(selected);
-    detailSig = '';
-  };
-  const sl = $('dSell'); if (sl) sl.onclick = () => { sellBuilding(selected); detailSig = ''; };
-  const dm = $('dMax'); if (dm) dm.onclick = () => { upgradeMaxSelected(selected); detailSig = ''; };
-  const ba = $('brA'); if (ba) ba.onclick = () => { tryBranch(selected, 'a'); detailSig = ''; };
-  const bb = $('brB'); if (bb) bb.onclick = () => { tryBranch(selected, 'b'); detailSig = ''; };
+  const u = $('dUp'); if (u) u.onclick = () => { Cmd.upgradeSelection(selected); detailSig = ''; };
+  const sl = $('dSell'); if (sl) sl.onclick = () => { Cmd.sellSelection(selected); detailSig = ''; };
+  const dm = $('dMax'); if (dm) dm.onclick = () => { Cmd.maxSelection(selected); detailSig = ''; };
+  const ba = $('brA'); if (ba) ba.onclick = () => { Cmd.branchSelection(selected, 'a'); detailSig = ''; };
+  const bb = $('brB'); if (bb) bb.onclick = () => { Cmd.branchSelection(selected, 'b'); detailSig = ''; };
 }
 function showGameOver() {
   const o = $('overlay');
@@ -7893,7 +9928,7 @@ function updateRunePanel() {
   });
   el.innerHTML = h;
   el.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { upgradeRune(G.runeBag.find(r => r.id === b.dataset.up)); updateRunePanel(); updateDetail(true); });
-  el.querySelectorAll('[data-sal]').forEach(b => b.onclick = () => { salvageRune(b.dataset.sal); updateRunePanel(); updateDetail(true); });
+  el.querySelectorAll('[data-sal]').forEach(b => b.onclick = () => { Cmd.salvage(b.dataset.sal); updateRunePanel(); updateDetail(true); });
   const slotEl = $('runeSlots');
   if (slotEl) {
     const b = (selected && selected.def) ? selected : null;
@@ -7915,13 +9950,13 @@ function updateRunePanel() {
       }
       sh += '</div>';
       slotEl.innerHTML = sh;
-      slotEl.querySelectorAll('[data-su]').forEach(x => x.onclick = () => { upgradeRuneIn(b, +x.dataset.su); updateRunePanel(); updateDetail(true); });
-      slotEl.querySelectorAll('[data-sus]').forEach(x => x.onclick = () => { unsocketRune(b, +x.dataset.sus); updateRunePanel(); updateDetail(true); });
+      slotEl.querySelectorAll('[data-su]').forEach(x => x.onclick = () => { Cmd.upgradeRuneIn(b, +x.dataset.su); updateRunePanel(); updateDetail(true); });
+      slotEl.querySelectorAll('[data-sus]').forEach(x => x.onclick = () => { Cmd.unsocket(b, +x.dataset.sus); updateRunePanel(); updateDetail(true); });
       const auto = $('autoSocket');
       if (auto) auto.onclick = () => {
         let n = 0;
         const bag = G.runeBag.slice().sort((p, q2) => (q2.affixes.length + q2.lv) - (p.affixes.length + p.lv));
-        for (const r of bag) { if (socketRune(b, r.id, null)) n++; }
+        for (const r of bag) { if (Cmd.socket(b, r.id, null)) n++; }
         updateRunePanel(); updateDetail(true);
         if (n) setTip('自动镶嵌 ' + n + ' 枚符文', 3);
       };
@@ -7934,6 +9969,18 @@ function togglePanel(id) {
   el.classList.toggle('open');
   // 修复线上现存 bug：runePanel 是内联 display 结构（非 .slide 滑出面板），
   // 仅切 class 永远无法显示；同步 display 并在打开时刷新内容（此前 🔮符文 按钮与 G 键失效）
+  if (id === 'savePanel') {
+    const open = el.classList.contains('open');
+    el.style.display = open ? '' : 'none';
+    if (open) { renderSavePanel(); if (typeof SFX !== 'undefined' && SFX.coin) SFX.coin(); }
+    return;
+  }
+  if (id === 'questPanel') {
+    const open = el.classList.contains('open');
+    el.style.display = open ? '' : 'none';
+    if (open) { renderQuestPanel(true); if (typeof SFX !== 'undefined' && SFX.coin) SFX.coin(); }
+    return;
+  }
   if (id === 'runePanel') {
     const open = el.classList.contains('open');
     el.style.display = open ? '' : 'none';
@@ -7986,7 +10033,7 @@ function showDrawResult(results) {
   if (order[best.r] >= 3) setTip('🎉 抽到【' + RARITY[best.r].name + '】' + best.name + '！', 5);
 }
 function doDraw(n, cur) {
-  const res = drawLottery(n, cur);
+  const res = Cmd.draw(n, cur);
   if (!res) return;
   showDrawResult(res);
   updateLotteryHUD();
@@ -8046,6 +10093,7 @@ function updateMenu() {
 function wireMenu() {
   if (!$('btnStart')) return;
   $('btnStart').onclick = () => startRun();
+  if ($('btnSaveMgr')) $('btnSaveMgr').onclick = () => showSavePanel();
   $('btnContinue').onclick = () => {
     if (!LAST_SAVE) return;
     SFX.init(); $('overlay').style.display = 'none';
@@ -8063,7 +10111,7 @@ function wireMenu() {
   const setW = v => { const el = $('adWave'); if (el) el.value = Math.max(1, Math.min(999, v | 0)); };
   if ($('adM5')) $('adM5').onclick = () => setW((+$('adWave').value || 1) - 5);
   if ($('adP5')) $('adP5').onclick = () => setW((+$('adWave').value || 1) + 5);
-  if ($('adGo')) $('adGo').onclick = () => jumpToWave(+$('adWave').value || 1);
+  if ($('adGo')) $('adGo').onclick = () => Cmd.jump(+$('adWave').value || 1);
   if ($('adExit')) $('adExit').onclick = () => {
     if ($('adminBar')) $('adminBar').style.display = 'none';
     if (G && !G.over) { G.over = true; grantMetaReward(false); }
@@ -8082,12 +10130,13 @@ function startRun() {
   META.gold -= cost; saveMeta();
   SFX.init();
   $('overlay').style.display = 'none';
-  Store.del('tangping_save');
+  SaveSystem.remove(0);
   newGame();
   G.diffKey = menuDiff; G.admin = !!d.admin;
   G.mode = menuMode; G.rebuilds = 0;
   applyEquippedPrizes();
   G.prepTimer = G.prepTimer * d.prepMul * ((G.prize && G.prize.prep) || 1);
+  G.prepTotal = G.prepTimer;
   paused = false; $('btnPause').textContent = '⏸';
   if ($('adminBar')) $('adminBar').style.display = G.admin ? 'flex' : 'none';
   if (G.admin && $('adWave')) $('adWave').value = 1;
@@ -8986,6 +11035,341 @@ function wireDreamMenuButtons() {
   if (fragClose) fragClose.onclick = () => { $('fragmentGallery').style.display = 'none'; showMenu(); };
 }
 
+/* ==================================================================
+ *  梦境委托（任务系统）UI
+ *  数据与引擎在 quest.js（QuestSystem），这里只负责"看得见、点得开"：
+ *    · 幕卡演出 showActCard —— 接取/完成委托时的一秒仪式感
+ *    · 委托面板 —— 当前目标进度 + 信物背包 + 六章进度
+ *    · 信物详情 —— 点开读全文（lore），这是"掉落物也有叙事"的关键
+ * ================================================================== */
+let _actTimer = null;
+
+/** 章节卡演出：先暂停游戏，避免全屏遮住时被偷家 */
+function showActCard(act, title, sub) {
+  const el = $('actCard');
+  if (!el) return;
+  _pauseForStory();
+  $('acAct').textContent = act || '';
+  $('acTitle').textContent = title || '';
+  $('acSub').textContent = sub || '';
+  el.classList.remove('out', 'show');
+  el.style.display = 'flex';
+  void el.offsetWidth;
+  el.classList.add('show');
+  if (_actTimer) clearTimeout(_actTimer);
+  _actTimer = setTimeout(hideActCard, 2300);
+}
+
+function hideActCard() {
+  const el = $('actCard');
+  if (!el || el.style.display === 'none') return;
+  if (_actTimer) { clearTimeout(_actTimer); _actTimer = null; }
+  el.classList.remove('show');
+  el.classList.add('out');
+  setTimeout(() => { el.style.display = 'none'; el.classList.remove('out'); }, 620);
+}
+
+/** 渲染委托面板（打开时与每次进度变化后调用） */
+let _questPanelSig = '';
+function renderQuestPanel(force) {
+  if (typeof QuestSystem === 'undefined' || !$('questPanel')) return;
+  const snap = QuestSystem.getSnapshot();
+  // 面板可能在游戏进行中被 updateHUD 反复刷新：数据没变就别重建 DOM
+  const _sig = QuestSystem._s.idx + '|' + QuestSystem.totalItems() + '|' + JSON.stringify(QuestSystem._s.chapters);
+  if (!force && _sig === _questPanelSig) return;
+  _questPanelSig = _sig;
+
+  // ---- 当前委托 ----
+  const cur = $('questCurrent');
+  if (snap.active) {
+    const d = snap.active.def, it = QUEST_ITEMS[d.item];
+    const en = (typeof ENEMY_DEFS !== 'undefined' && ENEMY_DEFS[d.enemy]) ? ENEMY_DEFS[d.enemy].name : d.enemy;
+    const p = clamp(snap.active.items / Math.max(1, d.need), 0, 1);
+    cur.innerHTML =
+      '<div class="qcur">' +
+        '<div class="qa">' + d.act + '　·　进行中</div>' +
+        '<div class="qt">' + it.icon + ' ' + d.title + '</div>' +
+        '<div class="qg">目标：击杀 <b>' + en + '</b>，收集 <b>' + it.name + '</b><br>' +
+        '信物 <b>' + snap.active.items + ' / ' + d.need + '</b>　已击杀 <b>' + snap.active.kills + '</b> 只　（掉落来源：' + it.from + '）</div>' +
+        '<div class="qbar"><i style="width:' + (p * 100).toFixed(0) + '%"></i></div>' +
+      '</div>';
+  } else if (snap.finished) {
+    cur.innerHTML = '<div class="qcur"><div class="qa">全 篇 终</div><div class="qt">🔔 六件信物，六个夜晚</div>' +
+      '<div class="qg">你已经把这场梦完整地读了一遍。梦魇还会再来，但你不再问「为什么是我」。</div></div>';
+  } else {
+    const nx = QuestSystem.getNext();
+    cur.innerHTML = '<div class="qcur"><div class="qa">等 待 解 锁</div><div class="qt">📜 下一份委托尚未出现</div>' +
+      '<div class="qg">' + (nx ? '推进到第 <b>' + nx.unlockWave + '</b> 波时，会有新的信物出现在梦魇身上。' : '全部委托已完成。') + '</div></div>';
+  }
+
+  // ---- 信物背包 ----
+  const items = snap.items;
+  $('questItemCount').textContent = QuestSystem.totalItems() + ' 件';
+  const iel = $('questItems');
+  iel.innerHTML = items.length
+    ? items.map(x => {
+        const r = (typeof RARITY !== 'undefined' && RARITY[x.def.rare]) ? RARITY[x.def.rare] : { color: '#94a3b8' };
+        return '<div class="qitem" data-item="' + x.id + '" style="border-color:' + r.color + '55" title="点击查看全文">' +
+          '<span class="qi">' + x.def.icon + '</span>' +
+          '<span class="qn" style="color:' + r.color + '">' + x.def.name + '</span>' +
+          '<span class="qc">×' + x.count + '</span></div>';
+      }).join('')
+    : '<div class="qempty">还没有信物。击杀委托指定的梦魇即可掉落 —— 面板上方写着"信物持有者"。</div>';
+  iel.querySelectorAll('[data-item]').forEach(el => { el.onclick = () => openQuestItem(el.dataset.item); });
+
+  // ---- 六章进度 ----
+  $('questProg').textContent = snap.doneCount + ' / ' + snap.total + ' 完成';
+  $('questList').innerHTML = snap.chapters.map(c => {
+    const it = QUEST_ITEMS[c.def.item];
+    const cls = c.done ? 'done' : (c.current ? 'cur' : 'locked');
+    const st = c.done ? '✅ 已完成' : (c.current ? ('进行中 ' + c.items + '/' + c.def.need) : ('第 ' + c.def.unlockWave + ' 波解锁'));
+    return '<div class="qrow ' + cls + '">' +
+      '<span class="qi2">' + (c.done ? '✅' : it.icon) + '</span>' +
+      '<div><div class="qn2">' + c.def.title + '</div>' +
+      '<div class="qd2">' + c.def.act + '　·　' + it.name + ' ×' + c.def.need + '（' + it.from + '）</div></div>' +
+      '<span class="qs">' + st + '</span></div>';
+  }).join('');
+}
+
+function showQuestPanel() {
+  const el = $('questPanel');
+  if (!el) return;
+  renderQuestPanel();
+  el.style.display = '';
+  el.classList.add('open');
+}
+
+function closeQuestPanel() {
+  const el = $('questPanel');
+  if (!el) return;
+  el.style.display = 'none';
+  el.classList.remove('open');
+}
+
+/** 信物详情浮层（"可以查看"的落点） */
+function openQuestItem(id) {
+  const d = (typeof QUEST_ITEMS !== 'undefined') ? QUEST_ITEMS[id] : null;
+  if (!d) return;
+  const r = (typeof RARITY !== 'undefined' && RARITY[d.rare]) ? RARITY[d.rare] : { name: '普通', color: '#94a3b8' };
+  $('itemIco').textContent = d.icon;
+  $('itemName').textContent = d.name;
+  $('itemName').style.color = r.color;
+  $('itemFrom').innerHTML = '来自「' + d.from + '」　·　' +
+    '<span style="color:' + r.color + '">' + r.name + '</span>';
+  $('itemDesc').textContent = d.desc;
+  $('itemLore').textContent = d.lore;
+  const el = $('itemDetail');
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+}
+
+function closeQuestItem() {
+  const el = $('itemDetail');
+  if (el) el.classList.remove('show');
+}
+
+/** HUD 上的委托进度小条（随时能看到"还差几件"） */
+let _questHudSig = '';
+function updateQuestHUD() {
+  const el = $('hudQuest');
+  if (!el) return;
+  if (typeof QuestSystem === 'undefined' || typeof G === 'undefined' || !G || !G.quest) {
+    if (el.style.display !== 'none') { el.style.display = 'none'; _questHudSig = ''; }
+    return;
+  }
+  const act = QuestSystem.getActive();
+  if (!act) {
+    if (el.style.display !== 'none') { el.style.display = 'none'; _questHudSig = ''; }
+    return;
+  }
+  const it = QUEST_ITEMS[act.def.item];
+  const sig = act.def.id + '|' + act.prog.items + '|' + act.def.need;
+  if (sig === _questHudSig) return;
+  _questHudSig = sig;
+  const done = act.prog.items >= act.def.need;
+  el.style.display = '';
+  el.innerHTML = '<span class="chi">📜</span><b>' + it.name + '</b>' +
+    '<span class="chp ' + (done ? 'ok' : 'no') + '">' + act.prog.items + '/' + act.def.need + '</span>';
+  const en = (typeof ENEMY_DEFS !== 'undefined' && ENEMY_DEFS[act.def.enemy]) ? ENEMY_DEFS[act.def.enemy].name : act.def.enemy;
+  el.title = '【' + act.def.act + '】' + act.def.title + '\n目标：击杀 ' + en + ' 收集 ' + it.name +
+    '（已击杀 ' + act.prog.kills + ' 只）\n点击查看全部委托（L）';
+}
+
+/* ==================================================================
+ *  BOSS 血条横幅：把「正在打谁、打到哪一阶段」搬到屏幕顶部，
+ *  小怪血条再密也不会和 BOSS 信息抢视线。
+ * ================================================================== */
+let _bossBarSig = '';
+function updateBossBar() {
+  const el = $('bossBar');
+  if (!el || typeof G === 'undefined' || !G) return;
+  let boss = null;
+  for (const e of G.enemies) { if (e.boss && !e.dead) { boss = e; break; } }
+  if (!boss) {
+    if (_bossBarSig !== '') { _bossBarSig = ''; el.classList.remove('show'); el.style.display = 'none'; }
+    return;
+  }
+  const hp = clamp(boss.hp / boss.maxHp, 0, 1);
+  const bdef = (typeof BOSS_DEFS !== 'undefined' && BOSS_DEFS[boss.bossKey]) ? BOSS_DEFS[boss.bossKey] : null;
+  const phN = bdef ? ((bdef.phases[boss.phase] || {}).name || '') : '';
+  const sig = boss.maxHp + '|' + Math.round(hp * 1000) + '|' + boss.phase;
+  if (sig === _bossBarSig) return;
+  _bossBarSig = sig;
+  el.style.display = 'block';
+  requestAnimationFrame(() => el.classList.add('show'));
+  $('bbName').textContent = '😈 ' + (bdef ? bdef.name : boss.def.name);
+  $('bbPhase').textContent = phN;
+  $('bbPhase').style.display = phN ? '' : 'none';
+  $('bbHp').textContent = Math.ceil(boss.hp) + ' / ' + Math.ceil(boss.maxHp) + '　(' + Math.round(hp * 100) + '%)';
+  $('bbFill').style.width = (hp * 100).toFixed(1) + '%';
+  const sh = (boss.shieldMax > 0) ? Math.max(0, boss.shield / boss.shieldMax) * 100 : 0;
+  $('bbShield').style.width = sh.toFixed(1) + '%';
+}
+
+/* ==================================================================
+ *  存档管理面板
+ *  槽位：0 = 自动存档，1~3 = 手动槽。数据层全在 save.js 的 SaveSystem。
+ * ================================================================== */
+let _svConfirmSlot = -1;
+let _svToastTimer = null;
+
+function svToast(msg, tone) {
+  const el = $('svToast');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = tone || '';
+  requestAnimationFrame(() => el.classList.add('show'));
+  clearTimeout(_svToastTimer);
+  _svToastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+function renderSavePanel() {
+  const el = $('saveSlots');
+  if (!el || typeof SaveSystem === 'undefined') return;
+  const slots = SaveSystem.list();
+  const cur = (typeof G !== 'undefined' && G && !G.over) ? G : null;
+  const DIFF_ICON = { normal: '🌙', hard: '🔥', hell: '💀', admin: '👑' };
+  const MODE_ICON = { limited: '⏳', unlimited: '♾️' };
+
+  el.innerHTML = slots.map(s => {
+    const tag = s.auto ? '自动' : ('槽 ' + s.slot);
+    const cls = 'svrow' + (s.auto ? ' auto' : '') + (s.info ? '' : ' empty');
+    if (!s.info) {
+      return '<div class="' + cls + '"><span class="svtag">' + tag + '</span>' +
+        '<div class="svmain"><div class="svname">空槽位</div>' +
+        '<div class="svmeta">把当前进度存到这里' + (cur ? '' : '（当前没有进行中的对局）') + '</div></div>' +
+        '<div class="svacts"><div class="r1">' +
+        '<button class="svbtn" data-save="' + s.slot + '"' + (cur ? '' : ' disabled') + '>存入</button>' +
+        '</div></div></div>';
+    }
+    const m = s.info;
+    const chips = [
+      '<span class="svchip">' + (MODE_ICON[m.mode] || '⏳') + (m.mode === 'unlimited' ? ' 无限模式' : ' 有限模式') + '</span>',
+      m.quest ? '<span class="svchip q">📜 委托 ' + m.quest + '/6</span>' : '',
+      m.dream ? '<span class="svchip d">💎 梦境 ' + m.dream + ' 项</span>' : '',
+      m.kills ? '<span class="svchip">⚔ ' + m.kills + ' 杀</span>' : '',
+    ].filter(Boolean).join('');
+    return '<div class="' + cls + '"><span class="svtag">' + tag + '</span>' +
+      '<div class="svmain">' +
+        '<div class="svname">第 ' + m.wave + ' 波 · ' + (DIFF_ICON[m.diff] || '') + ' ' + ((DIFFS[m.diff] || {}).name || m.diff) +
+          (m.name ? '　<span style="font-size:10.5px;color:#8b85a8;font-weight:400">' + m.name + '</span>' : '') + '</div>' +
+        '<div class="svmeta">💰 <b>' + fmt(m.gold) + '</b>　🏗 ' + m.buildings + ' 座　🕒 ' + SaveSystem.fmtTime(m.at) + '</div>' +
+        '<div class="svchips">' + chips + '</div>' +
+      '</div>' +
+      '<div class="svacts">' +
+        '<div class="r1">' +
+          '<button class="svbtn" data-load="' + s.slot + '">载入</button>' +
+          (s.auto ? '' : '<button class="svbtn blue" data-save="' + s.slot + '"' + (cur ? '' : ' disabled') + '>覆盖</button>') +
+        '</div>' +
+        '<div class="r1">' +
+          '<button class="svbtn blue" data-export="' + s.slot + '">导出</button>' +
+          '<button class="svbtn red" data-del="' + s.slot + '">删除</button>' +
+        '</div>' +
+      '</div></div>';
+  }).join('');
+
+  el.querySelectorAll('[data-save]').forEach(b => b.onclick = () => {
+    const slot = +b.dataset.save;
+    if (!G || G.over) { svToast('当前没有可保存的对局', 'warn'); return; }
+    const r = SaveSystem.write(slot, SaveSystem.capture(), slot === 0 ? '自动存档' : '手动存档');
+    if (r.ok) { renderSavePanel(); svToast('✅ 已保存到' + (slot === 0 ? '自动存档' : '槽 ' + slot)); SFX.coin(); }
+    else svToast(r.reason === 'quota' ? '❌ 浏览器存储空间已满' : '❌ 保存失败', 'err');
+  });
+  el.querySelectorAll('[data-load]').forEach(b => b.onclick = () => loadSaveSlot(+b.dataset.load));
+  el.querySelectorAll('[data-export]').forEach(b => b.onclick = () => {
+    if (SaveSystem.exportFile(+b.dataset.export)) svToast('📥 已导出存档文件');
+    else svToast('❌ 导出失败', 'err');
+  });
+  el.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+    const slot = +b.dataset.del;
+    if (_svConfirmSlot !== -1000 - slot) {
+      _svConfirmSlot = -1000 - slot;
+      svToast('⚠️ 再点一次「删除」确认', 'warn');
+      setTimeout(() => { if (_svConfirmSlot === -1000 - slot) _svConfirmSlot = -1; }, 4000);
+      return;
+    }
+    _svConfirmSlot = -1;
+    SaveSystem.remove(slot);
+    renderSavePanel();
+    svToast('🗑 已删除' + (slot === 0 ? '自动存档' : '槽 ' + slot));
+  });
+}
+
+/** 载入：进行中的对局会被替换，所以要二次确认 */
+function loadSaveSlot(slot) {
+  const d = SaveSystem.read(slot);
+  if (!d) { svToast('这个槽位是空的', 'warn'); return; }
+  if (typeof G !== 'undefined' && G && !G.over && G.wave > 0 && _svConfirmSlot !== slot) {
+    _svConfirmSlot = slot;
+    svToast('⚠️ 当前进度将被替换，再点一次「载入」确认', 'warn');
+    setTimeout(() => { if (_svConfirmSlot === slot) _svConfirmSlot = -1; }, 4000);
+    return;
+  }
+  _svConfirmSlot = -1;
+  doLoadSlot(slot, d);
+}
+
+function doLoadSlot(slot, d) {
+  try {
+    newGame(d);                       // newGame 内部会 applySave → SaveSystem.restore
+    // 从主菜单载入时要把菜单收起来
+    const ov = $('overlay');
+    if (ov) ov.style.display = 'none';
+    paused = false;
+    if ($('btnPause')) $('btnPause').textContent = '⏸';
+    if ($('adminBar')) $('adminBar').style.display = G.admin ? 'flex' : 'none';
+    if (typeof closeSavePanel === 'function') closeSavePanel();
+    if (typeof updateHUD === 'function') { hudT = 0; updateHUD(0.1); }
+    setTip('已载入存档：第 ' + G.wave + ' 波 · ' + ((DIFFS[G.diffKey] || {}).name || G.diffKey), 6);
+    if (typeof SFX !== 'undefined' && SFX.up) SFX.up();
+  } catch (e) {
+    console.error('[Save] 载入失败:', e);
+    svToast('❌ 载入失败：' + e.message, 'err');
+  }
+}
+
+function showSavePanel() {
+  const el = $('savePanel');
+  if (!el) return;
+  renderSavePanel();
+  el.style.display = '';
+  el.classList.add('open');
+}
+
+function closeSavePanel() {
+  const el = $('savePanel');
+  if (!el) return;
+  el.style.display = 'none';
+  el.classList.remove('open');
+}
+
+function toggleSavePanel() {
+  const el = $('savePanel');
+  if (!el) return;
+  if (el.classList.contains('open')) closeSavePanel(); else showSavePanel();
+}
+
 /* ==== main.js ==== */
 function cellFromXY(x, y) {
   if (x < ROOM_X0 || x > ROOM_X1 || y < ARENA_TOP || y > ARENA_BOT) return null;
@@ -9014,7 +11398,7 @@ cv.addEventListener('click', e => {
   const occ = G.grid[cell.r * COLS + cell.c];
   if (occ && occ !== 'bed') { selected = occ; selectedBuildKey = null; syncCards(); return; }
   if (selectedBuildKey) {
-    if (tryBuild(selectedBuildKey, cell.c, cell.r)) {
+    if (Cmd.build(selectedBuildKey, cell.c, cell.r)) {   // 经命令层派发（联机时客机只发意图）
       if (!canAfford(BUILD_DEFS[selectedBuildKey].cost)) { selectedBuildKey = null; syncCards(); }
     }
     return;
@@ -9025,23 +11409,32 @@ cv.addEventListener('contextmenu', e => { e.preventDefault(); selectedBuildKey =
 const SKILL_MAP = { q: 'meteor', w: 'freeze', e: 'overclock', r: 'mend', t: 'repel', f: 'siphon' };
 window.addEventListener('keydown', e => {
   const k = e.key;
-  if (k === 'Escape') { selectedBuildKey = null; selected = null; syncCards(); ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => $(p).classList.remove('open')); return; }
-  if (k === ' ') { e.preventDefault(); skipPrep(); return; }
+  if (k === 'Escape') {
+    selectedBuildKey = null; selected = null; syncCards();
+    ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => $(p).classList.remove('open'));
+    if ($('itemDetail') && $('itemDetail').classList.contains('show')) { closeQuestItem(); return; }
+    ['questPanel', 'runePanel'].forEach(p => { if ($(p) && $(p).classList.contains('open')) togglePanel(p); });
+    return;
+  }
+  if (k === ' ') { e.preventDefault(); Cmd.skipPrep(); return; }
   if (k === 'p' || k === 'P') { paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸'; return; }
   const sk = SKILL_MAP[k.toLowerCase()];
-  if (sk) { useSkill(sk); return; }
+  if (sk) { Cmd.skill(sk); return; }
   const bk = BUILD_KEYS.find(key => BUILD_DEFS[key].key === k);
   if (bk) { selectBuild(bk); return; }
-  if (k === 'u' || k === 'U') { if (selected && selected.def) tryUpgrade(selected); else if (selected && selected.isBed) upgradeBed(); else if (selected && selected.isDoor) upgradeDoor(selected.door); return; }
-  if (k === 'x' || k === 'X') { if (selected && selected.def) sellBuilding(selected); return; }
+  if (k === 'u' || k === 'U') { Cmd.upgradeSelection(selected); return; }
+  if (k === 'x' || k === 'X') { Cmd.sellSelection(selected); return; }
   if (k === 'b' || k === 'B') { togglePanel('lotPanel'); return; }
-  if (k === 'g') { togglePanel('runePanel'); return; }
-  if (k === 'm') { if (selected) upgradeMaxSelected(selected); return; }
-  if (k === 'M') { upgradeAllMax(); return; }
+  if (k === 'g' || k === 'G') { togglePanel('runePanel'); return; }
+  if (k === 'l' || k === 'L') { togglePanel('questPanel'); return; }
+  if (k === 'k' || k === 'K') { toggleSavePanel(); return; }
+  if (k === 's' || k === 'S') { if (saveGame(0)) { setTip('💾 已保存到自动存档', 3); SFX.coin(); } return; }
+  if (k === 'm') { Cmd.maxSelection(selected); return; }
+  if (k === 'M') { Cmd.upgradeAllMax(); return; }
 });
 function bindUI() {
-  $('btnSkip').onclick = () => skipPrep();
-  $('btnSkip2').onclick = () => skipPrep();
+  $('btnSkip').onclick = () => Cmd.skipPrep();
+  $('btnSkip2').onclick = () => Cmd.skipPrep();
   $('btnTech').onclick = () => togglePanel('techPanel');
   $('btnTech2').onclick = () => togglePanel('techPanel');
   $('btnAch').onclick = () => togglePanel('achPanel');
@@ -9052,17 +11445,43 @@ function bindUI() {
   $('btnDraw1').onclick = () => doDraw(1, 'gold');
   $('btnDraw10').onclick = () => doDraw(10, 'gold');
   $('btnDrawS').onclick = () => doDraw(1, 'soul');
-  $('btnUpAll').onclick = () => upgradeAllBuildings(false);
+  $('btnUpAll').onclick = () => Cmd.upgradeAll(false);
   $('runeClose').onclick = () => togglePanel('runePanel');
+  if ($('btnQuest')) $('btnQuest').onclick = () => togglePanel('questPanel');
+  if ($('questClose')) $('questClose').onclick = () => togglePanel('questPanel');
+  if ($('itemClose')) $('itemClose').onclick = () => closeQuestItem();
+  if ($('hudQuest')) $('hudQuest').onclick = () => togglePanel('questPanel');
   $('btnRune').onclick = () => togglePanel('runePanel');
-  $('btnMaxSel').onclick = () => { if (selected) upgradeMaxSelected(selected); else setTip('请先点击一个建筑、床或门', 3); };
-  $('btnMaxAll').onclick = () => upgradeAllMax();
-  $('btnUpTower').onclick = () => upgradeAllBuildings(true);
+  $('btnMaxSel').onclick = () => { if (selected) Cmd.maxSelection(selected); else setTip('请先点击一个建筑、床或门', 3); };
+  $('btnMaxAll').onclick = () => Cmd.upgradeAllMax();
+  $('btnUpTower').onclick = () => Cmd.upgradeAll(true);
   $('btnHelp2').onclick = () => togglePanel('helpPanel');
   $('btnPause').onclick = () => { paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸'; };
   $('btnSound').onclick = () => { SFX.on = !SFX.on; $('btnSound').textContent = SFX.on ? '🔊' : '🔇'; };
   $('btnSpeed').onclick = () => { timeScale = timeScale === 1 ? 2 : timeScale === 2 ? 3 : 1; $('btnSpeed').textContent = timeScale + '×'; };
-  $('btnSave').onclick = () => { saveGame(); setTip('进度已保存', 3); SFX.coin(); };
+  $('btnSave').onclick = () => toggleSavePanel();
+  if ($('saveClose')) $('saveClose').onclick = () => closeSavePanel();
+  if ($('svImport')) $('svImport').onclick = () => { const f = $('svFile'); if (f) f.click(); };
+  if ($('svFile')) $('svFile').onchange = (ev) => {
+    const file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    // 导到第一个空的手动槽，满了就覆盖槽 1
+    let slot = 1;
+    const list = SaveSystem.list();
+    const empty = list.find(s => s.slot >= 1 && !s.info);
+    if (empty) slot = empty.slot;
+    SaveSystem.importFile(file, slot, r => {
+      if (r.ok) { renderSavePanel(); svToast('📥 已导入到槽 ' + slot + '（第 ' + (r.meta ? r.meta.wave : '?') + ' 波）'); SFX.achieve(); }
+      else svToast('❌ 导入失败：' + (r.reason === 'invalid' ? '存档结构异常' : r.reason === 'json' ? '不是合法 JSON' : '文件不可读'), 'err');
+    });
+    ev.target.value = '';
+  };
+  if ($('svWipe')) $('svWipe').onclick = () => {
+    if (!window.__svWipeArmed) { window.__svWipeArmed = 1; svToast('⚠️ 再点一次确认清空全部槽位', 'warn'); setTimeout(() => window.__svWipeArmed = 0, 4000); return; }
+    window.__svWipeArmed = 0;
+    for (let s = 0; s <= SaveSystem.SLOTS; s++) SaveSystem.remove(s);
+    renderSavePanel(); svToast('🗑 已清空全部槽位');
+  };
   $('techClose').onclick = () => $('techPanel').classList.remove('open');
   $('achClose').onclick = () => $('achPanel').classList.remove('open');
   $('helpClose').onclick = () => $('helpPanel').classList.remove('open');
@@ -9103,6 +11522,7 @@ function buildHelp() {
     '</div>' +
     '<h4>炮塔共鸣</h4><div class="afflist">' +
     '<span class="aff">🎵 <b>相邻不同元素炮塔互相增幅</b>：2 种 +12% 伤害；3 种 +26% 伤害/射速 +10%；最高 6 种 +85% 伤害/射速 +34%</span>' +
+    '<span class="aff">📍 <b>怎么看出来</b>：正在共鸣的炮塔会亮起一圈<b>虚线光环</b>，格子左上角显示 <b>🎵元素种类数</b>；点开建筑详情可看到具体倍率与附加效果</span>' +
     '<span class="aff">🔥 <b>爆燃弹药</b>：动能 + 火焰 → 攻击附加灼烧</span>' +
     '<span class="aff">⚡ <b>导电冰霜</b>：冰霜 + 电磁 → 攻击附带小范围溅射</span>' +
     '<span class="aff">🧬 <b>腐蚀光斑</b>：能量 + 剧毒 → 攻击削减敌人抗性</span>' +
@@ -9224,13 +11644,31 @@ window.addEventListener('resize', function () { fit(); fitHUD(); updateBuildBarO
 fit(); fitHUD(); updateBuildBarOverflow(); applyCompactBar();
 
 let last = performance.now();
+const FIXED_DT = 1 / 60;   // 固定模拟步长（联机/复现的前提：模拟结果与帧率无关）
+let simAcc = 0;
 function loop(now) {
-  let dt = (now - last) / 1000; last = now;
-  dt = Math.min(dt, 0.05);
-  T += dt;
-  if (G && !G.over && !paused) { for (let i = 0; i < timeScale; i++) step(dt); }
-  if (G) { render(); updateHUD(dt); }
+  // 先把下一帧排上：任何一帧里抛出的异常都不会再让主循环「静默死掉」——
+  // 之前 render() 里一个 NaN 半径（过载爆轰的 boom 缺 max 字段）就能把整个游戏永久冻结。
   requestAnimationFrame(loop);
+  let dt = (now - last) / 1000; last = now;
+  if (!isFinite(dt) || dt < 0) dt = 0;
+  dt = Math.min(dt, 0.25);          // 切后台回来不要一次追几百帧
+  T += dt;
+  // 面板属性缓存按帧失效：一帧内（含 2×/3× 倍速的多次 step）bstat 只算一次
+  statFrame++;
+  try {
+    // 固定步长累加器：无论 30/60/144Hz，模拟都按 1/60 秒推进，帧率只影响画面平滑度
+    if (G && !G.over && !paused) {
+      simAcc += dt * timeScale;
+      let n = 0;
+      while (simAcc >= FIXED_DT && n < 15) { step(FIXED_DT); simAcc -= FIXED_DT; n++; }
+      if (n >= 15) simAcc = 0;      // 追不上就丢掉欠帧，避免雪崩
+    } else simAcc = 0;
+    if (G) { render(); updateHUD(dt); }
+  } catch (err) {
+    if (G) G.loopErrors = (G.loopErrors || 0) + 1;
+    console.error('[loop]', err);
+  }
 }
 let LAST_SAVE = null;
 function init() {

@@ -10,10 +10,17 @@ function buildBuildBar() {
       ? '<div class="dt" style="color:' + DMG[d.dmgType].color + '"><i>' + DMG[d.dmgType].icon + '</i>' + DMG[d.dmgType].name + '</div>'
       : '<div class="dt generic"><i>🔌</i>免电</div>';
     c.style.setProperty('--dc', (d.dmgType && DMG[d.dmgType].color) || d.color || '#8b8bd6');
+    const dps1 = d.tower ? towerPanelDps(d.stat(1), { type: k }) : 0;
     c.innerHTML = '<div class="ico">' + d.icon + '</div><div class="nm">' + d.name + '</div>' + dt +
+      (dps1 ? '<div class="dps">' + fmt1(dps1) + ' DPS</div>' : '') +
       '<div class="pr"><span class="g">' + fmt(d.cost.gold) + '💰</span></div>' +
-      '<div class="kb">' + d.key + '</div>';
-    c.title = d.name + '：' + d.desc + '（建造不消耗电力）';
+      '<div class="kb">' + d.key + '</div><div class="cnt"></div>';
+    // 悬停提示里补上面板 DPS —— 建造栏太窄，塞不下更多数字
+    let tip = d.name + '：' + d.desc + '（建造不消耗电力）';
+    if (d.tower) {
+      if (dps1) tip += '\nLv1 面板 DPS ≈ ' + fmt1(dps1) + '/秒';
+    }
+    c.title = tip;
     c.onclick = () => selectBuild(k);
     el.appendChild(c);
   });
@@ -29,7 +36,7 @@ function buildSkillBar() {
     b.className = 'skill'; b.dataset.k = k;
     b.innerHTML = '<div class="sico">' + s.icon + '</div><div class="scd"></div><div class="skey">' + s.key + '</div>';
     b.title = s.name + '：' + s.desc + '（冷却 ' + s.cd + 's）';
-    b.onclick = () => useSkill(k);
+    b.onclick = () => Cmd.skill(k);
     el.appendChild(b);
   });
 }
@@ -96,11 +103,11 @@ function buyTech(k) {
   G.souls -= c; G.tech[k]++;
   SFX.up();
   G.buildings.forEach(b => {
-    const nh = b.def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1);
+    const nh = buildingMaxHp(b.def, b.level, b.branch);
     b.hp += nh - b.maxHp; b.maxHp = nh;
   });
   G.doors.forEach(d2 => {
-    const nh = (420 + 200 * (d2.lv - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1);
+    const nh = doorMaxHp(d2.lv);
     d2.hp += nh - d2.maxHp; d2.maxHp = nh;
   });
   setTip(d.name + ' 提升至 Lv.' + G.tech[k], 3);
@@ -170,7 +177,28 @@ function updateHUD(dt) {
       chEl.title = c.def.desc(G.wave);
     } else { chEl.style.display = 'none'; }
   }
+  updateQuestHUD();   // 委托进度随 HUD 一起刷新（内部有签名缓存，不会每帧写 DOM）
+  updateBossBar();    // BOSS 横幅（同样有签名缓存）
   $('btnSkip').style.display = G.state === 'build' ? '' : 'none';
+  if ($('questPanel') && $('questPanel').classList.contains('open')) renderQuestPanel();
+  // 建造栏角标：每种建筑已建几座（把「还能放几座」变得一眼可见）
+  const cnt = {};
+  G.buildings.forEach(b => { cnt[b.type] = (cnt[b.type] || 0) + 1; });
+  $('buildBar').querySelectorAll('.card').forEach(c => {
+    const n = cnt[c.dataset.k] || 0;
+    const el2 = c.querySelector('.cnt');
+    if (el2) { el2.textContent = n ? n : ''; el2.style.display = n ? 'block' : 'none'; }
+  });
+  // HUD 底边备战倒计时进度条（越接近开战越红）
+  const pg = $('hudProg');
+  if (pg) {
+    if (G.state === 'build' && G.prepTotal > 0) {
+      const p = clamp(G.prepTimer / G.prepTotal, 0, 1);
+      pg.style.display = '';
+      pg.classList.toggle('warn', p < 0.28);
+      pg.firstElementChild.style.width = (p * 100).toFixed(1) + '%';
+    } else pg.style.display = 'none';
+  }
   _hudPulseCheck();
   $('buildBar').querySelectorAll('.card').forEach(c => {
     const d = BUILD_DEFS[c.dataset.k];
@@ -221,7 +249,7 @@ function updateDetail(force) {
   if (s.isBed) sig = 'bed|' + G.bed.lv + '|' + Math.ceil(G.bed.hp) + '|' + (G.gold > bedUpgradeCost(G.bed.lv) ? 1 : 0);
   else if (s.isDoor) sig = 'door|' + s.door.lane + '|' + s.door.lv + '|' + Math.ceil(s.door.hp) + '|' + (G.gold > doorUpgradeCost(s.door.lv) ? 1 : 0);
   else if (s.def) sig = 'b|' + s.type + '|' + s.level + '|' + (s.branch || '') + '|' + Math.ceil(s.hp) + '|' + G.buildings.indexOf(s) +
-    '|' + (canAfford(upgradeCost(s.def, s.level)) ? 1 : 0);
+    '|' + (s.resN || 0) + '|' + (s.resDmg || 1) + '|' + (s.kills || 0) + '|' + (canAfford(upgradeCost(s.def, s.level)) ? 1 : 0);
   else return;
   if (!force && sig === detailSig) return;
   detailSig = sig;
@@ -245,10 +273,10 @@ function updateDetail(force) {
     html = '<div class="dhead"><span class="dico">🚪</span><b>' + doorName(d) + '</b><span class="dlv">Lv.' + d.lv + '/50</span></div>' +
       '<div class="dst">第 ' + (d.lane + 1) + ' 道门　生命 ' + Math.ceil(d.hp) + '/' + Math.ceil(d.maxHp) +
       (d.shieldMax ? '　护盾 ' + Math.ceil(d.shield) + '/' + Math.ceil(d.shieldMax) : '') + '</div>' +
-      (d.lv < 50 ? '<div class="dup">下一级 → ' + NAME_POOL.door[d.lv] + '　生命 ' + Math.ceil((420 + 200 * d.lv) * techVal('ironwall', 0.15)) + '</div>' : '') +
+      (d.lv < 50 ? '<div class="dup">下一级 → ' + NAME_POOL.door[d.lv] + '　生命 ' + Math.ceil(doorMaxHp(d.lv + 1)) + '</div>' : '') +
       '<div class="dnote">门被攻破后，该路敌人会冲进房间拆建筑。</div>';
     act = d.lv >= 50 ? '<span class="max">已至巅峰</span>'
-      : '<button id="dUp">加固 ' + fmt(c) + '💰</button><button id="dMax" class="maxup">⏫升满</button>';
+      : '<button id="dUp">⬆ 加固<i>' + fmt(c) + '💰</i></button><button id="dMax" class="maxup">⏫ 升满</button>';
   } else if (s.def) {
     const st = bstat(s);
     const dtn = s.def.dmgType ? '<span class="dtn" style="color:' + DMG[s.def.dmgType].color + '">' + DMG[s.def.dmgType].icon + DMG[s.def.dmgType].name + '</span>' : '';
@@ -258,7 +286,24 @@ function updateDetail(force) {
         : (s.level < FREE_POWER_LV ? '<div class="dnote">⚡ Lv' + (FREE_POWER_LV + 1) + ' 之前升级<b>不消耗电量</b></div>' : '')) +
       '<div class="dst">' + s.def.statText(st) + '</div>' +
       '<div class="dst">生命 ' + Math.ceil(s.hp) + '/' + Math.ceil(s.maxHp) + (s.shieldMax ? '　护盾 ' + Math.ceil(s.shield) + '/' + Math.ceil(s.shieldMax) : '') +
-      '　耗电 ' + (s.def.upkeep * (1 + (s.level - 1) * 0.15)).toFixed(1) + '/s</div>';
+      '　耗电 ' + (s.def.upkeep * (1 + (s.level - 1) * 0.15)).toFixed(1) + '/s' +
+      (s.kills ? '　击杀 <b class="hl">' + s.kills + '</b>' : '') + '</div>';
+    // 面板 DPS：回答「这座炮塔到底值不值得升」
+    if (s.def.tower) {
+      const dps = towerPanelDps(st, s);
+      const perK = dps / Math.max(1, s.invested) * 1000;
+      html += '<div class="dst">面板 DPS ≈ <b class="hl">' + fmt1(dps) + '</b>/秒' +
+        '<span class="dup2">　性价比 ' + perK.toFixed(2) + ' DPS / 千金币</span></div>';
+    }
+    // 共鸣：相邻不同元素炮塔互相增幅（原先只有内部倍率，玩家看不到）
+    const rb = resBonusOf(s);
+    if (rb.n >= 2) {
+      html += '<div class="dres" style="--rc:' + rb.color + '">🎵 <b>' + rb.tier + '</b><span class="drn">相邻 ' + rb.n + ' 种元素</span>' +
+        '<span>伤害 <b>x' + rb.dmg.toFixed(2) + '</b>　射速 <b>x' + rb.rate.toFixed(2) + '</b></span>' +
+        (rb.extra ? '<span>' + rb.extra.icon + ' <b>' + rb.extra.name + '</b>：' + rb.extra.desc + '</span>' : '') + '</div>';
+    } else if (s.def.tower && s.def.dmgType) {
+      html += '<div class="dres dim">🎵 暂无共鸣 —— 把<b>不同元素</b>的炮塔挨着放（约 1.5 格内）即可互相增幅</div>';
+    }
     if (s.level < 50) {
       const ns = bstat(Object.assign(Object.create(Object.getPrototypeOf(s)), s, { level: s.level + 1 }));
       html += '<div class="dup">下一级 → <b>' + (NAME_POOL[s.type] ? NAME_POOL[s.type][s.level] : s.def.name) + '</b>　' + s.def.statText(ns) + '</div>';
@@ -275,8 +320,9 @@ function updateDetail(force) {
       html += '<div class="runeon"><span class="ro empty2">未镶嵌符文（' + runeSlots() + ' 槽）按 G 打开背包</span></div>';
     }
     const c = upgradeCost(s.def, s.level);
+    const costTxt = fmt(c.gold) + '💰' + (c.power ? ' ' + fmt(c.power) + '⚡' : '');
     act = (s.level >= 50 ? '<span class="max">已至巅峰</span>'
-      : '<button id="dUp">升级 ' + fmt(c.gold) + '💰' + (c.power ? ' ' + fmt(c.power) + '⚡' : '') + '</button><button id="dMax" class="maxup">⏫升满</button>') +
+      : '<button id="dUp">⬆ 升级<i>' + costTxt + '</i></button><button id="dMax" class="maxup">⏫ 升满</button>') +
       '<button id="dSell" class="sell">出售 +' + fmt(s.invested * SELL_RATE) + '</button>';
     if (!s.branch && s.def.branch && s.level >= BRANCH_AT) {
       const A = s.def.branch.a, B = s.def.branch.b;
@@ -286,16 +332,11 @@ function updateDetail(force) {
     }
   }
   el.innerHTML = html + '<div class="dact">' + act + '</div>';
-  const u = $('dUp'); if (u) u.onclick = () => {
-    if (selected && selected.isBed) upgradeBed();
-    else if (selected && selected.isDoor) upgradeDoor(selected.door);
-    else tryUpgrade(selected);
-    detailSig = '';
-  };
-  const sl = $('dSell'); if (sl) sl.onclick = () => { sellBuilding(selected); detailSig = ''; };
-  const dm = $('dMax'); if (dm) dm.onclick = () => { upgradeMaxSelected(selected); detailSig = ''; };
-  const ba = $('brA'); if (ba) ba.onclick = () => { tryBranch(selected, 'a'); detailSig = ''; };
-  const bb = $('brB'); if (bb) bb.onclick = () => { tryBranch(selected, 'b'); detailSig = ''; };
+  const u = $('dUp'); if (u) u.onclick = () => { Cmd.upgradeSelection(selected); detailSig = ''; };
+  const sl = $('dSell'); if (sl) sl.onclick = () => { Cmd.sellSelection(selected); detailSig = ''; };
+  const dm = $('dMax'); if (dm) dm.onclick = () => { Cmd.maxSelection(selected); detailSig = ''; };
+  const ba = $('brA'); if (ba) ba.onclick = () => { Cmd.branchSelection(selected, 'a'); detailSig = ''; };
+  const bb = $('brB'); if (bb) bb.onclick = () => { Cmd.branchSelection(selected, 'b'); detailSig = ''; };
 }
 function showGameOver() {
   const o = $('overlay');
@@ -381,7 +422,7 @@ function updateRunePanel() {
   });
   el.innerHTML = h;
   el.querySelectorAll('[data-up]').forEach(b => b.onclick = () => { upgradeRune(G.runeBag.find(r => r.id === b.dataset.up)); updateRunePanel(); updateDetail(true); });
-  el.querySelectorAll('[data-sal]').forEach(b => b.onclick = () => { salvageRune(b.dataset.sal); updateRunePanel(); updateDetail(true); });
+  el.querySelectorAll('[data-sal]').forEach(b => b.onclick = () => { Cmd.salvage(b.dataset.sal); updateRunePanel(); updateDetail(true); });
   const slotEl = $('runeSlots');
   if (slotEl) {
     const b = (selected && selected.def) ? selected : null;
@@ -403,13 +444,13 @@ function updateRunePanel() {
       }
       sh += '</div>';
       slotEl.innerHTML = sh;
-      slotEl.querySelectorAll('[data-su]').forEach(x => x.onclick = () => { upgradeRuneIn(b, +x.dataset.su); updateRunePanel(); updateDetail(true); });
-      slotEl.querySelectorAll('[data-sus]').forEach(x => x.onclick = () => { unsocketRune(b, +x.dataset.sus); updateRunePanel(); updateDetail(true); });
+      slotEl.querySelectorAll('[data-su]').forEach(x => x.onclick = () => { Cmd.upgradeRuneIn(b, +x.dataset.su); updateRunePanel(); updateDetail(true); });
+      slotEl.querySelectorAll('[data-sus]').forEach(x => x.onclick = () => { Cmd.unsocket(b, +x.dataset.sus); updateRunePanel(); updateDetail(true); });
       const auto = $('autoSocket');
       if (auto) auto.onclick = () => {
         let n = 0;
         const bag = G.runeBag.slice().sort((p, q2) => (q2.affixes.length + q2.lv) - (p.affixes.length + p.lv));
-        for (const r of bag) { if (socketRune(b, r.id, null)) n++; }
+        for (const r of bag) { if (Cmd.socket(b, r.id, null)) n++; }
         updateRunePanel(); updateDetail(true);
         if (n) setTip('自动镶嵌 ' + n + ' 枚符文', 3);
       };
@@ -422,6 +463,18 @@ function togglePanel(id) {
   el.classList.toggle('open');
   // 修复线上现存 bug：runePanel 是内联 display 结构（非 .slide 滑出面板），
   // 仅切 class 永远无法显示；同步 display 并在打开时刷新内容（此前 🔮符文 按钮与 G 键失效）
+  if (id === 'savePanel') {
+    const open = el.classList.contains('open');
+    el.style.display = open ? '' : 'none';
+    if (open) { renderSavePanel(); if (typeof SFX !== 'undefined' && SFX.coin) SFX.coin(); }
+    return;
+  }
+  if (id === 'questPanel') {
+    const open = el.classList.contains('open');
+    el.style.display = open ? '' : 'none';
+    if (open) { renderQuestPanel(true); if (typeof SFX !== 'undefined' && SFX.coin) SFX.coin(); }
+    return;
+  }
   if (id === 'runePanel') {
     const open = el.classList.contains('open');
     el.style.display = open ? '' : 'none';
@@ -474,7 +527,7 @@ function showDrawResult(results) {
   if (order[best.r] >= 3) setTip('🎉 抽到【' + RARITY[best.r].name + '】' + best.name + '！', 5);
 }
 function doDraw(n, cur) {
-  const res = drawLottery(n, cur);
+  const res = Cmd.draw(n, cur);
   if (!res) return;
   showDrawResult(res);
   updateLotteryHUD();
@@ -534,6 +587,7 @@ function updateMenu() {
 function wireMenu() {
   if (!$('btnStart')) return;
   $('btnStart').onclick = () => startRun();
+  if ($('btnSaveMgr')) $('btnSaveMgr').onclick = () => showSavePanel();
   $('btnContinue').onclick = () => {
     if (!LAST_SAVE) return;
     SFX.init(); $('overlay').style.display = 'none';
@@ -551,7 +605,7 @@ function wireMenu() {
   const setW = v => { const el = $('adWave'); if (el) el.value = Math.max(1, Math.min(999, v | 0)); };
   if ($('adM5')) $('adM5').onclick = () => setW((+$('adWave').value || 1) - 5);
   if ($('adP5')) $('adP5').onclick = () => setW((+$('adWave').value || 1) + 5);
-  if ($('adGo')) $('adGo').onclick = () => jumpToWave(+$('adWave').value || 1);
+  if ($('adGo')) $('adGo').onclick = () => Cmd.jump(+$('adWave').value || 1);
   if ($('adExit')) $('adExit').onclick = () => {
     if ($('adminBar')) $('adminBar').style.display = 'none';
     if (G && !G.over) { G.over = true; grantMetaReward(false); }
@@ -570,12 +624,13 @@ function startRun() {
   META.gold -= cost; saveMeta();
   SFX.init();
   $('overlay').style.display = 'none';
-  Store.del('tangping_save');
+  SaveSystem.remove(0);
   newGame();
   G.diffKey = menuDiff; G.admin = !!d.admin;
   G.mode = menuMode; G.rebuilds = 0;
   applyEquippedPrizes();
   G.prepTimer = G.prepTimer * d.prepMul * ((G.prize && G.prize.prep) || 1);
+  G.prepTotal = G.prepTimer;
   paused = false; $('btnPause').textContent = '⏸';
   if ($('adminBar')) $('adminBar').style.display = G.admin ? 'flex' : 'none';
   if (G.admin && $('adWave')) $('adWave').value = 1;
@@ -1472,4 +1527,339 @@ function wireDreamMenuButtons() {
   if (diaryClose) diaryClose.onclick = () => { $('diaryPanel').style.display = 'none'; showMenu(); };
   if (npcClose) npcClose.onclick = () => { $('npcPanel').style.display = 'none'; showMenu(); };
   if (fragClose) fragClose.onclick = () => { $('fragmentGallery').style.display = 'none'; showMenu(); };
+}
+
+/* ==================================================================
+ *  梦境委托（任务系统）UI
+ *  数据与引擎在 quest.js（QuestSystem），这里只负责"看得见、点得开"：
+ *    · 幕卡演出 showActCard —— 接取/完成委托时的一秒仪式感
+ *    · 委托面板 —— 当前目标进度 + 信物背包 + 六章进度
+ *    · 信物详情 —— 点开读全文（lore），这是"掉落物也有叙事"的关键
+ * ================================================================== */
+let _actTimer = null;
+
+/** 章节卡演出：先暂停游戏，避免全屏遮住时被偷家 */
+function showActCard(act, title, sub) {
+  const el = $('actCard');
+  if (!el) return;
+  _pauseForStory();
+  $('acAct').textContent = act || '';
+  $('acTitle').textContent = title || '';
+  $('acSub').textContent = sub || '';
+  el.classList.remove('out', 'show');
+  el.style.display = 'flex';
+  void el.offsetWidth;
+  el.classList.add('show');
+  if (_actTimer) clearTimeout(_actTimer);
+  _actTimer = setTimeout(hideActCard, 2300);
+}
+
+function hideActCard() {
+  const el = $('actCard');
+  if (!el || el.style.display === 'none') return;
+  if (_actTimer) { clearTimeout(_actTimer); _actTimer = null; }
+  el.classList.remove('show');
+  el.classList.add('out');
+  setTimeout(() => { el.style.display = 'none'; el.classList.remove('out'); }, 620);
+}
+
+/** 渲染委托面板（打开时与每次进度变化后调用） */
+let _questPanelSig = '';
+function renderQuestPanel(force) {
+  if (typeof QuestSystem === 'undefined' || !$('questPanel')) return;
+  const snap = QuestSystem.getSnapshot();
+  // 面板可能在游戏进行中被 updateHUD 反复刷新：数据没变就别重建 DOM
+  const _sig = QuestSystem._s.idx + '|' + QuestSystem.totalItems() + '|' + JSON.stringify(QuestSystem._s.chapters);
+  if (!force && _sig === _questPanelSig) return;
+  _questPanelSig = _sig;
+
+  // ---- 当前委托 ----
+  const cur = $('questCurrent');
+  if (snap.active) {
+    const d = snap.active.def, it = QUEST_ITEMS[d.item];
+    const en = (typeof ENEMY_DEFS !== 'undefined' && ENEMY_DEFS[d.enemy]) ? ENEMY_DEFS[d.enemy].name : d.enemy;
+    const p = clamp(snap.active.items / Math.max(1, d.need), 0, 1);
+    cur.innerHTML =
+      '<div class="qcur">' +
+        '<div class="qa">' + d.act + '　·　进行中</div>' +
+        '<div class="qt">' + it.icon + ' ' + d.title + '</div>' +
+        '<div class="qg">目标：击杀 <b>' + en + '</b>，收集 <b>' + it.name + '</b><br>' +
+        '信物 <b>' + snap.active.items + ' / ' + d.need + '</b>　已击杀 <b>' + snap.active.kills + '</b> 只　（掉落来源：' + it.from + '）</div>' +
+        '<div class="qbar"><i style="width:' + (p * 100).toFixed(0) + '%"></i></div>' +
+      '</div>';
+  } else if (snap.finished) {
+    cur.innerHTML = '<div class="qcur"><div class="qa">全 篇 终</div><div class="qt">🔔 六件信物，六个夜晚</div>' +
+      '<div class="qg">你已经把这场梦完整地读了一遍。梦魇还会再来，但你不再问「为什么是我」。</div></div>';
+  } else {
+    const nx = QuestSystem.getNext();
+    cur.innerHTML = '<div class="qcur"><div class="qa">等 待 解 锁</div><div class="qt">📜 下一份委托尚未出现</div>' +
+      '<div class="qg">' + (nx ? '推进到第 <b>' + nx.unlockWave + '</b> 波时，会有新的信物出现在梦魇身上。' : '全部委托已完成。') + '</div></div>';
+  }
+
+  // ---- 信物背包 ----
+  const items = snap.items;
+  $('questItemCount').textContent = QuestSystem.totalItems() + ' 件';
+  const iel = $('questItems');
+  iel.innerHTML = items.length
+    ? items.map(x => {
+        const r = (typeof RARITY !== 'undefined' && RARITY[x.def.rare]) ? RARITY[x.def.rare] : { color: '#94a3b8' };
+        return '<div class="qitem" data-item="' + x.id + '" style="border-color:' + r.color + '55" title="点击查看全文">' +
+          '<span class="qi">' + x.def.icon + '</span>' +
+          '<span class="qn" style="color:' + r.color + '">' + x.def.name + '</span>' +
+          '<span class="qc">×' + x.count + '</span></div>';
+      }).join('')
+    : '<div class="qempty">还没有信物。击杀委托指定的梦魇即可掉落 —— 面板上方写着"信物持有者"。</div>';
+  iel.querySelectorAll('[data-item]').forEach(el => { el.onclick = () => openQuestItem(el.dataset.item); });
+
+  // ---- 六章进度 ----
+  $('questProg').textContent = snap.doneCount + ' / ' + snap.total + ' 完成';
+  $('questList').innerHTML = snap.chapters.map(c => {
+    const it = QUEST_ITEMS[c.def.item];
+    const cls = c.done ? 'done' : (c.current ? 'cur' : 'locked');
+    const st = c.done ? '✅ 已完成' : (c.current ? ('进行中 ' + c.items + '/' + c.def.need) : ('第 ' + c.def.unlockWave + ' 波解锁'));
+    return '<div class="qrow ' + cls + '">' +
+      '<span class="qi2">' + (c.done ? '✅' : it.icon) + '</span>' +
+      '<div><div class="qn2">' + c.def.title + '</div>' +
+      '<div class="qd2">' + c.def.act + '　·　' + it.name + ' ×' + c.def.need + '（' + it.from + '）</div></div>' +
+      '<span class="qs">' + st + '</span></div>';
+  }).join('');
+}
+
+function showQuestPanel() {
+  const el = $('questPanel');
+  if (!el) return;
+  renderQuestPanel();
+  el.style.display = '';
+  el.classList.add('open');
+}
+
+function closeQuestPanel() {
+  const el = $('questPanel');
+  if (!el) return;
+  el.style.display = 'none';
+  el.classList.remove('open');
+}
+
+/** 信物详情浮层（"可以查看"的落点） */
+function openQuestItem(id) {
+  const d = (typeof QUEST_ITEMS !== 'undefined') ? QUEST_ITEMS[id] : null;
+  if (!d) return;
+  const r = (typeof RARITY !== 'undefined' && RARITY[d.rare]) ? RARITY[d.rare] : { name: '普通', color: '#94a3b8' };
+  $('itemIco').textContent = d.icon;
+  $('itemName').textContent = d.name;
+  $('itemName').style.color = r.color;
+  $('itemFrom').innerHTML = '来自「' + d.from + '」　·　' +
+    '<span style="color:' + r.color + '">' + r.name + '</span>';
+  $('itemDesc').textContent = d.desc;
+  $('itemLore').textContent = d.lore;
+  const el = $('itemDetail');
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+}
+
+function closeQuestItem() {
+  const el = $('itemDetail');
+  if (el) el.classList.remove('show');
+}
+
+/** HUD 上的委托进度小条（随时能看到"还差几件"） */
+let _questHudSig = '';
+function updateQuestHUD() {
+  const el = $('hudQuest');
+  if (!el) return;
+  if (typeof QuestSystem === 'undefined' || typeof G === 'undefined' || !G || !G.quest) {
+    if (el.style.display !== 'none') { el.style.display = 'none'; _questHudSig = ''; }
+    return;
+  }
+  const act = QuestSystem.getActive();
+  if (!act) {
+    if (el.style.display !== 'none') { el.style.display = 'none'; _questHudSig = ''; }
+    return;
+  }
+  const it = QUEST_ITEMS[act.def.item];
+  const sig = act.def.id + '|' + act.prog.items + '|' + act.def.need;
+  if (sig === _questHudSig) return;
+  _questHudSig = sig;
+  const done = act.prog.items >= act.def.need;
+  el.style.display = '';
+  el.innerHTML = '<span class="chi">📜</span><b>' + it.name + '</b>' +
+    '<span class="chp ' + (done ? 'ok' : 'no') + '">' + act.prog.items + '/' + act.def.need + '</span>';
+  const en = (typeof ENEMY_DEFS !== 'undefined' && ENEMY_DEFS[act.def.enemy]) ? ENEMY_DEFS[act.def.enemy].name : act.def.enemy;
+  el.title = '【' + act.def.act + '】' + act.def.title + '\n目标：击杀 ' + en + ' 收集 ' + it.name +
+    '（已击杀 ' + act.prog.kills + ' 只）\n点击查看全部委托（L）';
+}
+
+/* ==================================================================
+ *  BOSS 血条横幅：把「正在打谁、打到哪一阶段」搬到屏幕顶部，
+ *  小怪血条再密也不会和 BOSS 信息抢视线。
+ * ================================================================== */
+let _bossBarSig = '';
+function updateBossBar() {
+  const el = $('bossBar');
+  if (!el || typeof G === 'undefined' || !G) return;
+  let boss = null;
+  for (const e of G.enemies) { if (e.boss && !e.dead) { boss = e; break; } }
+  if (!boss) {
+    if (_bossBarSig !== '') { _bossBarSig = ''; el.classList.remove('show'); el.style.display = 'none'; }
+    return;
+  }
+  const hp = clamp(boss.hp / boss.maxHp, 0, 1);
+  const bdef = (typeof BOSS_DEFS !== 'undefined' && BOSS_DEFS[boss.bossKey]) ? BOSS_DEFS[boss.bossKey] : null;
+  const phN = bdef ? ((bdef.phases[boss.phase] || {}).name || '') : '';
+  const sig = boss.maxHp + '|' + Math.round(hp * 1000) + '|' + boss.phase;
+  if (sig === _bossBarSig) return;
+  _bossBarSig = sig;
+  el.style.display = 'block';
+  requestAnimationFrame(() => el.classList.add('show'));
+  $('bbName').textContent = '😈 ' + (bdef ? bdef.name : boss.def.name);
+  $('bbPhase').textContent = phN;
+  $('bbPhase').style.display = phN ? '' : 'none';
+  $('bbHp').textContent = Math.ceil(boss.hp) + ' / ' + Math.ceil(boss.maxHp) + '　(' + Math.round(hp * 100) + '%)';
+  $('bbFill').style.width = (hp * 100).toFixed(1) + '%';
+  const sh = (boss.shieldMax > 0) ? Math.max(0, boss.shield / boss.shieldMax) * 100 : 0;
+  $('bbShield').style.width = sh.toFixed(1) + '%';
+}
+
+/* ==================================================================
+ *  存档管理面板
+ *  槽位：0 = 自动存档，1~3 = 手动槽。数据层全在 save.js 的 SaveSystem。
+ * ================================================================== */
+let _svConfirmSlot = -1;
+let _svToastTimer = null;
+
+function svToast(msg, tone) {
+  const el = $('svToast');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = tone || '';
+  requestAnimationFrame(() => el.classList.add('show'));
+  clearTimeout(_svToastTimer);
+  _svToastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+function renderSavePanel() {
+  const el = $('saveSlots');
+  if (!el || typeof SaveSystem === 'undefined') return;
+  const slots = SaveSystem.list();
+  const cur = (typeof G !== 'undefined' && G && !G.over) ? G : null;
+  const DIFF_ICON = { normal: '🌙', hard: '🔥', hell: '💀', admin: '👑' };
+  const MODE_ICON = { limited: '⏳', unlimited: '♾️' };
+
+  el.innerHTML = slots.map(s => {
+    const tag = s.auto ? '自动' : ('槽 ' + s.slot);
+    const cls = 'svrow' + (s.auto ? ' auto' : '') + (s.info ? '' : ' empty');
+    if (!s.info) {
+      return '<div class="' + cls + '"><span class="svtag">' + tag + '</span>' +
+        '<div class="svmain"><div class="svname">空槽位</div>' +
+        '<div class="svmeta">把当前进度存到这里' + (cur ? '' : '（当前没有进行中的对局）') + '</div></div>' +
+        '<div class="svacts"><div class="r1">' +
+        '<button class="svbtn" data-save="' + s.slot + '"' + (cur ? '' : ' disabled') + '>存入</button>' +
+        '</div></div></div>';
+    }
+    const m = s.info;
+    const chips = [
+      '<span class="svchip">' + (MODE_ICON[m.mode] || '⏳') + (m.mode === 'unlimited' ? ' 无限模式' : ' 有限模式') + '</span>',
+      m.quest ? '<span class="svchip q">📜 委托 ' + m.quest + '/6</span>' : '',
+      m.dream ? '<span class="svchip d">💎 梦境 ' + m.dream + ' 项</span>' : '',
+      m.kills ? '<span class="svchip">⚔ ' + m.kills + ' 杀</span>' : '',
+    ].filter(Boolean).join('');
+    return '<div class="' + cls + '"><span class="svtag">' + tag + '</span>' +
+      '<div class="svmain">' +
+        '<div class="svname">第 ' + m.wave + ' 波 · ' + (DIFF_ICON[m.diff] || '') + ' ' + ((DIFFS[m.diff] || {}).name || m.diff) +
+          (m.name ? '　<span style="font-size:10.5px;color:#8b85a8;font-weight:400">' + m.name + '</span>' : '') + '</div>' +
+        '<div class="svmeta">💰 <b>' + fmt(m.gold) + '</b>　🏗 ' + m.buildings + ' 座　🕒 ' + SaveSystem.fmtTime(m.at) + '</div>' +
+        '<div class="svchips">' + chips + '</div>' +
+      '</div>' +
+      '<div class="svacts">' +
+        '<div class="r1">' +
+          '<button class="svbtn" data-load="' + s.slot + '">载入</button>' +
+          (s.auto ? '' : '<button class="svbtn blue" data-save="' + s.slot + '"' + (cur ? '' : ' disabled') + '>覆盖</button>') +
+        '</div>' +
+        '<div class="r1">' +
+          '<button class="svbtn blue" data-export="' + s.slot + '">导出</button>' +
+          '<button class="svbtn red" data-del="' + s.slot + '">删除</button>' +
+        '</div>' +
+      '</div></div>';
+  }).join('');
+
+  el.querySelectorAll('[data-save]').forEach(b => b.onclick = () => {
+    const slot = +b.dataset.save;
+    if (!G || G.over) { svToast('当前没有可保存的对局', 'warn'); return; }
+    const r = SaveSystem.write(slot, SaveSystem.capture(), slot === 0 ? '自动存档' : '手动存档');
+    if (r.ok) { renderSavePanel(); svToast('✅ 已保存到' + (slot === 0 ? '自动存档' : '槽 ' + slot)); SFX.coin(); }
+    else svToast(r.reason === 'quota' ? '❌ 浏览器存储空间已满' : '❌ 保存失败', 'err');
+  });
+  el.querySelectorAll('[data-load]').forEach(b => b.onclick = () => loadSaveSlot(+b.dataset.load));
+  el.querySelectorAll('[data-export]').forEach(b => b.onclick = () => {
+    if (SaveSystem.exportFile(+b.dataset.export)) svToast('📥 已导出存档文件');
+    else svToast('❌ 导出失败', 'err');
+  });
+  el.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+    const slot = +b.dataset.del;
+    if (_svConfirmSlot !== -1000 - slot) {
+      _svConfirmSlot = -1000 - slot;
+      svToast('⚠️ 再点一次「删除」确认', 'warn');
+      setTimeout(() => { if (_svConfirmSlot === -1000 - slot) _svConfirmSlot = -1; }, 4000);
+      return;
+    }
+    _svConfirmSlot = -1;
+    SaveSystem.remove(slot);
+    renderSavePanel();
+    svToast('🗑 已删除' + (slot === 0 ? '自动存档' : '槽 ' + slot));
+  });
+}
+
+/** 载入：进行中的对局会被替换，所以要二次确认 */
+function loadSaveSlot(slot) {
+  const d = SaveSystem.read(slot);
+  if (!d) { svToast('这个槽位是空的', 'warn'); return; }
+  if (typeof G !== 'undefined' && G && !G.over && G.wave > 0 && _svConfirmSlot !== slot) {
+    _svConfirmSlot = slot;
+    svToast('⚠️ 当前进度将被替换，再点一次「载入」确认', 'warn');
+    setTimeout(() => { if (_svConfirmSlot === slot) _svConfirmSlot = -1; }, 4000);
+    return;
+  }
+  _svConfirmSlot = -1;
+  doLoadSlot(slot, d);
+}
+
+function doLoadSlot(slot, d) {
+  try {
+    newGame(d);                       // newGame 内部会 applySave → SaveSystem.restore
+    // 从主菜单载入时要把菜单收起来
+    const ov = $('overlay');
+    if (ov) ov.style.display = 'none';
+    paused = false;
+    if ($('btnPause')) $('btnPause').textContent = '⏸';
+    if ($('adminBar')) $('adminBar').style.display = G.admin ? 'flex' : 'none';
+    if (typeof closeSavePanel === 'function') closeSavePanel();
+    if (typeof updateHUD === 'function') { hudT = 0; updateHUD(0.1); }
+    setTip('已载入存档：第 ' + G.wave + ' 波 · ' + ((DIFFS[G.diffKey] || {}).name || G.diffKey), 6);
+    if (typeof SFX !== 'undefined' && SFX.up) SFX.up();
+  } catch (e) {
+    console.error('[Save] 载入失败:', e);
+    svToast('❌ 载入失败：' + e.message, 'err');
+  }
+}
+
+function showSavePanel() {
+  const el = $('savePanel');
+  if (!el) return;
+  renderSavePanel();
+  el.style.display = '';
+  el.classList.add('open');
+}
+
+function closeSavePanel() {
+  const el = $('savePanel');
+  if (!el) return;
+  el.style.display = 'none';
+  el.classList.remove('open');
+}
+
+function toggleSavePanel() {
+  const el = $('savePanel');
+  if (!el) return;
+  if (el.classList.contains('open')) closeSavePanel(); else showSavePanel();
 }

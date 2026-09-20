@@ -1,6 +1,13 @@
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const rnd = (a, b) => a + Math.random() * (b - a);
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+/** 角度插值：把 from 朝 to 转 t 比例（t 取 0~1，自动走最短弧） */
+function turnTo(from, to, t) {
+  let d = to - from;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  return from + d * Math.min(1, Math.max(0, t));
+}
 const pick = arr => arr[(Math.random() * arr.length) | 0];
 const cellRect = (c, r) => ({ x: ROOM_X0 + c * CW, y: ARENA_TOP + r * CH, w: CW, h: CH });
 const cellCenter = (c, r) => ({ x: ROOM_X0 + c * CW + CW / 2, y: ARENA_TOP + r * CH + CH / 2 });
@@ -94,19 +101,42 @@ function placeBuildingAt(type, level) {
   }
   return null;
 }
+/* ==================================================================
+ * 生命值公式的唯一来源
+ * 这条公式（基础 × 等级成长 × 加固工程 × 生命强化 × 不朽要塞 × 道具加成 × 转职 1.3）
+ * 原先在 12 个地方各抄了一遍，抄漏的地方直接变成数值 Bug：
+ *   · upgradeDoor / upgradeBed 漏「要塞加固」→ 装备该道具后升门/床反而掉血
+ *   · applySave 漏「要塞加固」→ 读档后铁门与床铺生命凭空少 50%
+ *   · setBuildingLevel 漏等级成长 → 开局赠礼的 Lv10 炮塔只有 Lv1 的生命
+ *   · 剧情奖励「所有建筑免费升级」只留等级项 → 建筑最大生命被砍掉一大截
+ * 现在统一走这三个函数，且都写成 function 声明以便前面的代码提前调用。
+ * ================================================================== */
+const prizeHpMul = () => (G && G.prize && G.prize.hp) || 1;
+const buildingHpMul = () => techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * prizeHpMul();
+/** 建筑最大生命：def + 等级 + 是否已转职 */
+function buildingMaxHp(def, level, branch) {
+  return def.hp * (1 + (Math.max(1, level) - 1) * 0.35) * buildingHpMul() * (branch ? 1.3 : 1);
+}
+/** 铁门最大生命：等级 */
+function doorMaxHp(lv) {
+  return (420 + 200 * (Math.max(1, lv) - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50) * prizeHpMul();
+}
+/** 床铺最大生命：等级 */
+function bedMaxHp(lv) {
+  return (420 + 95 * (Math.max(1, lv) - 1)) * techVal('fortress', 0.50) * prizeHpMul();
+}
 function setBuildingLevel(b, lv) {
   b.level = Math.max(1, Math.min(b.def.maxLv || 50, lv));
-  const f = techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1);
-  b.maxHp = b.def.hp * f; b.hp = b.maxHp;
+  b.maxHp = buildingMaxHp(b.def, b.level, b.branch); b.hp = b.maxHp;
 }
 function setBedLevel(lv) {
   G.bed.lv = Math.max(1, Math.min(50, lv));
-  G.bed.maxHp = (420 + 95 * (G.bed.lv - 1)) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1);
+  G.bed.maxHp = bedMaxHp(G.bed.lv);
   G.bed.hp = G.bed.maxHp;
 }
 function setDoorLevel(d, lv) {
   d.lv = Math.max(1, Math.min(50, lv));
-  d.maxHp = (420 + 200 * (d.lv - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1);
+  d.maxHp = doorMaxHp(d.lv);
   d.hp = d.maxHp; d.broken = false;
 }
 // 永久型道具：装备后永久生效，每局不消耗库存。其余为消耗型——开局自动用掉 1 个，本局持续生效。
@@ -160,9 +190,10 @@ function newGame(loadFrom) {
     state: 'build', wave: 0,
     gold: 0, power: 0, souls: 0,
     runeBag: [], challenge: null, combo: 0, comboT: 0, maxCombo: 0,
+    quest: null,   // 梦境委托状态（quest.js QuestSystem 管理，随存档持久化）
     diffKey: 'normal', admin: false, winWave: 0, prize: {}, reviveLeft: 0, lastReward: 0,
     mode: 'limited', rebuilds: 0,
-    prepTimer: 34,
+    prepTimer: 34, prepTotal: 34,
     spawnQueue: [], bossQueue: [], spawnTimer: 0,
     grid: new Array(COLS * ROWS).fill(null),
     buildings: [], enemies: [], bullets: [], effects: [], parts: [], texts: [],
@@ -192,7 +223,15 @@ function newGame(loadFrom) {
   if (typeof DreamEngine !== 'undefined') { try { DreamEngine.init(); } catch(e) { console.warn('DreamEngine init failed:', e); } }
 }
 const techVal = (k, per) => 1 + G.tech[k] * per;
+/* ------------------------------------------------------------------
+ * 面板属性计算（bstat）—— 每帧缓存
+ * 调用频率极高：渲染时每座建筑每帧一次、开火时 towerDmgMul 还会遍历所有增幅塔、
+ * 经济结算里再遍历一次。而每次计算都要重跑转职公式 + 遍历符文词条（还会 new 对象）。
+ * 主循环每帧把 statFrame +1，同帧内复用结果即可，实测可省掉 4~6 倍重复计算。
+ * ------------------------------------------------------------------ */
+let statFrame = 0;
 function bstat(b) {
+  if (b.__sf === statFrame && b.__ss) return b.__ss;
   const s = b.def.stat(b.level);
   const base = (b.branch && b.def.branch && b.def.branch[b.branch]) ? b.def.branch[b.branch].mod(s, b) : s;
   if (b.runes && b.runes.length) {
@@ -208,7 +247,40 @@ function bstat(b) {
   if (base.range != null) base.range *= techVal('focus', 0.06);
   if (base.dmg != null && G.prize && G.prize.dmg) base.dmg *= G.prize.dmg;
   if (base.rate != null) base.rate *= techVal('swift', 0.08);
+  b.__sf = statFrame; b.__ss = base;
   return base;
+}
+/* ------------------------------------------------------------------
+ * 面板 DPS 估算 —— 回答「这座炮塔到底多强」
+ * 只用于展示，不参与实际结算。多目标武器按折算目标数估算。
+ * ------------------------------------------------------------------ */
+function towerPanelDps(s, b) {
+  if (!s || !s.dmg) return 0;
+  const fate = G.fate || {}, fateW = G.fateWave || {};
+  const critC = clamp(G.tech.crit * 0.04 + (fate.crit || 0) + (fateW.crit || 0), 0, 1);
+  const critM = 2.2 + G.tech.critmaster * 0.4 + (fate.critDmg || 0) + (fateW.critDmg || 0);
+  const critMul = 1 + critC * (critM - 1);
+  let targets = 1;
+  if (s.split) targets = Math.min(4, s.split);
+  else if (s.multi) targets = s.multi;
+  else if (s.chain) targets = Math.min(3, s.chain);
+  else if (s.aoe) targets = 2.5;      // 全范围声波：按 2.5 个目标折算
+  else if (s.splash) targets = 1.6;   // 溅射导弹：按 1.6 折算
+  const dps = s.dmg * targets;
+  if (b && b.type === 'flame') return dps * 1.5;   // 接触伤害 + 50% 灼烧残留
+  if (b && b.type === 'gravity') return dps;       // 引力塔伤害极低，价值在控场
+  return dps * (s.rate || 0) * critMul;
+}
+/** 共鸣增幅快照，供详情面板展示（把「隐形机制」显性化） */
+function resBonusOf(b) {
+  return {
+    n: (b && b.resN) || 0,
+    dmg: (b && b.resDmg) || 1,
+    rate: (b && b.resRate) || 1,
+    tier: (b && b.resTier) || '',
+    extra: (b && b.resExtra) || null,
+    color: (b && b.resColor) || '#7dd3fc',
+  };
 }
 const runeSlots = () => 2 + G.tech.runelord;
 function tryDropRune(wave, x, y) {
@@ -248,6 +320,8 @@ function computeResonance() {
     RESONANCE_TIERS.forEach(t => { if (n >= t.n) tier = t; });
     b.resN = n;
     b.resTier = tier ? tier.name : '';
+    b.resTierN = tier ? tier.n : 0;
+    b.resColor = tier ? tier.color : null;
     b.resDmg = tier ? tier.dmg : 1;
     b.resRate = tier ? tier.rate : 1;
     b.resExtra = null;
@@ -375,7 +449,7 @@ function tryUpgrade(b) {
   const c = upgradeCost(b.def, b.level);
   if (!canAfford(c)) { SFX.err(); setTip('资源不足，无法升级'); return false; }
   payCost(c); b.level++; b.invested += c.gold;
-  const nh = b.def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1);
+  const nh = buildingMaxHp(b.def, b.level, b.branch);
   b.hp += nh - b.maxHp; b.maxHp = nh;
   if (!G.upgradeFx) G.upgradeFx = [];
   G.upgradeFx.push({ x: b.x, y: b.y, t: 0.8 }); // 升级光环爆发（更久）
@@ -400,6 +474,7 @@ function tryBranch(b, which) {
 function sellBuilding(b) {
   const back = Math.round(b.invested * SELL_RATE);
   G.gold += back;
+  recycleRunes(b, '出售');
   G.grid[b.row * COLS + b.col] = null;
   G.buildings.splice(G.buildings.indexOf(b), 1);
   if (selected === b) selected = null;
@@ -416,7 +491,7 @@ function upgradeDoor(d) {
   const c = { gold: doorUpgradeCost(d.lv) };
   if (!canAfford(c)) { SFX.err(); return; }
   payCost(c); d.lv++;
-  const nh = (420 + 200 * (d.lv - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50);
+  const nh = doorMaxHp(d.lv);
   d.hp += nh - d.maxHp; d.maxHp = nh;
   SFX.up(); addText(WALL_X + 10, d.y - 62, '铁门 Lv.' + d.lv, '#9ef01a');
   spawnParts(WALL_X, d.y, 20, '#9ef01a', 3);
@@ -426,7 +501,7 @@ function upgradeBed() {
   const c = { gold: bedUpgradeCost(G.bed.lv) };
   if (!canAfford(c)) { SFX.err(); return; }
   payCost(c); G.bed.lv++;
-  const nh = (420 + 95 * (G.bed.lv - 1)) * techVal('fortress', 0.50);
+  const nh = bedMaxHp(G.bed.lv);
   G.bed.hp += nh - G.bed.maxHp; G.bed.maxHp = nh;
   SFX.up(); addText(BED_CX, BED_CY - 64, '床铺 Lv.' + G.bed.lv, '#ffd166');
   spawnParts(BED_CX, BED_CY, 18, '#ffd166', 3);
@@ -564,9 +639,9 @@ function applyStoryEffect(text, ctx) {
     G.buff.overclock = Math.max(G.buff.overclock || 0, s ? +s[1] : 8);
     got.push('超频 ' + (s ? s[1] : 8) + ' 秒');
   }
-  if (/免费|立刻免费/.test(t) && /升级/.test(t)) {
+  if (/(所有|全部|全体)[^。；]{0,12}建筑[^。；]{0,8}(免费)?升级/.test(t)) {
     let n = 0;
-    G.buildings.forEach(b => { if (b.level < b.def.maxLv) { b.level++; b.maxHp = b.def.hp * (1 + (b.level - 1) * 0.35); b.hp = b.maxHp; n++; } });
+    G.buildings.forEach(b => { if (b.level < b.def.maxLv) { b.level++; b.maxHp = buildingMaxHp(b.def, b.level, b.branch); b.hp = b.maxHp; n++; } });
     if (n) got.push(n + ' 座建筑免费升级');
   }
 
@@ -742,11 +817,16 @@ function updateEnemies(dt) {
       e.alpha = cyc < 2.2 ? 0.28 : 1;
       e.untargetable = cyc < 2.2;
     }
+    // 灼烧叠层衰减：火焰塔每帧会重新点亮 flameOn，离开火舌后才开始掉层
+    if (!e.flameOn && e.burnStack > 0) e.burnStack = Math.max(0, e.burnStack - dt * 1.2);
+    e.flameOn = false;
     if (e.burnT > 0) {
       e.burnT -= dt;
-      e.hp -= e.burnDmg * dt;
+      // 走统一伤害管线：抗性 / 护盾 / 统计 / 击杀归属（烈焰专精挑战）全部生效
+      if (e.burnDmg > 0) dotDamage(e, e.burnDmg, 'fire', e.burnSrc, dt);
       if (Math.random() < dt * 8) spawnParts(e.x, e.y, 1, '#ff8c42', 1.2, 0.4);
       if (e.hp <= 0) { killEnemy(e); continue; }
+      if (e.burnT <= 0) { e.burnDmg = 0; e.burnStack = 0; e.burnSrc = null; }
     }
     if (e.elem) { for (const k in e.elem) { if (e.elem[k] > 0) e.elem[k] -= dt; } }
     if (e.hasteT > 0) e.hasteT -= dt;
@@ -945,8 +1025,21 @@ function breakDoor(d) {
   setTip('第 ' + (d.lane + 1) + ' 道铁门被攻破！敌人涌入房间，会拆掉建筑再攻击床铺。', 6);
   G.enemies.forEach(e => { if (e.state === 'door' && e.door === d) e.state = 'room'; });
 }
+/* 建筑离开棋盘时把镶嵌的符文退回背包。
+   原先卖掉或被打掉一座建筑，镶在上面的符文（可能是传说级）会直接蒸发，
+   而符文是本作最重要的成长资产 —— 玩家没有任何提示就永久损失。 */
+function recycleRunes(b, why) {
+  const rs = (b.runes || []).filter(Boolean);
+  if (!rs.length) return 0;
+  rs.forEach(r => G.runeBag.push(r));
+  b.runes = [];
+  addText(b.x, b.y - 40, '🔮 取回 ' + rs.length + ' 个符文', '#c084fc');
+  setTip('建筑' + why + '，已把 ' + rs.length + ' 个符文退回背包', 4);
+  return rs.length;
+}
 function destroyBuilding(b) {
   if (G.track) G.track.buildLost = (G.track.buildLost || 0) + 1;
+  recycleRunes(b, '被摧毁');
   G.grid[b.row * COLS + b.col] = null;
   G.buildings.splice(G.buildings.indexOf(b), 1);
   if (selected === b) selected = null;
@@ -1033,6 +1126,7 @@ function updateTowers(dt) {
   for (const b of G.buildings) {
     const s = bstat(b);
     b.pulse += dt;
+    if (b.empT > 0) { b.empT -= dt; continue; }   // 瘫痪：主火力与自动放电一起停
     if (s.zapDmg) {
       b.zcd = (b.zcd || 0) - dt;
       if (b.zcd <= 0) {
@@ -1041,18 +1135,23 @@ function updateTowers(dt) {
       }
     }
     if (!b.def.tower || !fire) continue;
-    if (b.empT > 0) { b.empT -= dt; continue; }
     if (b.freezeT > 0) b.freezeT -= dt;
     if (b.type === 'flame') {
       const targets = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       b.flameOn = targets.length > 0;
+      if (targets.length) b.angle = Math.atan2(targets[0].y - b.y, targets[0].x - b.x);
       targets.forEach(e => {
-        let d = s.dmg * towerDmgMul(b) * typeMul(e, 'fire');
-        if (s.stack) { e.burnStack = Math.min(5, (e.burnStack || 0) + dt * 1.2); d *= (1 + e.burnStack * 0.35); }
-        e.burnT = Math.max(e.burnT, 0.6);
-        e.burnDmg = Math.max(e.burnDmg || 0, d);
-        e.hp -= d * dt; G.stats.dmg += d * dt;
-        if (e.hp <= 0) { if (G.track) G.track.killFire = (G.track.killFire || 0) + 1; killEnemy(e); }
+        // 灼烧叠层：仅在持续被喷到期间累积，离开火舌后会衰减（以前叠满 5 层就永久不减）
+        if (s.stack) e.burnStack = Math.min(5, (e.burnStack || 0) + dt * 1.2);
+        e.flameOn = true;
+        let d = s.dmg * towerDmgMul(b) * (1 + (e.burnStack || 0) * 0.35);
+        // 灼烧残留：离开火舌后仍持续 1.4 秒。注意以前 burnDmg 直接等于接触伤害，
+        // 而 updateEnemies 的灼烧结算与直接伤害同时生效 → 火焰塔实际打出双倍面板 DPS。
+        e.burnT = Math.max(e.burnT, 1.4);
+        e.burnDmg = Math.max(e.burnDmg || 0, d * 0.5);
+        e.burnSrc = b;
+        // 接触伤害交给统一管线：护盾/固定减伤/抗性/统计全部生效，且不再每帧刷数字
+        dotDamage(e, d, 'fire', b, dt);
       });
       if (targets.length && Math.random() < dt * 22) spawnParts(rnd(b.x - 20, b.x + 20), rnd(b.y - 20, b.y + 20), 1, '#ff8c42', 1.4, 0.5);
       continue;
@@ -1060,11 +1159,12 @@ function updateTowers(dt) {
     if (s.gravity) {
       const targets = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       b.gravOn = targets.length > 0;
+      const gm = s.dmg * towerDmgMul(b);
       targets.forEach(e => {
         const dx = b.x - e.x, dy = b.y - e.y, d = Math.hypot(dx, dy) || 1;
         if (d > 26) { const sp = s.pull * dt * (e.boss ? 0.28 : 1); e.x += dx / d * sp; e.y += dy / d * sp; }
         e.slow = Math.max(e.slow || 0, s.gravSlow); e.slowT = Math.max(e.slowT || 0, 0.4);
-        applyDamage(e, s.dmg * towerDmgMul(b) * dt, 'energy', b);
+        dotDamage(e, gm, 'energy', b, dt);
       });
       if (targets.length && Math.random() < dt * 14) spawnParts(rnd(b.x - 16, b.x + 16), rnd(b.y - 16, b.y + 16), 1, '#818cf8', 1.3, 0.5);
       continue;
@@ -1074,20 +1174,24 @@ function updateTowers(dt) {
     if (b.cd > 0) continue;
     const mode = b.type === 'laser' ? 'strongest' : 'front';
     const t = findTarget(b, s.range, mode);
-    if (!t) { b.cd = 0; continue; }
+    if (!t) { b.cd = 0; b.idle = (b.idle || 0) + dt; continue; }
     b.cd = 1;
-    b.angle = Math.atan2(t.y - b.y, t.x - b.x);
+    b.idle = 0;
+    // 炮塔转向加插值：原来瞬间跳变，视觉上像瞬移；现在按 14 rad/s 级别的速度追目标
+    b.angle = turnTo(b.angle, Math.atan2(t.y - b.y, t.x - b.x), dt * 14);
     if (s.aoe) {
       const mul = towerDmgMul(b);
       const all = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       all.forEach(e => {
         applyDamage(e, s.dmg * mul * critRoll(), 'kinetic', b);
         const dx = e.x - b.x, dy = e.y - b.y, d = Math.hypot(dx, dy) || 1;
-        if (s.knock && !e.boss) { e.x += dx / d * s.knock; e.y += dy / d * s.knock; }
-        if (s.sonicStun && !e.boss) e.stun = Math.max(e.stun || 0, s.sonicStun);
+        // BOSS 享受击退/眩晕减免，否则一座声波塔能把 BOSS 永久定在走廊口
+        const ctrl = e.boss ? 0.25 : 1;
+        if (s.knock) { e.x += dx / d * s.knock * ctrl; e.y += dy / d * s.knock * ctrl; }
+        if (s.sonicStun) e.stun = Math.max(e.stun || 0, s.sonicStun * ctrl);
       });
       addEffect({ type: 'ring', x: b.x, y: b.y, r: s.range, life: 0.3, maxLife: 0.3, color: '#f0abfc' });
-      b.fireFx = 0.25; // 开火脉冲
+      b.fireFx = 0.25; b.recoil = 1; // 开火脉冲 + 后座
       spawnParts(b.x, b.y, 5, b.def.color, 1.5, 0.3);
       SFX.shoot();
       continue;
@@ -1104,6 +1208,8 @@ function critRoll() {
 function fire_(b, t, s) {
   const mul = towerDmgMul(b);
   const dtype = b.def.dmgType;
+  b.recoil = 1;                 // 后座 + 炮口闪光（纯视觉，不参与结算）
+  b.fireFx = 0.2;
   if (b.type === 'laser') {
     const shots = s.multi || 1;
     let list = [t];
@@ -1137,7 +1243,7 @@ function fire_(b, t, s) {
     chain.forEach((e, i) => {
       addEffect({ type: 'arc', x: px, y: py, x2: e.x, y2: e.y, life: 0.22, maxLife: 0.22 });
       applyDamage(e, s.dmg * mul * Math.pow(0.84, i), dtype, b);
-      if (s.stun) e.stun = Math.max(e.stun || 0, s.stun);
+      if (s.stun) e.stun = Math.max(e.stun || 0, s.stun * (e.boss ? 0.4 : 1));
       if (s.splash) {
         G.enemies.forEach(o => { if (!o.dead && !hit.has(o) && dist(o, e) < s.splash) applyDamage(o, s.dmg * mul * 0.5, dtype, b); });
       }
@@ -1189,7 +1295,8 @@ function triggerReaction(e, rx, baseDmg) {
     e.hp -= d; G.stats.dmg += d;
     addText(e.x, e.y - 30, '💥 过载 ' + Math.round(d), '#fbbf24', true);
     spawnParts(e.x, e.y, 22, '#fbbf24', 4, 0.6); shakeBy(4);
-    addEffect({ type: 'boom', x: e.x, y: e.y, r: 110, life: 0.35, maxLife: 0.35 });
+    // 注意 max 字段：缺了它 updateEffects 会算出 NaN 半径，createRadialGradient 直接抛异常
+    addEffect({ type: 'boom', x: e.x, y: e.y, r: 110, max: 110, life: 0.35, maxLife: 0.35 });
   } else if (rx.id === 'toxiburn') {
     e.poison = Math.min(16, (e.poison || 0) * 2 + 2);
     e.poisonDps = Math.max(e.poisonDps || 0, 14 + G.wave * 1.2);
@@ -1213,7 +1320,51 @@ function triggerReaction(e, rx, baseDmg) {
   const dead = e.hp <= 0;
   if (dead && !e.dead) killEnemy(e);
 }
-function applyDamage(e, dmg, dtype, src, chain) {
+/* 元素标记登记 + 反应触发。从 applyDamage 里抽出来，便于 DoT 按节流频率单独调用 */
+function touchElement(e, dtype, baseDmg) {
+  if (!dtype || e.boss || e.dead) return false;
+  if (!e.elem) e.elem = {};
+  let reacted = null, other = null;
+  for (const k in e.elem) {
+    if (k !== dtype && e.elem[k] > 0) { const rx = findReaction(dtype, k); if (rx) { reacted = rx; other = k; break; } }
+  }
+  if (reacted) {
+    e.elem[other] = 0; e.elem[dtype] = 0;
+    G.stats.reactions = (G.stats.reactions || 0) + 1;
+    triggerReaction(e, reacted, baseDmg);
+    return true;
+  }
+  e.elem[dtype] = 5;
+  return false;
+}
+/* ------------------------------------------------------------------
+ * 持续伤害通道（火焰灼烧 / 引力奇点微伤）
+ * 以前这两个每秒 60 次直接调 applyDamage，后果：
+ *   ① 每帧弹一个伤害数字 → 满屏刷字，还会把 60 条浮动文字上限挤爆
+ *   ② 每帧受击闪白 + 粒子 → 敌人像频闪灯
+ *   ③ 绕过了护盾、固定减伤、抗性与 G.stats.dmg 统计
+ * 现在统一走这里：静默结算 + 每 0.5 秒合并弹一个数字，
+ * 并按 0.5 秒登记一次元素标记，保证与其它元素塔仍能触发反应。
+ * ------------------------------------------------------------------ */
+const DOT_MERGE_INTERVAL = 0.5;
+function dotDamage(e, dps, dtype, src, dt) {
+  if (e.dead || !(dps > 0)) return 0;
+  const d = applyDamage(e, dps * dt, dtype, src, false, true);
+  if (d > 0 && !e.dead) {
+    e.dotAcc = (e.dotAcc || 0) + d;
+    e.dotT = (e.dotT || 0) + dt;
+    if (e.dotT >= DOT_MERGE_INTERVAL) {
+      addText(e.x + rnd(-5, 5), e.y - e.r, Math.round(e.dotAcc), (DMG[dtype] && DMG[dtype].color) || '#ffd6d6');
+      e.dotAcc = 0; e.dotT = 0;
+      touchElement(e, dtype, dps * DOT_MERGE_INTERVAL);
+    }
+  }
+  return d;
+}
+/**
+ * @param {boolean} [silent] - true = 持续伤害帧结算：不弹数字/不闪光/不触发反伤与适应
+ */
+function applyDamage(e, dmg, dtype, src, chain, silent) {
   if (e.dead) return 0;
   const tm = typeMul(e, dtype);
   let d = dmg * tm;
@@ -1223,20 +1374,7 @@ function applyDamage(e, dmg, dtype, src, chain) {
     if (s.shred) DMG_KEYS.forEach(k => { e.res[k] = Math.max(0, (e.res[k] || 0) - s.shred * 0.1); });
   }
   // 元素反应：不同伤害类型叠加触发连锁
-  if (dtype && !e.boss) {
-    if (!e.elem) e.elem = {};
-    let reacted = null, other = null;
-    for (const k in e.elem) {
-      if (k !== dtype && e.elem[k] > 0) { const rx = findReaction(dtype, k); if (rx) { reacted = rx; other = k; break; } }
-    }
-    if (reacted) {
-      e.elem[other] = 0; e.elem[dtype] = 0;
-      G.stats.reactions = (G.stats.reactions || 0) + 1;
-      triggerReaction(e, reacted, dmg);
-    } else {
-      e.elem[dtype] = 5;
-    }
-  }
+  if (!silent) touchElement(e, dtype, dmg);
   if (e.vulnT > 0 && e.vuln > 1) d *= e.vuln;
   if (e.phaseShield && e.segIdx < e.phaseShield && d > 0) {
     const gate = e.maxHp - e.segMax * (e.segIdx + 1);
@@ -1249,17 +1387,19 @@ function applyDamage(e, dmg, dtype, src, chain) {
       if (e.state === 'walk') e.x = Math.max(20, e.x - 34);
     }
   }
-  if (e.def && e.def.reflect && src && src.def && d > 0) {
+  // 反伤：DoT 帧不反，否则火焰塔会被镜面梦魇每帧反弹致死
+  if (!silent && e.def && e.def.reflect && src && src.def && d > 0) {
     const rb = d * e.def.reflect;
     damageTarget(src, rb);
     if (Math.random() < 0.3) addText(e.x, e.y - 44, '🪞 反弹 ' + Math.round(rb), '#e2e8f0');
   }
-  if (e.def && e.def.adapt && dtype && d > 0) {
+  // 适应：同样只在真正的「一击」上累积，否则一帧就叠满抗性
+  if (!silent && e.def && e.def.adapt && dtype && d > 0) {
     e.res[dtype] = Math.min(0.7, (e.res[dtype] || 0) + e.def.adapt);
     e.adapted = (e.adapted || 0) + 1;
   }
-  // 炮塔共鸣附加效果
-  if (src && src.resExtra && dtype && d > 0 && !chain) {
+  // 炮塔共鸣附加效果（只吃单次命中，不吃 DoT 帧）
+  if (!silent && src && src.resExtra && dtype && d > 0 && !chain) {
     const rx = src.resExtra;
     if (rx.burn) { e.burnT = Math.max(e.burnT || 0, 2.2); e.burnDmg = Math.max(e.burnDmg || 0, rx.burn); }
     if (rx.poison) {
@@ -1276,8 +1416,12 @@ function applyDamage(e, dmg, dtype, src, chain) {
   if (e.shield > 0) { const a = Math.min(e.shield, d); e.shield -= a; d -= a; }
   if (d > 0) e.hp -= d;
   e.inCombatT = 2;
-  e.hitFlash = 0.12; // 受击白色闪烁
   G.stats.dmg += d;
+  if (silent) {
+    if (e.hp <= 0) { if (src && src.kills !== undefined) src.kills++; if (G.track && dtype === 'fire') G.track.killFire = (G.track.killFire || 0) + 1; killEnemy(e); }
+    return d;
+  }
+  e.hitFlash = 0.12; // 受击白色闪烁
   // 打击音效（按伤害属性区分，内部已做节流）
   if (typeof DreamSound !== 'undefined' && DreamSound.playDamageSound) DreamSound.playDamageSound(dtype);
   // 理解之路：残血的梦魇可能突然停下（由 MercyPath 决定是否触发；触发时走剧情对话）
@@ -1290,7 +1434,7 @@ function applyDamage(e, dmg, dtype, src, chain) {
   const dmgColor = d > 200 ? '#ff4d6d' : (d > 80 ? '#ffa500' : (tm > 1.05 ? '#ffe066' : (tm < 0.95 ? '#94a3b8' : '#ffffff')));
   addText(e.x + rnd(-6, 6), e.y - e.r, Math.round(d), dmgColor);
   spawnParts(e.x, e.y, crit ? 5 : 3, crit ? '#ffe066' : '#ffd6d6', crit ? 3 : 2, 0.35);
-  if (e.hp <= 0) { if (G.track && dtype === 'fire') G.track.killFire = (G.track.killFire || 0) + 1; killEnemy(e); }
+  if (e.hp <= 0) { if (src && src.kills !== undefined) src.kills++; if (G.track && dtype === 'fire') G.track.killFire = (G.track.killFire || 0) + 1; killEnemy(e); }
   return d;
 }
 function updateBullets(dt) {
@@ -1314,7 +1458,7 @@ function updateBullets(dt) {
           t.poisonDps = Math.max(t.poisonDps || 0, b.poisonDps);
           t.poisonT = 3.2;
         }
-        if (b.slow) { t.slow = b.slow; t.slowT = 2.0; }
+        if (b.slow) { t.slow = Math.max(t.slow || 0, b.slow); t.slowT = 2.0; }
         if (b.freezeChance && Math.random() < b.freezeChance) t.stun = Math.max(t.stun || 0, 0.9);
         spawnParts(b.tx, b.ty, b.crit > 1 ? 9 : 5, b.crit > 1 ? '#fff' : b.color, 2, 0.3);
       }
@@ -1322,7 +1466,8 @@ function updateBullets(dt) {
     }
     b.x += dx / d * step; b.y += dy / d * step;
     b.life += dt;
-    if (b.life > 2) G.bullets.splice(i, 1);
+    // 导弹基础速度 330px/s、射程可到 1200+，原来的 2 秒存活常常「飞不到就凭空消失」
+    if (b.life > 3.5) G.bullets.splice(i, 1);
   }
 }
 function rollEvent() {
@@ -1359,7 +1504,7 @@ function startWave() {
   addText(ROOM_X0 + 340, DOOR_MID_Y() - 150, '第 ' + G.wave + ' 波来袭！', '#ff6b6b', true);
   if (G.event.id !== 'none') { addText(ROOM_X0 + 340, DOOR_MID_Y() - 118, G.event.icon + ' ' + G.event.name, '#ffd166', true); setTip('本波事件【' + G.event.name + '】：' + G.event.desc, 6); }
   flash = 0.35; shakeBy(6 + Math.min(G.wave, 20) * 0.3); // 波次越高震动越强
-  G.waveTransition = { t: 2.0, wave: G.wave }; // 波次过渡动画
+  G.waveTransition = { t: 1.5, wave: G.wave }; // 波次过渡动画（1.5s，别长时间糊住战场）
   if (G.wave === 1) setTip('敌人分三路进攻！三条走廊各有一扇铁门，别只顾一边。', 8);
   if (G.wave === 5) setTip('精英梦魇开始出现（带词缀），BOSS 波也来了。注意伤害类型克制。', 8);
   if (G.wave === finalWave()) {
@@ -1439,6 +1584,7 @@ function endWave() {
     }
   }
   G.prepTimer = Math.max(12, 24 - G.wave * 0.16) * diffCfg().prepMul * ((G.prize && G.prize.prep) || 1);
+  G.prepTotal = G.prepTimer;
   let interest = 0, soulsFromBank = 0;
   G.buildings.forEach(b => {
     const s = bstat(b);
@@ -1542,7 +1688,7 @@ function updateEffects(dt) {
     const e = G.effects[i];
     e.life -= dt;
     if (e.type === 'meteor') { e.x += (e.tx - e.x) * dt * 5; e.y += (e.ty - e.y) * dt * 5; }
-    if (e.type === 'boom') e.r = e.max * (1 - e.life / e.maxLife);
+    if (e.type === 'boom') { const mx = (e.max != null) ? e.max : e.r; e.r = mx * (1 - e.life / e.maxLife); }
     if (e.type === 'curse') {
       const dps = 26;
       G.buildings.forEach(b => { if (dist(b, e) < e.r) damageTarget(b, dps * dt); });
@@ -1577,44 +1723,29 @@ function checkAchievements() {
     }
   });
 }
-function saveGame() {
-  if (!G || G.over) return;
-  try {
-    const d = {
-      v: 2, wave: G.wave, gold: G.gold, power: G.power, souls: G.souls,
-      grow: G.grow, tech: G.tech, ach: G.ach, stats: G.stats, lot: G.lot, runeBag: G.runeBag,
-      bed: { lv: G.bed.lv, hp: G.bed.hp },
-      doors: G.doors.map(d => ({ lv: d.lv, hp: d.hp })),
-      buildings: G.buildings.map(b => ({ t: b.type, c: b.col, r: b.row, lv: b.level, br: b.branch, hp: b.hp, inv: b.invested, runes: b.runes })),
-    };
-    Store.set('tangping_save', JSON.stringify(d));
-    const b = +Store.get('tangping_best', 0) || 0;
-    if (G.wave > b) Store.set('tangping_best', G.wave);
-  } catch (e) { }
+/* ------------------------------------------------------------------
+ * 存档入口：真正的实现与格式定义都在 save.js 的 SaveSystem。
+ * 保留这三个函数名是因为 endWave / 摇奖 / 按钮 / 主菜单都在调它们。
+ * ------------------------------------------------------------------ */
+function saveGame(slot) {
+  if (!G || G.over) return false;
+  const s = (slot === undefined) ? 0 : slot;
+  const d = SaveSystem.capture();
+  if (!d) return false;
+  const r = SaveSystem.write(s, d);
+  const b = +Store.get('tangping_best', 0) || 0;
+  if (G.wave > b) Store.set('tangping_best', G.wave);
+  if (!r.ok) {
+    setTip(r.reason === 'quota' ? '⚠️ 浏览器存储空间已满，存档失败（可在存档面板导出备份）' : '⚠️ 存档写入失败', 6);
+    return false;
+  }
+  return true;
 }
-function loadSave() {
-  try { const s = Store.get('tangping_save', null); return s ? JSON.parse(s) : null; } catch (e) { return null; }
+function loadSave(slot) {
+  return SaveSystem.read((slot === undefined) ? 0 : slot);
 }
-function applySave(d) {
-  G.wave = d.wave || 0; G.gold = d.gold || 0; G.power = d.power || 0; G.souls = d.souls || 0;
-  G.grow = d.grow || 0;
-  if (d.tech) Object.keys(d.tech).forEach(k => { if (G.tech[k] !== undefined) G.tech[k] = d.tech[k]; });
-  if (d.ach) G.ach = d.ach;
-  if (d.stats) Object.assign(G.stats, d.stats);
-  if (d.lot) G.lot = d.lot;
-  if (d.runeBag) G.runeBag = d.runeBag;
-  if (d.bed) { G.bed.lv = d.bed.lv; G.bed.maxHp = (420 + 95 * (G.bed.lv - 1)) * techVal('fortress', 0.50); G.bed.hp = Math.min(d.bed.hp, G.bed.maxHp); }
-  if (d.doors) d.doors.forEach((v, i) => { const o = G.doors[i]; if (!o) return; o.lv = v.lv; o.maxHp = (420 + 200 * (v.lv - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50); o.hp = Math.min(v.hp, o.maxHp); });
-  if (d.buildings) d.buildings.forEach(v => {
-    const def = BUILD_DEFS[v.t]; if (!def) return;
-    const p = cellCenter(v.c, v.r);
-    if (G.grid[v.r * COLS + v.c]) return;
-    const b = { type: v.t, def, level: v.lv || 1, col: v.c, row: v.r, x: p.x, y: p.y, branch: v.br || null, cd: 0, angle: -Math.PI / 2, target: null, pulse: 0, kills: 0, invested: v.inv || def.cost.gold, shield: 0, shieldMax: 0, runes: v.runes || [null, null] };
-    b.maxHp = def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1);
-    b.hp = Math.min(v.hp, b.maxHp);
-    G.buildings.push(b); G.grid[v.r * COLS + v.c] = b;
-  });
-}
+/** 读档：完整恢复（含难度/模式/命运加成/开局道具/护盾/梦境进度），实现见 save.js */
+function applySave(d) { return SaveSystem.restore(d); }
 function gameOver() {
   if (G.over) return;
   if (G.admin) {
@@ -1638,7 +1769,7 @@ function gameOver() {
   SFX.lose(); shakeBy(24); flash = 0.8;
   const b = +Store.get('tangping_best', 0) || 0;
   if (G.wave > b) Store.set('tangping_best', G.wave);
-  Store.del('tangping_save');
+  SaveSystem.remove(0);   // 结局后清掉自动存档（存档系统统一走 SaveSystem）
   showGameOver();
 }
 function gameWin() {
@@ -1657,7 +1788,7 @@ function gameWin() {
   const b = +Store.get('tangping_best', 0) || 0;
   if (G.wave > b) Store.set('tangping_best', G.wave);
   Store.set('tangping_cleared', 1);
-  Store.del('tangping_save');
+  SaveSystem.remove(0);
   spawnParts(640, 300, 80, '#ffd166', 6, 1.4);
   showVictory();
 }
@@ -1729,7 +1860,7 @@ function upgradeAllBuildings(onlyTower) {
     const c = upgradeCost(b.def, b.level);
     if (!canAfford(c)) continue;
     payCost(c); b.level++; b.invested += c.gold; spent += c.gold;
-    const nh = b.def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1);
+    const nh = buildingMaxHp(b.def, b.level, b.branch);
     b.hp += nh - b.maxHp; b.maxHp = nh; n++;
     spawnParts(b.x, b.y, 8, b.def.color, 2, 0.5);
   }

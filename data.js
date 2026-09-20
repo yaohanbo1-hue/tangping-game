@@ -93,9 +93,9 @@ const BUILD_DEFS = {
   flame: {
     name: '火焰喷射器', icon: '🔥', key: '7', color: '#ff8c42',
     cost: { gold: 130, power: 35 }, upkeep: 2.4, hp: 240, maxLv: 50, tower: true, dmgType: 'fire',
-    desc: '近距离范围灼烧，堵门利器。',
+    desc: '近距离范围灼烧，堵门利器；脱离火舌后仍会残留 1.4 秒燃烧。',
     stat: lv => ({ dmg: 10 + 5 * (lv - 1), range: 300 + 14 * (lv - 1), radius: 110 + 8 * (lv - 1) }),
-    statText: s => `火焰 ${s.dmg}/秒  范围 ${s.radius | 0}`,
+    statText: s => `火焰 ${s.dmg}/秒（+50% 灼烧残留）  范围 ${s.radius | 0}`,
     branch: {
       a: { name: '炼狱风暴', icon: '🌋', desc: '范围与灼烧大幅提升', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.8, range: s.range * 1.35, radius: s.radius * 1.6 }) },
       b: { name: '熔岩印记', icon: '🩸', desc: '灼烧可无限叠加，伤害递增', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.3, range: s.range, radius: s.radius * 1.2, stack: true }) },
@@ -358,7 +358,7 @@ const LOTTERY_POOL = [
   { id: 'g2', r: 'rare', w: 10, name: '金币大礼', icon: '💵', desc: '获得 650~1100 金币',
     apply: () => { const v = 650 + Math.round(Math.random() * 450); G.gold += v; return '获得 ' + v + ' 金币'; } },
   { id: 'u1', r: 'rare', w: 9, name: '强化祝福', icon: '⬆️', desc: '随机一座建筑免费升 1 级',
-    apply: () => { const c = G.buildings.filter(b => b.level < b.def.maxLv); if (!c.length) { G.gold += 400; return '无建筑可升级，改为获得 400 金币'; } const b = pick(c); b.level++; const nh = b.def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1); b.hp += nh - b.maxHp; b.maxHp = nh; return b.def.name + ' 升至 Lv.' + b.level; } },
+    apply: () => { const c = G.buildings.filter(b => b.level < b.def.maxLv); if (!c.length) { G.gold += 400; return '无建筑可升级，改为获得 400 金币'; } const b = pick(c); b.level++; const nh = buildingMaxHp(b.def, b.level, b.branch); b.hp += nh - b.maxHp; b.maxHp = nh; return b.def.name + ' 升至 Lv.' + b.level; } },
   { id: 'gr1', r: 'rare', w: 8, name: '加速发育', icon: '🌱', desc: '发育度 +3',
     apply: () => { G.grow = Math.min(25, G.grow + 3); return '发育度提升至 ' + G.grow; } },
   { id: 'gb1', r: 'rare', w: 8, name: '淘金热', icon: '🤑', desc: '本波金币产出 x2',
@@ -368,7 +368,7 @@ const LOTTERY_POOL = [
   { id: 'b1', r: 'epic', w: 3.2, name: '天降建筑', icon: '🏗️', desc: '免费获得一座随机建筑',
     apply: () => { const keys = BUILD_KEYS.slice(); for (let i = 0; i < 40; i++) { const c = (Math.random() * COLS) | 0, r = (Math.random() * ROWS) | 0; if (!G.grid[r * COLS + c] && !inBed(c, r)) { const k = pick(keys); const g = G.gold; G.gold = 1e9; const ok = tryBuild(k, c, r); G.gold = g; if (ok) return '免费建成：' + BUILD_DEFS[k].name; } } G.gold += 900; return '房间已满，改为获得 900 金币'; } },
   { id: 'u2', r: 'epic', w: 3, name: '全体强化', icon: '📈', desc: '所有炮塔免费升 1 级',
-    apply: () => { let n = 0; G.buildings.forEach(b => { if (b.def.tower && b.level < b.def.maxLv) { b.level++; const nh = b.def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1); b.hp += nh - b.maxHp; b.maxHp = nh; n++; } }); if (!n) { G.gold += 1200; return '没有可升级炮塔，获得 1200 金币'; } return n + ' 座炮塔集体升级！'; } },
+    apply: () => { let n = 0; G.buildings.forEach(b => { if (b.def.tower && b.level < b.def.maxLv) { b.level++; const nh = buildingMaxHp(b.def, b.level, b.branch); b.hp += nh - b.maxHp; b.maxHp = nh; n++; } }); if (!n) { G.gold += 1200; return '没有可升级炮塔，获得 1200 金币'; } return n + ' 座炮塔集体升级！'; } },
   { id: 'd2', r: 'epic', w: 2.8, name: '铁壁升华', icon: '🧱', desc: '三扇铁门各升 1 级并满血',
     apply: () => { G.doors.forEach(d => { d.lv++; d.maxHp = (420 + 200 * (d.lv - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1); d.hp = d.maxHp; d.broken = false; }); return '铁门强化至 Lv.' + G.doors[0].lv; } },
   { id: 's2', r: 'epic', w: 3, name: '灵魂涌泉', icon: '🔮', desc: '获得 45 灵魂',
@@ -380,7 +380,7 @@ const LOTTERY_POOL = [
   { id: 't1', r: 'legend', w: 0.75, name: '天启转职', icon: '⭐', desc: '随机一座满级建筑免费转职',
     apply: () => { const c = G.buildings.filter(b => !b.branch && b.level >= BRANCH_AT && b.def.branch); if (!c.length) { G.gold += 2500; return '无建筑可转职，改为获得 2500 金币'; } const b = pick(c); const w = pick(['a', 'b']); const g = G.gold, s = G.souls; G.gold = 1e9; G.souls = 1e9; tryBranch(b, w); G.gold = g; G.souls = s; return b.def.branch[b.branch].name + ' 诞生！'; } },
   { id: 'u3', r: 'legend', w: 0.6, name: '万物升华', icon: '🎆', desc: '所有建筑免费升 2 级',
-    apply: () => { let n = 0; G.buildings.forEach(b => { for (let i = 0; i < 2 && b.level < b.def.maxLv; i++) { b.level++; n++; } const nh = b.def.hp * (1 + (b.level - 1) * 0.35) * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1) * (b.branch ? 1.3 : 1); b.hp += nh - b.maxHp; b.maxHp = nh; }); return n ? '全部建筑共提升 ' + n + ' 级！' : '无可升级建筑，获得 3000 金币'; } },
+    apply: () => { let n = 0; G.buildings.forEach(b => { for (let i = 0; i < 2 && b.level < b.def.maxLv; i++) { b.level++; n++; } const nh = buildingMaxHp(b.def, b.level, b.branch); b.hp += nh - b.maxHp; b.maxHp = nh; }); return n ? '全部建筑共提升 ' + n + ' 级！' : '无可升级建筑，获得 3000 金币'; } },
   { id: 'g3', r: 'legend', w: 0.7, name: '金山银海', icon: '🏆', desc: '获得 3500 金币',
     apply: () => { G.gold += 3500; return '获得 3500 金币'; } },
   { id: 'f1', r: 'legend', w: 0.55, name: '永恒守护', icon: '🛡️', desc: '铁门与床铺最大生命永久 +50%',
@@ -646,11 +646,12 @@ function findReaction(a, b) { return REACTION_PAIRS[[a, b].sort().join('+')] || 
  * ============================================================ */
 const RESONANCE_R = 158;
 const RESONANCE_TIERS = [
-  { n: 2, dmg: 1.12, rate: 1.00, name: '双元素共鸣', icon: '🎵' },
-  { n: 3, dmg: 1.26, rate: 1.10, name: '三元素共鸣', icon: '🎶' },
-  { n: 4, dmg: 1.44, rate: 1.18, name: '四元素共鸣', icon: '🎼' },
-  { n: 5, dmg: 1.62, rate: 1.26, name: '全谱共鸣', icon: '🌈' },
-  { n: 6, dmg: 1.85, rate: 1.34, name: '万物共鸣', icon: '✨' },
+  // color 供画布徽记 / 详情面板使用，让「共鸣」这个隐形机制能被看见
+  { n: 2, dmg: 1.12, rate: 1.00, name: '双元素共鸣', icon: '🎵', color: '#7dd3fc' },
+  { n: 3, dmg: 1.26, rate: 1.10, name: '三元素共鸣', icon: '🎶', color: '#a78bfa' },
+  { n: 4, dmg: 1.44, rate: 1.18, name: '四元素共鸣', icon: '🎼', color: '#f0abfc' },
+  { n: 5, dmg: 1.62, rate: 1.26, name: '全谱共鸣', icon: '🌈', color: '#fbbf24' },
+  { n: 6, dmg: 1.85, rate: 1.34, name: '万物共鸣', icon: '✨', color: '#fff1a8' },
 ];
 // 特定双元素组合：额外附加效果
 const RESONANCE_PAIRS = {

@@ -2038,6 +2038,7 @@ const DreamEngine = {
     MercyPath.init();
     DreamFragments.initFragments();
     DreamDiary.initDiary();
+    if (typeof QuestSystem !== 'undefined') QuestSystem.init();
     this._initialized = true;
     EventBus.emit('dream:init', null);
   },
@@ -2091,6 +2092,9 @@ const DreamEngine = {
     // 日记：波次开始
     DreamDiary.addEntry('story', '第 ' + waveNum + ' 波开始' + (DeepDream.isActive() ? '（深层梦境）' : ''));
 
+    // 梦境委托：到达解锁波次则接取下一章
+    if (typeof QuestSystem !== 'undefined') { try { QuestSystem.onWaveStart(waveNum); } catch (e) { console.warn('QuestSystem waveStart:', e); } }
+
     EventBus.emit('dream:waveStart', waveNum);
   },
 
@@ -2128,6 +2132,9 @@ const DreamEngine = {
       }
     }
 
+    // 梦境委托：信物掉落与进度
+    if (typeof QuestSystem !== 'undefined') { try { QuestSystem.onEnemyKilled(enemy); } catch (e) { console.warn('QuestSystem kill:', e); } }
+
     // 检查是否可被理解（应在此之前调用 checkMercy）
     EventBus.emit('dream:enemyKilled', enemy);
   },
@@ -2153,6 +2160,7 @@ const DreamEngine = {
       fourthWall: FourthWall._state ? { activeEffects: FourthWall._state.activeEffects.length, chatMessages: FourthWall._state.chatMessages.length } : null,
       deepDream: DeepDream.isActive() ? { level: DeepDream.getCurrentLevel().name, wavesIn: DeepDream._wavesInDeep } : null,
       fragments: DreamFragments.getUnlockStatus(),
+      quest: typeof QuestSystem !== 'undefined' ? QuestSystem.getSnapshot() : null,
       mercy: MercyPath.getMercyProgress(),
       diary: { entries: DreamDiary._entries ? DreamDiary._entries.length : 0, completion: DreamDiary.getCompletionRate() },
     };

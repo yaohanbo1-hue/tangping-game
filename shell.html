@@ -58,6 +58,15 @@ canvas{display:block;width:1280px;height:720px}
 #hudTimer{padding:4px 9px;border-radius:7px;font-weight:700;font-size:13px;min-width:52px;text-align:center;flex-shrink:0;font-variant-numeric:tabular-nums}
 #hudTimer.prep{background:rgba(96,165,250,.2);color:#93c5fd}
 #hudTimer.fight{background:rgba(var(--danger-rgb),.22);color:var(--danger-2)}
+/* HUD 底边：备战倒计时进度条 */
+#hudProg{position:absolute;left:0;bottom:0;height:3px;width:100%;background:rgba(255,255,255,.07);overflow:hidden;pointer-events:none}
+#hudProg i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#3b82f6,#93c5fd);transition:width .12s linear,background .3s}
+#hudProg.warn i{background:linear-gradient(90deg,#f59e0b,#f87171)}
+/* 建造卡片：面板 DPS 与已建数量角标 */
+.card .dps{font-size:8.5px;font-weight:800;letter-spacing:0;color:#bfe9a0;margin-top:2px;text-shadow:0 1px 2px var(--shadow-2);white-space:nowrap}
+.card .cnt{position:absolute;left:4px;top:4px;min-width:13px;height:13px;line-height:13px;padding:0 3px;border-radius:7px;
+  font-size:8px;font-weight:800;text-align:center;color:#0b1020;background:linear-gradient(180deg,#e9f7c9,#9ef01a);
+  box-shadow:0 1px 4px rgba(0,0,0,.5);display:none}
 /* HUD 数值脉冲：JS 仅在「突增/掉血」时短暂加 class，单帧 keyframes 自动回落到默认样式 */
 #hud .stat span{font-variant-numeric:tabular-nums}
 #hud .stat b{transition:color .25s}
@@ -93,9 +102,13 @@ canvas{display:block;width:1280px;height:720px}
 .dhead b{font-size:14px;color:var(--gold-3)}
 .dtn{font-size:11px;margin-left:4px;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px}
 .dst{font-size:11.5px;color:#b9b3d6;line-height:1.6}
-.dact{margin-top:8px;display:flex;gap:8px}
-.dact button{flex:1;padding:6px;border-radius:6px;border:1px solid rgba(158,240,26,.4);background:rgba(158,240,26,.16);
-  color:#d9f99d;font-size:12px;cursor:pointer;font-family:inherit}
+/* 操作按钮：原来 flex:1 三等分，320px 面板下每颗只有 92px，
+   「升级 143K💰 114⚡」会被挤成两行、「⏫升满」蹦成「升/满」。
+   改为按钮内分两行（主标题 + 费用小字），字号收紧，永远不换行错位。 */
+.dact{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+.dact button{flex:1 1 0;min-width:78px;padding:6px 4px;border-radius:6px;border:1px solid rgba(158,240,26,.4);background:rgba(158,240,26,.16);
+  color:#d9ffb0;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;line-height:1.25;white-space:nowrap;overflow:hidden}
+.dact button i{display:block;font-style:normal;font-size:10px;font-weight:600;color:#ffe9b0;opacity:.92;margin-top:1px}
 .dact button:hover{background:rgba(158,240,26,.3)}
 .dact .sell{border-color:rgba(var(--danger-rgb),.4);background:rgba(var(--danger-rgb),.14);color:var(--danger-2)}
 .dact .sell:hover{background:rgba(var(--danger-rgb),.28)}
@@ -187,9 +200,9 @@ canvas{display:block;width:1280px;height:720px}
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 /* 右侧控制区：必须完整塞进 150px 高的 #bottom（修复 11 个按钮 + 提示被裁掉的问题）
    预算：136px 内容高 = 技能条 36 + 间隔 5 + 按钮网格 2 行 44 + 间隔 5 + 提示 46 */
-#right{width:232px;display:flex;flex-direction:column;gap:5px;min-height:0}
+#right{width:232px;display:flex;flex-direction:column;gap:4px;min-height:0}
 #skillBar{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;flex-shrink:0}
-.skill{position:relative;height:36px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,.07),var(--glass-2));
+.skill{position:relative;height:34px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,.07),var(--glass-2));
   border:1px solid rgba(130,120,220,.22);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;
   transition:transform .16s cubic-bezier(.2,.9,.3,1.3),box-shadow .2s,background .2s,border-color .2s}
 .skill:hover{background:linear-gradient(180deg,rgba(130,120,220,.3),rgba(110,100,200,.16));border-color:rgba(150,140,255,.5);
@@ -202,11 +215,13 @@ canvas{display:block;width:1280px;height:720px}
 .skill.cool{filter:grayscale(.75) brightness(.85)}
 .skill:not(.cool){border-color:rgba(158,240,26,.32)}
 #ctrls{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;flex-shrink:0}
-#ctrls .btn{min-width:0;width:100%;padding:5px 1px;font-size:9px;font-weight:700;text-align:center;letter-spacing:0;
-  line-height:1.15;overflow:hidden;white-space:nowrap;border-radius:6px}
-#hint{font-size:9.5px;color:#8882a8;line-height:1.42;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
-  padding:4px 6px;border-radius:6px;flex:1;min-height:0;overflow:hidden;border:1px solid rgba(255,255,255,.035)}
-#hint b{color:#b8b0d8}
+#ctrls .btn{min-width:0;width:100%;padding:3px 0;font-size:9px;font-weight:700;text-align:center;letter-spacing:0;
+  line-height:1.2;overflow:hidden;white-space:nowrap;border-radius:6px}
+/* 提示区：原来 3 行文字塞不进可用高度，最后一行被 overflow:hidden 切掉半截。
+   把技能条/按钮网格各收 1~2px，攒出的高度留给这里。 */
+#hint{font-size:9.2px;color:#8f89b0;line-height:1.3;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+  padding:3px 6px;border-radius:6px;flex:1;min-height:0;overflow:hidden;border:1px solid rgba(255,255,255,.035)}
+#hint b{color:#c2bce0;font-weight:700}
 .slide{position:absolute;right:0;top:56px;width:352px;height:504px;
   background:linear-gradient(180deg,rgba(14,11,30,.92),rgba(10,8,22,.94));
   backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);
@@ -269,6 +284,12 @@ canvas{display:block;width:1280px;height:720px}
   box-shadow:0 16px 60px rgba(0,0,0,.65),0 0 80px rgba(120,80,246,.08),inset 0 1px 0 var(--glass-1);
   animation:panelIn .5s ease-out both}
 @keyframes panelIn{from{opacity:0;transform:translateY(30px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+/* ⚠️ panelIn 带 animation-fill-mode:both，动画结束后仍会永久接管 transform。
+   于是凡是靠 translateX(-50%) / translate(-50%,-50%) 居中的浮层（剧情对话框、
+   怜悯对话框、碎片全文）都会被顶到屏幕右侧、超出 #wrap 被裁掉。
+   下面两个 keyframes 把居中位移写进动画里，动画结束仍保持居中。 */
+@keyframes dialogInX{from{opacity:0;transform:translateX(-50%) translateY(30px) scale(.96)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+@keyframes dialogInXY{from{opacity:0;transform:translate(-50%,-50%) scale(.96)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 .panel::-webkit-scrollbar{width:8px}
 .panel::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
 .panel.win h1{background:linear-gradient(135deg,var(--gold-2),#fde68a,var(--gold-2),#fde68a);background-size:300% auto;animation:titleShine 3s linear infinite;
@@ -309,6 +330,15 @@ canvas{display:block;width:1280px;height:720px}
 .dlv{font-size:11px;color:var(--pri);margin-left:6px;background:rgba(var(--pri-rgb),.16);padding:1px 6px;border-radius:4px;white-space:nowrap}
 .dst .hl{color:var(--gold);font-size:13px}
 .dup2{color:var(--ok-2);font-size:11px}
+/* 共鸣信息块（--rc 由 JS 按共鸣档位注入颜色） */
+.dres{margin-top:6px;font-size:10.5px;line-height:1.5;color:var(--text-mid);border-radius:6px;padding:5px 8px;
+  background:rgba(255,255,255,.045);background:color-mix(in srgb,var(--rc) 12%,transparent);
+  border-left:3px solid var(--rc)}
+.dres b{color:var(--rc)}
+.dres span{display:block;color:var(--text-note);font-size:10px}
+.dres .drn{float:right;color:var(--text-dim)}
+.dres.dim{background:rgba(255,255,255,.03);border-left-color:rgba(160,140,255,.35);color:var(--text-dim)}
+.dres.dim b{color:var(--text-mid)}
 .dnote{font-size:10.5px;color:var(--text-dim);line-height:1.5;background:var(--glass-1);border-radius:5px;padding:4px 7px;margin-top:5px}
 .dnote b{color:var(--gold-3)}
 .dup b{color:var(--gold-3)}
@@ -637,13 +667,155 @@ canvas{display:block;width:1280px;height:720px}
   0%,100%{opacity:.6;transform:scale(1)}
   50%{opacity:1;transform:scale(1.05)}}
 
+/* #overlay 之外的两个 .panel 没有任何定位，会被前面的 <canvas> 顶出可视区、
+   再被 #wrap 的 overflow:hidden 裁掉 —— 表现为「点了按钮面板打不开」。
+   这里给它们自己的绝对居中（transform 写进 keyframes，避免被 panelIn 覆盖）。 */
+#runePanel, #questPanel, #savePanel{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  z-index:22;max-height:88%;animation:dialogInXY .45s ease-out both}
+/* ================= BOSS 血条横幅 ================= */
+#bossBar{position:absolute;left:50%;top:62px;transform:translateX(-50%) translateY(-14px);width:640px;z-index:7;
+  display:none;opacity:0;transition:opacity .35s,transform .35s;pointer-events:none;
+  background:linear-gradient(180deg,rgba(38,10,22,.94),rgba(16,8,18,.92));
+  border:1px solid rgba(255,77,109,.45);border-radius:10px;padding:7px 12px 9px;box-sizing:border-box;
+  box-shadow:0 8px 30px rgba(0,0,0,.6),0 0 40px rgba(255,77,109,.14)}
+#bossBar.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.bb-top{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
+.bb-name{font-size:13px;font-weight:800;color:#ffd166;letter-spacing:1px;text-shadow:0 0 12px rgba(255,209,102,.4)}
+.bb-phase{font-size:10.5px;color:#fca5a5;background:rgba(255,77,109,.18);border:1px solid rgba(255,77,109,.35);
+  padding:1px 7px;border-radius:99px}
+.bb-hp{margin-left:auto;font-size:11.5px;font-weight:700;color:#ffd6d6;font-variant-numeric:tabular-nums}
+.bb-track{position:relative;height:12px;border-radius:7px;background:rgba(0,0,0,.55);overflow:hidden;
+  box-shadow:inset 0 1px 4px rgba(0,0,0,.7)}
+.bb-track i{position:absolute;left:0;top:0;bottom:0;border-radius:7px;
+  background:linear-gradient(180deg,#ff8fa3,#e11d48 55%,#7f1d1d);transition:width .18s linear;
+  box-shadow:0 0 14px rgba(255,77,109,.55)}
+.bb-track u{position:absolute;left:0;top:0;bottom:0;border-radius:7px;background:rgba(93,230,255,.55);
+  transition:width .18s linear}
+/* HUD 视觉统一：数值等宽 */
+#hud .stat{gap:4px}
+#hud .stat b{font-variant-numeric:tabular-nums;letter-spacing:.2px}
+/* 滑出面板统一标题与卡片观感 */
+.slide h3{border-bottom:1px solid rgba(150,140,255,.16);padding-bottom:7px}
+.slide .slist{gap:7px}
+.tech,.ach{border-radius:8px}
+.tech:hover,.ach:hover{transform:translateX(2px)}
+.bropt:active,.tech:active,.ach:active{transform:scale(.99)}
+
+/* ================= 存档管理 ================= */
+#savePanel{width:720px}
+.svrow{display:flex;align-items:center;gap:10px;text-align:left;background:rgba(255,255,255,.045);
+  border:1px solid rgba(160,140,255,.16);border-radius:9px;padding:9px 11px;margin-bottom:8px;transition:.15s}
+.svrow:hover{border-color:rgba(167,139,250,.42);background:rgba(167,139,250,.08)}
+.svrow.auto{border-color:rgba(125,211,252,.4);background:rgba(125,211,252,.07)}
+.svrow.empty{opacity:.65}
+.svtag{flex-shrink:0;width:52px;text-align:center;font-size:10px;font-weight:800;letter-spacing:1px;
+  padding:4px 0;border-radius:6px;background:rgba(167,139,250,.18);color:#c4b5fd}
+.svrow.auto .svtag{background:rgba(125,211,252,.2);color:#7dd3fc}
+.svmain{flex:1;min-width:0}
+.svname{font-size:13px;font-weight:700;color:#e9e4ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.svmeta{font-size:10.5px;color:var(--text-dim);margin-top:3px;line-height:1.5}
+.svmeta b{color:var(--gold-2)}
+.svchips{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.svchip{font-size:9.5px;padding:1px 6px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--text-note)}
+.svchip.q{background:rgba(255,209,102,.16);color:var(--gold-2)}
+.svchip.d{background:rgba(199,125,255,.16);color:#c77dff}
+.svacts{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.svacts .r1{display:flex;gap:4px}
+.svbtn{font-family:inherit;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:6px;cursor:pointer;
+  border:1px solid rgba(158,240,26,.4);background:rgba(158,240,26,.14);color:#d9ffb0;transition:.15s;white-space:nowrap}
+.svbtn:hover{background:rgba(158,240,26,.28)}
+.svbtn.blue{border-color:rgba(125,211,252,.45);background:rgba(125,211,252,.14);color:#bae6fd}
+.svbtn.blue:hover{background:rgba(125,211,252,.3)}
+.svbtn.red{border-color:rgba(248,113,113,.4);background:rgba(248,113,113,.13);color:#fca5a5}
+.svbtn.red:hover{background:rgba(248,113,113,.28)}
+.svbtn:disabled{opacity:.35;cursor:not-allowed}
+.svfoot{display:flex;gap:8px;justify-content:center;margin-top:4px;flex-wrap:wrap}
+.svnote{font-size:10.5px;color:var(--text-dim);line-height:1.6;margin:10px 0 12px;
+  background:rgba(255,255,255,.03);border-radius:8px;padding:8px 11px;text-align:left}
+.svnote b{color:var(--gold-3)}
+#svFile{display:none}
+#svToast{position:absolute;left:50%;bottom:170px;transform:translateX(-50%) translateY(12px);z-index:40;
+  padding:8px 16px;border-radius:9px;font-size:12.5px;font-weight:700;pointer-events:none;opacity:0;
+  background:rgba(16,13,34,.96);border:1px solid rgba(158,240,26,.5);color:#d9ffb0;
+  box-shadow:0 8px 26px rgba(0,0,0,.6);transition:opacity .25s,transform .25s}
+#svToast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#svToast.warn{border-color:rgba(251,191,36,.6);color:#fde68a}
+#svToast.err{border-color:rgba(248,113,113,.6);color:#fca5a5}
+
+/* ================= 梦境委托（任务系统） ================= */
+.qcur{background:linear-gradient(135deg,rgba(255,209,102,.13),rgba(139,92,246,.09));border:1px solid rgba(255,209,102,.38);
+  border-radius:10px;padding:12px 14px;margin-bottom:10px;text-align:left}
+.qcur .qa{font-size:11px;color:var(--gold-2);letter-spacing:3px}
+.qcur .qt{font-size:17px;font-weight:800;color:#f3efff;margin:3px 0 6px;letter-spacing:1px}
+.qcur .qg{font-size:12.5px;color:var(--text-mid);line-height:1.7}
+.qcur .qg b{color:var(--gold-3)}
+.qbar{height:7px;border-radius:4px;background:rgba(0,0,0,.45);overflow:hidden;margin-top:9px;box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+.qbar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#d97706,#fbbf24,#fde68a);transition:width .3s}
+.qitems{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.qitem{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);border-radius:9px;padding:8px 6px;
+  cursor:pointer;text-align:center;transition:transform .15s,background .15s,border-color .15s}
+.qitem:hover{background:rgba(255,209,102,.16);border-color:rgba(255,209,102,.55);transform:translateY(-2px)}
+.qitem .qi{font-size:25px;line-height:1.1;display:block}
+.qitem .qn{font-size:10.5px;color:#ddd8f5;margin-top:4px}
+.qitem .qc{font-size:10px;color:var(--gold-2);font-weight:800;margin-top:2px}
+.qempty{font-size:11px;color:var(--text-dim);grid-column:1/-1;padding:14px;text-align:center}
+.qrow{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.04);border:1px solid rgba(160,140,255,.14);
+  border-radius:8px;padding:7px 10px;margin-bottom:6px;text-align:left}
+.qrow .qi2{font-size:17px;flex-shrink:0}
+.qrow .qn2{font-size:12.5px;font-weight:700;color:#ddd8f5}
+.qrow .qd2{font-size:10.5px;color:var(--text-dim);margin-top:2px}
+.qrow .qs{margin-left:auto;font-size:10.5px;white-space:nowrap;color:var(--text-dim)}
+.qrow.done{border-color:rgba(124,243,154,.42);background:rgba(124,243,154,.08)}
+.qrow.done .qs{color:var(--ok-2)}
+.qrow.cur{border-color:rgba(255,209,102,.6);background:rgba(255,209,102,.11);box-shadow:0 0 14px rgba(255,209,102,.16)}
+.qrow.cur .qs{color:var(--gold-2)}
+.qrow.locked{opacity:.42}
+/* 信物详情 */
+#itemDetail{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:440px;max-height:76%;overflow-y:auto;
+  z-index:37;display:none;padding:22px 24px;border-radius:14px;box-sizing:border-box;text-align:center;
+  background:linear-gradient(180deg,rgba(21,16,42,.98),rgba(11,9,26,.99));border:1px solid rgba(255,209,102,.45);
+  box-shadow:0 20px 60px rgba(0,0,0,.72),0 0 50px rgba(255,209,102,.1)}
+#itemDetail.show{display:block;animation:dialogInXY .28s ease-out both}
+#itemDetail::-webkit-scrollbar{width:6px}
+#itemDetail::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.id-head{display:flex;align-items:center;gap:12px;text-align:left;margin-bottom:10px}
+.id-ico{font-size:40px;line-height:1}
+.id-name{font-size:16px;font-weight:800;color:var(--gold-2);letter-spacing:1px}
+.id-from{font-size:10.5px;color:var(--text-dim);margin-top:3px}
+.id-desc{font-size:12px;color:var(--text-mid);text-align:left;padding-bottom:10px;border-bottom:1px dashed rgba(160,140,255,.25)}
+.id-lore{font-size:12.5px;color:var(--text-mid);line-height:1.9;text-align:left;margin:12px 0 16px;white-space:pre-line}
+/* 章节标题卡（演出） */
+#actCard{position:absolute;inset:0;z-index:38;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at center,rgba(10,7,22,.84) 28%,rgba(3,2,8,.97) 100%)}
+#actCard.show{display:flex;animation:actIn .45s ease-out both}
+#actCard.out{animation:actOut .6s ease-in both}
+@keyframes actIn{from{opacity:0}to{opacity:1}}
+@keyframes actOut{to{opacity:0}}
+.ac-act{font-size:12.5px;letter-spacing:7px;color:var(--gold-2);opacity:.92}
+.ac-title{font-size:34px;font-weight:800;letter-spacing:3px;margin:12px 0 10px;color:#f3efff;
+  text-shadow:0 0 28px rgba(167,139,250,.65)}
+.ac-sub{font-size:12.5px;color:var(--text-note);letter-spacing:1px}
+.ac-line{width:210px;height:1px;margin:16px auto 0;background:linear-gradient(90deg,transparent,rgba(255,209,102,.75),transparent)}
+/* 剧情对话框：角色头像框 + 旁白样式区分 */
+.story-avatar{width:52px;height:52px;flex-shrink:0;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-size:26px;background:linear-gradient(180deg,rgba(24,19,48,.98),rgba(14,11,30,.98));
+  border:2px solid var(--sp-c,#a78bfa);box-shadow:0 0 22px var(--sp-glow,rgba(167,139,250,.35)),0 6px 18px rgba(0,0,0,.6);
+  animation:avatarIn .45s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes avatarIn{from{opacity:0;transform:scale(.5) rotate(-12deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+.story-header{display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.story-body{position:relative}
+.story-dialog.narration .story-text{font-style:italic;color:#cfc9e8;padding-left:12px;border-left:2px solid rgba(148,163,184,.35)}
+.story-dialog.narration .story-speaker{background:linear-gradient(90deg,rgba(148,163,184,.16),transparent);color:#a8b3c4!important}
+#hudQuest{cursor:pointer}
+#hudQuest:hover{filter:brightness(1.2)}
+
 /* ========= 剧情对话框 ========= */
 .story-dialog{position:absolute;left:50%;bottom:60px;transform:translateX(-50%);width:740px;
   background:linear-gradient(180deg,rgba(16,13,36,.93),rgba(12,10,28,.95));
   backdrop-filter:blur(28px) saturate(1.8);-webkit-backdrop-filter:blur(28px) saturate(1.8);
   border:1px solid rgba(130,120,255,.3);border-radius:16px;padding:20px 26px;z-index:30;
   box-shadow:0 8px 40px rgba(0,0,0,.6),0 0 60px rgba(120,80,246,.12),inset 0 1px 0 var(--glass-4);
-  animation:panelIn .4s ease-out both;box-sizing:border-box;display:flex;flex-direction:column;
+  animation:dialogInX .4s ease-out both;box-sizing:border-box;display:flex;flex-direction:column;
   max-height:calc(100% - 128px);overflow:hidden}
 .story-deco{position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,transparent 5%,rgba(var(--pri-rgb),.5) 30%,rgba(240,171,252,.4) 50%,rgba(var(--pri-rgb),.5) 70%,transparent 95%)}
@@ -716,7 +888,7 @@ canvas{display:block;width:1280px;height:720px}
   background:linear-gradient(135deg,rgba(16,13,36,.97),rgba(24,20,48,.96));
   border:1px solid rgba(var(--ok-rgb),.35);border-radius:14px;padding:22px;z-index:32;
   box-shadow:0 16px 50px rgba(0,0,0,.55),0 0 40px rgba(var(--ok-rgb),.1);
-  text-align:center;animation:panelIn .4s ease-out both}
+  text-align:center;animation:dialogInXY .4s ease-out both}
 .mercy-pulse{animation:mercy-pulse 2s infinite}
 @keyframes mercy-pulse{
   0%,100%{box-shadow:0 0 8px rgba(var(--ok-rgb),.2),0 0 20px rgba(var(--ok-rgb),.05)}
@@ -778,7 +950,7 @@ canvas{display:block;width:1280px;height:720px}
   width:520px;max-height:72%;display:none;padding:22px 26px;border-radius:14px;overflow-y:auto;
   background:linear-gradient(180deg,rgba(18,14,38,.97),rgba(11,9,26,.98));
   border:1px solid rgba(var(--pri-rgb),.45);box-shadow:0 20px 60px rgba(0,0,0,.65);color:var(--text)}
-#fragmentDetail.show{display:block;animation:panelIn .3s ease-out both}
+#fragmentDetail.show{display:block;animation:dialogInXY .3s ease-out both}
 #fragmentDetail::-webkit-scrollbar{width:6px}
 #fragmentDetail::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
 #fragmentDetail .fd-ico{font-size:42px;text-align:center;line-height:1.1}
@@ -838,6 +1010,8 @@ canvas{display:block;width:1280px;height:720px}
     <div class="stat" title="场上 + 待生成敌人"><i>💀</i><b id="hudEnemies">0</b></div>
     <div class="sp"></div>
     <div id="hudTimer" class="prep">0s</div><div id="hudChallenge" class="chg" style="display:none"></div>
+    <div id="hudQuest" class="chg" style="display:none" title="当前梦境委托，点击查看详情"></div>
+    <div id="hudProg"><i></i></div>
     <button class="btn" id="btnSkip" title="立刻开始下一波，剩余准备时间转化为金币">⏩召唤</button>
     <button class="btn" id="btnTech" title="灵魂科技树">🔬科技</button>
     <button class="btn" id="btnAch" title="成就">🏆<span id="achCount">0/12</span></button>
@@ -846,27 +1020,34 @@ canvas{display:block;width:1280px;height:720px}
     <button class="btn" id="btnPause" title="暂停 / 继续（P）">⏸</button>
     <button class="btn" id="btnSpeed" title="切换游戏速度">1×</button>
   </div>
+  <div id="bossBar">
+    <div class="bb-top"><span class="bb-name" id="bbName"></span><span class="bb-phase" id="bbPhase"></span>
+      <span class="bb-hp" id="bbHp"></span></div>
+    <div class="bb-track"><i id="bbFill" style="width:100%"></i><u id="bbShield" style="width:0%"></u></div>
+  </div>
   <div id="detail"></div>
   <div id="bottom">
     <div id="buildBar"></div>
     <div id="right">
       <div id="skillBar"></div>
       <div id="ctrls">
-        <button class="btn" id="btnTech2">🔬科技</button>
-        <button class="btn" id="btnSkip2">⏩召唤</button>
-        <button class="btn" id="btnHelp2" title="帮助与图鉴">❓</button>
-        <button class="btn hot" id="btnLot2" title="摇奖机">🎰摇奖</button>
-        <button class="btn rune" id="btnRune" title="符文背包（G）">🔮符文</button>
-        <button class="btn" id="btnUpAll" title="所有建筑各升 1 级">⬆️全升</button>
+        <button class="btn" id="btnTech2" title="灵魂科技树（消耗灵魂提升全局能力）">🔬科技</button>
+        <button class="btn" id="btnSkip2" title="立刻开始下一波，剩余准备时间折算成金币">⏩召唤</button>
+        <button class="btn" id="btnHelp2" title="帮助与图鉴：伤害克制 / 元素反应 / 共鸣 / 敌人机制">❓帮助</button>
+        <button class="btn hot" id="btnLot2" title="摇奖机：19 种奖励，带史诗/传说保底">🎰摇奖</button>
+        <button class="btn rune" id="btnRune" title="符文背包（G）：镶嵌符文提升建筑属性">🔮符文</button>
+        <button class="btn quest" id="btnQuest" title="梦境委托（L）：击杀指定梦魇收集信物，推进主线剧情">📜委托</button>
+        <button class="btn" id="btnUpAll" title="所有建筑各升 1 级">⬆全升</button>
         <button class="btn" id="btnUpTower" title="所有炮塔各升 1 级">🔫塔升</button>
         <button class="btn upmax" id="btnMaxSel" title="把选中的建筑/床/门一次性升到满级（M）">⏫满级</button>
-        <button class="btn upmax" id="btnMaxAll" title="所有建筑、床、门全部升到能升的最高">⏫全满</button>
-        <button class="btn" id="btnSound" title="音效开关">🔊</button>
-        <button class="btn" id="btnSave" title="保存进度">💾</button>
+        <button class="btn upmax" id="btnMaxAll" title="所有建筑、床、门全部升到能升的最高（Shift+M）">⏫全满</button>
+        <button class="btn" id="btnSound" title="音效开关">🔊音</button>
+        <button class="btn" id="btnSave" title="存档管理（K）：自动存档 / 3 个手动槽 / 导出导入">🗂存档</button>
       </div>
       <div id="hint">
-        <b>快捷键</b> 1..0/- 建筑 · QWERTF 技能 · U 升级 · X 出售 · B 摇奖<br>
-        <b>要点</b> 三路分兵 · 电力不足全场停火 · 看伤害类型克制
+        <b>建造</b> 1-9/0 或 A C D V N · 右键取消<br>
+        <b>技能</b> QWERTF · <b>升级</b> U · <b>出售</b> X · <b>符文</b> G · <b>暂停</b> P<br>
+        <b>要点</b> 三路分兵 · 元素克制 · 相邻异元素互相增伤
       </div>
     </div>
   </div>
@@ -916,6 +1097,53 @@ canvas{display:block;width:1280px;height:720px}
     </div>
     <div class="rfoot">💡 击杀梦魇掉落符文，波次越高掉率与品质越好；「贪婪掠夺」科技可提升掉率</div>
     <button class="big" id="runeClose">关闭</button>
+  </div>
+  <div class="panel" id="questPanel" style="display:none">
+    <h2>📜 梦境委托</h2>
+    <div class="rsub">击杀指定的梦魇，捡起它们掉落的信物 —— 每一件都在讲这场梦的另一半</div>
+    <div id="questCurrent"></div>
+    <div class="rsec">
+      <div class="rt"><b>信物背包</b> <span id="questItemCount" class="rsi">0 件</span></div>
+      <div id="questItems" class="qitems"></div>
+    </div>
+    <div class="rsec" style="max-height:260px">
+      <div class="rt"><b>委托进度</b> <span id="questProg" class="rsi"></span></div>
+      <div id="questList"></div>
+    </div>
+    <div class="rfoot">💡 每件信物点击可读全文；凑齐后自动结算奖励并解锁一段记忆碎片</div>
+    <button class="big" id="questClose">关闭</button>
+  </div>
+  <div class="panel" id="savePanel" style="display:none">
+    <h2>🗂 存档管理</h2>
+    <div class="rsub">存档保存在本机浏览器里；「导出」会把存档下载成 .json 文件，换设备或清缓存前记得导出备份</div>
+    <div id="saveSlots"></div>
+    <div class="svnote">
+      <b>自动存档</b>：每波结束、摇奖后自动写入，撤退/通关时清除<br>
+      <b>手动槽位</b>：可随时覆盖保存，用来留住想要的局面<br>
+      <b>快捷操作</b>：<b>S</b> 快速保存到自动存档 · <b>K</b> 打开本面板
+    </div>
+    <div class="svfoot">
+      <button class="svbtn blue" id="svImport">📥 导入存档文件</button>
+      <input type="file" id="svFile" accept="application/json,.json">
+      <button class="svbtn red" id="svWipe" title="清空全部槽位（不影响抽奖等跨局进度）">🗑 清空所有槽位</button>
+      <button class="big" id="saveClose">关闭</button>
+    </div>
+  </div>
+  <div id="svToast"></div>
+  <div id="itemDetail">
+    <div class="id-head"><span class="id-ico" id="itemIco">💧</span>
+      <div><div class="id-name" id="itemName"></div><div class="id-from" id="itemFrom"></div></div></div>
+    <div class="id-desc" id="itemDesc"></div>
+    <div class="id-lore" id="itemLore"></div>
+    <button class="big" id="itemClose">收 起</button>
+  </div>
+  <div id="actCard">
+    <div class="ac-inner">
+      <div class="ac-act" id="acAct"></div>
+      <div class="ac-title" id="acTitle"></div>
+      <div class="ac-line"></div>
+      <div class="ac-sub" id="acSub" style="margin-top:14px"></div>
+    </div>
   </div>
   <div id="adminBar">
     <span class="at">👑 管理员</span>
@@ -1016,6 +1244,7 @@ canvas{display:block;width:1280px;height:720px}
         <button class="alt" id="btnGacha">🎰 抽奖</button>
         <button class="alt" id="btnBag">🎒 仓库</button>
         <button class="alt" id="btnContinue">继续梦境</button>
+        <button class="alt" id="btnSaveMgr">🗂 存档管理</button>
       </div>
       <div class="btns dream-btns" style="margin-top:8px">
         <button class="alt dream" id="btnDiary">📖 梦境日记</button>
