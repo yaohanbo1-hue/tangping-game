@@ -35,6 +35,8 @@ cv.addEventListener('click', e => {
 cv.addEventListener('contextmenu', e => { e.preventDefault(); selectedBuildKey = null; selected = null; syncCards(); });
 const SKILL_MAP = { q: 'meteor', w: 'freeze', e: 'overclock', r: 'mend', t: 'repel', f: 'siphon' };
 window.addEventListener('keydown', e => {
+  const target = e.target;
+  if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
   const k = e.key;
   if (k === 'Escape') {
     selectedBuildKey = null; selected = null; syncCards();
@@ -56,8 +58,11 @@ window.addEventListener('keydown', e => {
   if (k === 'l' || k === 'L') { togglePanel('questPanel'); return; }
   if (k === 'k' || k === 'K') { toggleSavePanel(); return; }
   if (k === 's' || k === 'S') { if (saveGame(0)) { setTip('💾 已保存到自动存档', 3); SFX.coin(); } return; }
-  if (k === 'm') { Cmd.maxSelection(selected); return; }
-  if (k === 'M') { Cmd.upgradeAllMax(); return; }
+  if (k.toLowerCase() === 'm') {
+    if (e.shiftKey) Cmd.upgradeAllMax();
+    else Cmd.maxSelection(selected);
+    return;
+  }
 });
 function bindUI() {
   $('btnSkip').onclick = () => Cmd.skipPrep();
@@ -219,7 +224,7 @@ function buildHelp() {
     '<h4>电力规则</h4><div class="hnote">' +
     '<b>开局 0 金币、0 电量</b> —— 一切都得从零攒起<br>' +
     '<b>电量 = 第二种货币</b>：只用于 <b>Lv8 以上升级</b>，与机器能否运行完全无关<br>' +
-    '<b>电量唯一来源 = 发电机</b>：不建发电机，电量永远是 0；发电速率每级 x2，升级永不耗电<br>' +
+    '<b>持续发电来源 = 发电机</b>：每级发电速率 x2，升级永不耗电；局内摇奖也能一次性补电<br>' +
     '<b>炮塔</b>：建造与运行均不耗电，<b>没电也照常开火</b><br>' +
     '开局提示：先靠床的金币产出攒钱，尽快建出第一台发电机' +
     '</div>' +

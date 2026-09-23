@@ -1623,6 +1623,7 @@ function skipPrep() {
 }
 function useSkill(key) {
   const s = SKILL_DEFS[key];
+  if (!G || G.over || !s) return false;
   if (G.skills[key] > 0) { SFX.err(); return; }
   G.skills[key] = s.cd;
   if (G.track) G.track.skillUsed = (G.track.skillUsed || 0) + 1;
@@ -1829,6 +1830,8 @@ function rollLotteryItem() {
   return hit;
 }
 function drawLottery(n, currency) {
+  if (!G || G.over) return null;
+  if ((n !== 1 && n !== 10) || (currency !== 'gold' && currency !== 'soul')) { SFX.err(); return null; }
   const useSoul = currency === 'soul';
   const cost = useSoul ? LOTTERY.soulCost * n : (n === 10 ? LOTTERY.tenCost : LOTTERY.cost * n);
   const has = useSoul ? G.souls : G.gold;

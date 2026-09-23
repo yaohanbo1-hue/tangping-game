@@ -37,7 +37,7 @@ const BUILD_DEFS = {
   generator: {
     name: '梦境发电机', icon: '🔋', key: '2', color: '#4ad6ff',
     cost: { gold: 80, power: 0 }, upkeep: 0, hp: 160, maxLv: 50,
-    desc: '电力的唯一来源。开局电量为 0，不建发电机就永远没有电；产出每级 x2，升级永不耗电。',
+    desc: '电力的持续来源。开局电量为 0；产出每级 x2，升级永不耗电。局内摇奖也能一次性补充电力。',
     noPowerUp: true,
     stat: lv => ({ regen: 6 * Math.pow(2, lv - 1) }),
     statText: s => `发电 ${fmt(s.regen)} 电量/秒`,

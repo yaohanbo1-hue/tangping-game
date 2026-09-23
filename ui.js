@@ -150,8 +150,8 @@ function updateHUD(dt) {
   $('hudNet').textContent = (net > 0 ? '+' + fmt(net) + '/s' : '无发电机');
   $('hudNet').className = 'net ' + (net > 0 ? 'ok' : 'bad');
   $('hudPower').title = net > 0
-    ? '电量由发电机产出（唯一来源），只用于 Lv8 以上升级'
-    : '当前没有发电机，电量不会增长 —— 建一台发电机才能产出电力';
+    ? '电量由发电机持续产出；局内摇奖也可一次性补充，只用于 Lv8 以上升级'
+    : '当前没有发电机，电量不会自动增长；局内摇奖可一次性补充电力';
   $('hudSouls').textContent = G.admin ? '∞' : fmt(G.souls);
   const doorPct = Math.round(G.doors.reduce((s, d) => s + d.hp / d.maxHp, 0) / 3 * 100);
   const broken = G.doors.filter(d => d.broken).length;
@@ -282,11 +282,11 @@ function updateDetail(force) {
     const dtn = s.def.dmgType ? '<span class="dtn" style="color:' + DMG[s.def.dmgType].color + '">' + DMG[s.def.dmgType].icon + DMG[s.def.dmgType].name + '</span>' : '';
     html = '<div class="dhead"><span class="dico">' + (s.branch ? s.def.branch[s.branch].icon : s.def.icon) + '</span><b>' +
       buildName(s) + '</b><span class="dlv">Lv.' + s.level + '/50</span>' + dtn + '</div>' +
-      (s.def.noPowerUp ? '<div class="dnote">⚡ <b>电力的唯一来源</b>，升级永不耗电，发电速率每级 <b>x2</b></div>'
+      (s.def.noPowerUp ? '<div class="dnote">⚡ <b>持续发电来源</b>，升级永不耗电，发电速率每级 <b>x2</b></div>'
         : (s.level < FREE_POWER_LV ? '<div class="dnote">⚡ Lv' + (FREE_POWER_LV + 1) + ' 之前升级<b>不消耗电量</b></div>' : '')) +
       '<div class="dst">' + s.def.statText(st) + '</div>' +
       '<div class="dst">生命 ' + Math.ceil(s.hp) + '/' + Math.ceil(s.maxHp) + (s.shieldMax ? '　护盾 ' + Math.ceil(s.shield) + '/' + Math.ceil(s.shieldMax) : '') +
-      '　耗电 ' + (s.def.upkeep * (1 + (s.level - 1) * 0.15)).toFixed(1) + '/s' +
+      '　运行不消耗电力' +
       (s.kills ? '　击杀 <b class="hl">' + s.kills + '</b>' : '') + '</div>';
     // 面板 DPS：回答「这座炮塔到底值不值得升」
     if (s.def.tower) {

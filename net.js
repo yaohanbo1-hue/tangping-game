@@ -14,17 +14,43 @@
 //  命令全部使用「可序列化引用」：建筑用格子坐标 (c,r)，门用 lane，绝不传对象引用。
 // ============================================================
 
-/** 联机接缝。现在不启用，接上 WebRTC/WebSocket 时只需要实现 send / onRemote */
+const REMOTE_CMD_TOKEN = Symbol('remote-command');
+const AUTHORIZED_REMOTE_PEERS = new Set();
+const REMOTE_PEER_SEQUENCES = new Map();
+
+/** 联机接缝。远端命令在主机登记为已认证的 peer 之后才可进入执行层。 */
 const Net = {
   enabled: false,        // 单机 = false
   isHost: true,          // 房主负责跑模拟
+  /** 仅由完成握手的可信传输层调用，不能直接映射远端 payload。 */
+  authorizePeer(peerId) {
+    if (!this.enabled || !this.isHost || typeof peerId !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(peerId)) return false;
+    AUTHORIZED_REMOTE_PEERS.add(peerId);
+    REMOTE_PEER_SEQUENCES.set(peerId, 0);
+    return true;
+  },
+  revokePeer(peerId) {
+    REMOTE_PEER_SEQUENCES.delete(peerId);
+    return AUTHORIZED_REMOTE_PEERS.delete(peerId);
+  },
+  isAuthorizedPeer(peerId) {
+    return this.enabled && this.isHost && typeof peerId === 'string' && AUTHORIZED_REMOTE_PEERS.has(peerId);
+  },
   /** 客机 → 主机发送一条命令（阶段B 接入 DataChannel） */
   send(cmd) {
     // TODO(联机阶段B): this.channel.send(JSON.stringify(cmd))
-    console.warn('[Net] 尚未接入传输层，命令被丢弃:', cmd.t);
+    console.warn('[Net] 尚未接入传输层，命令被丢弃:', cmd && cmd.t);
+    return false;
   },
-  /** 主机收到远端命令 → 走同一条 exec 路径 */
-  onRemote(cmd) { Cmd.exec(cmd); },
+  /** 主机只接受已认证 peer 的远端命令；当前没有传输层，默认拒绝。 */
+  onRemote(cmd, peerId) {
+    if (!this.isAuthorizedPeer(peerId)) return false;
+    if (!cmd || !Number.isSafeInteger(cmd.seq) || cmd.seq <= (REMOTE_PEER_SEQUENCES.get(peerId) || 0)) return false;
+    const clean = Cmd._normalize(cmd);
+    if (!clean) return false;
+    REMOTE_PEER_SEQUENCES.set(peerId, cmd.seq);
+    return Cmd.exec(clean, REMOTE_CMD_TOKEN, peerId);
+  },
 };
 
 const Cmd = {
@@ -37,27 +63,93 @@ const Cmd = {
 
   /** 玩家意图入口。单机立即执行；将来客机只发送。 */
   dispatch(cmd) {
-    if (!cmd) return false;
-    cmd.seq = ++this._seq;
+    const clean = this._normalize(cmd);
+    if (!clean) return false;
+    const logged = Object.assign({ seq: ++this._seq }, clean);
     if (this.recording) {
-      this.log.push(cmd);
+      this.log.push(logged);
       if (this.log.length > 4000) this.log.shift();
     }
-    if (Net.enabled && !Net.isHost) { Net.send(cmd); return true; }
-    return this.exec(cmd);
+    if (Net.enabled && !Net.isHost) return Net.send(logged);
+    return this.exec(clean);
+  },
+
+  /** 只接受当前命令协议中的字段和值，避免远端 JSON 被宽松强转。 */
+  _normalize(cmd) {
+    if (!cmd || typeof cmd !== 'object' || Array.isArray(cmd) || !Object.prototype.hasOwnProperty.call(cmd, 't')) return null;
+    if (cmd.seq !== undefined && (!Number.isSafeInteger(cmd.seq) || cmd.seq < 1)) return null;
+    const shape = (...fields) => {
+      const allowed = new Set(['t', 'seq', ...fields]);
+      const keys = Object.keys(cmd);
+      return keys.every(k => allowed.has(k)) && keys.filter(k => k !== 'seq').length === fields.length + 1 && fields.every(k => Object.prototype.hasOwnProperty.call(cmd, k));
+    };
+    const coords = () => Number.isInteger(cmd.c) && cmd.c >= 0 && cmd.c < COLS && Number.isInteger(cmd.r) && cmd.r >= 0 && cmd.r < ROWS;
+    const runeId = v => typeof v === 'string' && v.length > 0 && v.length <= 64 && /^[A-Za-z0-9_-]+$/.test(v);
+
+    switch (cmd.t) {
+      case 'build':
+        return shape('k', 'c', 'r') && typeof cmd.k === 'string' && Object.prototype.hasOwnProperty.call(BUILD_DEFS, cmd.k) && coords()
+          ? { t: 'build', k: cmd.k, c: cmd.c, r: cmd.r } : null;
+      case 'upgrade':
+        if (cmd.what === 'bed' && shape('what')) return { t: 'upgrade', what: 'bed' };
+        if (cmd.what === 'door' && shape('what', 'lane') && Number.isInteger(cmd.lane) && cmd.lane >= 0 && cmd.lane < LANES.length) return { t: 'upgrade', what: 'door', lane: cmd.lane };
+        if (cmd.what === undefined && shape('c', 'r') && coords()) return { t: 'upgrade', c: cmd.c, r: cmd.r };
+        return null;
+      case 'branch':
+        return shape('c', 'r', 'which') && coords() && (cmd.which === 'a' || cmd.which === 'b')
+          ? { t: 'branch', c: cmd.c, r: cmd.r, which: cmd.which } : null;
+      case 'sell':
+        return shape('c', 'r') && coords() ? { t: 'sell', c: cmd.c, r: cmd.r } : null;
+      case 'skill':
+        return shape('k') && typeof cmd.k === 'string' && Object.prototype.hasOwnProperty.call(SKILL_DEFS, cmd.k)
+          ? { t: 'skill', k: cmd.k } : null;
+      case 'skip':
+        return shape() ? { t: 'skip' } : null;
+      case 'upAll':
+        return shape('towersOnly') && typeof cmd.towersOnly === 'boolean' ? { t: 'upAll', towersOnly: cmd.towersOnly } : null;
+      case 'maxAll':
+        return shape() ? { t: 'maxAll' } : null;
+      case 'maxSel':
+        if (cmd.what === 'bed' && shape('what')) return { t: 'maxSel', what: 'bed' };
+        if (cmd.what === 'door' && shape('what', 'lane') && Number.isInteger(cmd.lane) && cmd.lane >= 0 && cmd.lane < LANES.length) return { t: 'maxSel', what: 'door', lane: cmd.lane };
+        if (cmd.what === undefined && shape('c', 'r') && coords()) return { t: 'maxSel', c: cmd.c, r: cmd.r };
+        return null;
+      case 'rune': {
+        if (!Number.isInteger(cmd.c) || !Number.isInteger(cmd.r) || !coords()) return null;
+        if (cmd.op === 'socket') {
+          const fields = Object.prototype.hasOwnProperty.call(cmd, 'slot') ? ['op', 'c', 'r', 'runeId', 'slot'] : ['op', 'c', 'r', 'runeId'];
+          const slot = cmd.slot == null ? null : cmd.slot;
+          return shape(...fields) && runeId(cmd.runeId) && (slot === null || (Number.isInteger(slot) && slot >= 0 && slot < 16))
+            ? { t: 'rune', op: 'socket', c: cmd.c, r: cmd.r, runeId: cmd.runeId, slot } : null;
+        }
+        if ((cmd.op === 'unsocket' || cmd.op === 'upgrade') && shape('op', 'c', 'r', 'slot') && Number.isInteger(cmd.slot) && cmd.slot >= 0 && cmd.slot < 16)
+          return { t: 'rune', op: cmd.op, c: cmd.c, r: cmd.r, slot: cmd.slot };
+        return null;
+      }
+      case 'runeSalvage':
+        return shape('runeId') && runeId(cmd.runeId) ? { t: 'runeSalvage', runeId: cmd.runeId } : null;
+      case 'draw':
+        return shape('n', 'cur') && (cmd.n === 1 || cmd.n === 10) && (cmd.cur === 'gold' || cmd.cur === 'soul')
+          ? { t: 'draw', n: cmd.n, cur: cmd.cur } : null;
+      case 'jump':
+        return shape('wave') && Number.isInteger(cmd.wave) && cmd.wave >= 1 && cmd.wave <= 999 ? { t: 'jump', wave: cmd.wave } : null;
+      default: return null;
+    }
   },
 
   /** 真正改状态的地方（主机执行 / 单机执行） */
-  exec(cmd) {
-    if (typeof G === 'undefined' || !G || G.over) return false;
+  exec(cmd, remoteToken, peerId) {
+    const fromRemote = remoteToken === REMOTE_CMD_TOKEN;
+    if (fromRemote ? !Net.isAuthorizedPeer(peerId) : (remoteToken !== undefined || (Net.enabled && !Net.isHost))) return false;
+    cmd = this._normalize(cmd);
+    if (!cmd || typeof G === 'undefined' || !G || G.over || (fromRemote && cmd.t === 'jump')) return false;
     switch (cmd.t) {
       case 'build': {
-        if (typeof cmd.k !== 'string') return false;
-        return !!tryBuild(cmd.k, cmd.c | 0, cmd.r | 0);
+        return !!tryBuild(cmd.k, cmd.c, cmd.r);
       }
       case 'upgrade': {
         if (cmd.what === 'bed') { upgradeBed(); return true; }
-        if (cmd.what === 'door') { const d = G.doors[cmd.lane | 0]; if (d) upgradeDoor(d); return true; }
+        if (cmd.what === 'door') { const d = G.doors[cmd.lane]; if (d) upgradeDoor(d); return !!d; }
         const b = this._at(cmd.c, cmd.r); if (!b) return false;
         tryUpgrade(b); return true;
       }
@@ -70,7 +162,7 @@ const Cmd = {
         sellBuilding(b); return true;
       }
       case 'skill': {
-        if (typeof cmd.k !== 'string') return false;
+        if (!Object.prototype.hasOwnProperty.call(SKILL_DEFS, cmd.k)) return false;
         useSkill(cmd.k); return true;
       }
       case 'skip': { skipPrep(); return true; }
@@ -78,20 +170,20 @@ const Cmd = {
       case 'maxAll': { upgradeAllMax(); return true; }
       case 'maxSel': {
         if (cmd.what === 'bed') { upgradeMaxSelected({ isBed: true }); return true; }
-        if (cmd.what === 'door') { const d = G.doors[cmd.lane | 0]; if (d) upgradeMaxSelected({ isDoor: true, door: d }); return true; }
+        if (cmd.what === 'door') { const d = G.doors[cmd.lane]; if (d) upgradeMaxSelected({ isDoor: true, door: d }); return !!d; }
         const b = this._at(cmd.c, cmd.r); if (!b) return false;
         upgradeMaxSelected(b); return true;
       }
       case 'rune': {
         const b = this._at(cmd.c, cmd.r); if (!b) return false;
-        if (cmd.op === 'socket') return !!socketRune(b, cmd.runeId, cmd.slot == null ? null : (cmd.slot | 0));
-        if (cmd.op === 'unsocket') return !!unsocketRune(b, cmd.slot | 0);
-        if (cmd.op === 'upgrade') return !!upgradeRuneIn(b, cmd.slot | 0);
+        if (cmd.op === 'socket') return !!socketRune(b, cmd.runeId, cmd.slot);
+        if (cmd.op === 'unsocket') return !!unsocketRune(b, cmd.slot);
+        if (cmd.op === 'upgrade') return !!upgradeRuneIn(b, cmd.slot);
         return false;
       }
       case 'runeSalvage': { return !!salvageRune(cmd.runeId); }
-      case 'draw': { this.lastDraw = drawLottery(cmd.n | 0 || 1, cmd.cur === 'soul' ? 'soul' : 'gold'); return true; }
-      case 'jump': { return !!jumpToWave(cmd.wave | 0); }
+      case 'draw': { this.lastDraw = drawLottery(cmd.n, cmd.cur); return !!this.lastDraw; }
+      case 'jump': { return !fromRemote && !!jumpToWave(cmd.wave); }
       default: console.warn('[Cmd] 未知命令:', cmd.t); return false;
     }
   },
