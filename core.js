@@ -35,23 +35,26 @@ function bedGoldEffOf(lv) {
   return bedGoldOf(lv) * techVal('sleep', 0.12) * techVal('eternity', 0.60) * diffCfg().goldMul;
 }
 const SFX = {
-  ctx: null, on: true,
-  init() { if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.on = false; } } },
+  ctx: null, on: true, volume: 0.72,
+  init() {
+    if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.on = false; } }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+  },
   tone(freq, dur, type = 'sine', vol = 0.14, slide = 0) {
-    if (!this.on || !this.ctx) return;
+    if (!this.on || !this.ctx || this.volume <= 0) return;
     const t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
     o.type = type; o.frequency.setValueAtTime(freq, t);
     if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    g.gain.setValueAtTime(vol * this.volume, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + dur + 0.02);
   },
   noise(dur, vol = 0.2, filt = 900) {
-    if (!this.on || !this.ctx) return;
+    if (!this.on || !this.ctx || this.volume <= 0) return;
     const n = (this.ctx.sampleRate * dur) | 0, buf = this.ctx.createBuffer(1, n, this.ctx.sampleRate), d = buf.getChannelData(0);
     for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
     const s = this.ctx.createBufferSource(); s.buffer = buf;
     const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = filt;
-    const g = this.ctx.createGain(); g.gain.value = vol;
+    const g = this.ctx.createGain(); g.gain.value = vol * this.volume;
     s.connect(f); f.connect(g); g.connect(this.ctx.destination); s.start();
   },
   shoot() { this.tone(680, 0.06, 'square', 0.04, -420); },
@@ -71,8 +74,114 @@ const SFX = {
 };
 const Store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } },
+  set(k, v) {
+    try { localStorage.setItem(k, v); return { ok: true }; }
+    catch (e) { return { ok: false, name: (e && e.name) || 'StorageError' }; }
+  },
   del(k) { try { localStorage.removeItem(k); } catch (e) { } },
+};
+const Music = {
+  // MiniMax Music 3 成品放入 audio/ 后即可启用；暂缺文件时不影响游戏与音效。
+  tracks: { menu: 'audio/menu-loop.mp3', game: 'audio/game-loop.mp3', boss: 'audio/boss-loop.mp3' },
+  names: { menu: '入梦', game: '防线', boss: '终焉' },
+  on: true, volume: 0.34, duck: 1, current: 'menu', unlocked: false, blocked: Object.create(null),
+  active: null, cache: Object.create(null), missing: Object.create(null), fades: new WeakMap(),
+  init() {
+    let p = {};
+    try { p = JSON.parse(Store.get('tangping_audio', '{}') || '{}'); } catch (e) { p = {}; }
+    this.on = p.musicOn !== false;
+    this.volume = clamp(Number.isFinite(+p.musicVolume) ? +p.musicVolume : 0.34, 0, 1);
+    SFX.on = p.sfxOn !== false;
+    SFX.volume = clamp(Number.isFinite(+p.sfxVolume) ? +p.sfxVolume : 0.72, 0, 1);
+  },
+  persist() {
+    Store.set('tangping_audio', JSON.stringify({
+      musicOn: this.on, musicVolume: this.volume, sfxOn: SFX.on, sfxVolume: SFX.volume,
+    }));
+  },
+  _audio(key) {
+    if (this.cache[key]) return this.cache[key];
+    if (!this.tracks[key] || typeof Audio === 'undefined') return null;
+    const a = new Audio();
+    a.src = this.tracks[key]; a.loop = true; a.preload = 'none'; a.volume = 0;
+    a.addEventListener('error', () => {
+      this.missing[key] = true;
+      if (this.active === a) this.active = null;
+      if (typeof syncAudioUI === 'function') syncAudioUI();
+    }, { once: true });
+    this.cache[key] = a;
+    return a;
+  },
+  unlock() {
+    this.unlocked = true;
+    if (this.on && this.current) this.play(this.current);
+  },
+  play(key) {
+    if (!this.tracks[key]) return false;
+    this.current = key;
+    if (!this.on || !this.unlocked) return true;
+    const next = this._audio(key);
+    if (!next) return false;
+    if (this.active === next && !next.paused) return true;
+    const previous = this.active;
+    this.active = next;
+    if (next.paused) next.volume = 0;
+    const result = next.play();
+    if (result && typeof result.catch === 'function') {
+      result.catch(() => {
+        this.blocked[key] = true;
+        if (this.active === next) this.active = null;
+        if (typeof syncAudioUI === 'function') syncAudioUI();
+      });
+    }
+    this._fade(next, this.volume * this.duck, 900, false);
+    if (previous && previous !== next) this._fade(previous, 0, 700, true);
+    if (typeof syncAudioUI === 'function') syncAudioUI();
+    return true;
+  },
+  _fade(audio, target, duration, pauseAtEnd) {
+    if (!audio) return;
+    const old = this.fades.get(audio);
+    if (old) clearInterval(old);
+    const from = audio.volume, started = performance.now();
+    const step = () => {
+      const t = Math.min(1, (performance.now() - started) / duration);
+      audio.volume = clamp(from + (target - from) * t, 0, 1);
+      if (t >= 1) {
+        const id = this.fades.get(audio); if (id) clearInterval(id);
+        this.fades.delete(audio);
+        if (pauseAtEnd) audio.pause();
+      }
+    };
+    this.fades.set(audio, setInterval(step, 40));
+    step();
+  },
+  setEnabled(on) {
+    this.on = !!on; this.persist();
+    if (!this.on) this._fade(this.active, 0, 300, true);
+    else { this.unlock(); if (this.unlocked) this.play(this.current); }
+    if (typeof syncAudioUI === 'function') syncAudioUI();
+  },
+  setVolume(value, persist = true) {
+    this.volume = clamp(+value || 0, 0, 1); if (persist) this.persist();
+    if (this.active && this.on) this._fade(this.active, this.volume * this.duck, 120, this.volume === 0);
+    if (typeof syncAudioUI === 'function') syncAudioUI();
+  },
+  setDucking(on) {
+    this.duck = on ? 0.42 : 1;
+    if (this.active && this.on) this._fade(this.active, this.volume * this.duck, 260, false);
+  },
+  setSfx(on) { SFX.on = !!on; this.persist(); if (typeof syncAudioUI === 'function') syncAudioUI(); },
+  setSfxVolume(value, persist = true) { SFX.volume = clamp(+value || 0, 0, 1); if (persist) this.persist(); if (typeof syncAudioUI === 'function') syncAudioUI(); },
+  status() {
+    if (!this.on) return '背景音乐已关闭';
+    if (this.volume <= 0) return '背景音乐音量为 0';
+    if (this.missing[this.current]) return '待添加 audio/' + (this.tracks[this.current] || '').split('/').pop();
+    if (this.active && !this.active.paused) return '正在播放 · ' + (this.names[this.current] || '梦境');
+    if (!this.unlocked) return '点击页面后开始播放';
+    if (this.blocked[this.current]) return '播放受限，可点击音乐按钮重试';
+    return '放入音乐文件后自动播放';
+  },
 };
 const META_KEY = 'tangping_meta';
 const META = { gold: 0, pity: 0, inv: {}, equipped: [], runs: 0, best: 0 };
@@ -1489,6 +1598,7 @@ function buildWaveQueue(n) {
 }
 function startWave() {
   G.wave++;
+  if (typeof Music !== 'undefined') Music.play(G.wave === finalWave() ? 'boss' : 'game');
   G.event = rollEvent();
   const { rest, bossList } = buildWaveQueue(G.wave);
   G.spawnQueue = rest; G.bossQueue = bossList; G.spawnTimer = 0;
@@ -1531,7 +1641,7 @@ function startWave() {
     if (bossDlg) {
       setTimeout(() => {
         if (typeof showStoryDialog === 'function') {
-          showStoryDialog({ speaker: bossDlg.name || 'BOSS', text: bossDlg.intro || '...' });
+          showStoryDialog({ wave: bossDlg.wave, speaker: bossDlg.name || 'BOSS', text: bossDlg.intro || '...' });
         }
       }, 2000);
     }
@@ -1778,6 +1888,7 @@ function gameWin() {
   if (G.mode === 'unlimited') {
     G.cleared = (G.cleared || 0) + 1;
     G.state = 'build'; G.prepTimer = 25;
+    if (typeof Music !== 'undefined') Music.play('game');
     addText(ROOM_X0 + 300, DOOR_MID_Y() - 170, '♾ 已击败终焉梦魇，无尽继续！', '#7dd3fc', true);
     spawnParts(640, 300, 60, '#7dd3fc', 5, 1.2);
     setTip('无限模式：本局永不结束，梦魇会越来越强 — 看你能撑到第几波', 7);

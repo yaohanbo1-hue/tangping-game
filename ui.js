@@ -540,6 +540,38 @@ function ensureMenuDOM() {
   if ($('startPanel')) return;
   o.innerHTML = MENU_HTML;
   wireMenu();
+  if (typeof wireDreamMenuButtons === 'function') wireDreamMenuButtons();
+}
+function syncAudioUI() {
+  if (typeof Music === 'undefined') return;
+  const musicRange = $('musicVolume');
+  const sfxRange = $('sfxVolume');
+  const musicValue = $('musicVolumeValue');
+  const sfxValue = $('sfxVolumeValue');
+  if (musicRange) musicRange.value = Music.volume;
+  if (sfxRange) sfxRange.value = SFX.volume;
+  if (musicValue) musicValue.textContent = Math.round(Music.volume * 100) + '%';
+  if (sfxValue) sfxValue.textContent = Math.round(SFX.volume * 100) + '%';
+  const status = $('musicStatus');
+  if (status) status.textContent = Music.status();
+  const state = $('musicState');
+  if (state) state.textContent = Music.on ? '开' : '关';
+  const musicButton = $('btnMusicHome');
+  if (musicButton) {
+    musicButton.setAttribute('aria-pressed', Music.on ? 'true' : 'false');
+    musicButton.setAttribute('aria-label', Music.on ? '关闭背景音乐' : '开启背景音乐');
+  }
+  const homeSfxButton = $('btnSoundHome');
+  if (homeSfxButton) {
+    homeSfxButton.textContent = (SFX.on ? '🔊 战斗音效：开启' : '🔇 战斗音效：关闭');
+    homeSfxButton.setAttribute('aria-pressed', SFX.on ? 'true' : 'false');
+  }
+  const gameSfxButton = $('btnSound');
+  if (gameSfxButton) {
+    gameSfxButton.textContent = (SFX.on ? '🔊' : '🔇') + '音';
+    gameSfxButton.setAttribute('aria-pressed', SFX.on ? 'true' : 'false');
+    gameSfxButton.title = SFX.on ? '关闭战斗音效' : '开启战斗音效';
+  }
 }
 function showMenu() {
   ensureMenuDOM();
@@ -549,48 +581,83 @@ function showMenu() {
   $('overlay').style.display = 'flex';
   if ($('adminBar')) $('adminBar').style.display = 'none';
   paused = true;
+  if (typeof Music !== 'undefined') Music.play('menu');
   updateMenu();
 }
 function updateMenu() {
   const mg = $('metaGold'); if (mg) mg.textContent = META.gold;
   const bw = $('bestWave'); if (bw) bw.textContent = Math.max(META.best || 0, +Store.get('tangping_best', 0) || 0);
+  LAST_SAVE = loadSave();
+  const continueButton = $('btnContinue');
+  const continueMeta = $('continueMeta');
+  const saveInfo = $('saveInfo');
+  const hasSave = !!(LAST_SAVE && LAST_SAVE.wave > 0);
+  if (continueButton) {
+    continueButton.style.display = hasSave ? '' : 'none';
+    continueButton.setAttribute('aria-label', hasSave ? '继续第 ' + LAST_SAVE.wave + ' 波' : '没有可继续的存档');
+  }
+  if (continueMeta) continueMeta.textContent = hasSave ? '第 ' + LAST_SAVE.wave + ' 波 · ' + ((LAST_SAVE.buildings || []).length) + ' 座建筑' : '暂无自动存档';
+  if (saveInfo) saveInfo.textContent = hasSave
+    ? '自动记录 · 第 ' + LAST_SAVE.wave + ' 波 · ' + ((LAST_SAVE.buildings || []).length) + ' 座建筑'
+    : '尚无继续记录 · 新游戏会自动保存';
   const dc = $('diffCards');
   if (dc) {
     dc.innerHTML = DIFF_KEYS.map(k => {
       const d = DIFFS[k], ok = META.gold >= d.cost;
-      return '<div class="diff' + (d.admin ? ' adm' : '') + (menuDiff === k ? ' on' : '') + '" data-d="' + k + '" title="' + d.desc + '">' +
+      return '<div class="diff' + (d.admin ? ' adm' : '') + (menuDiff === k ? ' on' : '') + '" data-d="' + k + '" title="' + d.desc + '" role="button" tabindex="0" aria-pressed="' + (menuDiff === k) + '">' +
         '<div class="di">' + d.icon + '</div><div class="dn">' + d.name + '</div>' +
         '<div class="dd">' + d.desc + '</div>' +
         (d.cost ? '<div class="dc"' + (ok ? '' : ' style="color:#f87171"') + '>💰 ' + d.cost + '</div>' : '<div class="dc">免费</div>') +
         '<div class="dr">' + (d.admin ? '资源无限' : '结算 x' + d.reward) +
         (d.goldMul !== 1 ? ' · 金币 x' + d.goldMul : '') + '</div></div>';
     }).join('');
-    dc.querySelectorAll('.diff').forEach(el => el.onclick = () => { menuDiff = el.dataset.d; updateMenu(); });
+    dc.querySelectorAll('.diff').forEach(el => {
+      const choose = () => { menuDiff = el.dataset.d; updateMenu(); };
+      el.onclick = choose;
+      el.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); choose(); } };
+    });
   }
   const mc = $('modeCards');
   if (mc) {
     mc.innerHTML = MODE_KEYS.map(k => {
       const m = MODES[k];
-      return '<div class="mode' + (menuMode === k ? ' on' : '') + '" data-m="' + k + '">' +
+      return '<div class="mode' + (menuMode === k ? ' on' : '') + '" data-m="' + k + '" role="button" tabindex="0" aria-pressed="' + (menuMode === k) + '">' +
         '<span class="mi">' + m.icon + '</span><div><div class="mn">' + m.name + '</div>' +
         '<div class="md">' + m.desc + '　·　' + m.tip + '</div></div></div>';
     }).join('');
-    mc.querySelectorAll('.mode').forEach(el => el.onclick = () => { menuMode = el.dataset.m; updateMenu(); });
+    mc.querySelectorAll('.mode').forEach(el => {
+      const choose = () => { menuMode = el.dataset.m; updateMenu(); };
+      el.onclick = choose;
+      el.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); choose(); } };
+    });
+  }
+  const selectedDiff = DIFFS[menuDiff] || DIFFS.normal;
+  const selectedMode = MODES[menuMode] || MODES.limited;
+  const summary = $('setupSummary');
+  if (summary) {
+    const admFree = selectedDiff.admin && (META.equipped || []).indexOf('freeAdmin') >= 0;
+    const cost = selectedDiff.cost && !admFree ? selectedDiff.cost : 0;
+    summary.textContent = selectedDiff.name + ' · ' + selectedMode.name +
+      (cost ? ' · 入场消耗 ' + cost + ' 金币' : ' · 免费入场') +
+      (selectedDiff.admin ? ' · 管理员规则' : ' · 结算奖励 ×' + selectedDiff.reward);
   }
   const er = $('equipRow');
   if (er) {
     const eq = (META.equipped || []).filter(k => META_PRIZES[k]);
+    const equipCount = $('equipCount'); if (equipCount) equipCount.textContent = eq.length + ' / 3 已装备';
     er.innerHTML = eq.length ? eq.map(k => '<span class="eq">' + META_PRIZES[k].icon + ' ' + META_PRIZES[k].name + '</span>').join('')
       : '<span class="eq none">未装备开局道具 — 去「🎒 仓库」装备（最多 3 件）</span>';
   }
+  if (typeof syncAudioUI === 'function') syncAudioUI();
 }
 function wireMenu() {
   if (!$('btnStart')) return;
   $('btnStart').onclick = () => startRun();
   if ($('btnSaveMgr')) $('btnSaveMgr').onclick = () => showSavePanel();
-  $('btnContinue').onclick = () => {
+  if ($('btnContinue')) $('btnContinue').onclick = () => {
+    LAST_SAVE = loadSave();
     if (!LAST_SAVE) return;
-    SFX.init(); $('overlay').style.display = 'none';
+    SFX.init(); Music.unlock(); Music.play('game'); $('overlay').style.display = 'none';
     newGame(LAST_SAVE); paused = false; $('btnPause').textContent = '⏸';
     setTip('欢迎回到梦境，第 ' + G.wave + ' 波即将继续…', 5);
   };
@@ -602,6 +669,19 @@ function wireMenu() {
   $('gachaClose').onclick = () => showMenu();
   $('bagClose').onclick = () => showMenu();
   $('btnBagGacha').onclick = () => openGacha();
+  if ($('btnMusicHome')) $('btnMusicHome').onclick = () => {
+    if (Music.on) Music.setEnabled(false);
+    else { Music.unlock(); Music.setEnabled(true); }
+  };
+  if ($('musicVolume')) {
+    $('musicVolume').oninput = ev => Music.setVolume(ev.target.value, false);
+    $('musicVolume').onchange = () => Music.persist();
+  }
+  if ($('sfxVolume')) {
+    $('sfxVolume').oninput = ev => Music.setSfxVolume(ev.target.value, false);
+    $('sfxVolume').onchange = () => Music.persist();
+  }
+  if ($('btnSoundHome')) $('btnSoundHome').onclick = () => Music.setSfx(!SFX.on);
   const setW = v => { const el = $('adWave'); if (el) el.value = Math.max(1, Math.min(999, v | 0)); };
   if ($('adM5')) $('adM5').onclick = () => setW((+$('adWave').value || 1) - 5);
   if ($('adP5')) $('adP5').onclick = () => setW((+$('adWave').value || 1) + 5);
@@ -611,6 +691,7 @@ function wireMenu() {
     if (G && !G.over) { G.over = true; grantMetaReward(false); }
     showMenu();
   };
+  if (typeof wireDreamMenuButtons === 'function') wireDreamMenuButtons();
   updateMenu();
 }
 function startRun() {
@@ -623,6 +704,7 @@ function startRun() {
   }
   META.gold -= cost; saveMeta();
   SFX.init();
+  Music.unlock(); Music.play('game');
   $('overlay').style.display = 'none';
   SaveSystem.remove(0);
   newGame();
@@ -949,7 +1031,64 @@ function showStoryDialog(data) {
   const panel = $('storyDialog');
   if (!panel) return;
   storyQueue.push(data);
-  if (!storyTyping) _processStoryQueue();
+  if (!storyTyping && panel.style.display !== 'flex') _processStoryQueue();
+}
+
+/** 可选剧情视频：素材缺失、解码失败或浏览器不支持时，文字剧情照常播放。 */
+function _renderStoryMedia(data) {
+  const box = $('storyMedia');
+  if (!box) return;
+  _clearStoryMedia();
+  const slots = typeof STORY_VIDEO_SLOTS !== 'undefined' ? STORY_VIDEO_SLOTS : null;
+  const slot = slots && data && data.sceneId ? slots[data.sceneId] : null;
+  if (!slot || (!slot.video && !slot.poster)) return;
+
+  box.style.display = 'block';
+  box.setAttribute('aria-label', slot.title || '剧情镜头');
+  const poster = typeof slot.poster === 'string' ? slot.poster.trim() : '';
+  if (poster) {
+    const image = document.createElement('img');
+    image.className = 'story-media-poster';
+    image.src = poster;
+    image.alt = (slot.title || '剧情镜头') + '画面';
+    image.onerror = () => { image.hidden = true; };
+    box.appendChild(image);
+  }
+
+  const source = typeof slot.video === 'string' ? slot.video.trim() : '';
+  if (!source) return;
+  const video = document.createElement('video');
+  video.className = 'story-media-video';
+  video.src = source;
+  if (poster) video.poster = poster;
+  video.controls = true;
+  video.playsInline = true;
+  video.preload = 'metadata';
+  video.setAttribute('aria-label', slot.title || '剧情视频');
+  video.onerror = () => {
+    if (!box.contains(video)) return;
+    video.hidden = true;
+    const fallback = document.createElement('div');
+    fallback.className = 'story-media-fallback';
+    fallback.textContent = '镜头暂不可用，文字记录仍可继续。';
+    box.appendChild(fallback);
+  };
+  box.appendChild(video);
+}
+
+function _clearStoryMedia() {
+  const box = $('storyMedia');
+  if (!box) return;
+  const video = box.querySelector('video');
+  if (video) {
+    video.onerror = null;
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+  }
+  while (box.firstChild) box.removeChild(box.firstChild);
+  box.style.display = 'none';
+  box.removeAttribute('aria-label');
 }
 
 function _processStoryQueue() {
@@ -958,26 +1097,42 @@ function _processStoryQueue() {
   const panel = $('storyDialog');
   if (!panel) return;
   panel.style.display = 'flex';
+  if (typeof Music !== 'undefined') Music.setDucking(true);
   // 需要玩家做选择时暂停游戏，读完/选完再继续（避免「选着选着床没了」）
   const hasChoices = !!(data.choices && data.choices.length);
-  if (hasChoices) _pauseForStory();
+  if (hasChoices) {
+    panel.dataset.inputLocked = 'true';
+    _pauseForStory();
+  }
   // 暗角效果
   const vig = $('storyVignette');
   if (vig) { vig.style.display = ''; requestAnimationFrame(() => vig.style.opacity = '1'); }
   // 角色氛围
   const sp = STORY_SPEAKERS[data.speaker] || STORY_SPEAKERS['???'];
+  panel.style.setProperty('--sp-c', sp.color || '#a78bfa');
+  panel.style.setProperty('--sp-glow', sp.glow || 'rgba(167,139,250,.16)');
   const spEl = $('storySpeaker');
+  const avatar = $('storyAvatar');
+  const storyMeta = $('storyMeta');
+  if (avatar) {
+    avatar.textContent = sp.icon || '◌';
+    avatar.style.setProperty('--sp-c', sp.color || '#a78bfa');
+    avatar.style.setProperty('--sp-glow', sp.glow || 'rgba(167,139,250,.35)');
+    avatar.setAttribute('aria-label', (data.speaker || '未知声音') + '的头像');
+  }
+  if (storyMeta) storyMeta.textContent = [data.actTitle, data.wave ? '梦境记录 · 第 ' + data.wave + ' 波' : '梦境记录 · 未知时间'].filter(Boolean).join('　/　');
   if (spEl) {
-    spEl.innerHTML = '<span style="margin-right:6px;font-size:22px;vertical-align:middle">' + sp.icon + '</span>' + (data.speaker || '???');
+    spEl.textContent = data.speaker || '???';
     spEl.style.color = sp.color;
   }
-  panel.style.borderColor = sp.color.replace(')', ',.35)').replace('rgb', 'rgba');
+  panel.classList.toggle('narration', data.speaker === '旁白');
   // 氛围光
   const deco = panel.querySelector('.story-deco');
   if (deco) deco.style.background = 'linear-gradient(90deg,' + sp.glow + ',transparent)';
   // 角色小档案（来自 story.js，沉浸感：说话的人是谁）
   if (deco && sp.desc) deco.title = (data.speaker || '') + '：' + sp.desc;
   const textEl = $('storyText');
+  _renderStoryMedia(data);
   textEl.textContent = '';
   textEl.scrollTop = 0;
   const choicesEl = $('storyChoices');
@@ -1100,6 +1255,7 @@ function _showChoiceResult(line, autoMs) {
 function hideStoryDialog() {
   if (_storyTimer) { clearInterval(_storyTimer); _storyTimer = null; }
   clearTimeout(_storyAutoNext);
+  _clearStoryMedia();
   const panel = $('storyDialog');
   if (panel) {
     panel.style.display = 'none';
@@ -1113,6 +1269,8 @@ function hideStoryDialog() {
   if (vig) { vig.style.opacity = '0'; setTimeout(() => vig.style.display = 'none', 400); }
   storyQueue = [];
   storyTyping = false;
+  if (panel) delete panel.dataset.inputLocked;
+  if (typeof Music !== 'undefined') Music.setDucking(false);
   _resumeAfterStory();
   // 剧情读完后，把排队等着的第四面墙演出放出来
   _flushPendingFourthWall();
@@ -1827,6 +1985,7 @@ function loadSaveSlot(slot) {
 function doLoadSlot(slot, d) {
   try {
     newGame(d);                       // newGame 内部会 applySave → SaveSystem.restore
+    if (typeof Music !== 'undefined') { Music.unlock(); Music.play('game'); }
     // 从主菜单载入时要把菜单收起来
     const ov = $('overlay');
     if (ov) ov.style.display = 'none';

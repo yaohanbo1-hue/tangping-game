@@ -833,6 +833,12 @@ canvas{display:block;width:1280px;height:720px}
   max-height:212px;overflow-y:auto;flex:0 1 auto}
 .story-text::-webkit-scrollbar{width:6px}
 .story-text::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.story-media{position:relative;z-index:1;width:min(100%,560px);height:min(31.64vw,18vh,160px);aspect-ratio:16/9;margin:4px auto 10px;
+  overflow:hidden;border:1px solid color-mix(in srgb,var(--sp-c,#a78bfa) 35%,transparent);border-radius:12px;
+  background:rgba(0,0,0,.42);box-shadow:0 10px 32px rgba(0,0,0,.32)}
+.story-media-video,.story-media-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#080812}
+.story-media-fallback{position:absolute;inset:auto 0 0;padding:7px 10px;background:rgba(5,6,14,.78);color:#d2cde0;font-size:11px;text-align:center}
+.story-media[style*="display: none"]{display:none!important}
 .story-choices{display:flex;flex-direction:column;gap:8px;margin:14px 0 10px;max-height:200px;overflow-y:auto;flex:0 1 auto}
 .story-choices::-webkit-scrollbar{width:6px}
 .story-choices::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
@@ -993,6 +999,217 @@ canvas{display:block;width:1280px;height:720px}
 .bitem:active:not(.no){transform:scale(.985);transition-duration:.05s}
 /* 辅助文本提亮：#hint 原 #8882a8 对比度约 5.4:1，提到 #9a94c0 约 6.3:1 更稳 */
 #hint{color:#9a94c0}
+
+/* ================= 入梦主页：分区、档案卡与双层玻璃 ================= */
+#overlay{
+  background:
+    radial-gradient(ellipse at 18% 18%,rgba(91,79,199,.24),transparent 38%),
+    radial-gradient(ellipse at 82% 78%,rgba(43,117,153,.18),transparent 38%),
+    linear-gradient(145deg,#070711 0%,#111127 48%,#09121e 100%);
+}
+#overlay::before{
+  background:
+    radial-gradient(circle at 22% 34%,rgba(135,115,255,.13),transparent 32%),
+    radial-gradient(circle at 75% 58%,rgba(91,201,222,.09),transparent 34%),
+    linear-gradient(120deg,transparent 25%,rgba(255,255,255,.018) 50%,transparent 75%);
+  animation:bgPulse 10s ease-in-out infinite;
+}
+#overlay::after{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.25;
+  background:repeating-linear-gradient(0deg,transparent 0 4px,rgba(186,177,255,.018) 5px);
+}
+.home-panel.panel{
+  width:min(1000px,calc(100% - 48px));max-height:calc(100% - 32px);
+  padding:22px 24px 16px;text-align:left;overflow-x:hidden;
+  background:radial-gradient(ellipse at 18% 12%,rgba(126,103,217,.14),transparent 56%),
+    linear-gradient(145deg,rgba(13,13,31,.84),rgba(10,18,30,.78));
+  background-size:175% 175%,100% 100%;background-position:12% 8%,0 0;
+  border:1px solid rgba(191,181,255,.25);border-radius:22px;
+  box-shadow:0 30px 100px rgba(0,0,0,.66),0 0 90px rgba(114,93,238,.13),
+    inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1px 0 rgba(105,199,224,.08);
+  backdrop-filter:blur(32px) saturate(1.55);-webkit-backdrop-filter:blur(32px) saturate(1.55);
+  animation:panelIn .5s ease-out both,homeGlassDrift 18s ease-in-out .5s infinite alternate;
+}
+@keyframes homeGlassDrift{
+  0%,100%{background-position:12% 8%,0 0;box-shadow:0 30px 100px rgba(0,0,0,.66),0 0 72px rgba(114,93,238,.11),inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1px 0 rgba(105,199,224,.08)}
+  50%{background-position:88% 92%,0 0;box-shadow:0 30px 100px rgba(0,0,0,.66),0 0 92px rgba(114,153,238,.16),inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(105,199,224,.1)}
+}
+@keyframes homeCardRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes homeSignal{0%,100%{opacity:.58;transform:scale(.84);box-shadow:0 0 6px rgba(135,229,208,.45)}50%{opacity:1;transform:scale(1.12);box-shadow:0 0 14px rgba(135,229,208,.9)}}
+@keyframes homeClockEcho{0%,82%,100%{text-shadow:0 0 15px rgba(164,147,255,.3)}88%{text-shadow:0 0 23px rgba(164,147,255,.72),1px 0 rgba(125,211,252,.28)}}
+@keyframes homeStartPulse{0%,100%{filter:brightness(1);box-shadow:0 6px 20px rgba(93,77,190,.25),inset 0 1px 0 rgba(255,255,255,.18)}50%{filter:brightness(1.08);box-shadow:0 7px 25px rgba(111,101,215,.38),0 0 20px rgba(125,211,252,.08),inset 0 1px 0 rgba(255,255,255,.2)}}
+.home-layout>.setup-panel,.home-side>.record-card,.home-side>.home-shortcuts,.home-bottom>.home-guide,.home-bottom>.home-audio{animation:homeCardRise .48s cubic-bezier(.2,.7,.2,1) both}
+.home-layout>.setup-panel{animation-delay:.06s}.home-side>.record-card{animation-delay:.14s}
+.home-side>.home-shortcuts{animation-delay:.22s}.home-bottom>.home-guide{animation-delay:.3s}.home-bottom>.home-audio{animation-delay:.36s}
+.home-header{position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;
+  padding:2px 2px 16px;border-bottom:1px solid rgba(193,185,255,.12)}
+.home-header::after{content:'';position:absolute;left:0;bottom:-1px;width:38%;height:1px;
+  background:linear-gradient(90deg,rgba(178,153,255,.8),transparent)}
+.home-brand{min-width:0}
+.home-kicker{display:flex;align-items:center;gap:8px;color:#b7addc;font-size:10px;letter-spacing:2px}
+.home-kicker i{width:6px;height:6px;border-radius:50%;background:#87e5d0;box-shadow:0 0 12px rgba(135,229,208,.8);animation:homeSignal 4.2s ease-in-out infinite}
+.home-kicker span{padding-left:8px;border-left:1px solid rgba(255,255,255,.18);color:#8e88ae}
+.home-header h1{margin:6px 0 0!important;font-size:34px!important;line-height:1.08;letter-spacing:2px!important;
+  text-align:left;background:linear-gradient(110deg,#f3efff 5%,#c2b2ff 52%,#9ee6eb 100%)!important;
+  background-size:180% auto!important;animation:titleShine 7s linear infinite!important;
+  filter:drop-shadow(0 0 22px rgba(167,139,250,.26))!important}
+.home-title-sub{margin-top:6px;color:#9f9ab9;font-size:10px;letter-spacing:2.2px}
+.home-title-sub span{color:#7bd5d5;margin:0 3px}
+.home-header-side{display:flex;align-items:center;gap:12px}
+.home-clock{display:flex;flex-direction:column;align-items:flex-end;padding-right:14px;border-right:1px solid rgba(255,255,255,.12)}
+.home-clock>span{font:500 24px/1.1 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:2px;color:#d9d4f2;
+  text-shadow:0 0 18px rgba(164,147,255,.38);animation:homeClockEcho 9s ease-in-out infinite}
+.home-clock small{margin-top:5px;color:#827d9d;font-size:9px}
+.home-music{display:flex;align-items:center;gap:8px;min-width:156px;padding:8px 10px;text-align:left;
+  border-radius:12px;border:1px solid rgba(146,215,221,.18);background:linear-gradient(135deg,rgba(89,176,188,.10),rgba(167,139,250,.08));
+  color:#d9f4f3;cursor:pointer;font-family:inherit;transition:transform .2s,border-color .2s,background .2s}
+.home-music:hover{transform:translateY(-2px);border-color:rgba(146,215,221,.44);background:rgba(89,176,188,.16)}
+.hm-icon{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:rgba(125,211,252,.11);font-size:18px}
+.hm-copy{display:flex;flex-direction:column;min-width:0}
+.hm-copy b{font-size:10px;letter-spacing:.8px}
+.hm-copy small{margin-top:3px;color:#8d9ea8;font-size:8px;white-space:nowrap}
+.home-music>i{margin-left:auto;font-style:normal;font-size:9px;color:#8be5ce}
+.home-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,.85fr);gap:14px;padding-top:14px}
+.setup-panel,.record-card,.home-shortcuts{
+  position:relative;min-width:0;border:1px solid rgba(190,183,255,.13);border-radius:16px;
+  background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 8px 24px rgba(0,0,0,.14)
+}
+.setup-panel{padding:14px 15px 12px}
+.home-side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.record-card,.home-shortcuts{padding:13px}
+.home-section-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.home-section-title>span{font-size:12px;font-weight:800;color:#e8e4f7;letter-spacing:1px}
+.home-section-title>span i{margin-right:7px;color:#a79be0;font:600 9px ui-monospace,Consolas,monospace;letter-spacing:1px}
+.home-section-title>small{font-size:9px;color:#77748f}
+.home-currency{justify-content:flex-start;margin:0 0 12px;padding:8px 10px;border:1px solid rgba(255,209,102,.12);
+  border-radius:11px;background:linear-gradient(90deg,rgba(255,209,102,.075),rgba(255,255,255,.018))}
+.home-currency .mg{padding:0 10px 0 0;border:0;border-radius:0;background:transparent;font-size:13px}
+.home-currency .ms{display:flex;flex-direction:column;gap:2px;color:#d8d0b0;font-size:9px}
+.home-currency .ms em{font-style:normal;color:#89839c;font-size:8px}
+.home-label{display:flex;align-items:baseline;gap:8px;margin:10px 0 6px;color:#cfcae4;font-size:10px;font-weight:700;letter-spacing:.7px}
+.home-label small{color:#77738e;font-size:8px;font-weight:400;letter-spacing:0}
+.home-panel .diffs{gap:6px;margin:0 0 8px}
+.home-panel .diff{padding:8px 5px;border-width:1px;border-radius:11px;
+  background:linear-gradient(150deg,rgba(44,45,76,.65),rgba(21,25,43,.55))}
+.home-panel .diff:hover{transform:translateY(-2px);box-shadow:0 7px 20px rgba(139,92,246,.18)}
+.home-panel .diff.on{border-color:rgba(183,160,255,.76);background:linear-gradient(145deg,rgba(139,92,246,.20),rgba(96,165,250,.075));
+  box-shadow:0 0 0 1px rgba(183,160,255,.12),0 5px 20px rgba(127,92,246,.16)}
+.home-panel .diff.adm.on{border-color:rgba(255,209,102,.78);background:linear-gradient(145deg,rgba(255,209,102,.15),rgba(139,92,246,.06))}
+.home-panel .diff .di{font-size:18px}
+.home-panel .diff .dn{font-size:10px}
+.home-panel .diff .dd{font-size:8px;min-height:22px}
+.home-panel .diff .dc,.home-panel .diff .dr{font-size:8px}
+.home-panel .modes{gap:6px;margin:0}
+.home-panel .mode{padding:7px 8px;border-radius:10px;background:rgba(125,211,252,.035)}
+.home-panel .mode.on{border-color:rgba(125,211,252,.65);background:linear-gradient(110deg,rgba(125,211,252,.12),rgba(167,139,250,.075));
+  box-shadow:inset 0 0 18px rgba(125,211,252,.035)}
+.home-panel .mode .mi{font-size:17px}
+.home-panel .mode .mn{font-size:10px}
+.home-panel .mode .md{font-size:8px}
+.setup-summary{min-height:29px;margin-top:9px;padding:7px 9px;border-radius:9px;
+  background:rgba(9,11,24,.34);border:1px solid rgba(255,255,255,.045);color:#aaa5c0;font-size:9px;line-height:1.45}
+.setup-summary b{color:#d8ceff}
+.setup-summary em{color:#91d7d4;font-style:normal}
+.loadout-head{display:flex;justify-content:space-between;align-items:center;margin-top:10px;color:#c8c3dc;font-size:9px;font-weight:700}
+.loadout-head span+span{color:#827d99;font-weight:400}
+.home-panel .equipped{justify-content:flex-start;min-height:25px;margin:5px 0 8px}
+.home-panel .eq{font-size:8px;padding:3px 7px;border-radius:999px;background:rgba(192,132,252,.10)}
+.home-panel .eq.none{font-size:8px;padding-left:0}
+.home-start-actions{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.85fr);gap:8px;margin-top:4px}
+.home-start-actions button{min-width:0;min-height:48px;border-radius:11px}
+.home-start-actions .big{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:7px 12px;font-size:14px;letter-spacing:1.5px;
+  background:linear-gradient(120deg,#7666db,#6353b7 55%,#507fa7);border-color:rgba(198,186,255,.42);
+  box-shadow:0 6px 20px rgba(93,77,190,.25),inset 0 1px 0 rgba(255,255,255,.18);animation:homeStartPulse 5.6s ease-in-out 1.2s infinite}
+.home-start-actions .big small,.home-continue small{font-size:8px;font-weight:500;letter-spacing:.5px;color:rgba(245,243,255,.7)}
+.home-continue{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 8px;
+  border:1px solid rgba(125,211,252,.28);background:linear-gradient(145deg,rgba(125,211,252,.11),rgba(125,211,252,.035));
+  color:#d8f4ff;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;transition:.2s}
+.home-continue:hover{transform:translateY(-2px);border-color:rgba(125,211,252,.55);box-shadow:0 6px 18px rgba(56,189,248,.12)}
+.record-score{display:flex;align-items:baseline;gap:8px;padding:6px 3px 9px}
+.record-score b{font:600 36px/1 ui-monospace,SFMono-Regular,Consolas,monospace;color:#eee9ff;text-shadow:0 0 20px rgba(167,139,250,.35)}
+.record-score span{color:#9892ad;font-size:9px}
+.record-score i{margin-left:auto;color:#706b86;font:9px ui-monospace,Consolas,monospace;letter-spacing:2px}
+.record-divider{height:1px;background:linear-gradient(90deg,rgba(167,139,250,.3),rgba(255,255,255,.04),transparent);margin:2px 0 8px}
+.home-save-info{min-height:25px;color:#9a95ae;font-size:9px;line-height:1.5}
+.home-record-link{display:flex;align-items:center;gap:7px;width:100%;margin-top:4px;padding:7px 8px;border:1px solid rgba(255,255,255,.07);
+  border-radius:9px;background:rgba(255,255,255,.025);color:#c4bde2;text-align:left;font-family:inherit;font-size:10px;cursor:pointer;transition:.18s}
+.home-record-link:hover{border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.08)}
+.home-record-link b{margin-left:auto;color:#8f89a9;font-size:16px;font-weight:400}
+.home-shortcuts .home-section-title{margin-bottom:8px}
+.home-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.home-action{display:grid;grid-template-columns:27px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;column-gap:7px;
+  min-height:43px;padding:6px 7px;text-align:left;border:1px solid rgba(255,255,255,.075);border-radius:10px;
+  background:linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.012));color:#ded9f1;cursor:pointer;
+  font-family:inherit;transition:transform .18s,border-color .18s,background .18s,box-shadow .18s}
+.home-action:hover{transform:translateY(-2px);border-color:rgba(177,160,255,.32);background:rgba(167,139,250,.09);box-shadow:0 5px 14px rgba(0,0,0,.16)}
+.home-action>span{grid-row:1/3;display:grid;place-items:center;width:27px;height:27px;border-radius:8px;background:rgba(167,139,250,.11);font-size:15px}
+.home-action b{align-self:end;font-size:9px;white-space:nowrap}
+.home-action small{align-self:start;margin-top:2px;color:#817d96;font-size:7px;white-space:nowrap}
+.home-action.gold>span{background:rgba(255,209,102,.13)}.home-action.blue>span{background:rgba(125,211,252,.13)}
+.home-action.rose>span{background:rgba(251,113,133,.12)}.home-action.cyan>span{background:rgba(103,232,249,.11)}
+.home-action.violet>span{background:rgba(192,132,252,.13)}
+.home-bottom{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(230px,.8fr);gap:9px;margin-top:10px}
+.home-guide,.home-audio{align-self:start;min-width:0;border:1px solid rgba(190,183,255,.12);border-radius:11px;background:rgba(255,255,255,.022)}
+.home-guide summary,.home-audio summary{display:flex;align-items:center;gap:8px;min-height:34px;padding:7px 10px;list-style:none;cursor:pointer}
+.home-guide summary::-webkit-details-marker,.home-audio summary::-webkit-details-marker{display:none}
+.home-guide summary>span,.home-audio summary>span{color:#c9c3e1;font-size:9px;font-weight:700}
+.home-guide summary>small,.home-audio summary>small{margin-left:auto;color:#77738c;font-size:8px}
+.home-guide summary>b,.home-audio summary>b{width:17px;height:17px;display:grid;place-items:center;border-radius:50%;background:rgba(167,139,250,.1);color:#bfb4f0;font-size:11px}
+.home-guide[open] summary,.home-audio[open] summary{border-bottom:1px solid rgba(255,255,255,.06)}
+.home-guide[open] summary>b,.home-audio[open] summary>b{transform:rotate(45deg)}
+.home-guide .rules{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:0;padding:8px}
+.home-guide .rule{padding:6px 7px;border-radius:7px;background:rgba(255,255,255,.025);font-size:8px;line-height:1.45}
+.audio-controls{display:grid;gap:5px;padding:8px 10px}
+.audio-controls label{display:grid;grid-template-columns:88px minmax(50px,1fr) 30px;align-items:center;gap:7px;color:#b4afc8;font-size:8px}
+.audio-controls input{width:100%;height:3px;accent-color:#a99af1}
+.audio-controls output{color:#9290ab;text-align:right;font:8px ui-monospace,Consolas,monospace}
+.audio-controls button{justify-self:start;margin-top:2px;padding:4px 7px;border:1px solid rgba(255,255,255,.08);border-radius:7px;
+  background:rgba(255,255,255,.035);color:#b8b1d1;font-family:inherit;font-size:8px;cursor:pointer}
+.audio-controls button:hover{border-color:rgba(167,139,250,.35)}
+.home-panel :focus-visible{outline:2px solid rgba(160,221,231,.85);outline-offset:2px}
+.home-panel .diff:focus-visible,.home-panel .mode:focus-visible{z-index:1}
+
+/* ================= 剧情镜头与磨砂玻璃层次 ================= */
+.story-dialog{
+  background:linear-gradient(135deg,rgba(12,12,29,.82),rgba(13,20,35,.79));
+  border-color:color-mix(in srgb,var(--sp-c,#a78bfa) 42%,transparent);
+  box-shadow:0 18px 70px rgba(0,0,0,.62),0 0 68px var(--sp-glow,rgba(120,80,246,.12)),
+    inset 0 1px 0 rgba(255,255,255,.13),inset 0 -1px 0 rgba(125,211,252,.06);
+  backdrop-filter:blur(34px) saturate(1.45);-webkit-backdrop-filter:blur(34px) saturate(1.45);
+}
+.story-dialog::before{content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;opacity:.48;
+  background:radial-gradient(ellipse at 0 0,var(--sp-glow,rgba(167,139,250,.16)),transparent 52%)}
+.story-header{position:relative;z-index:1;align-items:center}
+.story-avatar{width:46px;height:46px;border-width:1px;background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(15,12,34,.7));
+  box-shadow:0 0 26px var(--sp-glow,rgba(167,139,250,.2)),inset 0 1px 0 rgba(255,255,255,.15)}
+.story-id{display:flex;flex-direction:column;gap:4px;min-width:0}
+.story-speaker{padding-left:10px;border-color:var(--sp-c,#a78bfa);background:linear-gradient(90deg,var(--sp-glow,rgba(167,139,250,.14)),transparent)}
+.story-meta{color:#77738f;font-size:8px;letter-spacing:1.3px}
+.story-text{position:relative;z-index:1;padding-top:8px;font-size:14px;line-height:2;color:#ece9f6}
+.story-choices,.story-next{position:relative;z-index:1}
+.story-choice{background:linear-gradient(120deg,rgba(167,139,250,.095),rgba(255,255,255,.025));
+  border-color:color-mix(in srgb,var(--sp-c,#a78bfa) 26%,transparent)}
+.story-choice:hover{border-color:color-mix(in srgb,var(--sp-c,#a78bfa) 56%,transparent)}
+
+@media (max-width:860px){
+  .home-panel.panel{width:calc(100% - 28px);padding:16px}
+  .home-layout{grid-template-columns:minmax(0,1fr)}
+  .home-side{display:grid;grid-template-columns:1fr 1.2fr;align-items:start}
+  .home-bottom{grid-template-columns:1fr}
+}
+@media (max-height:680px){
+  .home-panel.panel{padding-top:14px;padding-bottom:12px}
+  .home-header{padding-bottom:10px}
+  .home-layout{padding-top:9px;gap:9px}
+  .setup-panel{padding:10px 12px}
+  .home-side{gap:8px}
+}
+@media (prefers-reduced-motion:reduce){
+  #overlay::before,.home-panel.panel,.home-layout>.setup-panel,.home-side>.record-card,.home-side>.home-shortcuts,.home-bottom>.home-guide,.home-bottom>.home-audio,
+  .home-header h1,.home-kicker i,.home-clock>span,.home-start-actions .big,.home-music,.home-action,.story-avatar{animation:none!important}
+  .home-panel *, .story-dialog *{scroll-behavior:auto!important;transition-duration:.01ms!important}
+}
 </style>
 </head>
 <body>
@@ -1161,7 +1378,11 @@ canvas{display:block;width:1280px;height:720px}
   <!-- ========= 剧情对话框 ========= -->
   <div id="storyDialog" class="story-dialog" style="display:none">
     <div class="story-deco"></div>
-    <div class="story-header"><span id="storySpeaker" class="story-speaker"></span></div>
+    <div class="story-header">
+      <span id="storyAvatar" class="story-avatar" aria-hidden="true">◌</span>
+      <div class="story-id"><span id="storySpeaker" class="story-speaker"></span><small id="storyMeta" class="story-meta">梦境记录</small></div>
+    </div>
+    <div id="storyMedia" class="story-media" style="display:none"></div>
     <div id="storyText" class="story-text"></div>
     <div id="storyChoices" class="story-choices"></div>
     <button id="storyNext" class="story-next">继续 ▶</button>
@@ -1218,43 +1439,89 @@ canvas{display:block;width:1280px;height:720px}
   <div id="fragmentDetail"></div>
 
   <div id="overlay">
-    <div class="panel" id="startPanel">
-      <h1>躺平发育 · 梦魇防线</h1>
-      <div class="sub">你只想安静地躺着发育，但梦魇们不这么想</div>
-      <div class="rules">
-        <div class="rule">🚪 <b>三线战场</b>：上/中/下三条走廊各有一扇铁门，梦魇分路进攻，必须分兵防守！</div>
-        <div class="rule">🎨 <b>六种伤害</b>：动能/冰霜/能量/电磁/火焰/剧毒，敌人各有抗性与弱点；不同元素叠加触发<b>元素反应</b>。</div>
-        <div class="rule">👾 <b>30+ 种梦魇</b>：含飞行（无视门）、盾卫、召唤师、狂暴、吸血、分裂、隐身、传送、反弹等；精英怪带随机词缀，BOSS 有多阶段变身。</div>
-        <div class="rule">😈 <b>多阶段 BOSS</b>：血量每降一档就变招，抗性、速度、召唤全部升级。</div>
-        <div class="rule">⭐ <b>16 种建筑 · 转职</b>：含 10 种炮塔，每种满 Lv6 后可二选一转职，衍生 32 种形态。</div>
-        <div class="rule">🌪️ <b>随机事件</b>：每波可能触发电力风暴、金币雨、梦魇狂潮等，改变战场规则。</div>
-        <div class="rule">🎰 <b>梦境摇奖机</b>：花金币摇奖，19 种奖励含清场、天启转职、全体升级，带史诗/传说保底。</div>
-        <div class="rule">⬆️ <b>升级与出售</b>：点击建筑查看详情，可升 1 级、一键升满或出售返还 70% 投入。</div>
-        <div class="rule">👾 <b>32 种梦魇 + 5 个 BOSS</b>：钻地、EMP 瘫痪、寄生、拟态、诅咒、亡魂复活、镜面反弹、窃金、虚无光环、三段护盾巨像……</div>
-        <div class="rule">🏁 <b>胜负条件</b>：<b>失败</b> —— 床铺被摧毁；<b>胜利</b> —— 第 60 波击败【终焉梦魇】通关，之后可进入无尽模式。</div>
+    <div class="panel home-panel" id="startPanel">
+      <header class="home-header">
+        <div class="home-brand">
+          <div class="home-kicker"><i></i> 梦境监测记录 <span>档案 03:07</span></div>
+          <h1>躺平发育</h1>
+          <div class="home-title-sub">梦 魇 防 线 <span>·</span> 你确定这是第一次入梦吗？</div>
+        </div>
+        <div class="home-header-side">
+          <div class="home-clock"><span>03:07</span><small>走廊尽头的钟停在这里</small></div>
+          <button class="home-music" id="btnMusicHome" type="button">
+            <span class="hm-icon">♫</span><span class="hm-copy"><b>梦境配乐</b><small id="musicStatus">准备播放</small></span>
+            <i id="musicState">开</i>
+          </button>
+        </div>
+      </header>
+
+      <div class="home-layout">
+        <section class="setup-panel">
+          <div class="home-section-title"><span><i>01</i> 本次入梦</span><small>选择难度与梦境规则</small></div>
+          <div class="metabar home-currency">
+            <span class="mg">💰 <b id="metaGold">0</b></span>
+            <span class="ms">梦境金币 <em>用于摇奖与特殊难度</em></span>
+          </div>
+          <div class="home-label">防线难度 <small>难度越高，结算奖励越多</small></div>
+          <div class="diffs" id="diffCards"></div>
+          <div class="home-label">梦境规则</div>
+          <div class="modes" id="modeCards"></div>
+          <div class="setup-summary" id="setupSummary"></div>
+          <div class="loadout-head"><span>开局道具</span><span id="equipCount">0 / 3 已装备</span></div>
+          <div class="equipped" id="equipRow"></div>
+          <div class="home-start-actions">
+            <button class="big" id="btnStart" type="button"><span>进入梦境</span><small>开始新的防线</small></button>
+            <button class="home-continue" id="btnContinue" type="button" style="display:none">
+              <span>继续梦境</span><small id="continueMeta">自动存档</small>
+            </button>
+          </div>
+        </section>
+
+        <aside class="home-side">
+          <section class="record-card">
+            <div class="home-section-title"><span><i>02</i> 梦境档案</span><small>本机记录</small></div>
+            <div class="record-score"><b id="bestWave">0</b><span>历史最高波</span><i>WAVE</i></div>
+            <div class="record-divider"></div>
+            <div id="saveInfo" class="home-save-info">尚无继续记录</div>
+            <button class="home-record-link" id="btnSaveMgr" type="button">🗂 <span>存档管理</span><b>›</b></button>
+          </section>
+
+          <section class="home-shortcuts">
+            <div class="home-section-title"><span><i>03</i> 梦境工具</span><small>成长与收藏</small></div>
+            <div class="home-action-grid">
+              <button class="home-action gold" id="btnGacha" type="button"><span>🎰</span><b>梦境摇奖</b><small>获取开局道具</small></button>
+              <button class="home-action violet" id="btnBag" type="button"><span>🎒</span><b>道具仓库</b><small>管理装备与收藏</small></button>
+              <button class="home-action blue" id="btnDiary" type="button"><span>📖</span><b>梦境日记</b><small>回看经历与记录</small></button>
+              <button class="home-action rose" id="btnNPC" type="button"><span>👥</span><b>梦境居民</b><small>查看并招募伙伴</small></button>
+              <button class="home-action cyan" id="btnFragments" type="button"><span>💎</span><b>记忆碎片</b><small>拼合遗失的片段</small></button>
+            </div>
+          </section>
+        </aside>
       </div>
-      <div class="metabar">
-        <span class="mg">💰 <b id="metaGold">0</b></span>
-        <span class="ms">金币 — 用于抽奖与管理员模式</span>
+
+      <div class="home-bottom">
+        <details class="home-guide">
+          <summary><span>🧭 防线行动手册</span><small>路线、炮塔、梦魇与胜负规则</small><b>＋</b></summary>
+          <div class="rules">
+            <div class="rule">🚪 <b>三线战场</b>：三条走廊各有铁门，注意分路布防。</div>
+            <div class="rule">🎨 <b>元素克制</b>：六种伤害类型各有抗性与弱点，混搭可触发元素反应。</div>
+            <div class="rule">🔫 <b>建造与转职</b>：16 种建筑含 10 种炮塔；炮塔达到 Lv6 可选择专精分支。</div>
+            <div class="rule">👁️ <b>梦魇机制</b>：精英带随机词缀，敌人可能飞行、隐身、召唤或瘫痪炮塔。</div>
+            <div class="rule">😈 <b>阶段首领</b>：首领会在战斗中改变抗性、速度与攻击方式。</div>
+            <div class="rule">🌪️ <b>夜间事件</b>：金币雨、电力风暴等事件会改变当波局势。</div>
+            <div class="rule">🎰 <b>开局道具</b>：摇奖获得道具，在仓库装备后用于下一局。</div>
+            <div class="rule">🏁 <b>胜负条件</b>：有限模式守到第 60 波；床铺被摧毁则防线失守。无限模式可继续挑战。</div>
+          </div>
+        </details>
+        <details class="home-audio">
+          <summary><span>🎧 声音与氛围</span><small>背景音乐与战斗音效</small><b>＋</b></summary>
+          <div class="audio-controls">
+            <label><span>背景音乐音量</span><input id="musicVolume" type="range" min="0" max="1" step="0.01" value="0.34"><output id="musicVolumeValue">34%</output></label>
+            <label><span>战斗音效音量</span><input id="sfxVolume" type="range" min="0" max="1" step="0.01" value="0.72"><output id="sfxVolumeValue">72%</output></label>
+            <button id="btnSoundHome" type="button">🔊 战斗音效：开启</button>
+          </div>
+        </details>
       </div>
-      <div class="diffs" id="diffCards"></div>
-      <div class="modes" id="modeCards"></div>
-      <div class="equipped" id="equipRow"></div>
-      <div class="btns">
-        <button class="big" id="btnStart">开始躺平</button>
-        <button class="alt" id="btnGacha">🎰 抽奖</button>
-        <button class="alt" id="btnBag">🎒 仓库</button>
-        <button class="alt" id="btnContinue">继续梦境</button>
-        <button class="alt" id="btnSaveMgr">🗂 存档管理</button>
-      </div>
-      <div class="btns dream-btns" style="margin-top:8px">
-        <button class="alt dream" id="btnDiary">📖 梦境日记</button>
-        <button class="alt dream" id="btnNPC">👥 梦境居民</button>
-        <button class="alt dream" id="btnFragments">💎 记忆碎片</button>
-      </div>
-      <div id="saveInfo"></div>
-      <div class="best">🏆 历史最高波次：<span id="bestWave">0</span></div>
-      <div class="tipend">选择难度后开始：难度越高结算金币越多；<b>管理员</b>消耗 2000 金币，资源无限且可自由跳波。<br>每局结束会获得金币，可在「🎰 抽奖」抽取<b>开局道具</b>（如免费发电机、减半），装备后下一局生效。</div>
     </div>
     <div class="panel" id="gachaPanel" style="display:none">
       <h1>🎰 梦境抽奖</h1>

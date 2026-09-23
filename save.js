@@ -18,6 +18,11 @@ const SaveSystem = {
   VERSION: 3,
   /** 手动槽位数量（0 号保留给自动存档） */
   SLOTS: 3,
+  /** 保留合法的 0 HP；只有缺失或非数值才回退到满血。 */
+  _restoreHp(value, maxHp) {
+    const hp = value === null ? NaN : Number(value);
+    return clamp(Number.isFinite(hp) ? hp : maxHp, 0, maxHp);
+  },
   KEY: n => 'tangping_save_slot' + n,
   IDX: 'tangping_saves_index',
   LEGACY: 'tangping_save',       // v2 时代的单槽 key，会自动迁移到 0 号槽
@@ -70,9 +75,12 @@ const SaveSystem = {
       if (name !== undefined) d.name = name;
       d.meta = this._metaOf(d);
       const json = JSON.stringify(d);
-      Store.set(this.KEY(slot), json);
-      // 读回来确认真的落盘（localStorage 满时 setItem 会抛，某些浏览器是静默失败）
-      if (Store.get(this.KEY(slot), null) === null) return { ok: false, reason: 'storage-blocked' };
+      const write = Store.set(this.KEY(slot), json);
+      if (!write || !write.ok) {
+        return { ok: false, reason: write && write.name === 'QuotaExceededError' ? 'quota' : 'storage-blocked' };
+      }
+      // 回读并逐字比对：覆盖旧槽失败时，不能把仍存在的旧值误报为保存成功。
+      if (Store.get(this.KEY(slot), null) !== json) return { ok: false, reason: 'storage-blocked' };
       return { ok: true, bytes: json.length };
     } catch (e) {
       return { ok: false, reason: e && e.name === 'QuotaExceededError' ? 'quota' : 'error' };
@@ -310,7 +318,7 @@ const SaveSystem = {
       if (d.bed) {
         G.bed.lv = Math.max(1, Math.min(50, d.bed.lv | 0 || 1));
         G.bed.maxHp = bedMaxHp(G.bed.lv);
-        G.bed.hp = clamp(+d.bed.hp || G.bed.maxHp, 0, G.bed.maxHp);
+        G.bed.hp = this._restoreHp(d.bed.hp, G.bed.maxHp);
         G.bed.shieldMax = +d.bed.shieldMax || 0;
         G.bed.shield = clamp(+d.bed.shield || 0, 0, G.bed.shieldMax || G.bed.maxHp);
       }
@@ -319,7 +327,7 @@ const SaveSystem = {
           const o = G.doors[i]; if (!o) return;
           o.lv = Math.max(1, Math.min(50, v2.lv | 0 || 1));
           o.maxHp = doorMaxHp(o.lv);
-          o.hp = clamp(+v2.hp || o.maxHp, 0, o.maxHp);
+          o.hp = this._restoreHp(v2.hp, o.maxHp);
           o.shieldMax = +v2.shieldMax || 0;
           o.shield = clamp(+v2.shield || 0, 0, o.shieldMax || o.maxHp);
           o.broken = !!v2.broken && o.hp <= 0;
@@ -340,7 +348,7 @@ const SaveSystem = {
             shield: 0, shieldMax: 0, runes: this._fixRunes(v2.runes),
           };
           b.maxHp = buildingMaxHp(def, b.level, b.branch);
-          b.hp = clamp(+v2.hp || b.maxHp, 0, b.maxHp);
+          b.hp = this._restoreHp(v2.hp, b.maxHp);
           b.shieldMax = +v2.shieldMax || 0;
           b.shield = clamp(+v2.shield || 0, 0, b.shieldMax || b.maxHp);
           G.buildings.push(b); G.grid[r * COLS + c] = b;

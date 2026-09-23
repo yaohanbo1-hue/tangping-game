@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="game-version" content="1.2.1">
+<meta name="game-version" content="1.5.0">
 <title>躺平发育：梦魇防线</title>
 <style>
 :root{
@@ -833,6 +833,12 @@ canvas{display:block;width:1280px;height:720px}
   max-height:212px;overflow-y:auto;flex:0 1 auto}
 .story-text::-webkit-scrollbar{width:6px}
 .story-text::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.story-media{position:relative;z-index:1;width:min(100%,560px);height:min(31.64vw,18vh,160px);aspect-ratio:16/9;margin:4px auto 10px;
+  overflow:hidden;border:1px solid color-mix(in srgb,var(--sp-c,#a78bfa) 35%,transparent);border-radius:12px;
+  background:rgba(0,0,0,.42);box-shadow:0 10px 32px rgba(0,0,0,.32)}
+.story-media-video,.story-media-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#080812}
+.story-media-fallback{position:absolute;inset:auto 0 0;padding:7px 10px;background:rgba(5,6,14,.78);color:#d2cde0;font-size:11px;text-align:center}
+.story-media[style*="display: none"]{display:none!important}
 .story-choices{display:flex;flex-direction:column;gap:8px;margin:14px 0 10px;max-height:200px;overflow-y:auto;flex:0 1 auto}
 .story-choices::-webkit-scrollbar{width:6px}
 .story-choices::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
@@ -993,6 +999,217 @@ canvas{display:block;width:1280px;height:720px}
 .bitem:active:not(.no){transform:scale(.985);transition-duration:.05s}
 /* 辅助文本提亮：#hint 原 #8882a8 对比度约 5.4:1，提到 #9a94c0 约 6.3:1 更稳 */
 #hint{color:#9a94c0}
+
+/* ================= 入梦主页：分区、档案卡与双层玻璃 ================= */
+#overlay{
+  background:
+    radial-gradient(ellipse at 18% 18%,rgba(91,79,199,.24),transparent 38%),
+    radial-gradient(ellipse at 82% 78%,rgba(43,117,153,.18),transparent 38%),
+    linear-gradient(145deg,#070711 0%,#111127 48%,#09121e 100%);
+}
+#overlay::before{
+  background:
+    radial-gradient(circle at 22% 34%,rgba(135,115,255,.13),transparent 32%),
+    radial-gradient(circle at 75% 58%,rgba(91,201,222,.09),transparent 34%),
+    linear-gradient(120deg,transparent 25%,rgba(255,255,255,.018) 50%,transparent 75%);
+  animation:bgPulse 10s ease-in-out infinite;
+}
+#overlay::after{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.25;
+  background:repeating-linear-gradient(0deg,transparent 0 4px,rgba(186,177,255,.018) 5px);
+}
+.home-panel.panel{
+  width:min(1000px,calc(100% - 48px));max-height:calc(100% - 32px);
+  padding:22px 24px 16px;text-align:left;overflow-x:hidden;
+  background:radial-gradient(ellipse at 18% 12%,rgba(126,103,217,.14),transparent 56%),
+    linear-gradient(145deg,rgba(13,13,31,.84),rgba(10,18,30,.78));
+  background-size:175% 175%,100% 100%;background-position:12% 8%,0 0;
+  border:1px solid rgba(191,181,255,.25);border-radius:22px;
+  box-shadow:0 30px 100px rgba(0,0,0,.66),0 0 90px rgba(114,93,238,.13),
+    inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1px 0 rgba(105,199,224,.08);
+  backdrop-filter:blur(32px) saturate(1.55);-webkit-backdrop-filter:blur(32px) saturate(1.55);
+  animation:panelIn .5s ease-out both,homeGlassDrift 18s ease-in-out .5s infinite alternate;
+}
+@keyframes homeGlassDrift{
+  0%,100%{background-position:12% 8%,0 0;box-shadow:0 30px 100px rgba(0,0,0,.66),0 0 72px rgba(114,93,238,.11),inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1px 0 rgba(105,199,224,.08)}
+  50%{background-position:88% 92%,0 0;box-shadow:0 30px 100px rgba(0,0,0,.66),0 0 92px rgba(114,153,238,.16),inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1px 0 rgba(105,199,224,.1)}
+}
+@keyframes homeCardRise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes homeSignal{0%,100%{opacity:.58;transform:scale(.84);box-shadow:0 0 6px rgba(135,229,208,.45)}50%{opacity:1;transform:scale(1.12);box-shadow:0 0 14px rgba(135,229,208,.9)}}
+@keyframes homeClockEcho{0%,82%,100%{text-shadow:0 0 15px rgba(164,147,255,.3)}88%{text-shadow:0 0 23px rgba(164,147,255,.72),1px 0 rgba(125,211,252,.28)}}
+@keyframes homeStartPulse{0%,100%{filter:brightness(1);box-shadow:0 6px 20px rgba(93,77,190,.25),inset 0 1px 0 rgba(255,255,255,.18)}50%{filter:brightness(1.08);box-shadow:0 7px 25px rgba(111,101,215,.38),0 0 20px rgba(125,211,252,.08),inset 0 1px 0 rgba(255,255,255,.2)}}
+.home-layout>.setup-panel,.home-side>.record-card,.home-side>.home-shortcuts,.home-bottom>.home-guide,.home-bottom>.home-audio{animation:homeCardRise .48s cubic-bezier(.2,.7,.2,1) both}
+.home-layout>.setup-panel{animation-delay:.06s}.home-side>.record-card{animation-delay:.14s}
+.home-side>.home-shortcuts{animation-delay:.22s}.home-bottom>.home-guide{animation-delay:.3s}.home-bottom>.home-audio{animation-delay:.36s}
+.home-header{position:relative;display:flex;align-items:center;justify-content:space-between;gap:18px;
+  padding:2px 2px 16px;border-bottom:1px solid rgba(193,185,255,.12)}
+.home-header::after{content:'';position:absolute;left:0;bottom:-1px;width:38%;height:1px;
+  background:linear-gradient(90deg,rgba(178,153,255,.8),transparent)}
+.home-brand{min-width:0}
+.home-kicker{display:flex;align-items:center;gap:8px;color:#b7addc;font-size:10px;letter-spacing:2px}
+.home-kicker i{width:6px;height:6px;border-radius:50%;background:#87e5d0;box-shadow:0 0 12px rgba(135,229,208,.8);animation:homeSignal 4.2s ease-in-out infinite}
+.home-kicker span{padding-left:8px;border-left:1px solid rgba(255,255,255,.18);color:#8e88ae}
+.home-header h1{margin:6px 0 0!important;font-size:34px!important;line-height:1.08;letter-spacing:2px!important;
+  text-align:left;background:linear-gradient(110deg,#f3efff 5%,#c2b2ff 52%,#9ee6eb 100%)!important;
+  background-size:180% auto!important;animation:titleShine 7s linear infinite!important;
+  filter:drop-shadow(0 0 22px rgba(167,139,250,.26))!important}
+.home-title-sub{margin-top:6px;color:#9f9ab9;font-size:10px;letter-spacing:2.2px}
+.home-title-sub span{color:#7bd5d5;margin:0 3px}
+.home-header-side{display:flex;align-items:center;gap:12px}
+.home-clock{display:flex;flex-direction:column;align-items:flex-end;padding-right:14px;border-right:1px solid rgba(255,255,255,.12)}
+.home-clock>span{font:500 24px/1.1 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:2px;color:#d9d4f2;
+  text-shadow:0 0 18px rgba(164,147,255,.38);animation:homeClockEcho 9s ease-in-out infinite}
+.home-clock small{margin-top:5px;color:#827d9d;font-size:9px}
+.home-music{display:flex;align-items:center;gap:8px;min-width:156px;padding:8px 10px;text-align:left;
+  border-radius:12px;border:1px solid rgba(146,215,221,.18);background:linear-gradient(135deg,rgba(89,176,188,.10),rgba(167,139,250,.08));
+  color:#d9f4f3;cursor:pointer;font-family:inherit;transition:transform .2s,border-color .2s,background .2s}
+.home-music:hover{transform:translateY(-2px);border-color:rgba(146,215,221,.44);background:rgba(89,176,188,.16)}
+.hm-icon{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:rgba(125,211,252,.11);font-size:18px}
+.hm-copy{display:flex;flex-direction:column;min-width:0}
+.hm-copy b{font-size:10px;letter-spacing:.8px}
+.hm-copy small{margin-top:3px;color:#8d9ea8;font-size:8px;white-space:nowrap}
+.home-music>i{margin-left:auto;font-style:normal;font-size:9px;color:#8be5ce}
+.home-layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,.85fr);gap:14px;padding-top:14px}
+.setup-panel,.record-card,.home-shortcuts{
+  position:relative;min-width:0;border:1px solid rgba(190,183,255,.13);border-radius:16px;
+  background:linear-gradient(145deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 8px 24px rgba(0,0,0,.14)
+}
+.setup-panel{padding:14px 15px 12px}
+.home-side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.record-card,.home-shortcuts{padding:13px}
+.home-section-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.home-section-title>span{font-size:12px;font-weight:800;color:#e8e4f7;letter-spacing:1px}
+.home-section-title>span i{margin-right:7px;color:#a79be0;font:600 9px ui-monospace,Consolas,monospace;letter-spacing:1px}
+.home-section-title>small{font-size:9px;color:#77748f}
+.home-currency{justify-content:flex-start;margin:0 0 12px;padding:8px 10px;border:1px solid rgba(255,209,102,.12);
+  border-radius:11px;background:linear-gradient(90deg,rgba(255,209,102,.075),rgba(255,255,255,.018))}
+.home-currency .mg{padding:0 10px 0 0;border:0;border-radius:0;background:transparent;font-size:13px}
+.home-currency .ms{display:flex;flex-direction:column;gap:2px;color:#d8d0b0;font-size:9px}
+.home-currency .ms em{font-style:normal;color:#89839c;font-size:8px}
+.home-label{display:flex;align-items:baseline;gap:8px;margin:10px 0 6px;color:#cfcae4;font-size:10px;font-weight:700;letter-spacing:.7px}
+.home-label small{color:#77738e;font-size:8px;font-weight:400;letter-spacing:0}
+.home-panel .diffs{gap:6px;margin:0 0 8px}
+.home-panel .diff{padding:8px 5px;border-width:1px;border-radius:11px;
+  background:linear-gradient(150deg,rgba(44,45,76,.65),rgba(21,25,43,.55))}
+.home-panel .diff:hover{transform:translateY(-2px);box-shadow:0 7px 20px rgba(139,92,246,.18)}
+.home-panel .diff.on{border-color:rgba(183,160,255,.76);background:linear-gradient(145deg,rgba(139,92,246,.20),rgba(96,165,250,.075));
+  box-shadow:0 0 0 1px rgba(183,160,255,.12),0 5px 20px rgba(127,92,246,.16)}
+.home-panel .diff.adm.on{border-color:rgba(255,209,102,.78);background:linear-gradient(145deg,rgba(255,209,102,.15),rgba(139,92,246,.06))}
+.home-panel .diff .di{font-size:18px}
+.home-panel .diff .dn{font-size:10px}
+.home-panel .diff .dd{font-size:8px;min-height:22px}
+.home-panel .diff .dc,.home-panel .diff .dr{font-size:8px}
+.home-panel .modes{gap:6px;margin:0}
+.home-panel .mode{padding:7px 8px;border-radius:10px;background:rgba(125,211,252,.035)}
+.home-panel .mode.on{border-color:rgba(125,211,252,.65);background:linear-gradient(110deg,rgba(125,211,252,.12),rgba(167,139,250,.075));
+  box-shadow:inset 0 0 18px rgba(125,211,252,.035)}
+.home-panel .mode .mi{font-size:17px}
+.home-panel .mode .mn{font-size:10px}
+.home-panel .mode .md{font-size:8px}
+.setup-summary{min-height:29px;margin-top:9px;padding:7px 9px;border-radius:9px;
+  background:rgba(9,11,24,.34);border:1px solid rgba(255,255,255,.045);color:#aaa5c0;font-size:9px;line-height:1.45}
+.setup-summary b{color:#d8ceff}
+.setup-summary em{color:#91d7d4;font-style:normal}
+.loadout-head{display:flex;justify-content:space-between;align-items:center;margin-top:10px;color:#c8c3dc;font-size:9px;font-weight:700}
+.loadout-head span+span{color:#827d99;font-weight:400}
+.home-panel .equipped{justify-content:flex-start;min-height:25px;margin:5px 0 8px}
+.home-panel .eq{font-size:8px;padding:3px 7px;border-radius:999px;background:rgba(192,132,252,.10)}
+.home-panel .eq.none{font-size:8px;padding-left:0}
+.home-start-actions{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.85fr);gap:8px;margin-top:4px}
+.home-start-actions button{min-width:0;min-height:48px;border-radius:11px}
+.home-start-actions .big{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:7px 12px;font-size:14px;letter-spacing:1.5px;
+  background:linear-gradient(120deg,#7666db,#6353b7 55%,#507fa7);border-color:rgba(198,186,255,.42);
+  box-shadow:0 6px 20px rgba(93,77,190,.25),inset 0 1px 0 rgba(255,255,255,.18);animation:homeStartPulse 5.6s ease-in-out 1.2s infinite}
+.home-start-actions .big small,.home-continue small{font-size:8px;font-weight:500;letter-spacing:.5px;color:rgba(245,243,255,.7)}
+.home-continue{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 8px;
+  border:1px solid rgba(125,211,252,.28);background:linear-gradient(145deg,rgba(125,211,252,.11),rgba(125,211,252,.035));
+  color:#d8f4ff;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;transition:.2s}
+.home-continue:hover{transform:translateY(-2px);border-color:rgba(125,211,252,.55);box-shadow:0 6px 18px rgba(56,189,248,.12)}
+.record-score{display:flex;align-items:baseline;gap:8px;padding:6px 3px 9px}
+.record-score b{font:600 36px/1 ui-monospace,SFMono-Regular,Consolas,monospace;color:#eee9ff;text-shadow:0 0 20px rgba(167,139,250,.35)}
+.record-score span{color:#9892ad;font-size:9px}
+.record-score i{margin-left:auto;color:#706b86;font:9px ui-monospace,Consolas,monospace;letter-spacing:2px}
+.record-divider{height:1px;background:linear-gradient(90deg,rgba(167,139,250,.3),rgba(255,255,255,.04),transparent);margin:2px 0 8px}
+.home-save-info{min-height:25px;color:#9a95ae;font-size:9px;line-height:1.5}
+.home-record-link{display:flex;align-items:center;gap:7px;width:100%;margin-top:4px;padding:7px 8px;border:1px solid rgba(255,255,255,.07);
+  border-radius:9px;background:rgba(255,255,255,.025);color:#c4bde2;text-align:left;font-family:inherit;font-size:10px;cursor:pointer;transition:.18s}
+.home-record-link:hover{border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.08)}
+.home-record-link b{margin-left:auto;color:#8f89a9;font-size:16px;font-weight:400}
+.home-shortcuts .home-section-title{margin-bottom:8px}
+.home-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.home-action{display:grid;grid-template-columns:27px minmax(0,1fr);grid-template-rows:auto auto;align-items:center;column-gap:7px;
+  min-height:43px;padding:6px 7px;text-align:left;border:1px solid rgba(255,255,255,.075);border-radius:10px;
+  background:linear-gradient(135deg,rgba(255,255,255,.04),rgba(255,255,255,.012));color:#ded9f1;cursor:pointer;
+  font-family:inherit;transition:transform .18s,border-color .18s,background .18s,box-shadow .18s}
+.home-action:hover{transform:translateY(-2px);border-color:rgba(177,160,255,.32);background:rgba(167,139,250,.09);box-shadow:0 5px 14px rgba(0,0,0,.16)}
+.home-action>span{grid-row:1/3;display:grid;place-items:center;width:27px;height:27px;border-radius:8px;background:rgba(167,139,250,.11);font-size:15px}
+.home-action b{align-self:end;font-size:9px;white-space:nowrap}
+.home-action small{align-self:start;margin-top:2px;color:#817d96;font-size:7px;white-space:nowrap}
+.home-action.gold>span{background:rgba(255,209,102,.13)}.home-action.blue>span{background:rgba(125,211,252,.13)}
+.home-action.rose>span{background:rgba(251,113,133,.12)}.home-action.cyan>span{background:rgba(103,232,249,.11)}
+.home-action.violet>span{background:rgba(192,132,252,.13)}
+.home-bottom{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(230px,.8fr);gap:9px;margin-top:10px}
+.home-guide,.home-audio{align-self:start;min-width:0;border:1px solid rgba(190,183,255,.12);border-radius:11px;background:rgba(255,255,255,.022)}
+.home-guide summary,.home-audio summary{display:flex;align-items:center;gap:8px;min-height:34px;padding:7px 10px;list-style:none;cursor:pointer}
+.home-guide summary::-webkit-details-marker,.home-audio summary::-webkit-details-marker{display:none}
+.home-guide summary>span,.home-audio summary>span{color:#c9c3e1;font-size:9px;font-weight:700}
+.home-guide summary>small,.home-audio summary>small{margin-left:auto;color:#77738c;font-size:8px}
+.home-guide summary>b,.home-audio summary>b{width:17px;height:17px;display:grid;place-items:center;border-radius:50%;background:rgba(167,139,250,.1);color:#bfb4f0;font-size:11px}
+.home-guide[open] summary,.home-audio[open] summary{border-bottom:1px solid rgba(255,255,255,.06)}
+.home-guide[open] summary>b,.home-audio[open] summary>b{transform:rotate(45deg)}
+.home-guide .rules{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:0;padding:8px}
+.home-guide .rule{padding:6px 7px;border-radius:7px;background:rgba(255,255,255,.025);font-size:8px;line-height:1.45}
+.audio-controls{display:grid;gap:5px;padding:8px 10px}
+.audio-controls label{display:grid;grid-template-columns:88px minmax(50px,1fr) 30px;align-items:center;gap:7px;color:#b4afc8;font-size:8px}
+.audio-controls input{width:100%;height:3px;accent-color:#a99af1}
+.audio-controls output{color:#9290ab;text-align:right;font:8px ui-monospace,Consolas,monospace}
+.audio-controls button{justify-self:start;margin-top:2px;padding:4px 7px;border:1px solid rgba(255,255,255,.08);border-radius:7px;
+  background:rgba(255,255,255,.035);color:#b8b1d1;font-family:inherit;font-size:8px;cursor:pointer}
+.audio-controls button:hover{border-color:rgba(167,139,250,.35)}
+.home-panel :focus-visible{outline:2px solid rgba(160,221,231,.85);outline-offset:2px}
+.home-panel .diff:focus-visible,.home-panel .mode:focus-visible{z-index:1}
+
+/* ================= 剧情镜头与磨砂玻璃层次 ================= */
+.story-dialog{
+  background:linear-gradient(135deg,rgba(12,12,29,.82),rgba(13,20,35,.79));
+  border-color:color-mix(in srgb,var(--sp-c,#a78bfa) 42%,transparent);
+  box-shadow:0 18px 70px rgba(0,0,0,.62),0 0 68px var(--sp-glow,rgba(120,80,246,.12)),
+    inset 0 1px 0 rgba(255,255,255,.13),inset 0 -1px 0 rgba(125,211,252,.06);
+  backdrop-filter:blur(34px) saturate(1.45);-webkit-backdrop-filter:blur(34px) saturate(1.45);
+}
+.story-dialog::before{content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;opacity:.48;
+  background:radial-gradient(ellipse at 0 0,var(--sp-glow,rgba(167,139,250,.16)),transparent 52%)}
+.story-header{position:relative;z-index:1;align-items:center}
+.story-avatar{width:46px;height:46px;border-width:1px;background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(15,12,34,.7));
+  box-shadow:0 0 26px var(--sp-glow,rgba(167,139,250,.2)),inset 0 1px 0 rgba(255,255,255,.15)}
+.story-id{display:flex;flex-direction:column;gap:4px;min-width:0}
+.story-speaker{padding-left:10px;border-color:var(--sp-c,#a78bfa);background:linear-gradient(90deg,var(--sp-glow,rgba(167,139,250,.14)),transparent)}
+.story-meta{color:#77738f;font-size:8px;letter-spacing:1.3px}
+.story-text{position:relative;z-index:1;padding-top:8px;font-size:14px;line-height:2;color:#ece9f6}
+.story-choices,.story-next{position:relative;z-index:1}
+.story-choice{background:linear-gradient(120deg,rgba(167,139,250,.095),rgba(255,255,255,.025));
+  border-color:color-mix(in srgb,var(--sp-c,#a78bfa) 26%,transparent)}
+.story-choice:hover{border-color:color-mix(in srgb,var(--sp-c,#a78bfa) 56%,transparent)}
+
+@media (max-width:860px){
+  .home-panel.panel{width:calc(100% - 28px);padding:16px}
+  .home-layout{grid-template-columns:minmax(0,1fr)}
+  .home-side{display:grid;grid-template-columns:1fr 1.2fr;align-items:start}
+  .home-bottom{grid-template-columns:1fr}
+}
+@media (max-height:680px){
+  .home-panel.panel{padding-top:14px;padding-bottom:12px}
+  .home-header{padding-bottom:10px}
+  .home-layout{padding-top:9px;gap:9px}
+  .setup-panel{padding:10px 12px}
+  .home-side{gap:8px}
+}
+@media (prefers-reduced-motion:reduce){
+  #overlay::before,.home-panel.panel,.home-layout>.setup-panel,.home-side>.record-card,.home-side>.home-shortcuts,.home-bottom>.home-guide,.home-bottom>.home-audio,
+  .home-header h1,.home-kicker i,.home-clock>span,.home-start-actions .big,.home-music,.home-action,.story-avatar{animation:none!important}
+  .home-panel *, .story-dialog *{scroll-behavior:auto!important;transition-duration:.01ms!important}
+}
 </style>
 </head>
 <body>
@@ -1161,7 +1378,11 @@ canvas{display:block;width:1280px;height:720px}
   <!-- ========= 剧情对话框 ========= -->
   <div id="storyDialog" class="story-dialog" style="display:none">
     <div class="story-deco"></div>
-    <div class="story-header"><span id="storySpeaker" class="story-speaker"></span></div>
+    <div class="story-header">
+      <span id="storyAvatar" class="story-avatar" aria-hidden="true">◌</span>
+      <div class="story-id"><span id="storySpeaker" class="story-speaker"></span><small id="storyMeta" class="story-meta">梦境记录</small></div>
+    </div>
+    <div id="storyMedia" class="story-media" style="display:none"></div>
     <div id="storyText" class="story-text"></div>
     <div id="storyChoices" class="story-choices"></div>
     <button id="storyNext" class="story-next">继续 ▶</button>
@@ -1218,43 +1439,89 @@ canvas{display:block;width:1280px;height:720px}
   <div id="fragmentDetail"></div>
 
   <div id="overlay">
-    <div class="panel" id="startPanel">
-      <h1>躺平发育 · 梦魇防线</h1>
-      <div class="sub">你只想安静地躺着发育，但梦魇们不这么想</div>
-      <div class="rules">
-        <div class="rule">🚪 <b>三线战场</b>：上/中/下三条走廊各有一扇铁门，梦魇分路进攻，必须分兵防守！</div>
-        <div class="rule">🎨 <b>六种伤害</b>：动能/冰霜/能量/电磁/火焰/剧毒，敌人各有抗性与弱点；不同元素叠加触发<b>元素反应</b>。</div>
-        <div class="rule">👾 <b>30+ 种梦魇</b>：含飞行（无视门）、盾卫、召唤师、狂暴、吸血、分裂、隐身、传送、反弹等；精英怪带随机词缀，BOSS 有多阶段变身。</div>
-        <div class="rule">😈 <b>多阶段 BOSS</b>：血量每降一档就变招，抗性、速度、召唤全部升级。</div>
-        <div class="rule">⭐ <b>16 种建筑 · 转职</b>：含 10 种炮塔，每种满 Lv6 后可二选一转职，衍生 32 种形态。</div>
-        <div class="rule">🌪️ <b>随机事件</b>：每波可能触发电力风暴、金币雨、梦魇狂潮等，改变战场规则。</div>
-        <div class="rule">🎰 <b>梦境摇奖机</b>：花金币摇奖，19 种奖励含清场、天启转职、全体升级，带史诗/传说保底。</div>
-        <div class="rule">⬆️ <b>升级与出售</b>：点击建筑查看详情，可升 1 级、一键升满或出售返还 70% 投入。</div>
-        <div class="rule">👾 <b>32 种梦魇 + 5 个 BOSS</b>：钻地、EMP 瘫痪、寄生、拟态、诅咒、亡魂复活、镜面反弹、窃金、虚无光环、三段护盾巨像……</div>
-        <div class="rule">🏁 <b>胜负条件</b>：<b>失败</b> —— 床铺被摧毁；<b>胜利</b> —— 第 60 波击败【终焉梦魇】通关，之后可进入无尽模式。</div>
+    <div class="panel home-panel" id="startPanel">
+      <header class="home-header">
+        <div class="home-brand">
+          <div class="home-kicker"><i></i> 梦境监测记录 <span>档案 03:07</span></div>
+          <h1>躺平发育</h1>
+          <div class="home-title-sub">梦 魇 防 线 <span>·</span> 你确定这是第一次入梦吗？</div>
+        </div>
+        <div class="home-header-side">
+          <div class="home-clock"><span>03:07</span><small>走廊尽头的钟停在这里</small></div>
+          <button class="home-music" id="btnMusicHome" type="button">
+            <span class="hm-icon">♫</span><span class="hm-copy"><b>梦境配乐</b><small id="musicStatus">准备播放</small></span>
+            <i id="musicState">开</i>
+          </button>
+        </div>
+      </header>
+
+      <div class="home-layout">
+        <section class="setup-panel">
+          <div class="home-section-title"><span><i>01</i> 本次入梦</span><small>选择难度与梦境规则</small></div>
+          <div class="metabar home-currency">
+            <span class="mg">💰 <b id="metaGold">0</b></span>
+            <span class="ms">梦境金币 <em>用于摇奖与特殊难度</em></span>
+          </div>
+          <div class="home-label">防线难度 <small>难度越高，结算奖励越多</small></div>
+          <div class="diffs" id="diffCards"></div>
+          <div class="home-label">梦境规则</div>
+          <div class="modes" id="modeCards"></div>
+          <div class="setup-summary" id="setupSummary"></div>
+          <div class="loadout-head"><span>开局道具</span><span id="equipCount">0 / 3 已装备</span></div>
+          <div class="equipped" id="equipRow"></div>
+          <div class="home-start-actions">
+            <button class="big" id="btnStart" type="button"><span>进入梦境</span><small>开始新的防线</small></button>
+            <button class="home-continue" id="btnContinue" type="button" style="display:none">
+              <span>继续梦境</span><small id="continueMeta">自动存档</small>
+            </button>
+          </div>
+        </section>
+
+        <aside class="home-side">
+          <section class="record-card">
+            <div class="home-section-title"><span><i>02</i> 梦境档案</span><small>本机记录</small></div>
+            <div class="record-score"><b id="bestWave">0</b><span>历史最高波</span><i>WAVE</i></div>
+            <div class="record-divider"></div>
+            <div id="saveInfo" class="home-save-info">尚无继续记录</div>
+            <button class="home-record-link" id="btnSaveMgr" type="button">🗂 <span>存档管理</span><b>›</b></button>
+          </section>
+
+          <section class="home-shortcuts">
+            <div class="home-section-title"><span><i>03</i> 梦境工具</span><small>成长与收藏</small></div>
+            <div class="home-action-grid">
+              <button class="home-action gold" id="btnGacha" type="button"><span>🎰</span><b>梦境摇奖</b><small>获取开局道具</small></button>
+              <button class="home-action violet" id="btnBag" type="button"><span>🎒</span><b>道具仓库</b><small>管理装备与收藏</small></button>
+              <button class="home-action blue" id="btnDiary" type="button"><span>📖</span><b>梦境日记</b><small>回看经历与记录</small></button>
+              <button class="home-action rose" id="btnNPC" type="button"><span>👥</span><b>梦境居民</b><small>查看并招募伙伴</small></button>
+              <button class="home-action cyan" id="btnFragments" type="button"><span>💎</span><b>记忆碎片</b><small>拼合遗失的片段</small></button>
+            </div>
+          </section>
+        </aside>
       </div>
-      <div class="metabar">
-        <span class="mg">💰 <b id="metaGold">0</b></span>
-        <span class="ms">金币 — 用于抽奖与管理员模式</span>
+
+      <div class="home-bottom">
+        <details class="home-guide">
+          <summary><span>🧭 防线行动手册</span><small>路线、炮塔、梦魇与胜负规则</small><b>＋</b></summary>
+          <div class="rules">
+            <div class="rule">🚪 <b>三线战场</b>：三条走廊各有铁门，注意分路布防。</div>
+            <div class="rule">🎨 <b>元素克制</b>：六种伤害类型各有抗性与弱点，混搭可触发元素反应。</div>
+            <div class="rule">🔫 <b>建造与转职</b>：16 种建筑含 10 种炮塔；炮塔达到 Lv6 可选择专精分支。</div>
+            <div class="rule">👁️ <b>梦魇机制</b>：精英带随机词缀，敌人可能飞行、隐身、召唤或瘫痪炮塔。</div>
+            <div class="rule">😈 <b>阶段首领</b>：首领会在战斗中改变抗性、速度与攻击方式。</div>
+            <div class="rule">🌪️ <b>夜间事件</b>：金币雨、电力风暴等事件会改变当波局势。</div>
+            <div class="rule">🎰 <b>开局道具</b>：摇奖获得道具，在仓库装备后用于下一局。</div>
+            <div class="rule">🏁 <b>胜负条件</b>：有限模式守到第 60 波；床铺被摧毁则防线失守。无限模式可继续挑战。</div>
+          </div>
+        </details>
+        <details class="home-audio">
+          <summary><span>🎧 声音与氛围</span><small>背景音乐与战斗音效</small><b>＋</b></summary>
+          <div class="audio-controls">
+            <label><span>背景音乐音量</span><input id="musicVolume" type="range" min="0" max="1" step="0.01" value="0.34"><output id="musicVolumeValue">34%</output></label>
+            <label><span>战斗音效音量</span><input id="sfxVolume" type="range" min="0" max="1" step="0.01" value="0.72"><output id="sfxVolumeValue">72%</output></label>
+            <button id="btnSoundHome" type="button">🔊 战斗音效：开启</button>
+          </div>
+        </details>
       </div>
-      <div class="diffs" id="diffCards"></div>
-      <div class="modes" id="modeCards"></div>
-      <div class="equipped" id="equipRow"></div>
-      <div class="btns">
-        <button class="big" id="btnStart">开始躺平</button>
-        <button class="alt" id="btnGacha">🎰 抽奖</button>
-        <button class="alt" id="btnBag">🎒 仓库</button>
-        <button class="alt" id="btnContinue">继续梦境</button>
-        <button class="alt" id="btnSaveMgr">🗂 存档管理</button>
-      </div>
-      <div class="btns dream-btns" style="margin-top:8px">
-        <button class="alt dream" id="btnDiary">📖 梦境日记</button>
-        <button class="alt dream" id="btnNPC">👥 梦境居民</button>
-        <button class="alt dream" id="btnFragments">💎 记忆碎片</button>
-      </div>
-      <div id="saveInfo"></div>
-      <div class="best">🏆 历史最高波次：<span id="bestWave">0</span></div>
-      <div class="tipend">选择难度后开始：难度越高结算金币越多；<b>管理员</b>消耗 2000 金币，资源无限且可自由跳波。<br>每局结束会获得金币，可在「🎰 抽奖」抽取<b>开局道具</b>（如免费发电机、减半），装备后下一局生效。</div>
     </div>
     <div class="panel" id="gachaPanel" style="display:none">
       <h1>🎰 梦境抽奖</h1>
@@ -1287,25 +1554,51 @@ canvas{display:block;width:1280px;height:720px}
 //  躺平发育：梦魇防线  —  剧情数据文件（v2 完整版）
 // ============================================================
 
-// ─── 0. 角色档案 ───────────────────────────────────────────
+// ─── 0. 故事总纲与角色弧线 ─────────────────────────────────
+// 主轴：暴雨夜断电，宿舍钟停在 03:07。三位室友去取应急灯，七分钟后回来；
+// 玩家已在床上睡着，梦却把那段听不见的空白放大成一条不断延长的走廊。
+// 梦魇借「第四个人失踪」制造恐惧；真正的第四个人始终是床上的玩家。
+// 故事按线索递进：敲门暗号 → 值夜记录 → 缺失的七分钟 → 未听完的留言 → 主动回应。
+// 真相说明发生了什么，但不替玩家解释当时的感受；结尾让玩家亲自决定如何回应。
+const STORY_ARCS = [
+  { id: 'night-watch', title: '床边的第四声', waves: [1, 10], question: '门外三声之后，床边那一声是谁敲的？' },
+  { id: 'the-record', title: '倒放的值夜表', waves: [11, 20], question: '记录为什么先写了“回来”，再写“出发”？' },
+  { id: 'the-empty-place', title: '空位属于谁', waves: [21, 35], question: '照片里的空位，真的是少了一个人吗？' },
+  { id: 'the-lamp', title: '灯一直亮着', waves: [36, 50], question: '朋友回来以后，为什么梦还在等？' },
+  { id: 'the-reply', title: '听完那条语音', waves: [51, 60], question: '这一次，你愿意亲口回答吗？' },
+];
+
+// 视频素材接口：把 video/poster 填为相对仓库根目录的路径，例如
+// video: 'assets/story/wake_0307.mp4'。当前留空，始终走文字对白作为可靠回退。
+// sceneId 是稳定镜头编号，视频可逐个补入，不必改写波次、任务或存档结构。
+const STORY_VIDEO_SLOTS = {
+  wake_0307:       { title: '03:07 · 醒来', video: null, poster: null, fallback: 'dialogue' },
+  first_return:    { title: '走廊尽头的灯', video: null, poster: null, fallback: 'dialogue' },
+  ledger_four:     { title: '值夜记录', video: null, poster: null, fallback: 'dialogue' },
+  mirror_bed:      { title: '镜中空床', video: null, poster: null, fallback: 'dialogue' },
+  message_0307:    { title: '未听完的留言', video: null, poster: null, fallback: 'dialogue' },
+  morning_door:    { title: '门的两边', video: null, poster: null, fallback: 'dialogue' },
+};
+
+// ─── 1. 角色档案 ───────────────────────────────────────────
 // 唯一真相来源：对话框配色/头像（ui.js STORY_SPEAKERS）、角色档案面板都从这里取。
 // 新增说话人时只要在这里加一条即可，不要另外在 ui.js 里再写一份。
 const STORY_CHARACTERS = {
-  player:   { name: '你',     icon: '🛏️', color: '#e2e8f0', glow: 'rgba(226,231,240,.08)', desc: '一个普通的六年级学生，在梦境中保护自己的床铺。' },
-  xiaxia:   { name: '林小夏', icon: '🌻', color: '#fbbf24', glow: 'rgba(251,191,36,.10)',  desc: '隔壁床的室友，永远精力充沛，即使在噩梦里也能笑出来。' },
-  zhoumo:   { name: '周默',   icon: '📚', color: '#60a5fa', glow: 'rgba(96,165,250,.10)',  desc: '靠窗床铺的室友，沉默寡言，但似乎对梦境有超乎常人的理解。' },
-  zhaolei:  { name: '赵磊',   icon: '😂', color: '#34d399', glow: 'rgba(52,211,153,.10)',  desc: '对面床铺的室友，即使身处绝境也要讲个冷笑话。' },
-  shadow:   { name: '???',    icon: '👁️', color: '#c77dff', glow: 'rgba(199,125,255,.15)', desc: '梦境深处的声音，时而引导时而恐吓，身份不明。' },
+  player:   { name: '你',     icon: '🛏️', color: '#e2e8f0', glow: 'rgba(226,231,240,.08)', desc: '值夜记录里床上的第四个人。梦把等待变成了战场，但你不必再独自替所有沉默下结论。' },
+  xiaxia:   { name: '林小夏', icon: '🌻', color: '#fbbf24', glow: 'rgba(251,191,36,.10)',  desc: '负责把应急灯带回来的室友。她嘴上说“没事”，却一直记得给床头留一盏灯。' },
+  zhoumo:   { name: '周默',   icon: '📚', color: '#60a5fa', glow: 'rgba(96,165,250,.10)',  desc: '值夜记录的保管人。遇到记忆缺页时，他会把时间、人数和每一次敲门重新核对。' },
+  zhaolei:  { name: '赵磊',   icon: '😂', color: '#34d399', glow: 'rgba(52,211,153,.10)',  desc: '用糟糕笑话缓解紧张的室友。他记得每个人回来时说过的话，也记得你睡着前笑了一声。' },
+  shadow:   { name: '???',    icon: '👁️', color: '#c77dff', glow: 'rgba(199,125,255,.15)', desc: '由雨声、缺失的七分钟和未播完的留言叠成。它用最像你的声音，反复问你最怕的问题。' },
   narrator: { name: '旁白',   icon: '📖', color: '#94a3b8', glow: 'rgba(148,163,184,.12)', desc: '讲述你所不知道的事。' },
-  nightmare:{ name: '梦魇',   icon: '💀', color: '#ef4444', glow: 'rgba(239,68,68,.12)',   desc: '你未曾消化的情绪。它们不是敌人，是回音。' },
+  nightmare:{ name: '梦魇',   icon: '💀', color: '#ef4444', glow: 'rgba(239,68,68,.12)',   desc: '从黑暗里出现的东西，像是从某段记忆里带来的回音。' },
 };
 
-// ─── 1. 波次剧情（密集版）─────────────────────────────────
+// ─── 2. 波次剧情（五幕主线；sceneId 可选配入视频）────────
 const WAVE_STORY = [
-  // === 第一幕：入梦（Wave 1-10）===
+  // === 第一幕：床边的第四声（Wave 1-10）===
   {
-    wave: 1, speaker: '旁白',
-    text: '你闭上了眼。四周很安静……不对，有什么东西在黑暗中蠕动。你必须保护自己——至少，保护这张床。',
+    wave: 1, speaker: '旁白', sceneId: 'wake_0307', actTitle: '第一幕 · 床边的第四声',
+    text: '暴雨把宿舍的灯一盏盏按灭。墙钟停在 03:07，闹铃只响了一声。你从床上睁开眼，林小夏、周默和赵磊都站在床边；门外却传来三下敲门。停顿之后，床头又响起一声轻响。三个人同时回头——他们像是也在等你解释。',
     choices: [
       { text: '我是谁？这是哪里？', effect: '困惑的记忆碎片被激活' },
       { text: '管它呢，先建防御。', effect: '获得 50 金币奖励' },
@@ -1313,7 +1606,7 @@ const WAVE_STORY = [
   },
   {
     wave: 2, speaker: '林小夏',
-    text: '嘿！你也在这里！太好了——我还以为就我一个人被困在这个鬼地方。你看到那些黑乎乎的东西了吗？它们好像在往这边爬！',
+    text: '你醒啦。太好了，我们把应急灯拿回来了。刚才停电，我和赵磊、周默去楼下找灯，回来时你还睡着。……不对，你刚才是不是叫过我的名字？声音像是从门外传来的。',
     choices: [
       { text: '小夏？你怎么也在这？', effect: '林小夏好感度 +1' },
       { text: '快找地方躲起来！', effect: '获得 30 金币' },
@@ -1321,7 +1614,7 @@ const WAVE_STORY = [
   },
   {
     wave: 3, speaker: '周默',
-    text: '……别慌。我观察了十分钟。那些东西有规律——它们沿着走廊移动，不会同时攻击两个方向。利用这个间隙，可以逐个击破。',
+    text: '别慌。我把声音记下来了：门外三下，停顿，然后床头“嗒”一声。前面三下像敲门，最后一下更像录音机按键弹回去。梦魇只在那三下之后移动——它们像是在等谁把录音听完。',
     choices: [
       { text: '你怎么观察得这么仔细？', effect: '解锁敌人移动规律提示' },
       { text: '说得对，按你说的办。', effect: '所有炮塔本波射速 +10%' },
@@ -1329,7 +1622,7 @@ const WAVE_STORY = [
   },
   {
     wave: 5, speaker: '旁白',
-    text: '梦魇来得越来越频繁了。你隐约记得——这不是你第一次做这个梦。墙上有刻痕，像是上一次留下的……日期模糊不清。',
+    text: '床头墙上刻着一排日期。每个日期后面都是三道短痕，隔着一段空白，再添一道长痕。最后一道刻得很浅，像写的人怕吵醒谁。末行只剩几个字：灯带回来了，先别叫他。',
     choices: [
       { text: '仔细查看刻痕。', effect: '解锁隐藏记忆碎片' },
       { text: '别分心，战斗要紧。', effect: '所有炮塔伤害 +5%（本波）' },
@@ -1337,7 +1630,7 @@ const WAVE_STORY = [
   },
   {
     wave: 6, speaker: '赵磊',
-    text: '嘿，你们知道吗？我刚才数了一下，这已经是今天第 43 次噩梦了。我现在的状态——比上课还精神。噩梦？加班好吧！',
+    text: '我数过了，门外三下，停一会儿，然后“嗒”——像录音结束。要是鬼也会录留言，那它的礼貌程度至少比我高。别紧张，我们把灯拿回来了；你要是困，就接着睡。',
     choices: [
       { text: '赵磊你能不能正经点！', effect: '赵磊好感度 +1' },
       { text: '……你这冷笑话拯救了我。', effect: '全队士气提升，金币获取 +10%' },
@@ -1345,25 +1638,25 @@ const WAVE_STORY = [
   },
   {
     wave: 8, speaker: '周默',
-    text: '我翻了翻这里的笔记。上一批被困在这里的人……留下的记录到第 15 波就断了。不是通关——是消失。',
+    text: '我找到那晚的值夜记录。最后一页写着：“03:07，三人下楼取灯；床上留一人。”下一行被雨水洇开，只剩“回来后……别叫醒他”。签名那一栏没有名字，只有床头灯被画了两遍。',
     choices: [
       { text: '他们……怎么了？', effect: '解锁隐藏记忆碎片' },
       { text: '我们不会重蹈覆辙。', effect: '全队防御 +15%（本波）' },
     ],
   },
   {
-    wave: 10, speaker: '???',
-    text: '……你终于走到这里了。这些梦魇不是入侵者——它们是你自己的焦虑。你建的每一道墙，都是你亲手砌起的逃避。',
+    wave: 10, speaker: '???', sceneId: 'first_return', actTitle: '第一幕 · 床边的第四声',
+    text: '门后的不是脚步，是那晚的雨。你把墙垒得越高，敲门声就越近；你拼命守住的，好像不是出口，而是那七分钟的空白。可你还记得——三个人出门以后，究竟有没有回来？',
     choices: [
       { text: '你是谁？', effect: '触发深层梦境入口' },
       { text: '我不管，我只想睡个好觉。', effect: '床铺恢复至满血' },
     ],
   },
 
-  // === 第二幕：探索（Wave 11-20）===
+  // === 第二幕：倒放的值夜表（Wave 11-20）===
   {
     wave: 11, speaker: '林小夏',
-    text: '你听到了吗？走廊那边好像有光。不是梦魇的红光——是蓝白色的，像月光。要不要去看看？',
+    text: '走廊尽头亮起应急灯了。那晚也是这样：停电以后，我们下楼去拿备用灯，回来时你已经睡着。可你梦里的顺序是先听见敲门、再看见我们。你是不是把“回来”梦成了“还没回来”？',
     choices: [
       { text: '走，去看看。', effect: '提前发现 NPC 守梦者·艾拉' },
       { text: '太危险了，先守住这里。', effect: '获得 80 金币' },
@@ -1371,11 +1664,11 @@ const WAVE_STORY = [
   },
   {
     wave: 13, speaker: '旁白',
-    text: '金币数字开始倒着跳动。建筑图标短暂变成 ASCII 字符。HUD 上闪过一行字："有人在看着你。"',
+    text: '录音进度忽然倒退七分钟。屏幕闪过一行字：“03:07——我们下楼取灯。”再往后全是雨声。进度条走到尽头前，床头灯的影子里有个播放键一闪而过。',
   },
   {
     wave: 14, speaker: '赵磊',
-    text: '我刚才看到周默在墙上画画。画的是……一只蝴蝶？不对，是翅膀？他看到我之后就擦掉了。你觉得他在隐藏什么？',
+    text: '周默在值夜表边画了四个圈：三个写了名字，最后一个没有名字，只画了张床。我问他为什么不写第四个人。他说：“那个人在睡觉，写名字就像把他叫醒。”',
     choices: [
       { text: '去找周默聊聊。', effect: '解锁周默个人线分支' },
       { text: '每个人都有秘密，尊重他。', effect: '周默好感度 +1' },
@@ -1383,7 +1676,7 @@ const WAVE_STORY = [
   },
   {
     wave: 15, speaker: '梦魇',
-    text: '你以为逃进梦里就安全了？我们就是从你的恐惧中诞生的。每一道防线，都在告诉我们你怕什么。',
+    text: '你把门锁得这么紧，是怕我们进来，还是怕听见我们已经回来？三下敲门之后，里面没有回答。可录音最后明明有一声“嗒”——你真的不记得那是什么声音？',
     choices: [
       { text: '我不怕你们。', effect: '全军士气提升，炮塔射速 +10%' },
       { text: '……也许你说得对。', effect: '获得稀有梦境碎片' },
@@ -1391,19 +1684,19 @@ const WAVE_STORY = [
   },
   {
     wave: 16, speaker: '林小夏',
-    text: '我找到了一本日记！是上一批被困的人留下的。最后一页写着："第 20 波之后，选择变得不再重要。因为无论怎么选，都会后悔。"——你相信这句话吗？',
+    text: '值夜表上只有我们三个的名字。第四格不是被擦掉的，是折在床垫底下的一张便条。我还没敢抽出来；露出的半句话像是：“他睡着了，灯留着。”',
     choices: [
-      { text: '选择永远重要。', effect: '所有选择奖励 +50%' },
-      { text: '也许……但不选更糟。', effect: '解锁隐藏对话' },
+        { text: '把便条抽出来。', effect: '所有选择奖励 +50%' },
+        { text: '先别叫醒他。', effect: '解锁隐藏对话' },
     ],
   },
   {
     wave: 18, speaker: '旁白',
-    text: '梦魇们同时停住了。它们没有看你，而是越过你的肩膀，一起望向屏幕外的某个方向。你下意识地回头——身后什么都没有，但它们的视线没有收回来。',
+    text: '梦魇们同时停下，齐齐望向床头。三个人影站在灯下，第四道影子没有站起来，只在被面上动了动手指。走廊里传来录音末尾的一声“嗒”，梦魇随即退回黑暗。',
   },
   {
     wave: 19, speaker: '周默',
-    text: '我做了一个实验。如果在梦中死亡——不会真的醒来，而是会回到第 1 波重新开始。但每次重来，梦魇会记住你上一次的策略。',
+    text: '刻痕不是在数夜晚，是在记流程：三道短痕代表我们出门，隔开的长痕代表灯带回来了。最后一组只有三道短痕。可记录的时间已经到 03:14——后面那一笔是谁漏记的？',
     choices: [
       { text: '所以这是一个……循环？', effect: '解锁真相线索' },
       { text: '那我们更不能死。', effect: '全队攻击力 +10%' },
@@ -1411,17 +1704,17 @@ const WAVE_STORY = [
   },
   {
     wave: 20, speaker: '???',
-    text: '你开始分不清了——哪些是梦，哪些是现实。你记得自己在一张床上，但那张床……是你家里的，还是这个梦境里的？',
+    text: '你开始想起那盏暖黄色的灯。窗玻璃映出三个人站在床边，第四个影子躺在床上。你一直把那个位置当成空床——直到那只手从被子里伸出来，手环上写着你的名字。',
     choices: [
       { text: '我记得阳光的味道。', effect: '解锁 NPC"守梦者·艾拉"' },
       { text: '梦境就是我的现实。', effect: '梦境力量觉醒，全属性 +8%' },
     ],
   },
 
-  // === 第三幕：真相（Wave 21-35）===
+  // === 第三幕：空位属于谁（Wave 21-35）===
   {
     wave: 21, speaker: '赵磊',
-    text: '嘿……我忽然不想讲笑话了。你有没有想过——我们三个，小夏、周默、还有我——也许不是真的室友？',
+    text: '嘿，我忽然不想讲笑话了。梦里我总觉得自己已经走了很远，可每次回头，还是看见你在床上。我记得那晚你攥着被角发抖；我答应过，等你醒了再把那个笑话讲完。',
     choices: [
       { text: '你什么意思？', effect: '赵磊揭露真相线索' },
       { text: '别说了，我不想听。', effect: '获得 100 金币但赵磊沉默 5 波' },
@@ -1429,11 +1722,11 @@ const WAVE_STORY = [
   },
   {
     wave: 22, speaker: '旁白',
-    text: '存档损坏。\n数据：████████████\n恢复失败。\n\n……开玩笑的。存档好好的。但你刚才心跳加速了吧？',
+    text: '灯闪了一下。记录多出一行湿字：“别替床上的人回答。”赵磊把纸翻过去，背面又浮出：“他听得见。”你想开口，声音却从床头的录音机里先一步传出来——像有人把你的梦也录了进去。',
   },
   {
     wave: 23, speaker: '林小夏',
-    text: '周默……周默不见了！他床铺上的笔记还在，但人不见了。笔记最后一页写着："我要去找答案。如果你看到这条留言——别来找我。"',
+    text: '周默去镜子前核对人数，留下纸条：“别数走廊里的影子，数值夜表上的名字。”纸条背面有一道被划掉的补记：“床上的人也在名单里。”墨迹还没干。',
     choices: [
       { text: '我们必须去找他！', effect: '提前进入深层梦境' },
       { text: '……听他的话，留在这里。', effect: '获得周默遗留笔记，全属性 +12%' },
@@ -1441,7 +1734,7 @@ const WAVE_STORY = [
   },
   {
     wave: 25, speaker: '???',
-    text: '你认出了吗？那张脸——是你自己。你一直在对抗的，从来都不是什么梦魇。是你不愿面对的那个自己。',
+    text: '镜子里的你比现实慢了一拍。你抬手，它没有抬；床上的人却先一步睁开眼。那张脸和你一模一样，嘴唇动了动，没有发出声音：别再等门响了。',
     choices: [
       { text: '面对内心。', effect: '触发心魔化身 BOSS 战' },
       { text: '闭嘴！', effect: '暴怒状态：全炮塔暴击率 +15%' },
@@ -1449,11 +1742,11 @@ const WAVE_STORY = [
   },
   {
     wave: 26, speaker: '旁白',
-    text: '整个屏幕开始像素化。梦魇们暂停了。屏幕上出现一个光标，在你视野里打出一行字："第三十波之后，没有存档点。"',
+    text: '走廊像旧胶片一样抖动了一下。每扇门牌都变成 03:07。数字恢复后，最远那扇门开了一条缝；门外不是走廊，而是同一间宿舍——你从床尾看见三个人把应急灯放回床头。',
   },
   {
     wave: 27, speaker: '赵磊',
-    text: '我……想起来了。不是全部，但够了。我们不是室友。我们是你分裂出来的——乐观、理性、幽默。你把自己最好的三面留在了梦里，然后把现实关在了门外。',
+    text: '我想起那张合照了。三个人围着一张床，第四个位置看起来空着。照片没有烧掉任何人；只是床上的人被被子盖住了半张脸。露出的手腕上，是你的手环。',
     choices: [
       { text: '那你……不是真的？', effect: '赵磊揭示全部真相' },
       { text: '就算不是真的，你们也是我的朋友。', effect: '全队获得「羁绊之力」，全属性 +20%' },
@@ -1461,19 +1754,19 @@ const WAVE_STORY = [
   },
   {
     wave: 28, speaker: '林小夏',
-    text: '赵磊说的是真的。但我选了留下——因为外面的你，太孤独了。没有人陪你说笑，没有人替你解题，没有人给你讲冷笑话。你把我们留在梦里，自己醒着受苦。',
+    text: '我找到那段语音了。开头是周默：“停电了，我们去拿应急灯，很快回来。”接下来七分钟，只有雨声和脚步。最后赵磊说：“到了，别吵醒他。”可那句“到了”，在梦里一直没被你听见。',
     choices: [
       { text: '我……不知道该说什么。', effect: '解锁隐藏结局条件' },
       { text: '对不起。', effect: '林小夏、赵磊、周默全好感度满' },
     ],
   },
   {
-    wave: 29, speaker: '旁白',
-    text: '[梦境系统] 检测到异常脑电波。\n[梦境系统] 玩家意识清醒度：12%\n[梦境系统] 建议：立即唤醒。\n[梦境系统] 警告：玩家拒绝唤醒。\n[梦境系统] ……遵命。',
+    wave: 29, speaker: '旁白', sceneId: 'ledger_four', actTitle: '第三幕 · 空位属于谁',
+    text: '[值夜记录 · 03:07]\n停电：已确认。\n取灯：三人，往返约七分钟。\n床上：一人，仍在睡。\n床边：三人，已返回。\n总人数：四人。\n备注：灯放在床头。醒来后再告诉他。',
   },
   {
     wave: 30, speaker: '梦魇',
-    text: '最后一夜了。你准备好醒来了吗？还是说……你其实不想醒来？这里没有闹钟，没有截止日期，没有未读消息。只有你和黑暗。',
+    text: '你看见一块写着“出口”的牌子。翻到背面，是“回来”。三双湿鞋印从走廊走到床边，再没有离开。门后的梦魇说：“你只要继续守门，就不用面对他们真的回来以后，你该说什么。”',
     choices: [
       { text: '我要醒来。', effect: '进入终焉之战' },
       { text: '再睡五分钟……', effect: '最终 BOSS 战前全回复' },
@@ -1481,7 +1774,8 @@ const WAVE_STORY = [
   },
   {
     wave: 32, speaker: '周默',
-    text: '……我回来了。我去了梦境的最底层——那里什么都没有。只有一面镜子。镜子里是你。真正的你。你在哭。',
+    sceneId: 'mirror_bed', actTitle: '第三幕 · 空位属于谁',
+    text: '我核对过了。镜子里有三个人站着，床上躺着一个。四个人都在。镜面上写着 03:07，下面还有一行字：“不是他没回来，是他还没醒。”我擦掉以后，那句话又从镜子里面浮出来。',
     choices: [
       { text: '带我去看那面镜子。', effect: '解锁最终 BOSS 真名' },
       { text: '我已经知道答案了。', effect: '最终 BOSS 战前全属性 +30%' },
@@ -1489,17 +1783,17 @@ const WAVE_STORY = [
   },
   {
     wave: 35, speaker: '???',
-    text: '你听到了吗？那是闹钟的声音。很远，但越来越近。现实正在拉你回去。问题是——你是想被拉走，还是自己走回去？',
+    text: '你听到了吗？门外那句“到了”已经说完了。可你自己的声音还在重复：“再等七分钟。”这句话让梦里的门永远打不开——只要不听完，你就不用决定醒来以后要不要回应。',
     choices: [
       { text: '自己走回去。', effect: '解锁「自主觉醒」结局' },
       { text: '再等一下……', effect: '梦境加深，最终 BOSS 更强但奖励翻倍' },
     ],
   },
 
-  // === 第四幕：终局（Wave 36-60）===
+  // === 第四幕：灯一直亮着（Wave 36-50）===
   {
     wave: 38, speaker: '赵磊',
-    text: '嘿，你知道吗？如果这是最后一次讲笑话了——那我要讲一个最好的。准备好了吗？……为什么噩梦不会数学？因为它总是乘人之危！……好吧，这个确实很烂。但你会记得我的，对吧？',
+    text: '我决定把那个笑话讲完。为什么闹钟只叫醒三个人？因为第四个还在赖床。……我知道，还是很烂。那晚我讲到一半，你就睡着了。小夏说你笑了一声，我没听见，所以一直想亲口再讲一次。',
     choices: [
       { text: '永远记得。', effect: '赵磊化为最后一道防线（永久护盾 +500）' },
       { text: '谢谢你，赵磊。', effect: '全队获得「幽默之力」，暴击率 +20%' },
@@ -1507,7 +1801,7 @@ const WAVE_STORY = [
   },
   {
     wave: 40, speaker: '林小夏',
-    text: '我数了一下——你已经在这里待了 40 波了。外面的世界……也许只过了几个小时。但在这里，你学会了建防线、选技能、分配资源。这些在现实里也有用的，你知道吗？',
+    text: '那晚停电以后，我们把应急灯放在床头。赵磊讲笑话，周默记时间，我守着那盏灯。我们回来时你已经睡着了；没人怪你没应门。可梦里的你，为什么只记得门外有人？',
     choices: [
       { text: '你是说……这不是白费的？', effect: '全属性 +15%，解锁「成长」成就' },
       { text: '现实里又没有梦魇。', effect: '获得 200 金币' },
@@ -1515,7 +1809,7 @@ const WAVE_STORY = [
   },
   {
     wave: 42, speaker: '周默',
-    text: '我推算出来了。最终 BOSS——永恒梦魇——它的弱点不是攻击，是理解。它从恐惧中诞生，但如果你能理解恐惧的根源，它就会自己瓦解。',
+    text: '我把时间重新排过：03:07 停电，我们三个人下楼取灯；03:14 回来，灯放在床头。录音最后那声“嗒”是停止键，不是第四个人敲门。我们没有少谁——只是你睡着了，没听见我们回来。',
     choices: [
       { text: '理解……恐惧的根源？', effect: '最终 BOSS 战中「理解」技能解锁' },
       { text: '听不懂，但听起来很厉害。', effect: '全炮塔伤害 +25%' },
@@ -1523,11 +1817,11 @@ const WAVE_STORY = [
   },
   {
     wave: 45, speaker: '旁白',
-    text: '黑暗中，你看到了四张脸——你的三个室友，和一面镜子里的自己。他们都在看着你。等你做决定。',
+    text: '黑暗里有三个人影站在床边。镜子里的第四个人没有躲在门后，而是躺在床上。那三个人没有催他醒来，只把灯调低了些；床上的那个人，终于看清了他们的脸。',
   },
   {
     wave: 48, speaker: '林小夏',
-    text: '不管你怎么选——我都支持你。因为你是我们中最强的那个。不是因为你能打，而是因为你愿意保护别人。哪怕只是……一张床。',
+    text: '我想起来了。那晚你说“我没事”，手却一直攥着被角。我们回来后没有叫醒你，只把灯留在床头。你不用先证明自己勇敢；醒来以后，可以慢慢想要说什么。',
     choices: [
       { text: '我们一起来。', effect: '四人合力：全属性 +25%，持续到结局' },
       { text: '最后的战斗，交给我。', effect: '单人模式：攻击力 x2，但防御 -50%' },
@@ -1535,23 +1829,24 @@ const WAVE_STORY = [
   },
   {
     wave: 50, speaker: '赵磊',
-    text: '嘿……如果我们这次真的赢了——我是说，如果我们真的醒来——你还会记得我们吗？在现实里，你会不会某天忽然想起一个冷笑话，然后笑一下？那就够了。',
+    text: '我终于想起来那个笑话的结尾了。可说真的，我更想知道：这次你有没有听见我们说“到了”？那晚你没有回答也没关系。我们看见你睡着了，就把声音放轻了。',
     choices: [
       { text: '我会的。', effect: '赵磊永久记忆锁定' },
       { text: '我不会忘。', effect: '解锁隐藏结局「重逢」' },
     ],
   },
+  // === 第五幕：听完那条语音（Wave 51-60）===
   {
     wave: 52, speaker: '周默',
-    text: '我用公式算了一下——你有 73.6% 的概率能赢。剩下 26.4%……是我们被遗忘。但我不担心。因为你已经证明了一件事：在噩梦里，你没有放弃。',
+    text: '录音从 03:07 开始，到 03:14 结束。前面是雨声、下楼的脚步，最后才是赵磊：“灯拿回来了，我们都到了。别叫醒他。”文件名改过几次，最后留下的是：醒来再听。',
     choices: [
       { text: '数学不会骗人。', effect: '周默留下最终计算结果' },
       { text: '概率不是命运。', effect: '全属性 +20%' },
     ],
   },
   {
-    wave: 55, speaker: '???',
-    text: '……你在想什么？你已经走到了这里。还有 5 波。你害怕吗？',
+    wave: 55, speaker: '???', sceneId: 'message_0307', actTitle: '第五幕 · 听完那条语音',
+    text: '你怕的也许不是听见坏消息，而是这段声音一旦结束，就再也不能拿“还没回来”拖延回答。那七分钟没有吞掉任何人。是梦把等待拉得太长，让你以为门外一直空着。',
     choices: [
       { text: '害怕。但我不会停。', effect: '恐惧转化为力量，全属性 +30%' },
       { text: '不害怕了。', effect: '获得「无畏」状态，免疫所有控制效果' },
@@ -1559,11 +1854,11 @@ const WAVE_STORY = [
   },
   {
     wave: 58, speaker: '旁白',
-    text: '闹钟的声音越来越近了。你几乎能听到——滴答、滴答、滴答。那是现实的心跳。还剩两波。你准备好了吗？',
+    text: '播放器走完七分钟。先是雨声，然后是三个人的脚步。周默说：“灯放好了。”小夏说：“他睡着了。”赵磊按下停止键——“嗒”。噪声里似乎还夹着一句很轻的声音。像你，也像梦替你回答。',
   },
   {
-    wave: 60, speaker: '林小夏',
-    text: '最后一波了。嘿——别忘了，你不是一个人。周默的计算、赵磊的笑话、还有我的乐观——都在你心里。带着它们，去打败那个梦魇。然后……醒来。',
+    wave: 60, speaker: '林小夏', sceneId: 'morning_door', actTitle: '第五幕 · 亲口回答',
+    text: '留言播完，门外安静下来。小夏、周默和赵磊没有走；他们把应急灯放回床头。记录最后一行终于显出来：“床边三人，床上一人——四人已齐。”小夏没有催你开门，只轻声问：“这次，你愿意回答我们吗？”',
     choices: [
       { text: '醒来。', effect: '最终 BOSS 战全属性 +50%' },
       { text: '……谢谢你们。', effect: '全队羁绊之力爆发，最终 BOSS 战全属性 +100%' },
@@ -1573,60 +1868,60 @@ const WAVE_STORY = [
 
 // ─── 2. BOSS 对话（增强版）─────────────────────────────────
 const BOSS_DIALOG = {
-  lord: {
-    wave: 10,
-    name: '焦虑巨像',
-    icon: '🗿',
-    intro: '你以为关上门就安全了？每一道铁门都是你给自己画的牢笼。',
-    phase1: '焦虑像潮水，总会涌上来。',
-    phase2: '你听见了吗？那是你的心跳声……越来越快。',
-    phase3: '逃不掉的。焦虑不是敌人，它是你的一部分。',
-    defeat: '你暂时压住了焦虑……但它会在下一个失眠夜回来。',
-    personality: '压迫性的低语，像深夜辗转反侧时脑海中挥之不去的念头',
-  },
   abyss: {
-    wave: 15,
-    name: '深渊领主',
+    wave: 10,
+    name: '深渊巨口',
     icon: '🦑',
-    intro: '黑暗中，我才是主人。你的眼睛在这里毫无用处。',
-    phase1: '你害怕看不见的东西，对吧？',
-    phase2: '深渊在看着你……不，深渊就是你。',
-    phase3: '把你的光熄灭吧——黑暗才是永恒的。',
-    defeat: '深渊退去了……但你知道，它一直都在床底下。',
-    personality: '深沉、古老、充满嘲弄，像深海中传来的低频共鸣',
+    intro: '你把门修得这么牢，是怕雨进来，还是怕听见门外的人已经回来了？',
+    phase1: '三下。停。别按播放键。',
+    phase2: '雨声会一直响，直到你忘了自己在等谁。',
+    phase3: '只要不听最后一句，他们就永远还没回来。',
+    defeat: '黑暗退回门后。地上留下三双潮湿的鞋印，尽头的录音机亮起一格电量。',
+    personality: '由暴雨、门后的等待和未完成的录音构成，专挑玩家最不敢确认的时刻发问',
   },
   machine: {
-    wave: 20,
-    name: '噩梦编织者',
-    icon: '🕸️',
-    intro: '你的记忆……真有趣。让我拆开看看里面有什么。',
-    phase1: '这个画面——你小时候的卧室？让我把它搅碎。',
-    phase2: '你梦见过飞翔？那我给你加上坠落。',
-    phase3: '所有美好的记忆都变成了噩梦的素材。',
-    defeat: '记忆的碎片散落一地……有些似乎变得完整了。',
-    personality: '冷酷、好奇、像一个不带感情的实验者在翻弄标本',
+    wave: 15,
+    name: '机械核心',
+    icon: '🛰️',
+    intro: '记录开始。03:07，三人离开。床上：一人。你要把“离开”记成“失踪”吗？',
+    phase1: '时间戳冲突：03:07。',
+    phase2: '检测到七分钟空白。',
+    phase3: '错误：播放结束前，禁止确认归来。',
+    defeat: '机械停了。进度条往前跳了一格，三双脚步声从雨里走近。',
+    personality: '把记录缺页当作失踪证据的旧录音机，重复错误时间直到有人重新核对',
   },
   void: {
+    wave: 20,
+    name: '虚空之影',
+    icon: '🌑',
+    intro: '镜子里只有三个人站着。那第四个位置，真的是空的吗？',
+    phase1: '别数站着的人。',
+    phase2: '床上的影子刚才动了。',
+    phase3: '你看见了自己，却把自己当成了别人。',
+    defeat: '影子没有消失。它躺回床上，手腕上的名字终于清晰起来。',
+    personality: '把床上熟睡的自己伪装成失踪者，让玩家追逐一个其实从未离开的空位',
+  },
+  lord: {
     wave: 25,
-    name: '心魔化身',
-    icon: '👤',
-    intro: '你认得我吗？我就是你不愿承认的那个自己。',
-    phase1: '每次你逃避的时候，我就变得更强。',
-    phase2: '看着我！你跑不掉的——我就在你的倒影里。',
-    phase3: '承认吧——你需要的不是防线，是面对。',
-    defeat: '心魔消散了……但那面碎裂的镜子里，你看到了一丝微笑。',
-    personality: '阴郁、真诚、带着痛苦的温柔，像对着镜子自言自语',
+    name: '梦魇领主',
+    icon: '😈',
+    intro: '我不是把他们藏起来了。我只是把你不敢听的七分钟拉长了。',
+    phase1: '你说过“我没事”。',
+    phase2: '他们回来时，你已经睡着。',
+    phase3: '如果门真的打开，你准备好回应了吗？',
+    defeat: '它跪倒在地，身体化作一段尚未播放的波形。波形尽头，有三个人的声音。',
+    personality: '不靠编造怪物取胜，而是不断把等待解释成离别，阻止玩家听完留言',
   },
   final: {
     wave: 60,
-    name: '永恒梦魇',
+    name: '终焉梦魇',
     icon: '👁️‍🗨️',
-    intro: '醒来？你确定吗？外面的世界可没有存档点。',
-    phase1: '这个梦很安全。没有失败，没有失望。',
-    phase2: '醒来之后，你会忘记这里的一切。值得吗？',
-    phase3: '最后的机会——留下来，永远安睡。',
-    defeat: '光……刺眼的光。你听见了闹钟的声音。林小夏在笑，赵磊在讲冷笑话，周默在看书。你睁开了眼。',
-    personality: '温柔、诱惑、像一个不想让你离开的朋友，带着无法言说的悲伤',
+    intro: '最后一段不是怪物的声音。那只是你一直没听完的录音。',
+    phase1: '03:07。我们下楼去拿灯。',
+    phase2: '03:14。我们回来了，你已经睡着。',
+    phase3: '播放键就在这里。接下来的回答，不能由梦替你说。',
+    defeat: '雨声结束。周默说：“灯放好了。”小夏说：“让他睡吧。”赵磊按下停止键。床头灯亮着，门没有再敲；窗外的天色一点点变浅。',
+    personality: '由七分钟的空白和对回应的迟疑凝成；它把“还没回来”重复成循环，好让玩家不必面对录音结束后的安静',
   },
 };
 
@@ -1636,16 +1931,16 @@ const DREAM_FRAGMENTS = [
     text:'凌晨三点，你盯着天花板数绵羊。数到第一百只的时候，你意识到它们都长着你的脸。' },
   { id:'frag_2', title:'闹钟的诅咒', desc:'醒不来的循环', icon:'⏰', rarity:'common',
     text:'闹钟响了。你伸手去按，手指穿过了它。你还在梦里。今天是周几？你已经不记得了。' },
-  { id:'frag_3', title:'褪色的照片', desc:'模糊的记忆', icon:'📷', rarity:'common',
-    text:'一张全家福，但所有人的脸都是模糊的。只有你自己的脸清晰——在笑，但眼睛里没有光。' },
-  { id:'frag_4', title:'未接来电', desc:'错过的声音', icon:'📱', rarity:'common',
-    text:'手机屏幕上显示：27 个未接来电，来自"妈妈"。你打了回去，听筒里只有雨声。' },
+  { id:'frag_3', title:'床边的合照', desc:'第四个人没有离开', icon:'📷', rarity:'common',
+    text:'三个室友站在床边，第四个人被被子盖住，只露出戴着手环的手。背面写着：灯放好了。' },
+  { id:'frag_4', title:'七分钟录音', desc:'03:07 到 03:14', icon:'📱', rarity:'common',
+    text:'录音前段是雨声和下楼的脚步，结尾有人说“灯拿回来了”。停止键轻响一下，听起来像第四次敲门。' },
   { id:'frag_5', title:'空教室', desc:'独自面对', icon:'🏫', rarity:'common',
     text:'考试铃响了，但教室里只有你一个人。试卷上的题目你从未学过，而窗外是无尽的黑夜。' },
   { id:'frag_6', title:'追逐', desc:'逃不掉的恐惧', icon:'🏃', rarity:'common',
     text:'你在跑，身后有什么东西在追。你看不清它，但你知道——它没有形状，因为它就是"恐惧"本身。' },
-  { id:'frag_7', title:'镜中人', desc:'另一个自己', icon:'🪞', rarity:'common',
-    text:'镜子里的你没有在模仿你的动作。它在摇头。它在说："回去。"' },
+  { id:'frag_7', title:'镜中的床', desc:'影子里的人数', icon:'🪞', rarity:'common',
+    text:'镜子里三个人站着，一个人躺着。床上的影子抬起手，手环上的名字和你的一样。' },
   { id:'frag_8', title:'消失的房间', desc:'回不去的地方', icon:'🚪', rarity:'rare',
     text:'你回到童年的卧室，但一切都缩小了。书桌上的作业本翻开——上面写满了同一个字："逃"。' },
   { id:'frag_9', title:'失声', desc:'发不出的声音', icon:'🔇', rarity:'rare',
@@ -1654,24 +1949,24 @@ const DREAM_FRAGMENTS = [
     text:'河水向上游流去。岸边的树在倒着长，落叶飞回枝头。时间在倒退——但只有你注意到了。' },
   { id:'frag_11', title:'永恒的走廊', desc:'走不到尽头', icon:'🏛️', rarity:'rare',
     text:'走廊没有尽头。每扇门后面都是另一条走廊。你开始怀疑——也许"出口"这个概念本身就是个梦。' },
-  { id:'frag_12', title:'被遗忘的名字', desc:'失去的自我', icon:'📝', rarity:'rare',
-    text:'有人在叫你的名字。但你想不起那是谁的声音。你甚至开始怀疑——那真的是你的名字吗？' },
-  { id:'frag_13', title:'天台的风', desc:'真实的感觉', icon:'🌬️', rarity:'rare',
-    text:'你站在天台边缘。风很大。不是要跳下去——只是想感受一下"真实"的东西。风是真实的吗？' },
+  { id:'frag_12', title:'值夜表的第四格', desc:'不是空白，是一张床', icon:'📝', rarity:'rare',
+    text:'前三格写着三个名字，第四格画着一张床。旁边的备注是：他睡着了，别叫醒他。' },
+  { id:'frag_13', title:'灯下的压痕', desc:'没有寄出的留言', icon:'📄', rarity:'rare',
+    text:'斜光照过空白便笺，浮出两行字：“我们去拿灯，很快回来。”“到了，别叫醒他。”' },
   { id:'frag_14', title:'最后一课', desc:'未完的告别', icon:'📝', rarity:'epic',
     text:'老师说："人生的考试没有标准答案。"你醒了，发现自己泪流满面，但想不起为什么。' },
   { id:'frag_15', title:'碎片拼图', desc:'拼凑的自己', icon:'🧩', rarity:'epic',
-    text:'你把所有记忆碎片拼在一起，看到了一幅画——一个人躺在无数面镜子组成的房间里，每面镜子映出不同年龄的自己。' },
+    text:'你把记忆碎片拼在一起，看到无数面镜子围着一张床。每面镜子里都有一个不同年纪的人，唯独床边留着一道空白。' },
   { id:'frag_16', title:'创造者的独白', desc:'造梦者的歉意', icon:'🎭', rarity:'epic',
-    text:'"我创造了这个梦境来保护你。但保护太久，就变成了囚禁。对不起。"——一段不知来源的自言自语。' },
+    text:'"门关上以后，至少你不用再听见那一声。"字迹和你的很像，但最后一个字被反复涂黑。' },
   { id:'frag_17', title:'第一道光', desc:'从未到达的黎明', icon:'🌅', rarity:'legendary',
-    text:'在所有噩梦的最深处，有一扇小小的窗。窗外是黎明。你从没走到过那里——因为你总是在半路就建起了防线。' },
+    text:'所有梦魇的尽头有一扇小窗。窗外没有黎明，只有一盏亮着的走廊灯，和一双停在门外的鞋。' },
   { id:'frag_18', title:'闹钟', desc:'梦的终结者', icon:'🔔', rarity:'legendary',
     text:'闹钟。很简单的一个闹钟。但在梦境里，它是一个禁忌之物。因为闹钟意味着——梦要结束了。' },
-  { id:'frag_19', title:'两条路', desc:'分岔口的选择', icon:'🛤️', rarity:'legendary',
-    text:'一条路通向醒来，路上铺满了刺。另一条路通向永恒的安睡，路上开满了花。你站在分岔口，发现自己其实知道该走哪条。' },
+  { id:'frag_19', title:'03:14', desc:'灯回到了床头', icon:'🔔', rarity:'legendary',
+    text:'闹钟停在 03:07。七分钟后，三双湿鞋印走回床边。床头灯亮着，屋里四个人，一个也没有少。' },
   { id:'frag_20', title:'写给自己的信', desc:'来自内心的声音', icon:'💌', rarity:'legendary',
-    text:'"亲爱的我：如果你正在读这封信，说明你已经足够勇敢了。梦魇不是你的敌人，它们是你未曾消化的情绪。不要消灭它们——理解它们。然后，醒来。"' },
+    text:'"亲爱的我：如果你读到这里，先别相信写信的人。问问他，03:07 那时他在哪里。答案就在你记得最清楚、却一直不肯说的地方。"' },
 ];
 
 // ─── 4. NPC 台词 ───────────────────────────────────────────
@@ -1781,23 +2076,23 @@ const FOURTH_WALL_EVENTS = [
   },
   {
     wave: 18, type: 'chatMessage', title: '未知玩家',
-    params: { msg: '你知道这不是游戏，对吧？' },
-    content: '[系统] 玩家 "你真的在玩游戏吗？" 已加入房间。\n[你真的在玩游戏吗？] 你知道这不是游戏，对吧？\n[系统] 玩家 "你真的在玩游戏吗？" 已离开房间。',
+    params: { msg: '你也听见 03:07 的钟声了吗？' },
+    content: '[系统] 玩家 "空座位" 已加入房间。\n[空座位] 你也听见 03:07 的钟声了吗？\n[系统] 玩家 "空座位" 已离开房间。',
   },
   {
-    wave: 22, type: 'saveCorrupt', title: '存档损坏',
+    wave: 22, type: 'saveCorrupt', title: '缺页的记录',
     params: {},
-    content: '存档损坏。\n数据：████████████\n恢复失败。\n\n……开玩笑的。存档好好的。\n但你刚才心跳加速了吧？',
+    content: '索引读取异常。\n记录：03:07\n房间人数：三\n空床数量：一\n\n最后一行被反复擦去，只剩下一个问号。',
   },
   {
     wave: 26, type: 'uiCorrupt', title: '像素化',
     params: { type: 'glitch' },
-    content: '整个屏幕开始像素化。梦魇们暂停了。\n屏幕上出现一个光标，在你视野里打出一行字：\n"第三十波之后，没有存档点。"',
+    content: '整个画面像旧胶片一样抖动。\n走廊尽头的门牌变成了 03:07。\n门后有人写下一行字：\n"这扇门记得你。"',
   },
   {
     wave: 29, type: 'chatMessage', title: '脑电波异常',
-    params: { msg: '警告：玩家拒绝唤醒。' },
-    content: '[梦境系统] 检测到异常脑电波。\n[梦境系统] 玩家意识清醒度：12%\n[梦境系统] 建议：立即唤醒。\n[梦境系统] 警告：玩家拒绝唤醒。\n[梦境系统] ……遵命。',
+    params: { msg: '记录里少了一个名字。' },
+    content: '[值夜记录] 时间：03:07\n[值夜记录] 床铺：有人\n[值夜记录] 床边：三人\n[值夜记录] 走廊尽头：有人回应\n[值夜记录] 请勿开门。',
   },
   {
     wave: 30, type: 'fakeCrash', title: '梦境崩溃',
@@ -1817,7 +2112,7 @@ const FOURTH_WALL_EVENTS = [
   {
     wave: 49, type: 'fakeCrash', title: '循环',
     params: {},
-    content: '梦境遇到了问题，需要重新启动。\n错误代码：DREAM_LOOP\n\n你以为你在前进吗？\n这是第 49 次了。',
+    content: '梦境遇到了问题，需要重新启动。\n错误代码：DREAM_LOOP\n\n你以为你在前进吗？\n墙上的刻痕，比昨晚又多了一道。',
   },
   {
     wave: 55, type: 'uiCorrupt', title: '褪色',
@@ -1826,8 +2121,8 @@ const FOURTH_WALL_EVENTS = [
   },
   {
     wave: 59, type: 'chatMessage', title: '告别',
-    params: { msg: '最后一波了。祝你好运……真的。' },
-    content: '最后一波了。祝你好运……真的。\n\n（这次它没有笑。）',
+    params: { msg: '下一声钟响之后，记得自己回答。' },
+    content: '下一声钟响之后，记得自己回答。\n\n（这次它没有笑。）',
   },
 ];
 
@@ -2810,23 +3105,26 @@ function bedGoldEffOf(lv) {
   return bedGoldOf(lv) * techVal('sleep', 0.12) * techVal('eternity', 0.60) * diffCfg().goldMul;
 }
 const SFX = {
-  ctx: null, on: true,
-  init() { if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.on = false; } } },
+  ctx: null, on: true, volume: 0.72,
+  init() {
+    if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.on = false; } }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
+  },
   tone(freq, dur, type = 'sine', vol = 0.14, slide = 0) {
-    if (!this.on || !this.ctx) return;
+    if (!this.on || !this.ctx || this.volume <= 0) return;
     const t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
     o.type = type; o.frequency.setValueAtTime(freq, t);
     if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    g.gain.setValueAtTime(vol * this.volume, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + dur + 0.02);
   },
   noise(dur, vol = 0.2, filt = 900) {
-    if (!this.on || !this.ctx) return;
+    if (!this.on || !this.ctx || this.volume <= 0) return;
     const n = (this.ctx.sampleRate * dur) | 0, buf = this.ctx.createBuffer(1, n, this.ctx.sampleRate), d = buf.getChannelData(0);
     for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
     const s = this.ctx.createBufferSource(); s.buffer = buf;
     const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = filt;
-    const g = this.ctx.createGain(); g.gain.value = vol;
+    const g = this.ctx.createGain(); g.gain.value = vol * this.volume;
     s.connect(f); f.connect(g); g.connect(this.ctx.destination); s.start();
   },
   shoot() { this.tone(680, 0.06, 'square', 0.04, -420); },
@@ -2846,8 +3144,114 @@ const SFX = {
 };
 const Store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } },
+  set(k, v) {
+    try { localStorage.setItem(k, v); return { ok: true }; }
+    catch (e) { return { ok: false, name: (e && e.name) || 'StorageError' }; }
+  },
   del(k) { try { localStorage.removeItem(k); } catch (e) { } },
+};
+const Music = {
+  // MiniMax Music 3 成品放入 audio/ 后即可启用；暂缺文件时不影响游戏与音效。
+  tracks: { menu: 'audio/menu-loop.mp3', game: 'audio/game-loop.mp3', boss: 'audio/boss-loop.mp3' },
+  names: { menu: '入梦', game: '防线', boss: '终焉' },
+  on: true, volume: 0.34, duck: 1, current: 'menu', unlocked: false, blocked: Object.create(null),
+  active: null, cache: Object.create(null), missing: Object.create(null), fades: new WeakMap(),
+  init() {
+    let p = {};
+    try { p = JSON.parse(Store.get('tangping_audio', '{}') || '{}'); } catch (e) { p = {}; }
+    this.on = p.musicOn !== false;
+    this.volume = clamp(Number.isFinite(+p.musicVolume) ? +p.musicVolume : 0.34, 0, 1);
+    SFX.on = p.sfxOn !== false;
+    SFX.volume = clamp(Number.isFinite(+p.sfxVolume) ? +p.sfxVolume : 0.72, 0, 1);
+  },
+  persist() {
+    Store.set('tangping_audio', JSON.stringify({
+      musicOn: this.on, musicVolume: this.volume, sfxOn: SFX.on, sfxVolume: SFX.volume,
+    }));
+  },
+  _audio(key) {
+    if (this.cache[key]) return this.cache[key];
+    if (!this.tracks[key] || typeof Audio === 'undefined') return null;
+    const a = new Audio();
+    a.src = this.tracks[key]; a.loop = true; a.preload = 'none'; a.volume = 0;
+    a.addEventListener('error', () => {
+      this.missing[key] = true;
+      if (this.active === a) this.active = null;
+      if (typeof syncAudioUI === 'function') syncAudioUI();
+    }, { once: true });
+    this.cache[key] = a;
+    return a;
+  },
+  unlock() {
+    this.unlocked = true;
+    if (this.on && this.current) this.play(this.current);
+  },
+  play(key) {
+    if (!this.tracks[key]) return false;
+    this.current = key;
+    if (!this.on || !this.unlocked) return true;
+    const next = this._audio(key);
+    if (!next) return false;
+    if (this.active === next && !next.paused) return true;
+    const previous = this.active;
+    this.active = next;
+    if (next.paused) next.volume = 0;
+    const result = next.play();
+    if (result && typeof result.catch === 'function') {
+      result.catch(() => {
+        this.blocked[key] = true;
+        if (this.active === next) this.active = null;
+        if (typeof syncAudioUI === 'function') syncAudioUI();
+      });
+    }
+    this._fade(next, this.volume * this.duck, 900, false);
+    if (previous && previous !== next) this._fade(previous, 0, 700, true);
+    if (typeof syncAudioUI === 'function') syncAudioUI();
+    return true;
+  },
+  _fade(audio, target, duration, pauseAtEnd) {
+    if (!audio) return;
+    const old = this.fades.get(audio);
+    if (old) clearInterval(old);
+    const from = audio.volume, started = performance.now();
+    const step = () => {
+      const t = Math.min(1, (performance.now() - started) / duration);
+      audio.volume = clamp(from + (target - from) * t, 0, 1);
+      if (t >= 1) {
+        const id = this.fades.get(audio); if (id) clearInterval(id);
+        this.fades.delete(audio);
+        if (pauseAtEnd) audio.pause();
+      }
+    };
+    this.fades.set(audio, setInterval(step, 40));
+    step();
+  },
+  setEnabled(on) {
+    this.on = !!on; this.persist();
+    if (!this.on) this._fade(this.active, 0, 300, true);
+    else { this.unlock(); if (this.unlocked) this.play(this.current); }
+    if (typeof syncAudioUI === 'function') syncAudioUI();
+  },
+  setVolume(value, persist = true) {
+    this.volume = clamp(+value || 0, 0, 1); if (persist) this.persist();
+    if (this.active && this.on) this._fade(this.active, this.volume * this.duck, 120, this.volume === 0);
+    if (typeof syncAudioUI === 'function') syncAudioUI();
+  },
+  setDucking(on) {
+    this.duck = on ? 0.42 : 1;
+    if (this.active && this.on) this._fade(this.active, this.volume * this.duck, 260, false);
+  },
+  setSfx(on) { SFX.on = !!on; this.persist(); if (typeof syncAudioUI === 'function') syncAudioUI(); },
+  setSfxVolume(value, persist = true) { SFX.volume = clamp(+value || 0, 0, 1); if (persist) this.persist(); if (typeof syncAudioUI === 'function') syncAudioUI(); },
+  status() {
+    if (!this.on) return '背景音乐已关闭';
+    if (this.volume <= 0) return '背景音乐音量为 0';
+    if (this.missing[this.current]) return '待添加 audio/' + (this.tracks[this.current] || '').split('/').pop();
+    if (this.active && !this.active.paused) return '正在播放 · ' + (this.names[this.current] || '梦境');
+    if (!this.unlocked) return '点击页面后开始播放';
+    if (this.blocked[this.current]) return '播放受限，可点击音乐按钮重试';
+    return '放入音乐文件后自动播放';
+  },
 };
 const META_KEY = 'tangping_meta';
 const META = { gold: 0, pity: 0, inv: {}, equipped: [], runs: 0, best: 0 };
@@ -4264,6 +4668,7 @@ function buildWaveQueue(n) {
 }
 function startWave() {
   G.wave++;
+  if (typeof Music !== 'undefined') Music.play(G.wave === finalWave() ? 'boss' : 'game');
   G.event = rollEvent();
   const { rest, bossList } = buildWaveQueue(G.wave);
   G.spawnQueue = rest; G.bossQueue = bossList; G.spawnTimer = 0;
@@ -4306,7 +4711,7 @@ function startWave() {
     if (bossDlg) {
       setTimeout(() => {
         if (typeof showStoryDialog === 'function') {
-          showStoryDialog({ speaker: bossDlg.name || 'BOSS', text: bossDlg.intro || '...' });
+          showStoryDialog({ wave: bossDlg.wave, speaker: bossDlg.name || 'BOSS', text: bossDlg.intro || '...' });
         }
       }, 2000);
     }
@@ -4553,6 +4958,7 @@ function gameWin() {
   if (G.mode === 'unlimited') {
     G.cleared = (G.cleared || 0) + 1;
     G.state = 'build'; G.prepTimer = 25;
+    if (typeof Music !== 'undefined') Music.play('game');
     addText(ROOM_X0 + 300, DOOR_MID_Y() - 170, '♾ 已击败终焉梦魇，无尽继续！', '#7dd3fc', true);
     spawnParts(640, 300, 60, '#7dd3fc', 5, 1.2);
     setTip('无限模式：本局永不结束，梦魇会越来越强 — 看你能撑到第几波', 7);
@@ -4748,6 +5154,11 @@ const SaveSystem = {
   VERSION: 3,
   /** 手动槽位数量（0 号保留给自动存档） */
   SLOTS: 3,
+  /** 保留合法的 0 HP；只有缺失或非数值才回退到满血。 */
+  _restoreHp(value, maxHp) {
+    const hp = value === null ? NaN : Number(value);
+    return clamp(Number.isFinite(hp) ? hp : maxHp, 0, maxHp);
+  },
   KEY: n => 'tangping_save_slot' + n,
   IDX: 'tangping_saves_index',
   LEGACY: 'tangping_save',       // v2 时代的单槽 key，会自动迁移到 0 号槽
@@ -4800,9 +5211,12 @@ const SaveSystem = {
       if (name !== undefined) d.name = name;
       d.meta = this._metaOf(d);
       const json = JSON.stringify(d);
-      Store.set(this.KEY(slot), json);
-      // 读回来确认真的落盘（localStorage 满时 setItem 会抛，某些浏览器是静默失败）
-      if (Store.get(this.KEY(slot), null) === null) return { ok: false, reason: 'storage-blocked' };
+      const write = Store.set(this.KEY(slot), json);
+      if (!write || !write.ok) {
+        return { ok: false, reason: write && write.name === 'QuotaExceededError' ? 'quota' : 'storage-blocked' };
+      }
+      // 回读并逐字比对：覆盖旧槽失败时，不能把仍存在的旧值误报为保存成功。
+      if (Store.get(this.KEY(slot), null) !== json) return { ok: false, reason: 'storage-blocked' };
       return { ok: true, bytes: json.length };
     } catch (e) {
       return { ok: false, reason: e && e.name === 'QuotaExceededError' ? 'quota' : 'error' };
@@ -5040,7 +5454,7 @@ const SaveSystem = {
       if (d.bed) {
         G.bed.lv = Math.max(1, Math.min(50, d.bed.lv | 0 || 1));
         G.bed.maxHp = bedMaxHp(G.bed.lv);
-        G.bed.hp = clamp(+d.bed.hp || G.bed.maxHp, 0, G.bed.maxHp);
+        G.bed.hp = this._restoreHp(d.bed.hp, G.bed.maxHp);
         G.bed.shieldMax = +d.bed.shieldMax || 0;
         G.bed.shield = clamp(+d.bed.shield || 0, 0, G.bed.shieldMax || G.bed.maxHp);
       }
@@ -5049,7 +5463,7 @@ const SaveSystem = {
           const o = G.doors[i]; if (!o) return;
           o.lv = Math.max(1, Math.min(50, v2.lv | 0 || 1));
           o.maxHp = doorMaxHp(o.lv);
-          o.hp = clamp(+v2.hp || o.maxHp, 0, o.maxHp);
+          o.hp = this._restoreHp(v2.hp, o.maxHp);
           o.shieldMax = +v2.shieldMax || 0;
           o.shield = clamp(+v2.shield || 0, 0, o.shieldMax || o.maxHp);
           o.broken = !!v2.broken && o.hp <= 0;
@@ -5070,7 +5484,7 @@ const SaveSystem = {
             shield: 0, shieldMax: 0, runes: this._fixRunes(v2.runes),
           };
           b.maxHp = buildingMaxHp(def, b.level, b.branch);
-          b.hp = clamp(+v2.hp || b.maxHp, 0, b.maxHp);
+          b.hp = this._restoreHp(v2.hp, b.maxHp);
           b.shieldMax = +v2.shieldMax || 0;
           b.shield = clamp(+v2.shield || 0, 0, b.shieldMax || b.maxHp);
           G.buildings.push(b); G.grid[r * COLS + c] = b;
@@ -5291,6 +5705,8 @@ const Cmd = {
   exec(cmd, remoteToken, peerId) {
     const fromRemote = remoteToken === REMOTE_CMD_TOKEN;
     if (fromRemote ? !Net.isAuthorizedPeer(peerId) : (remoteToken !== undefined || (Net.enabled && !Net.isHost))) return false;
+    const storyDialog = typeof document !== 'undefined' && document.getElementById('storyDialog');
+    if (storyDialog && storyDialog.dataset.inputLocked === 'true') return false;
     cmd = this._normalize(cmd);
     if (!cmd || typeof G === 'undefined' || !G || G.over || (fromRemote && cmd.t === 'jump')) return false;
     switch (cmd.t) {
@@ -7575,39 +7991,39 @@ const DreamEngine = {
 const QUEST_ITEMS = {
   mist_tear: {
     name: '雾之泪', icon: '💧', rare: 'common', from: '幽灵',
-    desc: '一滴不会蒸发的雾',
-    lore: '幽灵没有眼泪。所以当你在走廊地板上捡到这颗冰凉的水珠时，'
-        + '你花了很久才明白：那是它还记得自己曾经是谁。',
+    desc: '应急灯罩上凝住的雨滴',
+    lore: '它不是眼泪，是灯罩从室外带回来的雨水。你把水滴放到灯下，'
+        + '墙上的值夜记录显出一小截字：03:07，三人下楼。',
   },
   mirror_shard: {
     name: '裂开的镜片', icon: '🪞', rare: 'rare', from: '镜面梦魇',
-    desc: '映不出你的一张脸',
-    lore: '你举起它，镜面里没有你。只有一间空教室，和一张没有人坐的椅子。'
-        + '你把它转了个角度——椅子旁边站着一个背影，穿着你的校服。',
+    desc: '只能照见床边三人的碎镜',
+    lore: '镜片里，小夏、周默和赵磊站在床边。第四个位置看起来空着。'
+        + '你把镜片转向床沿，才发现被子里伸出一只手，手环上刻着你的名字。',
   },
   faded_photo: {
     name: '褪色的合照', icon: '📷', rare: 'rare', from: '治疗梦魇',
-    desc: '四个人的合照，缺了一个角',
-    lore: '照片上是四张床、四个孩子。可你数来数去只有三个人的脸，'
-        + '第四个位置被烧掉了一个角。你认得那个空位的形状——是你自己的轮廓。',
+    desc: '三人守着一张床的照片',
+    lore: '照片边缘被雨水泡皱了。三个室友围着床，第四个位置被被子盖住。'
+        + '背面写着：“灯放好了。醒来再说。”照片没有缺人，只有一张没露脸的脸。',
   },
   broken_pendulum: {
     name: '断裂的钟摆', icon: '⏳', rare: 'epic', from: '时空梦魇',
-    desc: '指针停在 03:07',
-    lore: '钟摆断了，时间就停在了三点零七分。你忽然想起——'
-        + '那个未接来电的时间，也是 03:07。',
+    desc: '停在断电时刻的摆锤',
+    lore: '摆锤卡在 03:07，背面却留着一道新刻的 03:14。'
+        + '两道时间中间隔着七分钟。不是钟走错了，是有人把那段等待单独记了下来。',
   },
   blank_letter: {
     name: '空白的信纸', icon: '📄', rare: 'epic', from: '召唤梦魇',
-    desc: '写满字又被擦掉的信',
-    lore: '灯下侧着看，纸面上还留着上一版字迹的压痕：'
-        + '"别再来找我了。"下面一行更浅，像是哭着写的："你会后悔的。"',
+    desc: '写着出发与归来的录音便笺',
+    lore: '纸面看似空白，斜着迎光才看见两行压痕：“我们去拿灯，很快回来。”'
+        + '下一行是：“到了。别叫醒他。”字迹被雨水晕开，最后一个句号像一盏小灯。',
   },
   last_clock: {
     name: '最后一只闹钟', icon: '🔔', rare: 'legend', from: '梦魇领主',
-    desc: '梦境里的禁忌之物',
-    lore: '它一直响，但没有任何人听得见。因为闹钟意味着——梦要结束了。'
-        + '你把它握在手里，第一次感到掌心是热的。',
+    desc: '一只没有响过的床头闹钟',
+    lore: '背盖里刻着 03:07 和 03:14，中间画着一盏灯。最后一行写到一半：'
+        + '“如果他还没醒，就……”后面的字没有补完，像是留给醒来的人自己写。',
   },
 };
 
@@ -7633,8 +8049,8 @@ const QUEST_CHAPTERS = [
     from: '幽灵',
     hook: {
       speaker: '林小夏',
-      text: '你听……走廊尽头有哭声。是那些灰白色的东西——它们不打门，只是哭。\n'
-          + '我数过了，它们哭的时候会掉东西，像水珠。你能捡几颗回来吗？我想看看那是什么。',
+      text: '你听……走廊尽头有哭声。那些灰白的东西不撞门，只对着门缝反复说“我们回来了”。\n'
+          + '地上有几滴水，像是从应急灯一路滴过来的。能帮我捡回来吗？我想看看灯是不是从那条走廊来的。',
       choices: [
         { text: '我去。你在这别动。', effect: '林小夏好感度 +1' },
         { text: '……哭声？我什么都没听见。', effect: '获得 150 金币（她塞给你的）' },
@@ -7642,10 +8058,9 @@ const QUEST_CHAPTERS = [
     },
     done: {
       speaker: '林小夏',
-      text: '三颗……都是凉的。\n'
-          + '你知道吗，幽灵是没有眼泪的。因为它们已经不记得自己是谁了——'
-          + '可它还记得要哭。\n'
-          + '（她把水珠举到眼前，忽然不说话了。）',
+      text: '三颗……都是雨水。灯罩上也有同样的水痕。\n'
+          + '所以那盏灯真的走过这条走廊，不是梦魇捡来的。'
+          + '（她把水滴凑近灯光。墙上浮出一行很浅的字：三人下楼。）',
       choices: [
         { text: '它是不是……在替谁哭？', effect: '解锁记忆碎片，理解加深' },
         { text: '别想了，先活下去。', effect: '获得 400 金币，全队防御 +10%（本波）' },
@@ -7670,9 +8085,9 @@ const QUEST_CHAPTERS = [
     },
     done: {
       speaker: '周默',
-      text: '我照了。里面没有我。\n'
-          + '……有一张椅子，还有一件挂在椅背上的校服——是你的尺码。\n'
-          + '（他把镜片收进口袋，声音很轻。）所以这个教室里，本来应该坐着四个人。',
+      text: '我照了。镜子里有三个人站着，床上还有一道影子。\n'
+          + '换几个角度，它都没有消失。那不是空出来的位置，是镜面只把床上的人照得太暗。\n'
+          + '（他把镜片收进口袋。）记录上的四个人，应该一直是四个。',
       choices: [
         { text: '你的意思是，我们四个都在这？', effect: '解锁记忆碎片，理解加深' },
         { text: '镜子会说谎。别信它。', effect: '扎下心防：全队防御 +15%（本波）' },
@@ -7697,10 +8112,10 @@ const QUEST_CHAPTERS = [
     },
     done: {
       speaker: '赵磊',
-      text: '……照片上只有三个人。\n'
-          + '第四个位置被烧没了。我数了三遍，我把每张都翻过来看背面——'
-          + '背面写着同一个学号。\n'
-          + '（他难得没讲冷笑话。）小夏，你认识这个学号吗？',
+      text: '……照片上有三个人，还有一张床。\n'
+          + '被子盖住了第四个人，只露出一只手。每张照片背面都写着同一句话：'
+          + '“灯放好了，醒来再说。”\n'
+          + '（他难得没讲冷笑话。）小夏，你记得是谁把照片放在这里的吗？',
       choices: [
         { text: '那是我的学号。', effect: '解锁记忆碎片，理解加深' },
         { text: '把照片收起来。现在不是时候。', effect: '获得 800 金币' },
@@ -7715,9 +8130,9 @@ const QUEST_CHAPTERS = [
     from: '时空梦魇',
     hook: {
       speaker: '旁白',
-      text: '走廊尽头的墙上出现过一道时钟的虚影，然后又消失了。\n'
-          + '那些走得比谁都快的梦魇，身上挂着断掉的钟摆。\n'
-          + '你需要两个。你需要知道，那一天到底停在哪一秒。',
+      text: '走廊尽头的钟停在 03:07。可记录里又出现了 03:14。\n'
+          + '取应急灯的三个人说只离开了七分钟；梦里却像等了整整一夜。\n'
+          + '把断掉的钟摆找回来，看看究竟是哪段时间被梦藏起来了。',
       choices: [
         { text: '我记得那个时间。', effect: '命运印记：时间线收束' },
         { text: '我不想记得。', effect: '获得 500 金币，防御 +15%（本波）' },
@@ -7725,10 +8140,9 @@ const QUEST_CHAPTERS = [
     },
     done: {
       speaker: '???',
-      text: '03:07。\n'
-          + '你终于把它拿在手里了。\n'
-          + '那通电话你打了回去，听筒里只有雨声——因为你根本没有按下拨号键。\n'
-          + '（声音停顿了很久。）孩子，你要找的不是出口。是那天晚上你没说出口的那句话。',
+      text: '03:07 是停电的时刻，03:14 是应急灯回到床头的时刻。\n'
+          + '中间七分钟，录音里只有雨声、下楼声，还有一声很轻的停止键。\n'
+          + '（声音停顿了很久。）你怕听见的，是他们没回来，还是他们其实回来了？',
       choices: [
         { text: '……你是谁？', effect: '解锁记忆碎片，理解加深' },
         { text: '我不需要谁来教我后悔。', effect: '怒火：所有炮塔伤害 +15%（本波）' },
@@ -7743,9 +8157,9 @@ const QUEST_CHAPTERS = [
     from: '召唤梦魇',
     hook: {
       speaker: '林小夏',
-      text: '那些不停召唤小家伙的东西，身上带着纸。\n'
-          + '纸是空白的，但举到灯下能看见压痕——是写给谁的信，写了又擦掉。\n'
-          + '我要四张。我想拼出完整的句子。',
+      text: '召唤梦魇身上带着几张空白便笺。\n'
+          + '举到灯下能看见压痕：有人先写了出发，又写了归来，最后一句却一直没有写完。\n'
+          + '帮我找四张吧。我想知道，他们回来以后有没有叫醒你。',
       choices: [
         { text: '你想写给谁？', effect: '林小夏好感度 +1' },
         { text: '先收集，别多想。', effect: '获得 700 金币' },
@@ -7754,27 +8168,27 @@ const QUEST_CHAPTERS = [
     done: {
       speaker: '林小夏',
       text: '拼出来了。\n'
-          + '"对不起，那天我没有拉住你。"\n'
-          + '（她把四张纸按顺序摆好，手一直在抖。）\n'
-          + '这不是写给谁的。这是写给"没被拉住的那个人的"。\n'
-          + '你……你那天到底站在哪？',
+          + '“我们去拿灯，很快回来。”\n'
+          + '“到了。灯放在床头。”\n'
+          + '（她把四张纸按时间排好，手指停在最后一行。）\n'
+          + '后面没有“叫醒他”，也没有“离开”。只有一道空白，像是有人决定把选择留给你。',
       choices: [
-        { text: '我站在天台边上。', effect: '解锁记忆碎片，理解加深' },
-        { text: '我不记得了。真的。', effect: '获得 1500 金币，全队防御 +20%（本波）' },
+        { text: '那晚……你们真的回来了。', effect: '解锁记忆碎片，理解加深' },
+        { text: '我还没准备好听完。', effect: '获得 1500 金币，全队防御 +20%（本波）' },
       ],
     },
     rewardText: '获得 6000 金币、获得 120 灵魂、所有炮塔伤害 +10%（本局）',
     fragment: 'frag_13',
   },
   {
-    id: 'q6', act: '终幕 · 醒来', title: '最后一只闹钟',
+    id: 'q6', act: '终幕 · 亲口回答', title: '最后一只闹钟',
     unlockWave: 41, enemy: 'boss', need: 1, dropRate: 1, item: 'last_clock',
     from: '梦魇领主',
     hook: {
       speaker: '周默',
-      text: '它们之中最大的那一个——领主、巨口、机械核心、虚空之影——身上挂着一只闹钟。\n'
-          + '不，不是挂着。是被它攥在手里，攥得死死的。\n'
-          + '拿到它。然后我们就能决定：是继续睡，还是醒。',
+      text: '最大的梦魇手里有一只闹钟。指针停在 03:07，背盖却刻着另一个时间：03:14。\n'
+          + '那七分钟里，有人带灯回来，有人守在床边，还有人一直没有把留言听完。\n'
+          + '拿到闹钟。然后我们就能决定，要不要把最后一句听完。',
       choices: [
         { text: '我要醒。', effect: '决心：所有伤害 +10%（本局）' },
         { text: '我要先弄清楚全部真相。', effect: '获得 2000 金币，防御 +20%（本波）' },
@@ -7783,13 +8197,13 @@ const QUEST_CHAPTERS = [
     done: {
       speaker: '???',
       text: '你拿到它了。\n'
-          + '现在听好——我不再是"梦魇"了，我是你自己造出来的守门人。\n'
-          + '我拦着你，不是为了困住你。是因为你醒过来的那一次，是最后一次。\n'
-          + '（闹钟开始响。这一次，四个人都听见了。）\n'
-          + '按下去吧。但先回头看看——他们还在等你。',
+          + '背盖里没有诅咒，只有一行没写完的话：“灯放好了。如果他醒来……”\n'
+          + '赵磊说：“我记得后面还有一句。”小夏看向床头，周默却把录音机递给你。\n'
+          + '屏幕停在 03:14，播放键没有按下。镜子里三个人都在等你，但谁也没有替你伸手。\n'
+          + '你想先听哪一段？',
       choices: [
-        { text: '我回头了。他们都还在。', effect: '解锁最终记忆碎片，理解已达终点' },
-        { text: '按下去。独自醒来。', effect: '获得 10000 金币与结局印记' },
+        { text: '先听留言，再亲口回答。', effect: '解锁最终记忆碎片，理解已达终点' },
+        { text: '先把闹钟按停。', effect: '获得 10000 金币与结局印记' },
       ],
     },
     rewardText: '获得 12000 金币、获得 300 灵魂、所有伤害 +20%（本局）、所有建筑生命 +30%（本局）',
@@ -7808,7 +8222,7 @@ const QuestSystem = {
   init() {
     // 状态挂在 G 上，随核心存档一起持久化（core.js saveGame/applySave 已带 quest 字段）
     if (!G) return;
-    if (!G.quest || typeof G.quest !== 'object') G.quest = this.blank();
+    G.quest = this.normalizeState(G.quest);
     this._s = G.quest;
     this._initd = true;
     EventBus.emit('quest:init', this.getActive());
@@ -7816,6 +8230,37 @@ const QuestSystem = {
 
   blank() {
     return { idx: -1, chapters: {}, items: {}, finished: false };
+  },
+
+  /** 规整导入或损坏的进度对象，避免初始化任务时因缺少嵌套字段而中断读档。 */
+  normalizeState(raw) {
+    const out = this.blank();
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+
+    const idx = raw.idx;
+    out.idx = Number.isInteger(idx) && idx >= -1 && idx < QUEST_CHAPTERS.length ? idx : -1;
+    const count = value => {
+      const n = Number(value);
+      return Number.isFinite(n) ? Math.min(999999, Math.max(0, Math.floor(n))) : 0;
+    };
+
+    if (raw.chapters && typeof raw.chapters === 'object' && !Array.isArray(raw.chapters)) {
+      QUEST_CHAPTERS.forEach(def => {
+        const progress = raw.chapters[def.id];
+        if (!progress || typeof progress !== 'object' || Array.isArray(progress)) return;
+        out.chapters[def.id] = {
+          kills: count(progress.kills),
+          items: count(progress.items),
+          pity: Math.min(3, count(progress.pity)),
+          done: progress.done === true,
+        };
+      });
+    }
+    if (raw.items && typeof raw.items === 'object' && !Array.isArray(raw.items)) {
+      Object.keys(QUEST_ITEMS).forEach(id => { out.items[id] = count(raw.items[id]); });
+    }
+    out.finished = raw.finished === true;
+    return out;
   },
 
   /** 取某一章的运行时进度（没有就建） */
@@ -7951,9 +8396,9 @@ const QuestSystem = {
         if (typeof showStoryDialog === 'function') {
           showStoryDialog({
             speaker: '旁白',
-            text: '六件信物，六个夜晚。\n你终于把这场梦完整地读了一遍。\n'
-                + '从今往后，梦魇再来，你不再问"为什么是我"——因为你知道答案了。\n'
-                + '（梦境委托 · 全篇终）',
+            text: '六件信物，六段被雨声隔开的记忆。\n你把 03:07 到 03:14 的线索重新排好，却没有替那晚的自己编一个完美答案。\n'
+                + '录音还在。床头灯也还亮着。下一次开口，由你自己决定。\n'
+                + '（梦境委托 · 暂告一段落）',
           });
         }
       }, 6000);
@@ -8531,7 +8976,11 @@ function muzzleBrake(len, halfH, color) {
   ctx.fillRect(len - 8, -halfH - 1.6, 1.4, halfH * 2 + 3.2);
 }
 /** 10 种武器的炮管/发射器造型 —— 长度、粗细、机构都不同，不看名字也能分辨 */
-function drawBarrel(type, color, accent, hot) {
+const TOWER_MUZZLE_LENGTH = {
+  laser: 50, frost: 36, flame: 34, tesla: 27, poison: 26,
+  sonic: 26, missile: 25, gravity: 12, prism: 32, turret: 28,
+};
+function drawBarrel(type, color, accent, hot, branch) {
   accent = accent || color;
   hot = hot || 0;
   switch (type) {
@@ -8659,11 +9108,29 @@ function drawBarrel(type, color, accent, hot) {
       break;
     }
     default: {
-      // 机枪炮塔：双联管 + 制退器
-      barrelBody(color, 28, 2.2, accent, hot);
-      barrelBody(color, 26, 2.2, accent, hot);
-      ctx.save(); ctx.translate(0, -3.4); muzzleBrake(28, 2.2, color); ctx.restore();
-      ctx.save(); ctx.translate(0, 3.4); muzzleBrake(26, 2.2, color); ctx.restore();
+      if (type === "turret" && branch === "a") {
+        // 加特林分支：三联旋转枪管，保留原有转塔与射击逻辑
+        for (const y of [-4.2, 0, 4.2]) {
+          ctx.save(); ctx.translate(0, y);
+          barrelBody(color, 29, 1.45, accent, hot);
+          muzzleBrake(29, 1.45, color);
+          ctx.restore();
+        }
+      } else if (type === "turret" && branch === "b") {
+        // 狙击分支：加长重管与瞄准镜，纯外观标识
+        barrelBody(color, 36, 2.5, accent, hot);
+        muzzleBrake(36, 2.5, color);
+        ctx.fillStyle = shadeHex(color, 0.45);
+        rr(10, -6.2, 12, 2.4, 1); ctx.fill();
+        ctx.fillStyle = accent; ctx.globalAlpha = 0.8;
+        ctx.fillRect(14, -7.2, 4, 1.1); ctx.globalAlpha = 1;
+      } else {
+        // 基础机枪：双联管 + 制退器
+        barrelBody(color, 28, 2.2, accent, hot);
+        barrelBody(color, 26, 2.2, accent, hot);
+        ctx.save(); ctx.translate(0, -3.4); muzzleBrake(28, 2.2, color); ctx.restore();
+        ctx.save(); ctx.translate(0, 3.4); muzzleBrake(26, 2.2, color); ctx.restore();
+      }
       break;
     }
   }
@@ -8762,7 +9229,11 @@ function drawTowerArt(b, s, color) {
   ctx.fillStyle = gradR("hb" + color, 13, [[0, shadeHex(color, 0.5)], [0.55, shadeHex(color, -0.02)], [1, shadeHex(color, -0.5)]]);
   ctx.beginPath(); ctx.arc(0, 0, 12, 0, 6.2832); ctx.fill();
   ctx.strokeStyle = "rgba(0,0,0,.45)"; ctx.lineWidth = 2.4; ctx.stroke();
-  ctx.strokeStyle = isBr ? "#ffe066" : shadeHex(color, 0.6); ctx.lineWidth = 1.4; ctx.stroke();
+  const branchTrim = b.branch === "a" ? "#ffd166" : (b.branch === "b" ? "#7dd3fc" : shadeHex(color, 0.6));
+  ctx.strokeStyle = isBr ? branchTrim : shadeHex(color, 0.6); ctx.lineWidth = isBr ? 1.8 : 1.4; ctx.stroke();
+  ctx.strokeStyle = accent; ctx.globalAlpha = 0.72 + pulse * 0.2; ctx.lineWidth = 1.1;
+  ctx.beginPath(); ctx.arc(0, 0, 8.8, -0.2, Math.PI * 1.42); ctx.stroke();
+  ctx.globalAlpha = 1;
   ctx.globalAlpha = 0.18; ctx.fillStyle = "#ffffff";
   ctx.beginPath(); ctx.ellipse(-3.5, -3.5, 4.6, 3, -0.7, 0, 6.2832); ctx.fill();
   ctx.globalAlpha = 1;
@@ -8770,12 +9241,14 @@ function drawTowerArt(b, s, color) {
   ctx.fillStyle = accent;
   ctx.fillRect(5, -1.7, 9, 3.4);
   ctx.globalAlpha = 1;
-  drawBarrel(b.type, color, accent, hot);
+  drawBarrel(b.type, color, accent, hot, b.branch);
   ctx.restore();
 
   // ⑦ 炮口闪光 + 冲击环（用 fireFx 自身当进度，零新增状态）
   if (fxF > 0) {
-    const tipX = Math.cos(rot) * 34, tipY = -3 + Math.sin(rot) * 34;
+    const muzzle = b.type === "turret" && b.branch === "a" ? 29
+      : (b.type === "turret" && b.branch === "b" ? 36 : (TOWER_MUZZLE_LENGTH[b.type] || 28));
+    const tipX = Math.cos(rot) * muzzle, tipY = -3 + Math.sin(rot) * muzzle;
     ctx.save();
     ctx.translate(tipX, tipY);
     ctx.globalAlpha = (1 - hot) * 0.55;
@@ -8909,20 +9382,21 @@ function drawSupportArt(b, color) {
   ctx.restore();
 }
 function drawBuildings() {
+  const frameDt = typeof dt !== 'undefined' && Number.isFinite(dt) ? Math.max(0, dt) : 1 / 60;
   for (const b of G.buildings) {
     // 建造落地动画
     if (b.animY !== undefined && b.animY < 0) {
-      b.animY += 300 * (typeof dt !== 'undefined' ? dt : 0.016);
+      b.animY += 300 * frameDt;
       if (b.animY >= 0) { b.animY = 0; b.animBounce = 0.3; }
     }
     if (b.animBounce > 0) {
-      b.animBounce -= (typeof dt !== 'undefined' ? dt : 0.016) * 3;
+      b.animBounce -= frameDt * 3;
     }
     // 开火脉冲衰减
-    if (b.fireFx > 0) b.fireFx -= 0.016;
-    if (b.recoil > 0) b.recoil = Math.max(0, b.recoil - 0.15);
+    if (b.fireFx > 0) b.fireFx = Math.max(0, b.fireFx - frameDt);
+    if (b.recoil > 0) b.recoil = Math.max(0, b.recoil - frameDt * 9);
     const buildOffsetY = b.animY !== undefined ? b.animY : 0;
-    const fireScale = b.fireFx > 0 ? 1 + 0.04 * Math.min(b.fireFx * 4, 1) : 0;
+    const fireScale = b.fireFx > 0 ? 0.04 * Math.min(b.fireFx * 4, 1) : 0;
     const buildScale = (b.animBounce > 0 ? 1 + 0.1 * Math.sin(b.animBounce * 10) : 1) + fireScale;
 
     const R = cellRect(b.col, b.row);
@@ -9022,55 +9496,129 @@ function drawBuildings() {
 function drawBed() {
   const x = BED_CX, y = BED_CY;
   const R = cellRect(7, 1);
-  // 床铺背景光晕
-  const bedGlow = ctx.createRadialGradient(x, y, 10, x, y, 80);
-  bedGlow.addColorStop(0, 'rgba(93,80,160,.25)');
-  bedGlow.addColorStop(0.5, 'rgba(93,80,160,.08)');
+  const bedH = R.h * 2, bedX = R.x + 12, bedY = R.y + 9;
+  const bedW = R.w - 24, bedD = bedH - 22;
+  const gp = clamp((G.grow || 0) / 25, 0, 1);
+  const hp = G.bed.maxHp > 0 ? clamp(G.bed.hp / G.bed.maxHp, 0, 1) : 1;
+  const breathe = Math.sin(T * 1.35) * 1.2;
+
+  // 床是防线核心：先绘制随发育等级增强的柔和灵光，再画木框和寝具。
+  const bedGlow = ctx.createRadialGradient(x, y, 10, x, y, 82);
+  bedGlow.addColorStop(0, 'rgba(93,130,190,' + (0.13 + gp * 0.12) + ')');
+  bedGlow.addColorStop(0.58, 'rgba(93,80,160,.08)');
   bedGlow.addColorStop(1, 'transparent');
-  ctx.fillStyle = bedGlow; ctx.beginPath(); ctx.arc(x, y, 80, 0, 6.2832); ctx.fill();
-  ctx.fillStyle = 'rgba(0,0,0,.28)'; rr(R.x + 6, R.y + 8, R.w - 12, (R.h * 2) - 14, 12); ctx.fill();
-  ctx.fillStyle = '#5b4b8a'; rr(R.x + 14, R.y + 16, R.w - 28, (R.h * 2) - 30, 10); ctx.fill();
-  ctx.fillStyle = '#7d68b8'; rr(R.x + 14, R.y + 16, R.w - 28, 22, 10); ctx.fill();
-  ctx.fillStyle = '#e8e0ff'; rr(R.x + 20, R.y + 18, 34, 20, 6); ctx.fill();
-  const breathe = Math.sin(T * 1.6) * 2;
-  ctx.save(); ctx.translate(x + 6, y + 6 + breathe);
-  ctx.fillStyle = '#ffd9b3'; ctx.beginPath(); ctx.arc(-26, 0, 11, 0, 6.2832); ctx.fill();
-  ctx.fillStyle = '#4a3f6b'; ctx.beginPath(); ctx.arc(-26, -3, 11, Math.PI, 0); ctx.fill();
-  ctx.fillStyle = '#6fd3ff'; rr(-12, -9, 46, 18, 8); ctx.fill();
-  ctx.fillStyle = '#ffd9b3'; ctx.beginPath(); ctx.arc(30, -4, 6, 0, 6.2832); ctx.fill();
-  ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(-32, -1); ctx.lineTo(-28, -1); ctx.moveTo(-24, -1); ctx.lineTo(-20, -1); ctx.stroke();
-  ctx.fillStyle = 'rgba(200,220,255,.75)'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
-  const zt = (T * 0.7) % 1;
-  ctx.globalAlpha = 1 - zt; ctx.fillText('z', -34 - zt * 14, -14 - zt * 22);
-  ctx.restore();
-  const gp = G.grow / 25;
-  // 发育光环（多层渐变）
-  ctx.beginPath(); ctx.arc(x + 6, y + 6, 46 + gp * 18, 0, 6.2832);
-  const growGrad = ctx.createRadialGradient(x + 6, y + 6, 30, x + 6, y + 6, 46 + gp * 18);
-  growGrad.addColorStop(0, 'rgba(124,243,154,' + (0.05 + gp * 0.15) + ')');
-  growGrad.addColorStop(0.7, 'rgba(124,243,154,' + (0.08 + gp * 0.2) + ')');
+  ctx.fillStyle = bedGlow; ctx.beginPath(); ctx.arc(x, y, 82, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.34)';
+  ctx.beginPath(); ctx.ellipse(x + 5, y + 8, bedW * .66, bedD * .48, 0, 0, 6.2832); ctx.fill();
+
+  const growGrad = ctx.createRadialGradient(x, y, 32, x, y, 54 + gp * 18);
+  growGrad.addColorStop(0, 'rgba(124,243,154,' + (0.025 + gp * 0.11) + ')');
+  growGrad.addColorStop(.72, 'rgba(124,243,154,' + (0.035 + gp * 0.13) + ')');
   growGrad.addColorStop(1, 'rgba(124,243,154,0)');
-  ctx.fillStyle = growGrad; ctx.fill();
-  ctx.strokeStyle = 'rgba(124,243,154,' + (0.15 + gp * 0.35) + ')';
-  ctx.lineWidth = 1.5 + gp * 2.5; ctx.stroke();
-  // 发育等级光点
-  if (gp > 0.2) {
-    for (let i = 0; i < Math.floor(G.grow / 5); i++) {
-      const angle = T * 0.5 + i * (Math.PI * 2 / Math.max(1, Math.floor(G.grow / 5)));
-      const r = 50 + gp * 15;
-      const px = x + 6 + Math.cos(angle) * r;
-      const py = y + 6 + Math.sin(angle) * r;
-      const a = 0.4 + Math.sin(T * 3 + i) * 0.3;
-      ctx.fillStyle = 'rgba(124,243,154,' + a + ')';
-      ctx.beginPath(); ctx.arc(px, py, 2, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = growGrad; ctx.beginPath(); ctx.arc(x, y, 72, 0, 6.2832); ctx.fill();
+
+  // 深色木框、软包床头与黄铜包角，让床在密集战场中仍然一眼可辨。
+  const wood = ctx.createLinearGradient(bedX, bedY, bedX + bedW, bedY + bedD);
+  wood.addColorStop(0, '#473955'); wood.addColorStop(.48, '#302940'); wood.addColorStop(1, '#211e32');
+  ctx.fillStyle = wood; rr(bedX, bedY, bedW, bedD, 12); ctx.fill();
+  ctx.strokeStyle = 'rgba(223,193,139,.55)'; ctx.lineWidth = 1.3;
+  rr(bedX + 1, bedY + 1, bedW - 2, bedD - 2, 11); ctx.stroke();
+  ctx.fillStyle = 'rgba(218,190,143,.52)';
+  [[bedX + 5, bedY + 6], [bedX + bedW - 5, bedY + 6],
+    [bedX + 5, bedY + bedD - 6], [bedX + bedW - 5, bedY + bedD - 6]].forEach(p => {
+    ctx.beginPath(); ctx.arc(p[0], p[1], 1.5, 0, 6.2832); ctx.fill();
+  });
+
+  const headY = bedY + 5, headH = 29;
+  const head = ctx.createLinearGradient(bedX, headY, bedX, headY + headH);
+  head.addColorStop(0, '#76658e'); head.addColorStop(1, '#403854');
+  ctx.fillStyle = head; rr(bedX + 5, headY, bedW - 10, headH, 8); ctx.fill();
+  ctx.strokeStyle = 'rgba(233,218,187,.35)'; ctx.lineWidth = 1;
+  rr(bedX + 8, headY + 3, bedW - 16, headH - 6, 6); ctx.stroke();
+  ctx.fillStyle = 'rgba(232,217,182,.9)';
+  ctx.beginPath(); ctx.arc(x, headY + headH / 2, 2.1, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = 'rgba(198,179,234,.8)';
+  ctx.beginPath(); ctx.arc(x - 12, headY + headH / 2, 1, 0, 6.2832); ctx.arc(x + 12, headY + headH / 2, 1, 0, 6.2832); ctx.fill();
+
+  const mattress = { x: bedX + 7, y: headY + headH - 1, w: bedW - 14, h: bedD - headH - 11 };
+  const matGrad = ctx.createLinearGradient(mattress.x, mattress.y, mattress.x + mattress.w, mattress.y + mattress.h);
+  matGrad.addColorStop(0, '#ddd9ed'); matGrad.addColorStop(.46, '#b9bbd5'); matGrad.addColorStop(1, '#8589ad');
+  ctx.fillStyle = matGrad; rr(mattress.x, mattress.y, mattress.w, mattress.h, 8); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1;
+  rr(mattress.x + 1, mattress.y + 1, mattress.w - 2, mattress.h - 2, 7); ctx.stroke();
+
+  // 枕头、侧躺的孩子与绗缝被面；轻微呼吸只移动被角，不影响碰撞或战斗判定。
+  const pillow = { x: x - 24, y: mattress.y + 5, w: 48, h: 25 };
+  const pillowGrad = ctx.createLinearGradient(pillow.x, pillow.y, pillow.x, pillow.y + pillow.h);
+  pillowGrad.addColorStop(0, '#fff4e5'); pillowGrad.addColorStop(1, '#c7c7e2');
+  ctx.fillStyle = pillowGrad; rr(pillow.x, pillow.y, pillow.w, pillow.h, 8); ctx.fill();
+  ctx.strokeStyle = 'rgba(115,111,153,.4)'; ctx.lineWidth = 1;
+  rr(pillow.x + 3, pillow.y + 3, pillow.w - 6, pillow.h - 6, 6); ctx.stroke();
+
+  const faceX = x - 3, faceY = pillow.y + 18 + breathe * .25;
+  ctx.fillStyle = '#e9bb9e'; ctx.beginPath(); ctx.ellipse(faceX, faceY, 12, 9, .08, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = '#302b42'; ctx.beginPath(); ctx.ellipse(faceX - 1, faceY - 5, 12, 6, -.12, Math.PI, 6.2832); ctx.fill();
+  ctx.strokeStyle = 'rgba(72,54,59,.82)'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(faceX - 7, faceY + 1); ctx.quadraticCurveTo(faceX - 5, faceY + 3, faceX - 3, faceY + 1);
+  ctx.moveTo(faceX + 1, faceY + 1); ctx.quadraticCurveTo(faceX + 3, faceY + 3, faceX + 5, faceY + 1); ctx.stroke();
+
+  const quilt = { x: mattress.x + 3, y: pillow.y + 23 + breathe, w: mattress.w - 6, h: mattress.y + mattress.h - pillow.y - 28 };
+  const quiltGrad = ctx.createLinearGradient(quilt.x, quilt.y, quilt.x + quilt.w, quilt.y + quilt.h);
+  quiltGrad.addColorStop(0, '#6d91b5'); quiltGrad.addColorStop(.52, '#526d91'); quiltGrad.addColorStop(1, '#34455f');
+  ctx.fillStyle = quiltGrad; rr(quilt.x, quilt.y, quilt.w, quilt.h, 10); ctx.fill();
+  ctx.save(); rr(quilt.x, quilt.y, quilt.w, quilt.h, 10); ctx.clip();
+  ctx.strokeStyle = 'rgba(222,232,246,.30)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(quilt.x + 6, quilt.y + 13); ctx.quadraticCurveTo(x, quilt.y + 4, quilt.x + quilt.w - 6, quilt.y + 14);
+  ctx.moveTo(quilt.x + 8, quilt.y + quilt.h * .47); ctx.quadraticCurveTo(x - 5, quilt.y + quilt.h * .40, quilt.x + quilt.w - 8, quilt.y + quilt.h * .49);
+  ctx.moveTo(quilt.x + 7, quilt.y + quilt.h - 11); ctx.quadraticCurveTo(x, quilt.y + quilt.h - 18, quilt.x + quilt.w - 7, quilt.y + quilt.h - 11);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(220,228,244,.22)'; ctx.lineWidth = .7;
+  for (let i = 0; i < 4; i++) {
+    const sy = quilt.y + 21 + i * 16;
+    if (sy < quilt.y + quilt.h - 8) { ctx.beginPath(); ctx.moveTo(quilt.x + 7, sy); ctx.lineTo(quilt.x + 11, sy + 2); ctx.stroke(); }
+  }
+  // 缝在被角上的小月亮，呼应主界面停在 03:07 的梦境意象。
+  const moonX = x + 17, moonY = quilt.y + quilt.h - 17;
+  ctx.fillStyle = 'rgba(244,218,164,.9)'; ctx.beginPath(); ctx.arc(moonX, moonY, 4.2, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = '#435b79'; ctx.beginPath(); ctx.arc(moonX + 2, moonY - 1.5, 4, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = 'rgba(242,228,190,.9)'; ctx.beginPath(); ctx.arc(moonX - 9, moonY - 5, 1, 0, 6.2832); ctx.arc(moonX + 8, moonY + 4, .8, 0, 6.2832); ctx.fill();
+  if (hp < .3) {
+    ctx.globalAlpha = .45 + Math.sin(T * 5) * .12;
+    ctx.strokeStyle = 'rgba(255,135,151,.86)'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(quilt.x + 9, quilt.y + 9); ctx.lineTo(quilt.x + 14, quilt.y + 19);
+    ctx.lineTo(quilt.x + 10, quilt.y + 27); ctx.moveTo(quilt.x + 14, quilt.y + 19); ctx.lineTo(quilt.x + 20, quilt.y + 22); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  // 发育等级光点沿床侧缓慢巡游，保留原有效果但降低遮挡。
+  if (gp > .2) {
+    const count = Math.min(5, Math.floor((G.grow || 0) / 5));
+    for (let i = 0; i < count; i++) {
+      const angle = T * .42 + i * (Math.PI * 2 / Math.max(1, count));
+      const radius = 54 + gp * 13;
+      const px = x + Math.cos(angle) * radius, py = y + Math.sin(angle) * radius;
+      ctx.globalAlpha = .28 + Math.sin(T * 2.5 + i) * .16;
+      ctx.fillStyle = '#9bf4b4'; ctx.beginPath(); ctx.arc(px, py, 1.5, 0, 6.2832); ctx.fill();
     }
+    ctx.globalAlpha = 1;
   }
+
+  const zt = (T * .7) % 1;
+  ctx.save(); ctx.globalAlpha = 1 - zt; ctx.fillStyle = 'rgba(221,232,255,.78)';
+  ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('z', x - 18 - zt * 8, mattress.y + 11 - zt * 20); ctx.restore();
   if (G.bed.shield > 0) {
-    ctx.strokeStyle = 'rgba(93,230,255,.6)'; ctx.lineWidth = 2;
-    rr(R.x + 10, R.y + 12, R.w - 20, (R.h * 2) - 22, 12); ctx.stroke();
+    const shieldPulse = .42 + Math.sin(T * 2.2) * .1;
+    ctx.strokeStyle = 'rgba(93,230,255,' + shieldPulse + ')'; ctx.lineWidth = 2;
+    ctx.shadowColor = 'rgba(93,230,255,.48)'; ctx.shadowBlur = 8;
+    rr(R.x + 8, R.y + 7, R.w - 16, (R.h * 2) - 14, 13); ctx.stroke(); ctx.shadowBlur = 0;
   }
-  if (G.bed.hp < G.bed.maxHp) bar(x - 40, R.y + 2, 80, 6, G.bed.hp / G.bed.maxHp, '#4ade80');
+  if (G.bed.hp < G.bed.maxHp) {
+    const hpColor = hp < .3 ? '#f87171' : (hp < .6 ? '#fbbf24' : '#4ade80');
+    bar(x - 40, R.y + 2, 80, 6, hp, hpColor, hpColor);
+  }
   const bn = bedName();
   ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
   ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.85)';
@@ -10142,6 +10690,38 @@ function ensureMenuDOM() {
   if ($('startPanel')) return;
   o.innerHTML = MENU_HTML;
   wireMenu();
+  if (typeof wireDreamMenuButtons === 'function') wireDreamMenuButtons();
+}
+function syncAudioUI() {
+  if (typeof Music === 'undefined') return;
+  const musicRange = $('musicVolume');
+  const sfxRange = $('sfxVolume');
+  const musicValue = $('musicVolumeValue');
+  const sfxValue = $('sfxVolumeValue');
+  if (musicRange) musicRange.value = Music.volume;
+  if (sfxRange) sfxRange.value = SFX.volume;
+  if (musicValue) musicValue.textContent = Math.round(Music.volume * 100) + '%';
+  if (sfxValue) sfxValue.textContent = Math.round(SFX.volume * 100) + '%';
+  const status = $('musicStatus');
+  if (status) status.textContent = Music.status();
+  const state = $('musicState');
+  if (state) state.textContent = Music.on ? '开' : '关';
+  const musicButton = $('btnMusicHome');
+  if (musicButton) {
+    musicButton.setAttribute('aria-pressed', Music.on ? 'true' : 'false');
+    musicButton.setAttribute('aria-label', Music.on ? '关闭背景音乐' : '开启背景音乐');
+  }
+  const homeSfxButton = $('btnSoundHome');
+  if (homeSfxButton) {
+    homeSfxButton.textContent = (SFX.on ? '🔊 战斗音效：开启' : '🔇 战斗音效：关闭');
+    homeSfxButton.setAttribute('aria-pressed', SFX.on ? 'true' : 'false');
+  }
+  const gameSfxButton = $('btnSound');
+  if (gameSfxButton) {
+    gameSfxButton.textContent = (SFX.on ? '🔊' : '🔇') + '音';
+    gameSfxButton.setAttribute('aria-pressed', SFX.on ? 'true' : 'false');
+    gameSfxButton.title = SFX.on ? '关闭战斗音效' : '开启战斗音效';
+  }
 }
 function showMenu() {
   ensureMenuDOM();
@@ -10151,48 +10731,83 @@ function showMenu() {
   $('overlay').style.display = 'flex';
   if ($('adminBar')) $('adminBar').style.display = 'none';
   paused = true;
+  if (typeof Music !== 'undefined') Music.play('menu');
   updateMenu();
 }
 function updateMenu() {
   const mg = $('metaGold'); if (mg) mg.textContent = META.gold;
   const bw = $('bestWave'); if (bw) bw.textContent = Math.max(META.best || 0, +Store.get('tangping_best', 0) || 0);
+  LAST_SAVE = loadSave();
+  const continueButton = $('btnContinue');
+  const continueMeta = $('continueMeta');
+  const saveInfo = $('saveInfo');
+  const hasSave = !!(LAST_SAVE && LAST_SAVE.wave > 0);
+  if (continueButton) {
+    continueButton.style.display = hasSave ? '' : 'none';
+    continueButton.setAttribute('aria-label', hasSave ? '继续第 ' + LAST_SAVE.wave + ' 波' : '没有可继续的存档');
+  }
+  if (continueMeta) continueMeta.textContent = hasSave ? '第 ' + LAST_SAVE.wave + ' 波 · ' + ((LAST_SAVE.buildings || []).length) + ' 座建筑' : '暂无自动存档';
+  if (saveInfo) saveInfo.textContent = hasSave
+    ? '自动记录 · 第 ' + LAST_SAVE.wave + ' 波 · ' + ((LAST_SAVE.buildings || []).length) + ' 座建筑'
+    : '尚无继续记录 · 新游戏会自动保存';
   const dc = $('diffCards');
   if (dc) {
     dc.innerHTML = DIFF_KEYS.map(k => {
       const d = DIFFS[k], ok = META.gold >= d.cost;
-      return '<div class="diff' + (d.admin ? ' adm' : '') + (menuDiff === k ? ' on' : '') + '" data-d="' + k + '" title="' + d.desc + '">' +
+      return '<div class="diff' + (d.admin ? ' adm' : '') + (menuDiff === k ? ' on' : '') + '" data-d="' + k + '" title="' + d.desc + '" role="button" tabindex="0" aria-pressed="' + (menuDiff === k) + '">' +
         '<div class="di">' + d.icon + '</div><div class="dn">' + d.name + '</div>' +
         '<div class="dd">' + d.desc + '</div>' +
         (d.cost ? '<div class="dc"' + (ok ? '' : ' style="color:#f87171"') + '>💰 ' + d.cost + '</div>' : '<div class="dc">免费</div>') +
         '<div class="dr">' + (d.admin ? '资源无限' : '结算 x' + d.reward) +
         (d.goldMul !== 1 ? ' · 金币 x' + d.goldMul : '') + '</div></div>';
     }).join('');
-    dc.querySelectorAll('.diff').forEach(el => el.onclick = () => { menuDiff = el.dataset.d; updateMenu(); });
+    dc.querySelectorAll('.diff').forEach(el => {
+      const choose = () => { menuDiff = el.dataset.d; updateMenu(); };
+      el.onclick = choose;
+      el.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); choose(); } };
+    });
   }
   const mc = $('modeCards');
   if (mc) {
     mc.innerHTML = MODE_KEYS.map(k => {
       const m = MODES[k];
-      return '<div class="mode' + (menuMode === k ? ' on' : '') + '" data-m="' + k + '">' +
+      return '<div class="mode' + (menuMode === k ? ' on' : '') + '" data-m="' + k + '" role="button" tabindex="0" aria-pressed="' + (menuMode === k) + '">' +
         '<span class="mi">' + m.icon + '</span><div><div class="mn">' + m.name + '</div>' +
         '<div class="md">' + m.desc + '　·　' + m.tip + '</div></div></div>';
     }).join('');
-    mc.querySelectorAll('.mode').forEach(el => el.onclick = () => { menuMode = el.dataset.m; updateMenu(); });
+    mc.querySelectorAll('.mode').forEach(el => {
+      const choose = () => { menuMode = el.dataset.m; updateMenu(); };
+      el.onclick = choose;
+      el.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); choose(); } };
+    });
+  }
+  const selectedDiff = DIFFS[menuDiff] || DIFFS.normal;
+  const selectedMode = MODES[menuMode] || MODES.limited;
+  const summary = $('setupSummary');
+  if (summary) {
+    const admFree = selectedDiff.admin && (META.equipped || []).indexOf('freeAdmin') >= 0;
+    const cost = selectedDiff.cost && !admFree ? selectedDiff.cost : 0;
+    summary.textContent = selectedDiff.name + ' · ' + selectedMode.name +
+      (cost ? ' · 入场消耗 ' + cost + ' 金币' : ' · 免费入场') +
+      (selectedDiff.admin ? ' · 管理员规则' : ' · 结算奖励 ×' + selectedDiff.reward);
   }
   const er = $('equipRow');
   if (er) {
     const eq = (META.equipped || []).filter(k => META_PRIZES[k]);
+    const equipCount = $('equipCount'); if (equipCount) equipCount.textContent = eq.length + ' / 3 已装备';
     er.innerHTML = eq.length ? eq.map(k => '<span class="eq">' + META_PRIZES[k].icon + ' ' + META_PRIZES[k].name + '</span>').join('')
       : '<span class="eq none">未装备开局道具 — 去「🎒 仓库」装备（最多 3 件）</span>';
   }
+  if (typeof syncAudioUI === 'function') syncAudioUI();
 }
 function wireMenu() {
   if (!$('btnStart')) return;
   $('btnStart').onclick = () => startRun();
   if ($('btnSaveMgr')) $('btnSaveMgr').onclick = () => showSavePanel();
-  $('btnContinue').onclick = () => {
+  if ($('btnContinue')) $('btnContinue').onclick = () => {
+    LAST_SAVE = loadSave();
     if (!LAST_SAVE) return;
-    SFX.init(); $('overlay').style.display = 'none';
+    SFX.init(); Music.unlock(); Music.play('game'); $('overlay').style.display = 'none';
     newGame(LAST_SAVE); paused = false; $('btnPause').textContent = '⏸';
     setTip('欢迎回到梦境，第 ' + G.wave + ' 波即将继续…', 5);
   };
@@ -10204,6 +10819,19 @@ function wireMenu() {
   $('gachaClose').onclick = () => showMenu();
   $('bagClose').onclick = () => showMenu();
   $('btnBagGacha').onclick = () => openGacha();
+  if ($('btnMusicHome')) $('btnMusicHome').onclick = () => {
+    if (Music.on) Music.setEnabled(false);
+    else { Music.unlock(); Music.setEnabled(true); }
+  };
+  if ($('musicVolume')) {
+    $('musicVolume').oninput = ev => Music.setVolume(ev.target.value, false);
+    $('musicVolume').onchange = () => Music.persist();
+  }
+  if ($('sfxVolume')) {
+    $('sfxVolume').oninput = ev => Music.setSfxVolume(ev.target.value, false);
+    $('sfxVolume').onchange = () => Music.persist();
+  }
+  if ($('btnSoundHome')) $('btnSoundHome').onclick = () => Music.setSfx(!SFX.on);
   const setW = v => { const el = $('adWave'); if (el) el.value = Math.max(1, Math.min(999, v | 0)); };
   if ($('adM5')) $('adM5').onclick = () => setW((+$('adWave').value || 1) - 5);
   if ($('adP5')) $('adP5').onclick = () => setW((+$('adWave').value || 1) + 5);
@@ -10213,6 +10841,7 @@ function wireMenu() {
     if (G && !G.over) { G.over = true; grantMetaReward(false); }
     showMenu();
   };
+  if (typeof wireDreamMenuButtons === 'function') wireDreamMenuButtons();
   updateMenu();
 }
 function startRun() {
@@ -10225,6 +10854,7 @@ function startRun() {
   }
   META.gold -= cost; saveMeta();
   SFX.init();
+  Music.unlock(); Music.play('game');
   $('overlay').style.display = 'none';
   SaveSystem.remove(0);
   newGame();
@@ -10551,7 +11181,64 @@ function showStoryDialog(data) {
   const panel = $('storyDialog');
   if (!panel) return;
   storyQueue.push(data);
-  if (!storyTyping) _processStoryQueue();
+  if (!storyTyping && panel.style.display !== 'flex') _processStoryQueue();
+}
+
+/** 可选剧情视频：素材缺失、解码失败或浏览器不支持时，文字剧情照常播放。 */
+function _renderStoryMedia(data) {
+  const box = $('storyMedia');
+  if (!box) return;
+  _clearStoryMedia();
+  const slots = typeof STORY_VIDEO_SLOTS !== 'undefined' ? STORY_VIDEO_SLOTS : null;
+  const slot = slots && data && data.sceneId ? slots[data.sceneId] : null;
+  if (!slot || (!slot.video && !slot.poster)) return;
+
+  box.style.display = 'block';
+  box.setAttribute('aria-label', slot.title || '剧情镜头');
+  const poster = typeof slot.poster === 'string' ? slot.poster.trim() : '';
+  if (poster) {
+    const image = document.createElement('img');
+    image.className = 'story-media-poster';
+    image.src = poster;
+    image.alt = (slot.title || '剧情镜头') + '画面';
+    image.onerror = () => { image.hidden = true; };
+    box.appendChild(image);
+  }
+
+  const source = typeof slot.video === 'string' ? slot.video.trim() : '';
+  if (!source) return;
+  const video = document.createElement('video');
+  video.className = 'story-media-video';
+  video.src = source;
+  if (poster) video.poster = poster;
+  video.controls = true;
+  video.playsInline = true;
+  video.preload = 'metadata';
+  video.setAttribute('aria-label', slot.title || '剧情视频');
+  video.onerror = () => {
+    if (!box.contains(video)) return;
+    video.hidden = true;
+    const fallback = document.createElement('div');
+    fallback.className = 'story-media-fallback';
+    fallback.textContent = '镜头暂不可用，文字记录仍可继续。';
+    box.appendChild(fallback);
+  };
+  box.appendChild(video);
+}
+
+function _clearStoryMedia() {
+  const box = $('storyMedia');
+  if (!box) return;
+  const video = box.querySelector('video');
+  if (video) {
+    video.onerror = null;
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+  }
+  while (box.firstChild) box.removeChild(box.firstChild);
+  box.style.display = 'none';
+  box.removeAttribute('aria-label');
 }
 
 function _processStoryQueue() {
@@ -10560,26 +11247,42 @@ function _processStoryQueue() {
   const panel = $('storyDialog');
   if (!panel) return;
   panel.style.display = 'flex';
+  if (typeof Music !== 'undefined') Music.setDucking(true);
   // 需要玩家做选择时暂停游戏，读完/选完再继续（避免「选着选着床没了」）
   const hasChoices = !!(data.choices && data.choices.length);
-  if (hasChoices) _pauseForStory();
+  if (hasChoices) {
+    panel.dataset.inputLocked = 'true';
+    _pauseForStory();
+  }
   // 暗角效果
   const vig = $('storyVignette');
   if (vig) { vig.style.display = ''; requestAnimationFrame(() => vig.style.opacity = '1'); }
   // 角色氛围
   const sp = STORY_SPEAKERS[data.speaker] || STORY_SPEAKERS['???'];
+  panel.style.setProperty('--sp-c', sp.color || '#a78bfa');
+  panel.style.setProperty('--sp-glow', sp.glow || 'rgba(167,139,250,.16)');
   const spEl = $('storySpeaker');
+  const avatar = $('storyAvatar');
+  const storyMeta = $('storyMeta');
+  if (avatar) {
+    avatar.textContent = sp.icon || '◌';
+    avatar.style.setProperty('--sp-c', sp.color || '#a78bfa');
+    avatar.style.setProperty('--sp-glow', sp.glow || 'rgba(167,139,250,.35)');
+    avatar.setAttribute('aria-label', (data.speaker || '未知声音') + '的头像');
+  }
+  if (storyMeta) storyMeta.textContent = [data.actTitle, data.wave ? '梦境记录 · 第 ' + data.wave + ' 波' : '梦境记录 · 未知时间'].filter(Boolean).join('　/　');
   if (spEl) {
-    spEl.innerHTML = '<span style="margin-right:6px;font-size:22px;vertical-align:middle">' + sp.icon + '</span>' + (data.speaker || '???');
+    spEl.textContent = data.speaker || '???';
     spEl.style.color = sp.color;
   }
-  panel.style.borderColor = sp.color.replace(')', ',.35)').replace('rgb', 'rgba');
+  panel.classList.toggle('narration', data.speaker === '旁白');
   // 氛围光
   const deco = panel.querySelector('.story-deco');
   if (deco) deco.style.background = 'linear-gradient(90deg,' + sp.glow + ',transparent)';
   // 角色小档案（来自 story.js，沉浸感：说话的人是谁）
   if (deco && sp.desc) deco.title = (data.speaker || '') + '：' + sp.desc;
   const textEl = $('storyText');
+  _renderStoryMedia(data);
   textEl.textContent = '';
   textEl.scrollTop = 0;
   const choicesEl = $('storyChoices');
@@ -10702,6 +11405,7 @@ function _showChoiceResult(line, autoMs) {
 function hideStoryDialog() {
   if (_storyTimer) { clearInterval(_storyTimer); _storyTimer = null; }
   clearTimeout(_storyAutoNext);
+  _clearStoryMedia();
   const panel = $('storyDialog');
   if (panel) {
     panel.style.display = 'none';
@@ -10715,6 +11419,8 @@ function hideStoryDialog() {
   if (vig) { vig.style.opacity = '0'; setTimeout(() => vig.style.display = 'none', 400); }
   storyQueue = [];
   storyTyping = false;
+  if (panel) delete panel.dataset.inputLocked;
+  if (typeof Music !== 'undefined') Music.setDucking(false);
   _resumeAfterStory();
   // 剧情读完后，把排队等着的第四面墙演出放出来
   _flushPendingFourthWall();
@@ -11429,6 +12135,7 @@ function loadSaveSlot(slot) {
 function doLoadSlot(slot, d) {
   try {
     newGame(d);                       // newGame 内部会 applySave → SaveSystem.restore
+    if (typeof Music !== 'undefined') { Music.unlock(); Music.play('game'); }
     // 从主菜单载入时要把菜单收起来
     const ov = $('overlay');
     if (ov) ov.style.display = 'none';
@@ -11505,7 +12212,20 @@ cv.addEventListener('contextmenu', e => { e.preventDefault(); selectedBuildKey =
 const SKILL_MAP = { q: 'meteor', w: 'freeze', e: 'overclock', r: 'mend', t: 'repel', f: 'siphon' };
 window.addEventListener('keydown', e => {
   const target = e.target;
-  if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+  if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(target.tagName) ||
+    (target.closest && target.closest('[role="button"]')))) return;
+  // 保留浏览器的 Ctrl/Alt/Meta 系统快捷键（例如 Ctrl+S 保存网页、Ctrl+P 打印）。
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  // 菜单、抽奖、仓库和结算画面打开时，不能让按键操作被遮住的游戏场景。
+  const overlay = $('overlay');
+  if (overlay && overlay.style.display === 'flex') return;
+  // 剧情选择弹窗暂停了模拟；按键不能穿透弹窗去解除暂停或施放技能。
+  const storyDialog = $('storyDialog');
+  if (storyDialog && storyDialog.dataset.inputLocked === 'true') {
+    if (e.key === ' ') e.preventDefault();
+    return;
+  }
+  if (e.repeat) return; // 这些都是单次动作快捷键，长按不应重复施放或反复切换暂停。
   const k = e.key;
   if (k === 'Escape') {
     selectedBuildKey = null; selected = null; syncCards();
@@ -11557,8 +12277,12 @@ function bindUI() {
   $('btnMaxAll').onclick = () => Cmd.upgradeAllMax();
   $('btnUpTower').onclick = () => Cmd.upgradeAll(true);
   $('btnHelp2').onclick = () => togglePanel('helpPanel');
-  $('btnPause').onclick = () => { paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸'; };
-  $('btnSound').onclick = () => { SFX.on = !SFX.on; $('btnSound').textContent = SFX.on ? '🔊' : '🔇'; };
+  $('btnPause').onclick = () => {
+    const storyDialog = $('storyDialog');
+    if (storyDialog && storyDialog.dataset.inputLocked === 'true') return;
+    paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸';
+  };
+  $('btnSound').onclick = () => Music.setSfx(!SFX.on);
   $('btnSpeed').onclick = () => { timeScale = timeScale === 1 ? 2 : timeScale === 2 ? 3 : 1; $('btnSpeed').textContent = timeScale + '×'; };
   $('btnSave').onclick = () => toggleSavePanel();
   if ($('saveClose')) $('saveClose').onclick = () => closeSavePanel();
@@ -11773,6 +12497,10 @@ function loop(now) {
 }
 let LAST_SAVE = null;
 function init() {
+  Music.init();
+  const unlockAudio = () => { Music.unlock(); SFX.init(); };
+  document.addEventListener('pointerdown', unlockAudio, { once: true });
+  document.addEventListener('keydown', unlockAudio, { once: true });
   newGame();
   buildBuildBar(); buildSkillBar(); buildTechPanel(); buildAchPanel(); buildHelp(); buildLottery(); bindUI();
   paused = true;
@@ -11786,6 +12514,7 @@ function init() {
   wireDreamMenuButtons();
   initDreamUI();
   showMenu();
+  syncAudioUI();
   requestAnimationFrame(loop);
 }
 init();

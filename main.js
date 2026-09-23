@@ -36,7 +36,20 @@ cv.addEventListener('contextmenu', e => { e.preventDefault(); selectedBuildKey =
 const SKILL_MAP = { q: 'meteor', w: 'freeze', e: 'overclock', r: 'mend', t: 'repel', f: 'siphon' };
 window.addEventListener('keydown', e => {
   const target = e.target;
-  if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+  if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(target.tagName) ||
+    (target.closest && target.closest('[role="button"]')))) return;
+  // 保留浏览器的 Ctrl/Alt/Meta 系统快捷键（例如 Ctrl+S 保存网页、Ctrl+P 打印）。
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  // 菜单、抽奖、仓库和结算画面打开时，不能让按键操作被遮住的游戏场景。
+  const overlay = $('overlay');
+  if (overlay && overlay.style.display === 'flex') return;
+  // 剧情选择弹窗暂停了模拟；按键不能穿透弹窗去解除暂停或施放技能。
+  const storyDialog = $('storyDialog');
+  if (storyDialog && storyDialog.dataset.inputLocked === 'true') {
+    if (e.key === ' ') e.preventDefault();
+    return;
+  }
+  if (e.repeat) return; // 这些都是单次动作快捷键，长按不应重复施放或反复切换暂停。
   const k = e.key;
   if (k === 'Escape') {
     selectedBuildKey = null; selected = null; syncCards();
@@ -88,8 +101,12 @@ function bindUI() {
   $('btnMaxAll').onclick = () => Cmd.upgradeAllMax();
   $('btnUpTower').onclick = () => Cmd.upgradeAll(true);
   $('btnHelp2').onclick = () => togglePanel('helpPanel');
-  $('btnPause').onclick = () => { paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸'; };
-  $('btnSound').onclick = () => { SFX.on = !SFX.on; $('btnSound').textContent = SFX.on ? '🔊' : '🔇'; };
+  $('btnPause').onclick = () => {
+    const storyDialog = $('storyDialog');
+    if (storyDialog && storyDialog.dataset.inputLocked === 'true') return;
+    paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸';
+  };
+  $('btnSound').onclick = () => Music.setSfx(!SFX.on);
   $('btnSpeed').onclick = () => { timeScale = timeScale === 1 ? 2 : timeScale === 2 ? 3 : 1; $('btnSpeed').textContent = timeScale + '×'; };
   $('btnSave').onclick = () => toggleSavePanel();
   if ($('saveClose')) $('saveClose').onclick = () => closeSavePanel();
@@ -304,6 +321,10 @@ function loop(now) {
 }
 let LAST_SAVE = null;
 function init() {
+  Music.init();
+  const unlockAudio = () => { Music.unlock(); SFX.init(); };
+  document.addEventListener('pointerdown', unlockAudio, { once: true });
+  document.addEventListener('keydown', unlockAudio, { once: true });
   newGame();
   buildBuildBar(); buildSkillBar(); buildTechPanel(); buildAchPanel(); buildHelp(); buildLottery(); bindUI();
   paused = true;
@@ -317,6 +338,7 @@ function init() {
   wireDreamMenuButtons();
   initDreamUI();
   showMenu();
+  syncAudioUI();
   requestAnimationFrame(loop);
 }
 init();

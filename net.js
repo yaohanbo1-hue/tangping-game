@@ -141,6 +141,8 @@ const Cmd = {
   exec(cmd, remoteToken, peerId) {
     const fromRemote = remoteToken === REMOTE_CMD_TOKEN;
     if (fromRemote ? !Net.isAuthorizedPeer(peerId) : (remoteToken !== undefined || (Net.enabled && !Net.isHost))) return false;
+    const storyDialog = typeof document !== 'undefined' && document.getElementById('storyDialog');
+    if (storyDialog && storyDialog.dataset.inputLocked === 'true') return false;
     cmd = this._normalize(cmd);
     if (!cmd || typeof G === 'undefined' || !G || G.over || (fromRemote && cmd.t === 'jump')) return false;
     switch (cmd.t) {

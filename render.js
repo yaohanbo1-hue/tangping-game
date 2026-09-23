@@ -545,7 +545,11 @@ function muzzleBrake(len, halfH, color) {
   ctx.fillRect(len - 8, -halfH - 1.6, 1.4, halfH * 2 + 3.2);
 }
 /** 10 种武器的炮管/发射器造型 —— 长度、粗细、机构都不同，不看名字也能分辨 */
-function drawBarrel(type, color, accent, hot) {
+const TOWER_MUZZLE_LENGTH = {
+  laser: 50, frost: 36, flame: 34, tesla: 27, poison: 26,
+  sonic: 26, missile: 25, gravity: 12, prism: 32, turret: 28,
+};
+function drawBarrel(type, color, accent, hot, branch) {
   accent = accent || color;
   hot = hot || 0;
   switch (type) {
@@ -673,11 +677,29 @@ function drawBarrel(type, color, accent, hot) {
       break;
     }
     default: {
-      // 机枪炮塔：双联管 + 制退器
-      barrelBody(color, 28, 2.2, accent, hot);
-      barrelBody(color, 26, 2.2, accent, hot);
-      ctx.save(); ctx.translate(0, -3.4); muzzleBrake(28, 2.2, color); ctx.restore();
-      ctx.save(); ctx.translate(0, 3.4); muzzleBrake(26, 2.2, color); ctx.restore();
+      if (type === "turret" && branch === "a") {
+        // 加特林分支：三联旋转枪管，保留原有转塔与射击逻辑
+        for (const y of [-4.2, 0, 4.2]) {
+          ctx.save(); ctx.translate(0, y);
+          barrelBody(color, 29, 1.45, accent, hot);
+          muzzleBrake(29, 1.45, color);
+          ctx.restore();
+        }
+      } else if (type === "turret" && branch === "b") {
+        // 狙击分支：加长重管与瞄准镜，纯外观标识
+        barrelBody(color, 36, 2.5, accent, hot);
+        muzzleBrake(36, 2.5, color);
+        ctx.fillStyle = shadeHex(color, 0.45);
+        rr(10, -6.2, 12, 2.4, 1); ctx.fill();
+        ctx.fillStyle = accent; ctx.globalAlpha = 0.8;
+        ctx.fillRect(14, -7.2, 4, 1.1); ctx.globalAlpha = 1;
+      } else {
+        // 基础机枪：双联管 + 制退器
+        barrelBody(color, 28, 2.2, accent, hot);
+        barrelBody(color, 26, 2.2, accent, hot);
+        ctx.save(); ctx.translate(0, -3.4); muzzleBrake(28, 2.2, color); ctx.restore();
+        ctx.save(); ctx.translate(0, 3.4); muzzleBrake(26, 2.2, color); ctx.restore();
+      }
       break;
     }
   }
@@ -776,7 +798,11 @@ function drawTowerArt(b, s, color) {
   ctx.fillStyle = gradR("hb" + color, 13, [[0, shadeHex(color, 0.5)], [0.55, shadeHex(color, -0.02)], [1, shadeHex(color, -0.5)]]);
   ctx.beginPath(); ctx.arc(0, 0, 12, 0, 6.2832); ctx.fill();
   ctx.strokeStyle = "rgba(0,0,0,.45)"; ctx.lineWidth = 2.4; ctx.stroke();
-  ctx.strokeStyle = isBr ? "#ffe066" : shadeHex(color, 0.6); ctx.lineWidth = 1.4; ctx.stroke();
+  const branchTrim = b.branch === "a" ? "#ffd166" : (b.branch === "b" ? "#7dd3fc" : shadeHex(color, 0.6));
+  ctx.strokeStyle = isBr ? branchTrim : shadeHex(color, 0.6); ctx.lineWidth = isBr ? 1.8 : 1.4; ctx.stroke();
+  ctx.strokeStyle = accent; ctx.globalAlpha = 0.72 + pulse * 0.2; ctx.lineWidth = 1.1;
+  ctx.beginPath(); ctx.arc(0, 0, 8.8, -0.2, Math.PI * 1.42); ctx.stroke();
+  ctx.globalAlpha = 1;
   ctx.globalAlpha = 0.18; ctx.fillStyle = "#ffffff";
   ctx.beginPath(); ctx.ellipse(-3.5, -3.5, 4.6, 3, -0.7, 0, 6.2832); ctx.fill();
   ctx.globalAlpha = 1;
@@ -784,12 +810,14 @@ function drawTowerArt(b, s, color) {
   ctx.fillStyle = accent;
   ctx.fillRect(5, -1.7, 9, 3.4);
   ctx.globalAlpha = 1;
-  drawBarrel(b.type, color, accent, hot);
+  drawBarrel(b.type, color, accent, hot, b.branch);
   ctx.restore();
 
   // ⑦ 炮口闪光 + 冲击环（用 fireFx 自身当进度，零新增状态）
   if (fxF > 0) {
-    const tipX = Math.cos(rot) * 34, tipY = -3 + Math.sin(rot) * 34;
+    const muzzle = b.type === "turret" && b.branch === "a" ? 29
+      : (b.type === "turret" && b.branch === "b" ? 36 : (TOWER_MUZZLE_LENGTH[b.type] || 28));
+    const tipX = Math.cos(rot) * muzzle, tipY = -3 + Math.sin(rot) * muzzle;
     ctx.save();
     ctx.translate(tipX, tipY);
     ctx.globalAlpha = (1 - hot) * 0.55;
@@ -923,20 +951,21 @@ function drawSupportArt(b, color) {
   ctx.restore();
 }
 function drawBuildings() {
+  const frameDt = typeof dt !== 'undefined' && Number.isFinite(dt) ? Math.max(0, dt) : 1 / 60;
   for (const b of G.buildings) {
     // 建造落地动画
     if (b.animY !== undefined && b.animY < 0) {
-      b.animY += 300 * (typeof dt !== 'undefined' ? dt : 0.016);
+      b.animY += 300 * frameDt;
       if (b.animY >= 0) { b.animY = 0; b.animBounce = 0.3; }
     }
     if (b.animBounce > 0) {
-      b.animBounce -= (typeof dt !== 'undefined' ? dt : 0.016) * 3;
+      b.animBounce -= frameDt * 3;
     }
     // 开火脉冲衰减
-    if (b.fireFx > 0) b.fireFx -= 0.016;
-    if (b.recoil > 0) b.recoil = Math.max(0, b.recoil - 0.15);
+    if (b.fireFx > 0) b.fireFx = Math.max(0, b.fireFx - frameDt);
+    if (b.recoil > 0) b.recoil = Math.max(0, b.recoil - frameDt * 9);
     const buildOffsetY = b.animY !== undefined ? b.animY : 0;
-    const fireScale = b.fireFx > 0 ? 1 + 0.04 * Math.min(b.fireFx * 4, 1) : 0;
+    const fireScale = b.fireFx > 0 ? 0.04 * Math.min(b.fireFx * 4, 1) : 0;
     const buildScale = (b.animBounce > 0 ? 1 + 0.1 * Math.sin(b.animBounce * 10) : 1) + fireScale;
 
     const R = cellRect(b.col, b.row);
@@ -1036,55 +1065,129 @@ function drawBuildings() {
 function drawBed() {
   const x = BED_CX, y = BED_CY;
   const R = cellRect(7, 1);
-  // 床铺背景光晕
-  const bedGlow = ctx.createRadialGradient(x, y, 10, x, y, 80);
-  bedGlow.addColorStop(0, 'rgba(93,80,160,.25)');
-  bedGlow.addColorStop(0.5, 'rgba(93,80,160,.08)');
+  const bedH = R.h * 2, bedX = R.x + 12, bedY = R.y + 9;
+  const bedW = R.w - 24, bedD = bedH - 22;
+  const gp = clamp((G.grow || 0) / 25, 0, 1);
+  const hp = G.bed.maxHp > 0 ? clamp(G.bed.hp / G.bed.maxHp, 0, 1) : 1;
+  const breathe = Math.sin(T * 1.35) * 1.2;
+
+  // 床是防线核心：先绘制随发育等级增强的柔和灵光，再画木框和寝具。
+  const bedGlow = ctx.createRadialGradient(x, y, 10, x, y, 82);
+  bedGlow.addColorStop(0, 'rgba(93,130,190,' + (0.13 + gp * 0.12) + ')');
+  bedGlow.addColorStop(0.58, 'rgba(93,80,160,.08)');
   bedGlow.addColorStop(1, 'transparent');
-  ctx.fillStyle = bedGlow; ctx.beginPath(); ctx.arc(x, y, 80, 0, 6.2832); ctx.fill();
-  ctx.fillStyle = 'rgba(0,0,0,.28)'; rr(R.x + 6, R.y + 8, R.w - 12, (R.h * 2) - 14, 12); ctx.fill();
-  ctx.fillStyle = '#5b4b8a'; rr(R.x + 14, R.y + 16, R.w - 28, (R.h * 2) - 30, 10); ctx.fill();
-  ctx.fillStyle = '#7d68b8'; rr(R.x + 14, R.y + 16, R.w - 28, 22, 10); ctx.fill();
-  ctx.fillStyle = '#e8e0ff'; rr(R.x + 20, R.y + 18, 34, 20, 6); ctx.fill();
-  const breathe = Math.sin(T * 1.6) * 2;
-  ctx.save(); ctx.translate(x + 6, y + 6 + breathe);
-  ctx.fillStyle = '#ffd9b3'; ctx.beginPath(); ctx.arc(-26, 0, 11, 0, 6.2832); ctx.fill();
-  ctx.fillStyle = '#4a3f6b'; ctx.beginPath(); ctx.arc(-26, -3, 11, Math.PI, 0); ctx.fill();
-  ctx.fillStyle = '#6fd3ff'; rr(-12, -9, 46, 18, 8); ctx.fill();
-  ctx.fillStyle = '#ffd9b3'; ctx.beginPath(); ctx.arc(30, -4, 6, 0, 6.2832); ctx.fill();
-  ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(-32, -1); ctx.lineTo(-28, -1); ctx.moveTo(-24, -1); ctx.lineTo(-20, -1); ctx.stroke();
-  ctx.fillStyle = 'rgba(200,220,255,.75)'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
-  const zt = (T * 0.7) % 1;
-  ctx.globalAlpha = 1 - zt; ctx.fillText('z', -34 - zt * 14, -14 - zt * 22);
-  ctx.restore();
-  const gp = G.grow / 25;
-  // 发育光环（多层渐变）
-  ctx.beginPath(); ctx.arc(x + 6, y + 6, 46 + gp * 18, 0, 6.2832);
-  const growGrad = ctx.createRadialGradient(x + 6, y + 6, 30, x + 6, y + 6, 46 + gp * 18);
-  growGrad.addColorStop(0, 'rgba(124,243,154,' + (0.05 + gp * 0.15) + ')');
-  growGrad.addColorStop(0.7, 'rgba(124,243,154,' + (0.08 + gp * 0.2) + ')');
+  ctx.fillStyle = bedGlow; ctx.beginPath(); ctx.arc(x, y, 82, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = 'rgba(0,0,0,.34)';
+  ctx.beginPath(); ctx.ellipse(x + 5, y + 8, bedW * .66, bedD * .48, 0, 0, 6.2832); ctx.fill();
+
+  const growGrad = ctx.createRadialGradient(x, y, 32, x, y, 54 + gp * 18);
+  growGrad.addColorStop(0, 'rgba(124,243,154,' + (0.025 + gp * 0.11) + ')');
+  growGrad.addColorStop(.72, 'rgba(124,243,154,' + (0.035 + gp * 0.13) + ')');
   growGrad.addColorStop(1, 'rgba(124,243,154,0)');
-  ctx.fillStyle = growGrad; ctx.fill();
-  ctx.strokeStyle = 'rgba(124,243,154,' + (0.15 + gp * 0.35) + ')';
-  ctx.lineWidth = 1.5 + gp * 2.5; ctx.stroke();
-  // 发育等级光点
-  if (gp > 0.2) {
-    for (let i = 0; i < Math.floor(G.grow / 5); i++) {
-      const angle = T * 0.5 + i * (Math.PI * 2 / Math.max(1, Math.floor(G.grow / 5)));
-      const r = 50 + gp * 15;
-      const px = x + 6 + Math.cos(angle) * r;
-      const py = y + 6 + Math.sin(angle) * r;
-      const a = 0.4 + Math.sin(T * 3 + i) * 0.3;
-      ctx.fillStyle = 'rgba(124,243,154,' + a + ')';
-      ctx.beginPath(); ctx.arc(px, py, 2, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = growGrad; ctx.beginPath(); ctx.arc(x, y, 72, 0, 6.2832); ctx.fill();
+
+  // 深色木框、软包床头与黄铜包角，让床在密集战场中仍然一眼可辨。
+  const wood = ctx.createLinearGradient(bedX, bedY, bedX + bedW, bedY + bedD);
+  wood.addColorStop(0, '#473955'); wood.addColorStop(.48, '#302940'); wood.addColorStop(1, '#211e32');
+  ctx.fillStyle = wood; rr(bedX, bedY, bedW, bedD, 12); ctx.fill();
+  ctx.strokeStyle = 'rgba(223,193,139,.55)'; ctx.lineWidth = 1.3;
+  rr(bedX + 1, bedY + 1, bedW - 2, bedD - 2, 11); ctx.stroke();
+  ctx.fillStyle = 'rgba(218,190,143,.52)';
+  [[bedX + 5, bedY + 6], [bedX + bedW - 5, bedY + 6],
+    [bedX + 5, bedY + bedD - 6], [bedX + bedW - 5, bedY + bedD - 6]].forEach(p => {
+    ctx.beginPath(); ctx.arc(p[0], p[1], 1.5, 0, 6.2832); ctx.fill();
+  });
+
+  const headY = bedY + 5, headH = 29;
+  const head = ctx.createLinearGradient(bedX, headY, bedX, headY + headH);
+  head.addColorStop(0, '#76658e'); head.addColorStop(1, '#403854');
+  ctx.fillStyle = head; rr(bedX + 5, headY, bedW - 10, headH, 8); ctx.fill();
+  ctx.strokeStyle = 'rgba(233,218,187,.35)'; ctx.lineWidth = 1;
+  rr(bedX + 8, headY + 3, bedW - 16, headH - 6, 6); ctx.stroke();
+  ctx.fillStyle = 'rgba(232,217,182,.9)';
+  ctx.beginPath(); ctx.arc(x, headY + headH / 2, 2.1, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = 'rgba(198,179,234,.8)';
+  ctx.beginPath(); ctx.arc(x - 12, headY + headH / 2, 1, 0, 6.2832); ctx.arc(x + 12, headY + headH / 2, 1, 0, 6.2832); ctx.fill();
+
+  const mattress = { x: bedX + 7, y: headY + headH - 1, w: bedW - 14, h: bedD - headH - 11 };
+  const matGrad = ctx.createLinearGradient(mattress.x, mattress.y, mattress.x + mattress.w, mattress.y + mattress.h);
+  matGrad.addColorStop(0, '#ddd9ed'); matGrad.addColorStop(.46, '#b9bbd5'); matGrad.addColorStop(1, '#8589ad');
+  ctx.fillStyle = matGrad; rr(mattress.x, mattress.y, mattress.w, mattress.h, 8); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1;
+  rr(mattress.x + 1, mattress.y + 1, mattress.w - 2, mattress.h - 2, 7); ctx.stroke();
+
+  // 枕头、侧躺的孩子与绗缝被面；轻微呼吸只移动被角，不影响碰撞或战斗判定。
+  const pillow = { x: x - 24, y: mattress.y + 5, w: 48, h: 25 };
+  const pillowGrad = ctx.createLinearGradient(pillow.x, pillow.y, pillow.x, pillow.y + pillow.h);
+  pillowGrad.addColorStop(0, '#fff4e5'); pillowGrad.addColorStop(1, '#c7c7e2');
+  ctx.fillStyle = pillowGrad; rr(pillow.x, pillow.y, pillow.w, pillow.h, 8); ctx.fill();
+  ctx.strokeStyle = 'rgba(115,111,153,.4)'; ctx.lineWidth = 1;
+  rr(pillow.x + 3, pillow.y + 3, pillow.w - 6, pillow.h - 6, 6); ctx.stroke();
+
+  const faceX = x - 3, faceY = pillow.y + 18 + breathe * .25;
+  ctx.fillStyle = '#e9bb9e'; ctx.beginPath(); ctx.ellipse(faceX, faceY, 12, 9, .08, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = '#302b42'; ctx.beginPath(); ctx.ellipse(faceX - 1, faceY - 5, 12, 6, -.12, Math.PI, 6.2832); ctx.fill();
+  ctx.strokeStyle = 'rgba(72,54,59,.82)'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(faceX - 7, faceY + 1); ctx.quadraticCurveTo(faceX - 5, faceY + 3, faceX - 3, faceY + 1);
+  ctx.moveTo(faceX + 1, faceY + 1); ctx.quadraticCurveTo(faceX + 3, faceY + 3, faceX + 5, faceY + 1); ctx.stroke();
+
+  const quilt = { x: mattress.x + 3, y: pillow.y + 23 + breathe, w: mattress.w - 6, h: mattress.y + mattress.h - pillow.y - 28 };
+  const quiltGrad = ctx.createLinearGradient(quilt.x, quilt.y, quilt.x + quilt.w, quilt.y + quilt.h);
+  quiltGrad.addColorStop(0, '#6d91b5'); quiltGrad.addColorStop(.52, '#526d91'); quiltGrad.addColorStop(1, '#34455f');
+  ctx.fillStyle = quiltGrad; rr(quilt.x, quilt.y, quilt.w, quilt.h, 10); ctx.fill();
+  ctx.save(); rr(quilt.x, quilt.y, quilt.w, quilt.h, 10); ctx.clip();
+  ctx.strokeStyle = 'rgba(222,232,246,.30)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(quilt.x + 6, quilt.y + 13); ctx.quadraticCurveTo(x, quilt.y + 4, quilt.x + quilt.w - 6, quilt.y + 14);
+  ctx.moveTo(quilt.x + 8, quilt.y + quilt.h * .47); ctx.quadraticCurveTo(x - 5, quilt.y + quilt.h * .40, quilt.x + quilt.w - 8, quilt.y + quilt.h * .49);
+  ctx.moveTo(quilt.x + 7, quilt.y + quilt.h - 11); ctx.quadraticCurveTo(x, quilt.y + quilt.h - 18, quilt.x + quilt.w - 7, quilt.y + quilt.h - 11);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(220,228,244,.22)'; ctx.lineWidth = .7;
+  for (let i = 0; i < 4; i++) {
+    const sy = quilt.y + 21 + i * 16;
+    if (sy < quilt.y + quilt.h - 8) { ctx.beginPath(); ctx.moveTo(quilt.x + 7, sy); ctx.lineTo(quilt.x + 11, sy + 2); ctx.stroke(); }
+  }
+  // 缝在被角上的小月亮，呼应主界面停在 03:07 的梦境意象。
+  const moonX = x + 17, moonY = quilt.y + quilt.h - 17;
+  ctx.fillStyle = 'rgba(244,218,164,.9)'; ctx.beginPath(); ctx.arc(moonX, moonY, 4.2, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = '#435b79'; ctx.beginPath(); ctx.arc(moonX + 2, moonY - 1.5, 4, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = 'rgba(242,228,190,.9)'; ctx.beginPath(); ctx.arc(moonX - 9, moonY - 5, 1, 0, 6.2832); ctx.arc(moonX + 8, moonY + 4, .8, 0, 6.2832); ctx.fill();
+  if (hp < .3) {
+    ctx.globalAlpha = .45 + Math.sin(T * 5) * .12;
+    ctx.strokeStyle = 'rgba(255,135,151,.86)'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(quilt.x + 9, quilt.y + 9); ctx.lineTo(quilt.x + 14, quilt.y + 19);
+    ctx.lineTo(quilt.x + 10, quilt.y + 27); ctx.moveTo(quilt.x + 14, quilt.y + 19); ctx.lineTo(quilt.x + 20, quilt.y + 22); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  // 发育等级光点沿床侧缓慢巡游，保留原有效果但降低遮挡。
+  if (gp > .2) {
+    const count = Math.min(5, Math.floor((G.grow || 0) / 5));
+    for (let i = 0; i < count; i++) {
+      const angle = T * .42 + i * (Math.PI * 2 / Math.max(1, count));
+      const radius = 54 + gp * 13;
+      const px = x + Math.cos(angle) * radius, py = y + Math.sin(angle) * radius;
+      ctx.globalAlpha = .28 + Math.sin(T * 2.5 + i) * .16;
+      ctx.fillStyle = '#9bf4b4'; ctx.beginPath(); ctx.arc(px, py, 1.5, 0, 6.2832); ctx.fill();
     }
+    ctx.globalAlpha = 1;
   }
+
+  const zt = (T * .7) % 1;
+  ctx.save(); ctx.globalAlpha = 1 - zt; ctx.fillStyle = 'rgba(221,232,255,.78)';
+  ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+  ctx.fillText('z', x - 18 - zt * 8, mattress.y + 11 - zt * 20); ctx.restore();
   if (G.bed.shield > 0) {
-    ctx.strokeStyle = 'rgba(93,230,255,.6)'; ctx.lineWidth = 2;
-    rr(R.x + 10, R.y + 12, R.w - 20, (R.h * 2) - 22, 12); ctx.stroke();
+    const shieldPulse = .42 + Math.sin(T * 2.2) * .1;
+    ctx.strokeStyle = 'rgba(93,230,255,' + shieldPulse + ')'; ctx.lineWidth = 2;
+    ctx.shadowColor = 'rgba(93,230,255,.48)'; ctx.shadowBlur = 8;
+    rr(R.x + 8, R.y + 7, R.w - 16, (R.h * 2) - 14, 13); ctx.stroke(); ctx.shadowBlur = 0;
   }
-  if (G.bed.hp < G.bed.maxHp) bar(x - 40, R.y + 2, 80, 6, G.bed.hp / G.bed.maxHp, '#4ade80');
+  if (G.bed.hp < G.bed.maxHp) {
+    const hpColor = hp < .3 ? '#f87171' : (hp < .6 ? '#fbbf24' : '#4ade80');
+    bar(x - 40, R.y + 2, 80, 6, hp, hpColor, hpColor);
+  }
   const bn = bedName();
   ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
   ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.85)';
