@@ -6,13 +6,22 @@ function toCanvas(e) {
   const r = cv.getBoundingClientRect();
   return { x: (e.clientX - r.left) * (W / r.width), y: (e.clientY - r.top) * (H / r.height) };
 }
-cv.addEventListener('mousemove', e => {
-  const p = toCanvas(e); mouse.x = p.x; mouse.y = p.y; hoverCell = cellFromXY(p.x, p.y);
-});
-cv.addEventListener('mouseleave', () => { hoverCell = null; mouse.x = -999; });
-cv.addEventListener('click', e => {
-  SFX.init();
-  const p = toCanvas(e), x = p.x, y = p.y;
+/* ------------------------------------------------------------------
+ * 指针输入（桌面鼠标 + 手机触摸共用一套逻辑）
+ *   桌面：移动预览 + 左键操作 + 右键取消
+ *   手机：轻触等同左键（浏览器会为轻触合成 click，所以点按逻辑只写一份）；
+ *         触摸拖动时同步悬停预览（否则看不到放置预览）；
+ *         长按 520ms 取消当前选择，替代桌面端的右键。
+ *   统一用 Pointer Events：iOS Safari 13+ / Android Chromium / 华为浏览器 / 微信 X5 都支持。
+ * ------------------------------------------------------------------ */
+const CANCEL_HOLD_MS = 520;
+let _holdTimer = null, _holdStart = null, _holdFired = false;
+function cancelSelection() {
+  selectedBuildKey = null; selected = null; syncCards();
+}
+function applyCanvasPointer(x, y) { mouse.x = x; mouse.y = y; hoverCell = cellFromXY(x, y); }
+/** 点按（鼠标左键 / 轻触）的落点判定 */
+function handleCanvasTap(x, y) {
   if (x > WALL_X - 44 && x < ROOM_X0 + 30) {
     for (const D of G.doors) {
       const L = LANES[D.lane];
@@ -20,7 +29,7 @@ cv.addEventListener('click', e => {
     }
   }
   const cell = cellFromXY(x, y);
-  if (!cell) { selected = null; selectedBuildKey = null; syncCards(); return; }
+  if (!cell) { cancelSelection(); return; }
   if (inBed(cell.c, cell.r)) { selected = { isBed: true }; selectedBuildKey = null; syncCards(); return; }
   const occ = G.grid[cell.r * COLS + cell.c];
   if (occ && occ !== 'bed') { selected = occ; selectedBuildKey = null; syncCards(); return; }
@@ -31,8 +40,41 @@ cv.addEventListener('click', e => {
     return;
   }
   selected = null;
+}
+function clearHold() { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; } }
+cv.addEventListener('mousemove', e => { const p = toCanvas(e); applyCanvasPointer(p.x, p.y); });
+cv.addEventListener('mouseleave', () => { hoverCell = null; mouse.x = -999; });
+cv.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'touch') return;      // 鼠标/触控板继续走下面的 click
+  SFX.init();
+  const p = toCanvas(e);
+  applyCanvasPointer(p.x, p.y);
+  _holdStart = { x: e.clientX, y: e.clientY, moved: false };
+  _holdFired = false;
+  clearHold();
+  _holdTimer = setTimeout(() => {
+    _holdTimer = null;
+    if (_holdStart && !_holdStart.moved) { _holdFired = true; cancelSelection(); setTip('已取消选择', 1.6); }
+  }, CANCEL_HOLD_MS);
 });
-cv.addEventListener('contextmenu', e => { e.preventDefault(); selectedBuildKey = null; selected = null; syncCards(); });
+cv.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'touch') return;
+  const p = toCanvas(e);
+  applyCanvasPointer(p.x, p.y);
+  // 手指移动超过阈值就算拖动（放预览），不再触发长按取消
+  if (_holdStart && !_holdStart.moved && Math.hypot(e.clientX - _holdStart.x, e.clientY - _holdStart.y) > 12) {
+    _holdStart.moved = true; clearHold();
+  }
+});
+cv.addEventListener('pointerup', e => { if (e.pointerType !== 'touch') return; clearHold(); _holdStart = null; });
+cv.addEventListener('pointercancel', e => { if (e.pointerType !== 'touch') return; clearHold(); _holdStart = null; hoverCell = null; });
+cv.addEventListener('click', e => {
+  SFX.init();
+  if (_holdFired) { _holdFired = false; return; }   // 长按已经取消过了，别把抬手当成点按
+  const p = toCanvas(e);
+  handleCanvasTap(p.x, p.y);
+});
+cv.addEventListener('contextmenu', e => { e.preventDefault(); cancelSelection(); });
 const SKILL_MAP = { q: 'meteor', w: 'freeze', e: 'overclock', r: 'mend', t: 'repel', f: 'siphon' };
 window.addEventListener('keydown', e => {
   const target = e.target;
@@ -256,11 +298,174 @@ function buildHelp() {
     '进度每波自动保存，也可手动点 💾 保存；开局可选择「继续梦境」' +
     '</div>';
 }
-// 屏幕适配
+/* ------------------------------------------------------------------
+ * 屏幕适配（桌面 + 手机）
+ *   1) 尺寸优先取 visualViewport：手机浏览器地址栏会动态遮挡，
+ *      innerHeight 会把被遮住的部分也算进去，直接用会让画布被顶出屏幕。
+ *   2) 刘海 / 灵动岛 / 底部横条的安全区要从可用尺寸里扣掉，否则横屏时
+ *      左边的 HUD 会被刘海压住；两侧留白不等时再做居中偏移补偿。
+ * ------------------------------------------------------------------ */
+function viewportSize() {
+  const vv = window.visualViewport;
+  const w = (vv && vv.width) ? vv.width : window.innerWidth;
+  const h = (vv && vv.height) ? vv.height : window.innerHeight;
+  return { w: w || 1280, h: h || 720 };
+}
+function safeInset() {
+  let t = 0, r = 0, b = 0, l = 0;
+  try {
+    const cs = getComputedStyle(document.documentElement);
+    const num = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
+    t = num(cs.getPropertyValue('--sat')); r = num(cs.getPropertyValue('--sar'));
+    b = num(cs.getPropertyValue('--sab')); l = num(cs.getPropertyValue('--sal'));
+  } catch (e) { /* 不支持 env() 的老浏览器：当 0 处理 */ }
+  return { t, r, b, l };
+}
+function isPortrait() { const vp = viewportSize(); return vp.h > vp.w; }
+
+/* ---------------- 手机端（触摸设备）适配 ---------------- */
+const Mobile = {
+  /** 是否触摸设备。maxTouchPoints 兜底：部分安卓浏览器不带 ontouchstart。 */
+  isTouch: ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0,
+  /** 短边 ≤ 500px 才算手机。平板竖屏（iPad mini 744）画布已经够大，不打扰。 */
+  isPhone: false,
+  /** 判定阈值：手机竖屏宽度最大约 430（iPhone Pro Max），留些余量到 500。 */
+  PHONE_SHORT_SIDE: 500,
+  /** 玩家已经处理过竖屏提示，不再自动弹出。 */
+  hintDismissed: false,
+  /** 是否处于全屏。 */
+  fullscreenOn: false,
+  /** 「旋转画面」竖屏模式的角度：0 = 关闭，90 / -90 = 两个旋转方向。
+   *  为什么需要两个方向：系统开了「旋转锁定」时浏览器只能报告竖屏，
+   *  拿不到手机的真实物理朝向，所以给玩家一个「翻转方向」按钮兜底。 */
+  rotated: 0,
+
+  /** 进入全屏：安卓 / 华为 / 小米等 Chromium 内核可用；iPhone Safari 不支持，返回 false。 */
+  enterFullscreen() {
+    const el = document.documentElement;
+    const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen || el.msRequestFullscreen;
+    if (!fn) return Promise.resolve(false);
+    try {
+      const r = fn.call(el, { navigationUI: 'hide' });
+      return Promise.resolve(r).then(() => { this.fullscreenOn = true; return true; }, () => false);
+    } catch (e) { return Promise.resolve(false); }
+  },
+  exitFullscreen() {
+    const fn = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+    if (fn) { try { const r = fn.call(document); if (r && r.catch) r.catch(function () {}); } catch (e) {} }
+    this.fullscreenOn = false;
+  },
+  /** 锁定横屏。安卓 Chromium 要求先进入全屏；iPhone Safari 不支持。 */
+  lockLandscape() {
+    try {
+      const o = screen.orientation;
+      if (o && o.lock) return Promise.resolve(o.lock('landscape')).then(() => true, () => false);
+    } catch (e) { /* 不支持或未全屏 */ }
+    return Promise.resolve(false);
+  },
+  /** 手机上的「开始玩」：全屏 + 锁横屏，失败就退回提示 / 旋转画面。 */
+  goFullscreenLandscape() {
+    return this.enterFullscreen().then(fs => {
+      return (fs ? this.lockLandscape() : Promise.resolve(false)).then(lk => {
+        if (!lk) {
+          setTip(fs
+            ? '已全屏。请把手机横过来 —— 如果没反应，说明开了旋转锁定，可改用「旋转画面」'
+            : '这个浏览器不支持全屏，请手动把手机横过来，或用「旋转画面」', 7);
+        }
+        this.dismissHint();
+        refitAll();
+        return { fs, lk };
+      });
+    });
+  },
+  /** 竖屏兜底方案：把游戏整体转 90°，可用空间从 390×844 变成 844×390，尺寸和横屏一样大。 */
+  useRotatedLayout() {
+    this.rotated = 90;
+    document.body.classList.add('rotated');
+    this.dismissHint();
+    refitAll();
+    setTimeout(refitAll, 320);
+  },
+  /** 画面上下颠倒时翻转 180°（旋转锁定下无法自动判断方向，只能让玩家点一下） */
+  flipRotate() {
+    this.rotated = this.rotated === 90 ? -90 : 90;
+    refitAll();
+    setTimeout(refitAll, 320);
+  },
+  /** 退出旋转，回到普通竖屏，并把选择权交还给玩家 */
+  exitRotated() {
+    this.rotated = 0;
+    document.body.classList.remove('rotated');
+    this.hintDismissed = false;
+    const el = $('rotateHint'); if (el) el.classList.add('show');
+    refitAll();
+  },
+  showHint() { const el = $('rotateHint'); if (el) el.classList.add('show'); },
+  dismissHint() {
+    this.hintDismissed = true;
+    const el = $('rotateHint'); if (el) el.classList.remove('show');
+    refitAll();
+    setTimeout(refitAll, 250);
+  },
+  /** 竖屏 + 手机 才提醒横屏 */
+  refreshHint() {
+    if (!this.isTouch || this.hintDismissed) return;
+    const vp = viewportSize();
+    this.isPhone = Math.min(vp.w, vp.h) <= this.PHONE_SHORT_SIDE;
+    if (vp.h > vp.w && this.isPhone && !this.rotated) this.showHint();
+    else { const el = $('rotateHint'); if (el) el.classList.remove('show'); }
+  },
+  /** 触摸设备把键盘快捷键提示换成触摸操作说明（同时腾出高度给加大的按钮） */
+  applyHintText() {
+    const el = $('hint'); if (!el || !this.isTouch) return;
+    // 控制在 3 行以内：#hint 是 flex:1 + overflow:hidden，超出会被切掉最后一行
+    el.innerHTML = '<b>建造</b> 点卡片选中 → 点格子放置<br>' +
+      '<b>取消</b> 长按画面　<b>升级</b> 点建筑 / 铁门<br>' +
+      '<b>技能</b> 点右侧格子，波次会自动推进';
+  },
+  toggleFullscreen() {
+    if (this.fullscreenOn || document.fullscreenElement || document.webkitFullscreenElement) this.exitFullscreen();
+    else this.goFullscreenLandscape();
+  },
+};
+
 function fit() {
-  const s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
   const wrap = document.getElementById('wrap');
-  wrap.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
+  if (!wrap) return;
+  const vp = viewportSize();
+  const p = safeInset();
+  const portrait = vp.h > vp.w;
+  if (Mobile.rotated && portrait) {
+    // 竖屏 + 旋转模式：把可用宽高对调（旋转 90° 后 844×390 就变成「宽 844、高 390」）
+    const availW = Math.max(180, vp.h - p.t - p.b);
+    const availH = Math.max(140, vp.w - p.l - p.r);
+    const s = Math.min(availW / 1280, availH / 720);
+    wrap.style.transform = 'translate(-50%,-50%) rotate(' + Mobile.rotated + 'deg) scale(' + s.toFixed(5) + ')';
+    return;
+  }
+  // 竖屏不需要给侧边刘海留白（横屏才需要），底部横条始终留
+  const insL = portrait ? 0 : p.l, insR = portrait ? 0 : p.r;
+  const availW = Math.max(180, vp.w - insL - insR);
+  const availH = Math.max(140, vp.h - p.t - p.b);
+  const s = Math.min(availW / 1280, availH / 720);
+  const dx = (insL - insR) / 2, dy = (p.t - p.b) / 2;
+  wrap.style.transform = 'translate(calc(-50% + ' + dx.toFixed(2) + 'px), calc(-50% + ' + dy.toFixed(2) + 'px)) scale(' + s.toFixed(5) + ')';
+}
+
+function initMobile() {
+  if (!Mobile.isTouch) return;                 // 桌面端完全不受影响
+  document.body.classList.add('touch');
+  Mobile.applyHintText();
+  const bf = $('btnFull'); if (bf) bf.onclick = () => Mobile.toggleFullscreen();
+  const rhFull = $('rhFull'); if (rhFull) rhFull.onclick = () => Mobile.goFullscreenLandscape();
+  const rhRot = $('rhRotate'); if (rhRot) rhRot.onclick = () => Mobile.useRotatedLayout();
+  const rhSkip = $('rhSkip'); if (rhSkip) rhSkip.onclick = () => Mobile.dismissHint();
+  const rotFlip = $('rotFlip'); if (rotFlip) rotFlip.onclick = () => Mobile.flipRotate();
+  const rotExit = $('rotExit'); if (rotExit) rotExit.onclick = () => Mobile.exitRotated();
+  // iOS Safari：拦掉页面级双指缩放（面板内部的滚动不受影响）
+  ['gesturestart', 'gesturechange'].forEach(t =>
+    document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+  Mobile.refreshHint();
 }
 function fitHUD() {
   var h = document.getElementById('hud');
@@ -289,8 +494,19 @@ function scrollBuildKeyIntoView(k) {
   var card = el.querySelector('.card[data-k="' + k + '"]');
   if (card && card.scrollIntoView) card.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
 }
-window.addEventListener('resize', function () { fit(); fitHUD(); updateBuildBarOverflow(); applyCompactBar(); });
-fit(); fitHUD(); updateBuildBarOverflow(); applyCompactBar();
+function refitAll() { fit(); fitHUD(); updateBuildBarOverflow(); applyCompactBar(); Mobile.refreshHint(); }
+window.addEventListener('resize', refitAll);
+// 手机转屏 / 进出全屏后浏览器上报的尺寸有延迟，补两次再算一遍
+window.addEventListener('orientationchange', function () { refitAll(); setTimeout(refitAll, 120); setTimeout(refitAll, 450); });
+['fullscreenchange', 'webkitfullscreenchange'].forEach(t =>
+  document.addEventListener(t, function () { setTimeout(refitAll, 120); setTimeout(refitAll, 450); }));
+// 地址栏收放 / 软键盘弹出：只重算缩放，不触发别的布局
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', fit);
+  window.visualViewport.addEventListener('scroll', fit);
+}
+initMobile();
+refitAll();
 
 let last = performance.now();
 const FIXED_DT = 1 / 60;   // 固定模拟步长（联机/复现的前提：模拟结果与帧率无关）

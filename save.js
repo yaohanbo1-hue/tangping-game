@@ -36,9 +36,11 @@ const SaveSystem = {
       let info = null;
       if (raw) {
         try {
-          const d = JSON.parse(raw);
-          const m = d && d.meta;
-          if (m) info = m;
+          const parsed = JSON.parse(raw);
+          // 老版本存档没有 meta 摘要，直接取 d.meta 会让槽位在面板里显示成「空」。
+          // 先走一遍迁移，再按需现算一份摘要。
+          const d = (parsed && parsed.meta) ? parsed : (this.migrate(parsed) || parsed);
+          info = (d && d.meta) ? d.meta : (d && d.run ? this._metaOf(d) : { broken: true });
         } catch (e) { info = { broken: true }; }
       }
       out.push({ slot: s, auto: s === 0, info });
@@ -199,7 +201,7 @@ const SaveSystem = {
         admin: !!G.admin, winWave: G.winWave | 0,
         prepTimer: G.prepTimer, prepTotal: G.prepTotal,
         reviveLeft: G.reviveLeft | 0,
-        combo: G.combo | 0, maxCombo: G.maxCombo | 0,
+        combo: G.combo | 0, comboT: G.comboT || 0, maxCombo: G.maxCombo | 0,
         eventId: (G.event && G.event.id) || 'none',
         eventTimer: G.eventTimer | 0,
         prize: G.prize || {},
@@ -250,8 +252,10 @@ const SaveSystem = {
       }
       if (Array.isArray(dm.npcs) && typeof NPCGuardians !== 'undefined') {
         dm.npcs.forEach(n => {
-          const def = (typeof NPC_DIALOG !== 'undefined') ? NPC_DIALOG.find(x => x.id === n.id) : null;
-          if (def && !NPCGuardians._recruited.some(r => r.def.id === n.id)) {
+          // captureDream() 存的是 NPC_DATA 的能力 id（abilityId），不是 NPC_DIALOG 的 npc_N。
+          // 之前只按 x.id 查找，永远匹配不到 —— 表现就是「读档后驻守的梦境居民全部消失」。
+          const def = (typeof NPC_DIALOG !== 'undefined') ? NPC_DIALOG.find(x => x.id === n.id || x.abilityId === n.id) : null;
+          if (def && !NPCGuardians._recruited.some(r => r.def.abilityId === def.abilityId)) {
             NPCGuardians._recruited.push({ def, roomId: n.roomId });
           }
         });
@@ -294,7 +298,7 @@ const SaveSystem = {
       G.prepTimer = isFinite(run.prepTimer) ? +run.prepTimer : G.prepTimer;
       G.prepTotal = isFinite(run.prepTotal) && run.prepTotal > 0 ? +run.prepTotal : G.prepTimer;
       G.reviveLeft = run.reviveLeft | 0;
-      G.combo = run.combo | 0; G.maxCombo = run.maxCombo | 0;
+      G.combo = run.combo | 0; G.comboT = +run.comboT || 0; G.maxCombo = run.maxCombo | 0;
       G.eventTimer = +run.eventTimer || 0;
       if (run.eventId && typeof EVENTS !== 'undefined') {
         const ev = EVENTS.find(e => e.id === run.eventId);

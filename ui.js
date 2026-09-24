@@ -827,8 +827,14 @@ function openBag() {
  * ============================================================ */
 
 // === 事件监听初始化 ===
+let _dreamUIStamp = -1;
 function initDreamUI() {
   if (typeof EventBus === 'undefined') return;
+  // 幂等保护：newGame() 里的 EventBus.clear() 会回调本函数重新注册（见 dream.js 的 clear()）。
+  // 用 EventBus.generation 当印章，保证同一世代只注册一次，避免监听堆叠导致弹窗重复播放。
+  if (_dreamUIStamp === EventBus.generation) return;
+  _dreamUIStamp = EventBus.generation;
+  EventBus._uiRebind = initDreamUI;
 
   // ---- 剧情对话（由 DreamEngine / core.js 波次钩子触发）----
   EventBus.on('story:dialog', (data) => {

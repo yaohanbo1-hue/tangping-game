@@ -269,6 +269,11 @@ function waveUnlocks(n) {
   if (n >= 26) add('chronos', 0, 0.08);
   if (n >= 30) add('nullifier', 0, 0.07);
   if (n >= 34) add('colossus', 0, 0.05);
+  // 追加梦魇的解锁节奏（22 波起陆续登场）
+  if (n >= 22) add('rustbug', 0, 0.09);
+  if (n >= 24) add('owl', 0, 0.09);
+  if (n >= 26) add('echo', 0, 0.08);
+  if (n >= 28) add('weaver', 0, 0.07);
   return u;
 }
 const TECH_DEFS = {
@@ -321,6 +326,13 @@ const EVENTS = [
   { id: 'haste', name: '疾行时刻', icon: '⏩', desc: '敌人速度 x1.4', eff: { spdMul: 1.4 } },
   { id: 'blackout', name: '断电危机', icon: '🕯️', desc: '本波升级耗电量 x1.6', eff: { powerCostMul: 1.6 } },
   { id: 'brittle', name: '梦境脆弱', icon: '💔', desc: '敌人生命 -35%', eff: { hpMul: 0.65 } },
+  // ── 追加事件：全部只用引擎已支持的 eff 字段（powerMul / goldMul / countMul /
+  //    rewardMul / soulMul / spdMul / powerCostMul / hpMul），不需要改逻辑 ──
+  { id: 'bloodmoon',  name: '血月当空', icon: '🌑', desc: '敌人生命 +40%，但灵魂掉落 x2.5', eff: { hpMul: 1.4, soulMul: 2.5 } },
+  { id: 'twinrain',   name: '双倍宝箱', icon: '📦', desc: '敌人 x1.3，波次奖励 x2.5', eff: { countMul: 1.3, rewardMul: 2.5 } },
+  { id: 'static',     name: '静电弥漫', icon: '🌫️', desc: '敌人速度 -25%，但电力产出 -35%', eff: { spdMul: 0.75, powerMul: 0.65 } },
+  { id: 'inflation',  name: '梦境通胀', icon: '💸', desc: '本波金币产出 x3，但升级耗电 x2', eff: { goldMul: 3, powerCostMul: 2 } },
+  { id: 'reaperhour', name: '收割时刻', icon: '⏳', desc: '敌人 x1.8、速度 x1.25，灵魂掉落 x3', eff: { countMul: 1.8, spdMul: 1.25, soulMul: 3 } },
 ];
 const ACHIEVEMENTS = [
   { id: 'w10', name: '初露锋芒', desc: '存活到第 10 波', check: () => G.wave >= 10, reward: { soul: 15 } },
@@ -330,11 +342,22 @@ const ACHIEVEMENTS = [
   { id: 'k2000', name: '歼灭专家', desc: '累计击杀 2000 只梦魇', check: () => G.stats.kills >= 2000, reward: { soul: 60 } },
   { id: 'rich', name: '小富即安', desc: '金币储量达到 3000', check: () => G.gold >= 3000, reward: { soul: 20 } },
   { id: 'growth', name: '彻底躺平', desc: '发育度达到满级 25', check: () => G.grow >= 25, reward: { soul: 30 } },
-  { id: 'allbuild', name: '集大成者', desc: '同时拥有全部 11 种建筑', check: () => new Set(G.buildings.map(b => b.type)).size >= 11, reward: { soul: 50 } },
+  { id: 'allbuild', name: '集大成者', desc: '同时拥有 11 种不同的建筑', check: () => new Set(G.buildings.map(b => b.type)).size >= 11, reward: { soul: 50 } },
   { id: 'branch', name: '进化之路', desc: '完成 5 次建筑转职', check: () => G.buildings.filter(b => b.branch).length >= 5, reward: { soul: 45 } },
   { id: 'nolose', name: '固若金汤', desc: '第 20 波时三扇门全部完好', check: () => G.wave >= 20 && G.doors.every(d => d.hp >= d.maxHp), reward: { soul: 55 } },
   { id: 'tower20', name: '炮塔森林', desc: '同时拥有 20 座炮塔', check: () => G.buildings.filter(b => b.def.tower).length >= 20, reward: { soul: 35 } },
   { id: 'boss5', name: '弑君者', desc: '击杀 5 个 BOSS', check: () => G.stats.bossKills >= 5, reward: { soul: 70 } },
+  // ── 追加成就 ──
+  { id: 'w55', name: '守夜人', desc: '存活到第 55 波', check: () => G.wave >= 55, reward: { soul: 150 } },
+  { id: 'k5000', name: '梦魇清理者', desc: '累计击杀 5000 只梦魇', check: () => G.stats.kills >= 5000, reward: { soul: 120 } },
+  { id: 'boss15', name: '梦魇终结者', desc: '击杀 15 个 BOSS', check: () => G.stats.bossKills >= 15, reward: { soul: 140 } },
+  { id: 'rich30k', name: '梦境富豪', desc: '单局金币储量达到 30000', check: () => G.gold >= 30000, reward: { soul: 60 } },
+  { id: 'combo30', name: '连杀艺术家', desc: '达成 30 连杀', check: () => G.maxCombo >= 30, reward: { soul: 50 } },
+  { id: 'branch16', name: '全员进化', desc: '同时拥有 16 座已转职的建筑', check: () => G.buildings.filter(b => b.branch).length >= 16, reward: { soul: 110 } },
+  { id: 'rune10', name: '符文收藏家', desc: '背包与建筑上共有 10 枚符文', check: () => (G.runeBag.length + G.buildings.reduce((n, b) => n + (b.runes || []).filter(Boolean).length, 0)) >= 10, reward: { soul: 70 } },
+  { id: 'chal20', name: '挑战达人', desc: '累计完成 20 次波次挑战', check: () => (G.stats.challenges | 0) >= 20, reward: { soul: 80 } },
+  { id: 'frag5', name: '拾忆者', desc: '收集 5 块记忆碎片', check: () => typeof DreamFragments !== 'undefined' && !!DreamFragments._collected && DreamFragments._collected.size >= 5, reward: { soul: 90 } },
+  { id: 'npc3', name: '梦境召集人', desc: '同时驻守 3 位梦境居民', check: () => typeof NPCGuardians !== 'undefined' && !!NPCGuardians._recruited && NPCGuardians._recruited.length >= 3, reward: { soul: 85 } },
 ];
 const RARITY = {
   common: { name: '普通', color: '#94a3b8', glow: 'rgba(148,163,184,.5)' },
@@ -423,6 +446,22 @@ Object.assign(ENEMY_DEFS, {
   reaper: { name: '收割者', icon: '⚔️', hp: 260, speed: 44, dmg: 30, gold: 34, soul: 5, cost: 50, r: 23, color: '#dc2626', buildingBonus: 3.0, weak: { frost: 0.45 } },
   frostbane: { name: '霜噬兽', icon: '🐺', hp: 190, speed: 50, dmg: 18, gold: 25, soul: 4, cost: 40, r: 21, color: '#a5f3fc', freezeTower: { r: 170, dur: 4, cd: 11 }, res: { frost: 0.75 }, weak: { fire: 0.6 } },
   necromancer: { name: '死灵法师', icon: '💀', hp: 240, speed: 28, dmg: 10, gold: 36, soul: 6, cost: 52, r: 22, color: '#6b21a8', revive: { every: 7, n: 3 }, res: { fire: 0.5 }, weak: { energy: 0.5 } },
+});
+// ── 追加梦魇：全部复用引擎既有机制字段，不需要新增战斗/渲染逻辑。
+//    敌人是按 def.color + def.icon 泛化绘制的，加进来即生效，图鉴也会自动收录。 ──
+Object.assign(ENEMY_DEFS, {
+  rustbug: { name: '锈蚀梦魇', icon: '⚙️', hp: 240, speed: 32, dmg: 20, gold: 30, soul: 4, cost: 46, r: 21, color: '#c9a227',
+    buildingBonus: 1.6, res: { kinetic: 0.5, fire: 0.3 }, weak: { shock: 0.5 },
+    tip: '建筑克星：对建筑造成 1.6 倍伤害，优先扑向炮塔' },
+  owl: { name: '夜枭梦魇', icon: '🦉', hp: 150, speed: 74, dmg: 12, gold: 24, soul: 4, cost: 40, r: 16, color: '#a78bfa',
+    flying: true, stealth: true, res: { fire: 0.35 }, weak: { kinetic: 0.5 },
+    tip: '隐身飞行，无视铁门 —— 需要侦察兵或范围伤害才能稳稳处理' },
+  echo: { name: '回响梦魇', icon: '🔊', hp: 260, speed: 38, dmg: 14, gold: 28, soul: 5, cost: 48, r: 22, color: '#7dd3fc',
+    split: 2, res: { shock: 0.4 }, weak: { toxic: 0.5 },
+    tip: '死亡后分裂成两只梦魇，别用单体高伤硬拆' },
+  weaver: { name: '织梦者', icon: '🕸️', hp: 300, speed: 26, dmg: 11, gold: 34, soul: 6, cost: 56, r: 24, color: '#e2e8f0',
+    ward: { shield: 0.35, r: 160 }, res: { energy: 0.45 }, weak: { fire: 0.45 },
+    tip: '为周围友军持续叠加护盾，优先集火' },
 });
 const BOSS_DEFS = {
   lord: {

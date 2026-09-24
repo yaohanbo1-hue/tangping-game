@@ -2,8 +2,22 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="game-version" content="<!--VERSION-->">
+<!-- 手机端：viewport-fit=cover 让页面铺进刘海区，安全区由 CSS 变量 + JS 缩放一起处理 -->
+<meta name="theme-color" content="#08060f">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="躺平发育">
+<meta name="format-detection" content="telephone=no,email=no,address=no">
+<!-- 国产浏览器（微信 / QQ 的 X5 内核、UC、华为浏览器）的横屏与全屏提示 -->
+<meta name="x5-orientation" content="landscape">
+<meta name="screen-orientation" content="landscape">
+<meta name="full-screen" content="yes">
+<meta name="x5-fullscreen" content="true">
+<meta name="browsermode" content="application">
 <title>躺平发育：梦魇防线</title>
 <style>
 :root{
@@ -29,11 +43,18 @@
   --bg-0:#08060f; --bg-1:#0e0b1c;
   /* 动效基准 */
   --ease-out:cubic-bezier(.2,.9,.3,1.35); --dur:.18s;
-}
+  /* 安全区（iPhone 刘海 / 灵动岛 / 底部横条）：供 JS 读取后参与缩放计算 */
+  --sat:env(safe-area-inset-top,0px);--sar:env(safe-area-inset-right,0px);
+  --sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px)}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:var(--bg-0);overflow:hidden;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:var(--text)}
+html,body{height:100%;background:var(--bg-0);overflow:hidden;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:var(--text);
+  -webkit-text-size-adjust:100%;text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
+  overscroll-behavior:none;touch-action:manipulation}
+/* 手机浏览器地址栏收起/展开会让视口跳动，用 fixed 锁住 body 避免页面被顶走 */
+body{position:fixed;inset:0;width:100%;height:100%;-webkit-user-select:none;user-select:none}
 #wrap{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center center;background:var(--bg-1);border-radius:10px;box-shadow:0 0 60px rgba(120,80,255,.25);overflow:hidden}
-canvas{display:block;width:1280px;height:720px}
+canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 /* 梦境氛围层：仅覆盖走廊区域（56–556），不遮挡 HUD 与底部操作栏 */
 #fx{position:absolute;left:0;top:56px;width:1280px;height:500px;pointer-events:none;z-index:4;
   background:
@@ -1205,7 +1226,59 @@ canvas{display:block;width:1280px;height:720px}
   .setup-panel{padding:10px 12px}
   .home-side{gap:8px}
 }
+/* ==================== 手机端适配 ==================== */
+/* 全屏按钮只在触摸设备出现 */
+#btnFull{display:none!important}
+body.touch #btnFull{display:inline-flex!important;align-items:center;justify-content:center}
+
+/* 加大底部操作栏按钮的点击热区（这里是手机上最容易点错的地方）。
+   只在 #right 内部放大，并靠把 #hint 换成两行触摸说明腾出等量高度，
+   避免 #bottom 固定 150px 高度被撑破。 */
+body.touch #ctrls .btn{padding:4px 0;font-size:9.5px}
+/* #hint 是 flex:1 + overflow:hidden：加高的按钮要靠这里的字号换回空间，否则最后一行被切 */
+body.touch #hint{font-size:9px;line-height:1.28}
+body.touch .story-choice{padding:11px 13px;font-size:14px}
+body.touch .panel .btn,body.touch .slide .btn{min-height:26px}
+body.touch .home-panel .btn{min-height:30px}
+
+/* 手机上毛玻璃很吃 GPU：把最密集的几层模糊半径降下来（观感几乎无差别） */
+body.touch #hud,body.touch .panel,body.touch .slide,body.touch #overlay::before{
+  backdrop-filter:blur(12px) saturate(1.5);-webkit-backdrop-filter:blur(12px) saturate(1.5)}
+
+/* 可滚动区域必须放行纵向手势 —— body 上的 touch-action 会连带限制子元素，
+   不显式放行的话面板里划不动 */
+.slist,#techList,#achList,#helpBody,#runeList,#questBody,#lotPool,#lotRes,#detail,
+.panel,.slide,.story-textbox,.story-choices,.home-layout{touch-action:pan-y}
+.slist,.panel,.slide,#detail,.story-textbox,.home-layout{-webkit-overflow-scrolling:touch}
+
+/* 竖屏提示：由 JS 判定（触摸设备 + 竖屏 + 短边 ≤900px）后加 .show */
+#rotateHint{position:fixed;inset:0;z-index:300;display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:26px;text-align:center;
+  background:radial-gradient(ellipse at center,rgba(26,19,62,.97) 0%,rgba(6,5,14,.995) 100%)}
+#rotateHint.show{display:flex}
+#rotateHint .rh-ico{font-size:54px;line-height:1;animation:rhTilt 2.4s ease-in-out infinite}
+@keyframes rhTilt{0%,100%{transform:rotate(-16deg)}50%{transform:rotate(16deg)}}
+#rotateHint h3{font-size:19px;font-weight:800;color:var(--pri-2);letter-spacing:.5px}
+#rotateHint p{font-size:12.5px;line-height:1.75;color:var(--text-note);max-width:330px}
+#rotateHint .rh-btn{margin-top:2px;padding:11px 24px;border-radius:10px;border:1px solid rgba(160,140,255,.4);
+  background:rgba(255,255,255,.05);color:var(--text);font-size:14px;font-family:inherit;cursor:pointer}
+#rotateHint .rh-btn.primary{background:linear-gradient(180deg,rgba(167,139,250,.5),rgba(167,139,250,.2));
+  border-color:rgba(196,181,253,.65);color:#fff;font-weight:700}
+#rotateHint .rh-btn:active,#rotateHint .rh-link:active{transform:scale(.97)}
+#rotateHint .rh-link{margin-top:6px;padding:8px 12px;border:0;background:none;color:var(--text-dim);
+  font-size:12.5px;font-family:inherit;text-decoration:underline;cursor:pointer}
+
+/* 旋转模式下的兜底操作条（真实屏幕坐标，不随游戏缩放） */
+#rotBar{position:fixed;z-index:290;display:none;gap:6px;left:calc(8px + env(safe-area-inset-left,0px));
+  top:calc(8px + env(safe-area-inset-top,0px))}
+body.rotated #rotBar{display:flex}
+#rotBar button{padding:8px 12px;border-radius:9px;border:1px solid rgba(160,140,255,.45);
+  background:rgba(18,14,38,.86);color:#ded9ff;font-size:12.5px;font-family:inherit;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer}
+#rotBar button:active{transform:scale(.96);background:rgba(167,139,250,.32)}
+
 @media (prefers-reduced-motion:reduce){
+  #rotateHint .rh-ico{animation:none}
   #overlay::before,.home-panel.panel,.home-layout>.setup-panel,.home-side>.record-card,.home-side>.home-shortcuts,.home-bottom>.home-guide,.home-bottom>.home-audio,
   .home-header h1,.home-kicker i,.home-clock>span,.home-start-actions .big,.home-music,.home-action,.story-avatar{animation:none!important}
   .home-panel *, .story-dialog *{scroll-behavior:auto!important;transition-duration:.01ms!important}
@@ -1213,6 +1286,22 @@ canvas{display:block;width:1280px;height:720px}
 </style>
 </head>
 <body>
+<!-- 竖屏提示：放在 #wrap 之外才能覆盖真实屏幕（#wrap 被缩放后只占中间一小块） -->
+<div id="rotateHint">
+  <div class="rh-ico">📱</div>
+  <h3>把手机横过来玩</h3>
+  <p>《躺平发育》是横屏塔防，竖屏下战场会被压得很小、按钮也难点。</p>
+  <p style="margin-top:-2px">如果手机开了「旋转锁定」，横过来屏幕不会自动转 ——<br>
+     请先把手机<b>横着拿</b>，再点第二个按钮把画面转过来。</p>
+  <button class="rh-btn primary" id="rhFull" type="button">全屏 + 锁定横屏</button>
+  <button class="rh-btn" id="rhRotate" type="button">我已横着拿 → 画面转向</button>
+  <button class="rh-link" id="rhSkip" type="button">不转向，直接开始</button>
+</div>
+<!-- 旋转模式下的兜底操作条：放在 #wrap 之外，用真实屏幕坐标，不随游戏缩放 -->
+<div id="rotBar">
+  <button type="button" id="rotFlip" title="画面上下颠倒时点这里翻转 180°">⟲ 翻转方向</button>
+  <button type="button" id="rotExit" title="退出旋转，回到普通竖屏">✕ 退出旋转</button>
+</div>
 <div id="wrap">
   <canvas id="game" width="1280" height="720"></canvas>
   <div id="fx"></div>
@@ -1237,6 +1326,7 @@ canvas{display:block;width:1280px;height:720px}
     <button class="btn" id="btnHelp" title="图鉴与帮助">❓图鉴</button>
     <button class="btn" id="btnPause" title="暂停 / 继续（P）">⏸</button>
     <button class="btn" id="btnSpeed" title="切换游戏速度">1×</button>
+    <button class="btn" id="btnFull" title="全屏 / 锁定横屏（手机推荐）">⛶</button>
   </div>
   <div id="bossBar">
     <div class="bb-top"><span class="bb-name" id="bbName"></span><span class="bb-phase" id="bbPhase"></span>

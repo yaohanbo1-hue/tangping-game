@@ -326,10 +326,12 @@ function newGame(loadFrom) {
   SKILL_KEYS.forEach(k => G.skills[k] = 0);
   BED_CELLS.forEach(([c, r]) => G.grid[r * COLS + c] = 'bed');
   selected = null; selectedBuildKey = null;
+  // 梦境系统必须排在 applySave() 之前初始化：DreamEngine.init() 会把记忆碎片 / 梦境日记 /
+  // NPC 驻守 / 理解路线 / 第四面墙触发记录全部复位。顺序反了的话，restoreDream() 刚恢复的
+  // 进度会被立刻清空 —— 表现就是「读档之后记忆碎片和日记全没了」。
+  if (typeof DreamEngine !== 'undefined') { try { DreamEngine.init(); } catch(e) { console.warn('DreamEngine init failed:', e); } }
   if (loadFrom) applySave(loadFrom);
   else setTip('点击左侧建筑卡片，再点击房间空位建造。先放「金币矿机」和「发电机」！', 8);
-  // 初始化梦境系统
-  if (typeof DreamEngine !== 'undefined') { try { DreamEngine.init(); } catch(e) { console.warn('DreamEngine init failed:', e); } }
 }
 const techVal = (k, per) => 1 + G.tech[k] * per;
 /* ------------------------------------------------------------------
@@ -366,8 +368,9 @@ function bstat(b) {
 function towerPanelDps(s, b) {
   if (!s || !s.dmg) return 0;
   const fate = G.fate || {}, fateW = G.fateWave || {};
-  const critC = clamp(G.tech.crit * 0.04 + (fate.crit || 0) + (fateW.crit || 0), 0, 1);
-  const critM = 2.2 + G.tech.critmaster * 0.4 + (fate.critDmg || 0) + (fateW.critDmg || 0);
+  // 与 critRoll() 保持一致：面板显示也要把符文上的暴击率 / 暴击伤害算进去
+  const critC = clamp((s.crit || 0) + G.tech.crit * 0.04 + (fate.crit || 0) + (fateW.crit || 0), 0, 0.95);
+  const critM = (s.critDmg || 2.2) + G.tech.critmaster * 0.4 + (fate.critDmg || 0) + (fateW.critDmg || 0);
   const critMul = 1 + critC * (critM - 1);
   let targets = 1;
   if (s.split) targets = Math.min(4, s.split);
@@ -392,6 +395,19 @@ function resBonusOf(b) {
   };
 }
 const runeSlots = () => 2 + G.tech.runelord;
+/**
+ * 符文槽数组必须与 runeSlots() 等长。
+ * 科技「符文宗师」会加槽，但老建筑建造时只有 2 个位置 —— 不补齐的话，socketRune() 里用
+ * findIndex 找空槽会在数组末尾提前返回 -1，面板上明明显示还有空槽却提示「没有空的符文槽」，
+ * 同时 runes 数组会退化成带空洞的稀疏数组（存档规整逻辑又按 runeSlots() 重建，两边对不上）。
+ */
+function ensureRuneSlots(b) {
+  if (!b) return null;
+  const n = runeSlots();
+  if (!Array.isArray(b.runes)) b.runes = [];
+  while (b.runes.length < n) b.runes.push(null);
+  return b.runes;
+}
 function tryDropRune(wave, x, y) {
   const chance = (0.012 + wave * 0.0016) * (1 + G.tech.looting * 0.2);
   if (Math.random() > Math.min(0.5, chance)) return null;
@@ -538,7 +554,7 @@ function tryBuild(key, c, r) {
     type: key, def, level: 1, col: c, row: r, x: p.x, y: p.y,
     hp: def.hp * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1), maxHp: def.hp * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1),
     shield: 0, shieldMax: 0, cd: 0, angle: -Math.PI / 2, target: null, branch: null,
-    invested: def.cost.gold, pulse: 0, kills: 0, runes: [null, null], fireFx: 0,
+    invested: def.cost.gold, pulse: 0, kills: 0, runes: new Array(runeSlots()).fill(null), fireFx: 0,
   };
   b.animY = -60; b.animBounce = 0.3;
   G.buildings.push(b); G.grid[r * COLS + c] = b; G.resDirty = true;
@@ -1292,7 +1308,7 @@ function updateTowers(dt) {
       const mul = towerDmgMul(b);
       const all = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       all.forEach(e => {
-        applyDamage(e, s.dmg * mul * critRoll(), 'kinetic', b);
+        applyDamage(e, s.dmg * mul * critRoll(b), 'kinetic', b);
         const dx = e.x - b.x, dy = e.y - b.y, d = Math.hypot(dx, dy) || 1;
         // BOSS 享受击退/眩晕减免，否则一座声波塔能把 BOSS 永久定在走廊口
         const ctrl = e.boss ? 0.25 : 1;
@@ -1308,11 +1324,14 @@ function updateTowers(dt) {
     fire_(b, t, s);
   }
 }
-function critRoll() {
-  // 剧情加成（暴击率 +N%）也计入：基础来自灵魂科技树
-  const chance = G.tech.crit * 0.04 + (G.fate.crit || 0) + (G.fateWave.crit || 0);
+function critRoll(b) {
+  // 暴击率 = 符文词条（面板 s.crit）+ 灵魂科技树「致命一击」+ 剧情加成。
+  // 此前漏掉了符文那一项，导致符文上的「✨暴击率 / 💫暴击伤害」词条完全不生效。
+  const s = (b && b.def) ? bstat(b) : null;
+  const chance = clamp((s && s.crit ? s.crit : 0) + G.tech.crit * 0.04 + (G.fate.crit || 0) + (G.fateWave.crit || 0), 0, 0.95);
   const extra = (G.fate.critDmg || 0) + (G.fateWave.critDmg || 0);
-  return Math.random() < chance ? (2.2 + G.tech.critmaster * 0.4 + extra) : 1;
+  const base = (s && s.critDmg ? s.critDmg : 2.2);
+  return Math.random() < chance ? (base + G.tech.critmaster * 0.4 + extra) : 1;
 }
 function fire_(b, t, s) {
   const mul = towerDmgMul(b);
@@ -1335,7 +1354,7 @@ function fire_(b, t, s) {
         if (hits >= (s.pierce || 1)) break;
         const a2 = Math.atan2(e.y - b.y, e.x - b.x);
         if (Math.abs(Math.atan2(Math.sin(a2 - ang), Math.cos(a2 - ang))) < 0.24 && dist(e, b) <= s.range + 40) {
-          applyDamage(e, s.dmg * mul * critRoll(), dtype, b); hits++;
+          applyDamage(e, s.dmg * mul * critRoll(b), dtype, b); hits++;
         }
       }
     });
@@ -1366,7 +1385,7 @@ function fire_(b, t, s) {
     if (!tg.length) tg.push(t);
     tg.forEach(e => {
       addEffect({ type: 'laser', x: b.x, y: b.y, x2: e.x, y2: e.y, life: 0.16, maxLife: 0.16, color: '#67e8f9' });
-      applyDamage(e, s.dmg * mul * critRoll(), dtype, b);
+      applyDamage(e, s.dmg * mul * critRoll(b), dtype, b);
     });
     SFX.laser();
   } else {
@@ -1376,7 +1395,7 @@ function fire_(b, t, s) {
     for (let i = 0; i < nm; i++) {
       G.bullets.push({
         x: b.x, y: b.y, tx: t.x, ty: t.y, target: t, spd: bspd,
-        dmg: s.dmg * mul, crit: critRoll(), type: b.type, dtype,
+        dmg: s.dmg * mul, crit: critRoll(b), type: b.type, dtype,
         slow: s.slow || 0, freezeChance: s.freezeChance || 0, shred: s.shred || 0,
         splash: s.splash || 0, poisonStack: s.poison ? 1 : 0, poisonDps: s.poisonDps || 0, poisonMax: s.maxStack || 0,
         r: br, color: b.def.color, src: b, life: 0,
@@ -1875,6 +1894,18 @@ function gameOver() {
     setTip('「梦境重生」生效，床铺已恢复满血', 5);
     return;
   }
+  // 无限模式：床铺被毁不结束本局，而是自动重构。
+  // （README 承诺过这条，但 G.rebuilds 只被初始化、全文没有任何一处自增 —— 逻辑一直缺失）
+  if (G.mode === 'unlimited') {
+    G.rebuilds = (G.rebuilds || 0) + 1;
+    G.bed.hp = G.bed.maxHp; G.bed.shield = G.bed.shieldMax;
+    G.enemies.forEach(e => { if (e.target && e.target.isBed) { e.target = null; e.state = 'walk'; } });
+    addText(BED_CX, BED_CY - 90, '♾ 床铺自动重构（第 ' + G.rebuilds + ' 次）', '#7dd3fc', true);
+    spawnParts(BED_CX, BED_CY, 50, '#7dd3fc', 5, 1.2);
+    flash = 0.6; shakeBy(18); SFX.up();
+    setTip('无限模式：床铺被毁会自动重构，但梦魇一波比一波强', 5);
+    return;
+  }
   G.over = true; G.state = 'over';
   grantMetaReward(false);
   SFX.lose(); shakeBy(24); flash = 0.8;
@@ -2010,6 +2041,7 @@ function upgradeMaxSelected(b) {
 }
 function socketRune(b, runeId, slot) {
   if (!b || !b.def) return false;
+  ensureRuneSlots(b);   // 补足槽位：否则「符文宗师」加槽后自动镶嵌找不到空槽
   const idx = G.runeBag.findIndex(r => r.id === runeId);
   if (idx < 0) return false;
   const slots = runeSlots();

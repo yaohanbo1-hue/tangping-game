@@ -2,8 +2,22 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="game-version" content="1.5.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="game-version" content="1.7.0">
+<!-- 手机端：viewport-fit=cover 让页面铺进刘海区，安全区由 CSS 变量 + JS 缩放一起处理 -->
+<meta name="theme-color" content="#08060f">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="躺平发育">
+<meta name="format-detection" content="telephone=no,email=no,address=no">
+<!-- 国产浏览器（微信 / QQ 的 X5 内核、UC、华为浏览器）的横屏与全屏提示 -->
+<meta name="x5-orientation" content="landscape">
+<meta name="screen-orientation" content="landscape">
+<meta name="full-screen" content="yes">
+<meta name="x5-fullscreen" content="true">
+<meta name="browsermode" content="application">
 <title>躺平发育：梦魇防线</title>
 <style>
 :root{
@@ -29,11 +43,18 @@
   --bg-0:#08060f; --bg-1:#0e0b1c;
   /* 动效基准 */
   --ease-out:cubic-bezier(.2,.9,.3,1.35); --dur:.18s;
-}
+  /* 安全区（iPhone 刘海 / 灵动岛 / 底部横条）：供 JS 读取后参与缩放计算 */
+  --sat:env(safe-area-inset-top,0px);--sar:env(safe-area-inset-right,0px);
+  --sab:env(safe-area-inset-bottom,0px);--sal:env(safe-area-inset-left,0px)}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:var(--bg-0);overflow:hidden;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:var(--text)}
+html,body{height:100%;background:var(--bg-0);overflow:hidden;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;color:var(--text);
+  -webkit-text-size-adjust:100%;text-size-adjust:100%;
+  -webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
+  overscroll-behavior:none;touch-action:manipulation}
+/* 手机浏览器地址栏收起/展开会让视口跳动，用 fixed 锁住 body 避免页面被顶走 */
+body{position:fixed;inset:0;width:100%;height:100%;-webkit-user-select:none;user-select:none}
 #wrap{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center center;background:var(--bg-1);border-radius:10px;box-shadow:0 0 60px rgba(120,80,255,.25);overflow:hidden}
-canvas{display:block;width:1280px;height:720px}
+canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 /* 梦境氛围层：仅覆盖走廊区域（56–556），不遮挡 HUD 与底部操作栏 */
 #fx{position:absolute;left:0;top:56px;width:1280px;height:500px;pointer-events:none;z-index:4;
   background:
@@ -1205,7 +1226,59 @@ canvas{display:block;width:1280px;height:720px}
   .setup-panel{padding:10px 12px}
   .home-side{gap:8px}
 }
+/* ==================== 手机端适配 ==================== */
+/* 全屏按钮只在触摸设备出现 */
+#btnFull{display:none!important}
+body.touch #btnFull{display:inline-flex!important;align-items:center;justify-content:center}
+
+/* 加大底部操作栏按钮的点击热区（这里是手机上最容易点错的地方）。
+   只在 #right 内部放大，并靠把 #hint 换成两行触摸说明腾出等量高度，
+   避免 #bottom 固定 150px 高度被撑破。 */
+body.touch #ctrls .btn{padding:4px 0;font-size:9.5px}
+/* #hint 是 flex:1 + overflow:hidden：加高的按钮要靠这里的字号换回空间，否则最后一行被切 */
+body.touch #hint{font-size:9px;line-height:1.28}
+body.touch .story-choice{padding:11px 13px;font-size:14px}
+body.touch .panel .btn,body.touch .slide .btn{min-height:26px}
+body.touch .home-panel .btn{min-height:30px}
+
+/* 手机上毛玻璃很吃 GPU：把最密集的几层模糊半径降下来（观感几乎无差别） */
+body.touch #hud,body.touch .panel,body.touch .slide,body.touch #overlay::before{
+  backdrop-filter:blur(12px) saturate(1.5);-webkit-backdrop-filter:blur(12px) saturate(1.5)}
+
+/* 可滚动区域必须放行纵向手势 —— body 上的 touch-action 会连带限制子元素，
+   不显式放行的话面板里划不动 */
+.slist,#techList,#achList,#helpBody,#runeList,#questBody,#lotPool,#lotRes,#detail,
+.panel,.slide,.story-textbox,.story-choices,.home-layout{touch-action:pan-y}
+.slist,.panel,.slide,#detail,.story-textbox,.home-layout{-webkit-overflow-scrolling:touch}
+
+/* 竖屏提示：由 JS 判定（触摸设备 + 竖屏 + 短边 ≤900px）后加 .show */
+#rotateHint{position:fixed;inset:0;z-index:300;display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:26px;text-align:center;
+  background:radial-gradient(ellipse at center,rgba(26,19,62,.97) 0%,rgba(6,5,14,.995) 100%)}
+#rotateHint.show{display:flex}
+#rotateHint .rh-ico{font-size:54px;line-height:1;animation:rhTilt 2.4s ease-in-out infinite}
+@keyframes rhTilt{0%,100%{transform:rotate(-16deg)}50%{transform:rotate(16deg)}}
+#rotateHint h3{font-size:19px;font-weight:800;color:var(--pri-2);letter-spacing:.5px}
+#rotateHint p{font-size:12.5px;line-height:1.75;color:var(--text-note);max-width:330px}
+#rotateHint .rh-btn{margin-top:2px;padding:11px 24px;border-radius:10px;border:1px solid rgba(160,140,255,.4);
+  background:rgba(255,255,255,.05);color:var(--text);font-size:14px;font-family:inherit;cursor:pointer}
+#rotateHint .rh-btn.primary{background:linear-gradient(180deg,rgba(167,139,250,.5),rgba(167,139,250,.2));
+  border-color:rgba(196,181,253,.65);color:#fff;font-weight:700}
+#rotateHint .rh-btn:active,#rotateHint .rh-link:active{transform:scale(.97)}
+#rotateHint .rh-link{margin-top:6px;padding:8px 12px;border:0;background:none;color:var(--text-dim);
+  font-size:12.5px;font-family:inherit;text-decoration:underline;cursor:pointer}
+
+/* 旋转模式下的兜底操作条（真实屏幕坐标，不随游戏缩放） */
+#rotBar{position:fixed;z-index:290;display:none;gap:6px;left:calc(8px + env(safe-area-inset-left,0px));
+  top:calc(8px + env(safe-area-inset-top,0px))}
+body.rotated #rotBar{display:flex}
+#rotBar button{padding:8px 12px;border-radius:9px;border:1px solid rgba(160,140,255,.45);
+  background:rgba(18,14,38,.86);color:#ded9ff;font-size:12.5px;font-family:inherit;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer}
+#rotBar button:active{transform:scale(.96);background:rgba(167,139,250,.32)}
+
 @media (prefers-reduced-motion:reduce){
+  #rotateHint .rh-ico{animation:none}
   #overlay::before,.home-panel.panel,.home-layout>.setup-panel,.home-side>.record-card,.home-side>.home-shortcuts,.home-bottom>.home-guide,.home-bottom>.home-audio,
   .home-header h1,.home-kicker i,.home-clock>span,.home-start-actions .big,.home-music,.home-action,.story-avatar{animation:none!important}
   .home-panel *, .story-dialog *{scroll-behavior:auto!important;transition-duration:.01ms!important}
@@ -1213,6 +1286,22 @@ canvas{display:block;width:1280px;height:720px}
 </style>
 </head>
 <body>
+<!-- 竖屏提示：放在 #wrap 之外才能覆盖真实屏幕（#wrap 被缩放后只占中间一小块） -->
+<div id="rotateHint">
+  <div class="rh-ico">📱</div>
+  <h3>把手机横过来玩</h3>
+  <p>《躺平发育》是横屏塔防，竖屏下战场会被压得很小、按钮也难点。</p>
+  <p style="margin-top:-2px">如果手机开了「旋转锁定」，横过来屏幕不会自动转 ——<br>
+     请先把手机<b>横着拿</b>，再点第二个按钮把画面转过来。</p>
+  <button class="rh-btn primary" id="rhFull" type="button">全屏 + 锁定横屏</button>
+  <button class="rh-btn" id="rhRotate" type="button">我已横着拿 → 画面转向</button>
+  <button class="rh-link" id="rhSkip" type="button">不转向，直接开始</button>
+</div>
+<!-- 旋转模式下的兜底操作条：放在 #wrap 之外，用真实屏幕坐标，不随游戏缩放 -->
+<div id="rotBar">
+  <button type="button" id="rotFlip" title="画面上下颠倒时点这里翻转 180°">⟲ 翻转方向</button>
+  <button type="button" id="rotExit" title="退出旋转，回到普通竖屏">✕ 退出旋转</button>
+</div>
 <div id="wrap">
   <canvas id="game" width="1280" height="720"></canvas>
   <div id="fx"></div>
@@ -1237,6 +1326,7 @@ canvas{display:block;width:1280px;height:720px}
     <button class="btn" id="btnHelp" title="图鉴与帮助">❓图鉴</button>
     <button class="btn" id="btnPause" title="暂停 / 继续（P）">⏸</button>
     <button class="btn" id="btnSpeed" title="切换游戏速度">1×</button>
+    <button class="btn" id="btnFull" title="全屏 / 锁定横屏（手机推荐）">⛶</button>
   </div>
   <div id="bossBar">
     <div class="bb-top"><span class="bb-name" id="bbName"></span><span class="bb-phase" id="bbPhase"></span>
@@ -1967,6 +2057,27 @@ const DREAM_FRAGMENTS = [
     text:'闹钟停在 03:07。七分钟后，三双湿鞋印走回床边。床头灯亮着，屋里四个人，一个也没有少。' },
   { id:'frag_20', title:'写给自己的信', desc:'来自内心的声音', icon:'💌', rarity:'legendary',
     text:'"亲爱的我：如果你读到这里，先别相信写信的人。问问他，03:07 那时他在哪里。答案就在你记得最清楚、却一直不肯说的地方。"' },
+  // ── 追加 10 块碎片：继续沿着 03:07 停电、七分钟缺口、第四双鞋的线索往下挖 ──
+  { id:'frag_21', title:'走廊的第四双鞋', desc:'门口多出来的那道水痕', icon:'👟', rarity:'common',
+    text:'门口摆着三双湿鞋，鞋尖朝外，像是随时准备再出去一次。第四道水痕从楼梯口一路拖到床边，却没有对应的鞋。' },
+  { id:'frag_22', title:'备用灯的电量', desc:'只亮过七分钟', icon:'🔋', rarity:'common',
+    text:'应急灯的指示灯还剩三格电。说明书上写着满电可连续照明两小时。它只亮过七分钟，却耗掉了第一格。' },
+  { id:'frag_23', title:'手环上的名字', desc:'和你的一模一样', icon:'⌚', rarity:'rare',
+    text:'照片里那只手环的腕带上刻着名字。你把照片放大到发虚，才敢承认那三个字和你的一模一样。' },
+  { id:'frag_24', title:'值夜表的背面', desc:'被写过又擦掉', icon:'📋', rarity:'rare',
+    text:'纸背有很深的压痕，是写字时用力留下的。逆着光读出来只有一行："第四格不用填，他一直在。"' },
+  { id:'frag_25', title:'没有发出去的短信', desc:'草稿箱里的一行字', icon:'✉️', rarity:'rare',
+    text:'草稿箱里躺着一条没发出去的消息，收件人是那个三个人的群。只有两个字："别关灯。"发送时间停在 03:07。' },
+  { id:'frag_26', title:'雨声里的另一层', desc:'多出来的那个呼吸', icon:'🌧️', rarity:'epic',
+    text:'把录音降速到一半，雨声底下浮出第四个人的呼吸。它比雨声更慢，也比屋里的三个人更近。' },
+  { id:'frag_27', title:'床垫下的纸条', desc:'写给下一个醒着的人', icon:'📃', rarity:'epic',
+    text:'纸条上只有一句："如果你读到这里，说明轮到你了。把灯留着，别应门。"字迹很新，墨还没完全干。' },
+  { id:'frag_28', title:'第四格的名字', desc:'被雨水泡开的墨迹', icon:'🖋️', rarity:'epic',
+    text:'值夜表的第四格被雨水泡过，墨迹散成一团。但在紫外灯下还能看出一个偏旁 —— 和你自己的姓，是同一个。' },
+  { id:'frag_29', title:'录音的最后一秒', desc:'一直没有播完的那一段', icon:'▶️', rarity:'legendary',
+    text:'进度条走到 06:59 就断了。你把缺的那零点几秒补上，听见有人轻轻把门带上，然后对着床铺说了一句："我们回来了。"' },
+  { id:'frag_30', title:'醒来的第一句话', desc:'最后一块碎片', icon:'🌅', rarity:'legendary',
+    text:'三十块碎片拼在一起，拼出的不是答案，是一张床和三个站在床边的人。天快亮了。你说出的第一句话，决定了这盘录音要不要倒回去重听。' },
 ];
 
 // ─── 4. NPC 台词 ───────────────────────────────────────────
@@ -2502,6 +2613,11 @@ function waveUnlocks(n) {
   if (n >= 26) add('chronos', 0, 0.08);
   if (n >= 30) add('nullifier', 0, 0.07);
   if (n >= 34) add('colossus', 0, 0.05);
+  // 追加梦魇的解锁节奏（22 波起陆续登场）
+  if (n >= 22) add('rustbug', 0, 0.09);
+  if (n >= 24) add('owl', 0, 0.09);
+  if (n >= 26) add('echo', 0, 0.08);
+  if (n >= 28) add('weaver', 0, 0.07);
   return u;
 }
 const TECH_DEFS = {
@@ -2554,6 +2670,13 @@ const EVENTS = [
   { id: 'haste', name: '疾行时刻', icon: '⏩', desc: '敌人速度 x1.4', eff: { spdMul: 1.4 } },
   { id: 'blackout', name: '断电危机', icon: '🕯️', desc: '本波升级耗电量 x1.6', eff: { powerCostMul: 1.6 } },
   { id: 'brittle', name: '梦境脆弱', icon: '💔', desc: '敌人生命 -35%', eff: { hpMul: 0.65 } },
+  // ── 追加事件：全部只用引擎已支持的 eff 字段（powerMul / goldMul / countMul /
+  //    rewardMul / soulMul / spdMul / powerCostMul / hpMul），不需要改逻辑 ──
+  { id: 'bloodmoon',  name: '血月当空', icon: '🌑', desc: '敌人生命 +40%，但灵魂掉落 x2.5', eff: { hpMul: 1.4, soulMul: 2.5 } },
+  { id: 'twinrain',   name: '双倍宝箱', icon: '📦', desc: '敌人 x1.3，波次奖励 x2.5', eff: { countMul: 1.3, rewardMul: 2.5 } },
+  { id: 'static',     name: '静电弥漫', icon: '🌫️', desc: '敌人速度 -25%，但电力产出 -35%', eff: { spdMul: 0.75, powerMul: 0.65 } },
+  { id: 'inflation',  name: '梦境通胀', icon: '💸', desc: '本波金币产出 x3，但升级耗电 x2', eff: { goldMul: 3, powerCostMul: 2 } },
+  { id: 'reaperhour', name: '收割时刻', icon: '⏳', desc: '敌人 x1.8、速度 x1.25，灵魂掉落 x3', eff: { countMul: 1.8, spdMul: 1.25, soulMul: 3 } },
 ];
 const ACHIEVEMENTS = [
   { id: 'w10', name: '初露锋芒', desc: '存活到第 10 波', check: () => G.wave >= 10, reward: { soul: 15 } },
@@ -2563,11 +2686,22 @@ const ACHIEVEMENTS = [
   { id: 'k2000', name: '歼灭专家', desc: '累计击杀 2000 只梦魇', check: () => G.stats.kills >= 2000, reward: { soul: 60 } },
   { id: 'rich', name: '小富即安', desc: '金币储量达到 3000', check: () => G.gold >= 3000, reward: { soul: 20 } },
   { id: 'growth', name: '彻底躺平', desc: '发育度达到满级 25', check: () => G.grow >= 25, reward: { soul: 30 } },
-  { id: 'allbuild', name: '集大成者', desc: '同时拥有全部 11 种建筑', check: () => new Set(G.buildings.map(b => b.type)).size >= 11, reward: { soul: 50 } },
+  { id: 'allbuild', name: '集大成者', desc: '同时拥有 11 种不同的建筑', check: () => new Set(G.buildings.map(b => b.type)).size >= 11, reward: { soul: 50 } },
   { id: 'branch', name: '进化之路', desc: '完成 5 次建筑转职', check: () => G.buildings.filter(b => b.branch).length >= 5, reward: { soul: 45 } },
   { id: 'nolose', name: '固若金汤', desc: '第 20 波时三扇门全部完好', check: () => G.wave >= 20 && G.doors.every(d => d.hp >= d.maxHp), reward: { soul: 55 } },
   { id: 'tower20', name: '炮塔森林', desc: '同时拥有 20 座炮塔', check: () => G.buildings.filter(b => b.def.tower).length >= 20, reward: { soul: 35 } },
   { id: 'boss5', name: '弑君者', desc: '击杀 5 个 BOSS', check: () => G.stats.bossKills >= 5, reward: { soul: 70 } },
+  // ── 追加成就 ──
+  { id: 'w55', name: '守夜人', desc: '存活到第 55 波', check: () => G.wave >= 55, reward: { soul: 150 } },
+  { id: 'k5000', name: '梦魇清理者', desc: '累计击杀 5000 只梦魇', check: () => G.stats.kills >= 5000, reward: { soul: 120 } },
+  { id: 'boss15', name: '梦魇终结者', desc: '击杀 15 个 BOSS', check: () => G.stats.bossKills >= 15, reward: { soul: 140 } },
+  { id: 'rich30k', name: '梦境富豪', desc: '单局金币储量达到 30000', check: () => G.gold >= 30000, reward: { soul: 60 } },
+  { id: 'combo30', name: '连杀艺术家', desc: '达成 30 连杀', check: () => G.maxCombo >= 30, reward: { soul: 50 } },
+  { id: 'branch16', name: '全员进化', desc: '同时拥有 16 座已转职的建筑', check: () => G.buildings.filter(b => b.branch).length >= 16, reward: { soul: 110 } },
+  { id: 'rune10', name: '符文收藏家', desc: '背包与建筑上共有 10 枚符文', check: () => (G.runeBag.length + G.buildings.reduce((n, b) => n + (b.runes || []).filter(Boolean).length, 0)) >= 10, reward: { soul: 70 } },
+  { id: 'chal20', name: '挑战达人', desc: '累计完成 20 次波次挑战', check: () => (G.stats.challenges | 0) >= 20, reward: { soul: 80 } },
+  { id: 'frag5', name: '拾忆者', desc: '收集 5 块记忆碎片', check: () => typeof DreamFragments !== 'undefined' && !!DreamFragments._collected && DreamFragments._collected.size >= 5, reward: { soul: 90 } },
+  { id: 'npc3', name: '梦境召集人', desc: '同时驻守 3 位梦境居民', check: () => typeof NPCGuardians !== 'undefined' && !!NPCGuardians._recruited && NPCGuardians._recruited.length >= 3, reward: { soul: 85 } },
 ];
 const RARITY = {
   common: { name: '普通', color: '#94a3b8', glow: 'rgba(148,163,184,.5)' },
@@ -2656,6 +2790,22 @@ Object.assign(ENEMY_DEFS, {
   reaper: { name: '收割者', icon: '⚔️', hp: 260, speed: 44, dmg: 30, gold: 34, soul: 5, cost: 50, r: 23, color: '#dc2626', buildingBonus: 3.0, weak: { frost: 0.45 } },
   frostbane: { name: '霜噬兽', icon: '🐺', hp: 190, speed: 50, dmg: 18, gold: 25, soul: 4, cost: 40, r: 21, color: '#a5f3fc', freezeTower: { r: 170, dur: 4, cd: 11 }, res: { frost: 0.75 }, weak: { fire: 0.6 } },
   necromancer: { name: '死灵法师', icon: '💀', hp: 240, speed: 28, dmg: 10, gold: 36, soul: 6, cost: 52, r: 22, color: '#6b21a8', revive: { every: 7, n: 3 }, res: { fire: 0.5 }, weak: { energy: 0.5 } },
+});
+// ── 追加梦魇：全部复用引擎既有机制字段，不需要新增战斗/渲染逻辑。
+//    敌人是按 def.color + def.icon 泛化绘制的，加进来即生效，图鉴也会自动收录。 ──
+Object.assign(ENEMY_DEFS, {
+  rustbug: { name: '锈蚀梦魇', icon: '⚙️', hp: 240, speed: 32, dmg: 20, gold: 30, soul: 4, cost: 46, r: 21, color: '#c9a227',
+    buildingBonus: 1.6, res: { kinetic: 0.5, fire: 0.3 }, weak: { shock: 0.5 },
+    tip: '建筑克星：对建筑造成 1.6 倍伤害，优先扑向炮塔' },
+  owl: { name: '夜枭梦魇', icon: '🦉', hp: 150, speed: 74, dmg: 12, gold: 24, soul: 4, cost: 40, r: 16, color: '#a78bfa',
+    flying: true, stealth: true, res: { fire: 0.35 }, weak: { kinetic: 0.5 },
+    tip: '隐身飞行，无视铁门 —— 需要侦察兵或范围伤害才能稳稳处理' },
+  echo: { name: '回响梦魇', icon: '🔊', hp: 260, speed: 38, dmg: 14, gold: 28, soul: 5, cost: 48, r: 22, color: '#7dd3fc',
+    split: 2, res: { shock: 0.4 }, weak: { toxic: 0.5 },
+    tip: '死亡后分裂成两只梦魇，别用单体高伤硬拆' },
+  weaver: { name: '织梦者', icon: '🕸️', hp: 300, speed: 26, dmg: 11, gold: 34, soul: 6, cost: 56, r: 24, color: '#e2e8f0',
+    ward: { shield: 0.35, r: 160 }, res: { energy: 0.45 }, weak: { fire: 0.45 },
+    tip: '为周围友军持续叠加护盾，优先集火' },
 });
 const BOSS_DEFS = {
   lord: {
@@ -3396,10 +3546,12 @@ function newGame(loadFrom) {
   SKILL_KEYS.forEach(k => G.skills[k] = 0);
   BED_CELLS.forEach(([c, r]) => G.grid[r * COLS + c] = 'bed');
   selected = null; selectedBuildKey = null;
+  // 梦境系统必须排在 applySave() 之前初始化：DreamEngine.init() 会把记忆碎片 / 梦境日记 /
+  // NPC 驻守 / 理解路线 / 第四面墙触发记录全部复位。顺序反了的话，restoreDream() 刚恢复的
+  // 进度会被立刻清空 —— 表现就是「读档之后记忆碎片和日记全没了」。
+  if (typeof DreamEngine !== 'undefined') { try { DreamEngine.init(); } catch(e) { console.warn('DreamEngine init failed:', e); } }
   if (loadFrom) applySave(loadFrom);
   else setTip('点击左侧建筑卡片，再点击房间空位建造。先放「金币矿机」和「发电机」！', 8);
-  // 初始化梦境系统
-  if (typeof DreamEngine !== 'undefined') { try { DreamEngine.init(); } catch(e) { console.warn('DreamEngine init failed:', e); } }
 }
 const techVal = (k, per) => 1 + G.tech[k] * per;
 /* ------------------------------------------------------------------
@@ -3436,8 +3588,9 @@ function bstat(b) {
 function towerPanelDps(s, b) {
   if (!s || !s.dmg) return 0;
   const fate = G.fate || {}, fateW = G.fateWave || {};
-  const critC = clamp(G.tech.crit * 0.04 + (fate.crit || 0) + (fateW.crit || 0), 0, 1);
-  const critM = 2.2 + G.tech.critmaster * 0.4 + (fate.critDmg || 0) + (fateW.critDmg || 0);
+  // 与 critRoll() 保持一致：面板显示也要把符文上的暴击率 / 暴击伤害算进去
+  const critC = clamp((s.crit || 0) + G.tech.crit * 0.04 + (fate.crit || 0) + (fateW.crit || 0), 0, 0.95);
+  const critM = (s.critDmg || 2.2) + G.tech.critmaster * 0.4 + (fate.critDmg || 0) + (fateW.critDmg || 0);
   const critMul = 1 + critC * (critM - 1);
   let targets = 1;
   if (s.split) targets = Math.min(4, s.split);
@@ -3462,6 +3615,19 @@ function resBonusOf(b) {
   };
 }
 const runeSlots = () => 2 + G.tech.runelord;
+/**
+ * 符文槽数组必须与 runeSlots() 等长。
+ * 科技「符文宗师」会加槽，但老建筑建造时只有 2 个位置 —— 不补齐的话，socketRune() 里用
+ * findIndex 找空槽会在数组末尾提前返回 -1，面板上明明显示还有空槽却提示「没有空的符文槽」，
+ * 同时 runes 数组会退化成带空洞的稀疏数组（存档规整逻辑又按 runeSlots() 重建，两边对不上）。
+ */
+function ensureRuneSlots(b) {
+  if (!b) return null;
+  const n = runeSlots();
+  if (!Array.isArray(b.runes)) b.runes = [];
+  while (b.runes.length < n) b.runes.push(null);
+  return b.runes;
+}
 function tryDropRune(wave, x, y) {
   const chance = (0.012 + wave * 0.0016) * (1 + G.tech.looting * 0.2);
   if (Math.random() > Math.min(0.5, chance)) return null;
@@ -3608,7 +3774,7 @@ function tryBuild(key, c, r) {
     type: key, def, level: 1, col: c, row: r, x: p.x, y: p.y,
     hp: def.hp * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1), maxHp: def.hp * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1),
     shield: 0, shieldMax: 0, cd: 0, angle: -Math.PI / 2, target: null, branch: null,
-    invested: def.cost.gold, pulse: 0, kills: 0, runes: [null, null], fireFx: 0,
+    invested: def.cost.gold, pulse: 0, kills: 0, runes: new Array(runeSlots()).fill(null), fireFx: 0,
   };
   b.animY = -60; b.animBounce = 0.3;
   G.buildings.push(b); G.grid[r * COLS + c] = b; G.resDirty = true;
@@ -4362,7 +4528,7 @@ function updateTowers(dt) {
       const mul = towerDmgMul(b);
       const all = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       all.forEach(e => {
-        applyDamage(e, s.dmg * mul * critRoll(), 'kinetic', b);
+        applyDamage(e, s.dmg * mul * critRoll(b), 'kinetic', b);
         const dx = e.x - b.x, dy = e.y - b.y, d = Math.hypot(dx, dy) || 1;
         // BOSS 享受击退/眩晕减免，否则一座声波塔能把 BOSS 永久定在走廊口
         const ctrl = e.boss ? 0.25 : 1;
@@ -4378,11 +4544,14 @@ function updateTowers(dt) {
     fire_(b, t, s);
   }
 }
-function critRoll() {
-  // 剧情加成（暴击率 +N%）也计入：基础来自灵魂科技树
-  const chance = G.tech.crit * 0.04 + (G.fate.crit || 0) + (G.fateWave.crit || 0);
+function critRoll(b) {
+  // 暴击率 = 符文词条（面板 s.crit）+ 灵魂科技树「致命一击」+ 剧情加成。
+  // 此前漏掉了符文那一项，导致符文上的「✨暴击率 / 💫暴击伤害」词条完全不生效。
+  const s = (b && b.def) ? bstat(b) : null;
+  const chance = clamp((s && s.crit ? s.crit : 0) + G.tech.crit * 0.04 + (G.fate.crit || 0) + (G.fateWave.crit || 0), 0, 0.95);
   const extra = (G.fate.critDmg || 0) + (G.fateWave.critDmg || 0);
-  return Math.random() < chance ? (2.2 + G.tech.critmaster * 0.4 + extra) : 1;
+  const base = (s && s.critDmg ? s.critDmg : 2.2);
+  return Math.random() < chance ? (base + G.tech.critmaster * 0.4 + extra) : 1;
 }
 function fire_(b, t, s) {
   const mul = towerDmgMul(b);
@@ -4405,7 +4574,7 @@ function fire_(b, t, s) {
         if (hits >= (s.pierce || 1)) break;
         const a2 = Math.atan2(e.y - b.y, e.x - b.x);
         if (Math.abs(Math.atan2(Math.sin(a2 - ang), Math.cos(a2 - ang))) < 0.24 && dist(e, b) <= s.range + 40) {
-          applyDamage(e, s.dmg * mul * critRoll(), dtype, b); hits++;
+          applyDamage(e, s.dmg * mul * critRoll(b), dtype, b); hits++;
         }
       }
     });
@@ -4436,7 +4605,7 @@ function fire_(b, t, s) {
     if (!tg.length) tg.push(t);
     tg.forEach(e => {
       addEffect({ type: 'laser', x: b.x, y: b.y, x2: e.x, y2: e.y, life: 0.16, maxLife: 0.16, color: '#67e8f9' });
-      applyDamage(e, s.dmg * mul * critRoll(), dtype, b);
+      applyDamage(e, s.dmg * mul * critRoll(b), dtype, b);
     });
     SFX.laser();
   } else {
@@ -4446,7 +4615,7 @@ function fire_(b, t, s) {
     for (let i = 0; i < nm; i++) {
       G.bullets.push({
         x: b.x, y: b.y, tx: t.x, ty: t.y, target: t, spd: bspd,
-        dmg: s.dmg * mul, crit: critRoll(), type: b.type, dtype,
+        dmg: s.dmg * mul, crit: critRoll(b), type: b.type, dtype,
         slow: s.slow || 0, freezeChance: s.freezeChance || 0, shred: s.shred || 0,
         splash: s.splash || 0, poisonStack: s.poison ? 1 : 0, poisonDps: s.poisonDps || 0, poisonMax: s.maxStack || 0,
         r: br, color: b.def.color, src: b, life: 0,
@@ -4945,6 +5114,18 @@ function gameOver() {
     setTip('「梦境重生」生效，床铺已恢复满血', 5);
     return;
   }
+  // 无限模式：床铺被毁不结束本局，而是自动重构。
+  // （README 承诺过这条，但 G.rebuilds 只被初始化、全文没有任何一处自增 —— 逻辑一直缺失）
+  if (G.mode === 'unlimited') {
+    G.rebuilds = (G.rebuilds || 0) + 1;
+    G.bed.hp = G.bed.maxHp; G.bed.shield = G.bed.shieldMax;
+    G.enemies.forEach(e => { if (e.target && e.target.isBed) { e.target = null; e.state = 'walk'; } });
+    addText(BED_CX, BED_CY - 90, '♾ 床铺自动重构（第 ' + G.rebuilds + ' 次）', '#7dd3fc', true);
+    spawnParts(BED_CX, BED_CY, 50, '#7dd3fc', 5, 1.2);
+    flash = 0.6; shakeBy(18); SFX.up();
+    setTip('无限模式：床铺被毁会自动重构，但梦魇一波比一波强', 5);
+    return;
+  }
   G.over = true; G.state = 'over';
   grantMetaReward(false);
   SFX.lose(); shakeBy(24); flash = 0.8;
@@ -5080,6 +5261,7 @@ function upgradeMaxSelected(b) {
 }
 function socketRune(b, runeId, slot) {
   if (!b || !b.def) return false;
+  ensureRuneSlots(b);   // 补足槽位：否则「符文宗师」加槽后自动镶嵌找不到空槽
   const idx = G.runeBag.findIndex(r => r.id === runeId);
   if (idx < 0) return false;
   const slots = runeSlots();
@@ -5172,9 +5354,11 @@ const SaveSystem = {
       let info = null;
       if (raw) {
         try {
-          const d = JSON.parse(raw);
-          const m = d && d.meta;
-          if (m) info = m;
+          const parsed = JSON.parse(raw);
+          // 老版本存档没有 meta 摘要，直接取 d.meta 会让槽位在面板里显示成「空」。
+          // 先走一遍迁移，再按需现算一份摘要。
+          const d = (parsed && parsed.meta) ? parsed : (this.migrate(parsed) || parsed);
+          info = (d && d.meta) ? d.meta : (d && d.run ? this._metaOf(d) : { broken: true });
         } catch (e) { info = { broken: true }; }
       }
       out.push({ slot: s, auto: s === 0, info });
@@ -5335,7 +5519,7 @@ const SaveSystem = {
         admin: !!G.admin, winWave: G.winWave | 0,
         prepTimer: G.prepTimer, prepTotal: G.prepTotal,
         reviveLeft: G.reviveLeft | 0,
-        combo: G.combo | 0, maxCombo: G.maxCombo | 0,
+        combo: G.combo | 0, comboT: G.comboT || 0, maxCombo: G.maxCombo | 0,
         eventId: (G.event && G.event.id) || 'none',
         eventTimer: G.eventTimer | 0,
         prize: G.prize || {},
@@ -5386,8 +5570,10 @@ const SaveSystem = {
       }
       if (Array.isArray(dm.npcs) && typeof NPCGuardians !== 'undefined') {
         dm.npcs.forEach(n => {
-          const def = (typeof NPC_DIALOG !== 'undefined') ? NPC_DIALOG.find(x => x.id === n.id) : null;
-          if (def && !NPCGuardians._recruited.some(r => r.def.id === n.id)) {
+          // captureDream() 存的是 NPC_DATA 的能力 id（abilityId），不是 NPC_DIALOG 的 npc_N。
+          // 之前只按 x.id 查找，永远匹配不到 —— 表现就是「读档后驻守的梦境居民全部消失」。
+          const def = (typeof NPC_DIALOG !== 'undefined') ? NPC_DIALOG.find(x => x.id === n.id || x.abilityId === n.id) : null;
+          if (def && !NPCGuardians._recruited.some(r => r.def.abilityId === def.abilityId)) {
             NPCGuardians._recruited.push({ def, roomId: n.roomId });
           }
         });
@@ -5430,7 +5616,7 @@ const SaveSystem = {
       G.prepTimer = isFinite(run.prepTimer) ? +run.prepTimer : G.prepTimer;
       G.prepTotal = isFinite(run.prepTotal) && run.prepTotal > 0 ? +run.prepTotal : G.prepTimer;
       G.reviveLeft = run.reviveLeft | 0;
-      G.combo = run.combo | 0; G.maxCombo = run.maxCombo | 0;
+      G.combo = run.combo | 0; G.comboT = +run.comboT || 0; G.maxCombo = run.maxCombo | 0;
       G.eventTimer = +run.eventTimer || 0;
       if (run.eventId && typeof EVENTS !== 'undefined') {
         const ev = EVENTS.find(e => e.id === run.eventId);
@@ -5827,6 +6013,12 @@ const EventBus = {
   /** @type {Object<string, Function[]>} 事件处理器映射 */
   _handlers: {},
 
+  /** clear() 被调用过多少次。ui.js 用它当「印章」判断自己是否需要重新注册。 */
+  generation: 0,
+
+  /** clear() 之后需要重新注册的 UI 监听（由 ui.js 的 initDreamUI 挂上）。 */
+  _uiRebind: null,
+
   /**
    * 订阅事件
    * @param {string} event - 事件名称
@@ -5874,6 +6066,15 @@ const EventBus = {
    */
   clear() {
     this._handlers = {};
+    this.generation++;
+    // 关键：newGame() 会调用 clear() 把全部监听清掉。dream.js 的子系统会在
+    // DreamEngine.init() 里重新注册，但 ui.js 那批「剧情之外」的演出监听
+    // （记忆碎片弹窗 / 第四面墙演出与回滚 / 深层梦境转场与 HUD / 旋律提示 /
+    // 理解路线对话 / NPC 招募提示）只在启动时注册过一次 —— 不在这里回调重注册，
+    // 玩家点「进入梦境」之后这些功能会全部静默失效。
+    if (typeof this._uiRebind === 'function') {
+      try { this._uiRebind(); } catch (e) { console.warn('[EventBus] UI 监听重新注册失败:', e); }
+    }
   },
 };
 
@@ -6509,6 +6710,9 @@ const FourthWall = {
       saveCorruptActive: false,
     };
     this._triggeredWaves = new Set();
+    // 上一局残留的第四面墙视觉（颜色反转 / 按钮文字被替换 / 故障滤镜 / 假崩溃）
+    // 必须一起复位，否则新一局开场就带着上一局的异常画面，而且再也回不来。
+    if (typeof revertFourthWall === 'function') { try { revertFourthWall(); } catch (e) { console.warn('[FourthWall] revert:', e); } }
     EventBus.emit('fourthWall:init', null);
   },
 
@@ -7552,6 +7756,16 @@ const DreamFragments = {
       frag_18: ['boss', 0.015],
       frag_19: ['boss', 0.01],
       frag_20: ['boss', 0.01],
+      frag_21: ['grunt', 0.06],
+      frag_22: ['sprinter', 0.05],
+      frag_23: ['phantom', 0.04],
+      frag_24: ['digger', 0.04],
+      frag_25: ['mimic', 0.035],
+      frag_26: ['wraith', 0.03],
+      frag_27: ['necromancer', 0.025],
+      frag_28: ['warden', 0.02],
+      frag_29: ['boss', 0.012],
+      frag_30: ['final', 0.05],
     };
     return (typeof DREAM_FRAGMENTS !== 'undefined' ? DREAM_FRAGMENTS : []).map(f => {
       const d = DROPS[f.id] || ['any', 0.02];
@@ -7839,6 +8053,10 @@ const DreamEngine = {
    */
   init() {
     DreamEcology.initEcology();
+    // 中立生物持有上一局的坐标与 HP，不清掉会把它们带进新一局；
+    // 生成计时器同理（否则新局开场几秒就立刻刷出生物）。
+    NeutralCreatures._creatures.length = 0;
+    this._neutralSpawnTimer = 0;
     NPCGuardians.initNPCs();
     FourthWall.initFourthWall();
     DreamSound.initSound();
@@ -10977,8 +11195,14 @@ function openBag() {
  * ============================================================ */
 
 // === 事件监听初始化 ===
+let _dreamUIStamp = -1;
 function initDreamUI() {
   if (typeof EventBus === 'undefined') return;
+  // 幂等保护：newGame() 里的 EventBus.clear() 会回调本函数重新注册（见 dream.js 的 clear()）。
+  // 用 EventBus.generation 当印章，保证同一世代只注册一次，避免监听堆叠导致弹窗重复播放。
+  if (_dreamUIStamp === EventBus.generation) return;
+  _dreamUIStamp = EventBus.generation;
+  EventBus._uiRebind = initDreamUI;
 
   // ---- 剧情对话（由 DreamEngine / core.js 波次钩子触发）----
   EventBus.on('story:dialog', (data) => {
@@ -12182,13 +12406,22 @@ function toCanvas(e) {
   const r = cv.getBoundingClientRect();
   return { x: (e.clientX - r.left) * (W / r.width), y: (e.clientY - r.top) * (H / r.height) };
 }
-cv.addEventListener('mousemove', e => {
-  const p = toCanvas(e); mouse.x = p.x; mouse.y = p.y; hoverCell = cellFromXY(p.x, p.y);
-});
-cv.addEventListener('mouseleave', () => { hoverCell = null; mouse.x = -999; });
-cv.addEventListener('click', e => {
-  SFX.init();
-  const p = toCanvas(e), x = p.x, y = p.y;
+/* ------------------------------------------------------------------
+ * 指针输入（桌面鼠标 + 手机触摸共用一套逻辑）
+ *   桌面：移动预览 + 左键操作 + 右键取消
+ *   手机：轻触等同左键（浏览器会为轻触合成 click，所以点按逻辑只写一份）；
+ *         触摸拖动时同步悬停预览（否则看不到放置预览）；
+ *         长按 520ms 取消当前选择，替代桌面端的右键。
+ *   统一用 Pointer Events：iOS Safari 13+ / Android Chromium / 华为浏览器 / 微信 X5 都支持。
+ * ------------------------------------------------------------------ */
+const CANCEL_HOLD_MS = 520;
+let _holdTimer = null, _holdStart = null, _holdFired = false;
+function cancelSelection() {
+  selectedBuildKey = null; selected = null; syncCards();
+}
+function applyCanvasPointer(x, y) { mouse.x = x; mouse.y = y; hoverCell = cellFromXY(x, y); }
+/** 点按（鼠标左键 / 轻触）的落点判定 */
+function handleCanvasTap(x, y) {
   if (x > WALL_X - 44 && x < ROOM_X0 + 30) {
     for (const D of G.doors) {
       const L = LANES[D.lane];
@@ -12196,7 +12429,7 @@ cv.addEventListener('click', e => {
     }
   }
   const cell = cellFromXY(x, y);
-  if (!cell) { selected = null; selectedBuildKey = null; syncCards(); return; }
+  if (!cell) { cancelSelection(); return; }
   if (inBed(cell.c, cell.r)) { selected = { isBed: true }; selectedBuildKey = null; syncCards(); return; }
   const occ = G.grid[cell.r * COLS + cell.c];
   if (occ && occ !== 'bed') { selected = occ; selectedBuildKey = null; syncCards(); return; }
@@ -12207,8 +12440,41 @@ cv.addEventListener('click', e => {
     return;
   }
   selected = null;
+}
+function clearHold() { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = null; } }
+cv.addEventListener('mousemove', e => { const p = toCanvas(e); applyCanvasPointer(p.x, p.y); });
+cv.addEventListener('mouseleave', () => { hoverCell = null; mouse.x = -999; });
+cv.addEventListener('pointerdown', e => {
+  if (e.pointerType !== 'touch') return;      // 鼠标/触控板继续走下面的 click
+  SFX.init();
+  const p = toCanvas(e);
+  applyCanvasPointer(p.x, p.y);
+  _holdStart = { x: e.clientX, y: e.clientY, moved: false };
+  _holdFired = false;
+  clearHold();
+  _holdTimer = setTimeout(() => {
+    _holdTimer = null;
+    if (_holdStart && !_holdStart.moved) { _holdFired = true; cancelSelection(); setTip('已取消选择', 1.6); }
+  }, CANCEL_HOLD_MS);
 });
-cv.addEventListener('contextmenu', e => { e.preventDefault(); selectedBuildKey = null; selected = null; syncCards(); });
+cv.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'touch') return;
+  const p = toCanvas(e);
+  applyCanvasPointer(p.x, p.y);
+  // 手指移动超过阈值就算拖动（放预览），不再触发长按取消
+  if (_holdStart && !_holdStart.moved && Math.hypot(e.clientX - _holdStart.x, e.clientY - _holdStart.y) > 12) {
+    _holdStart.moved = true; clearHold();
+  }
+});
+cv.addEventListener('pointerup', e => { if (e.pointerType !== 'touch') return; clearHold(); _holdStart = null; });
+cv.addEventListener('pointercancel', e => { if (e.pointerType !== 'touch') return; clearHold(); _holdStart = null; hoverCell = null; });
+cv.addEventListener('click', e => {
+  SFX.init();
+  if (_holdFired) { _holdFired = false; return; }   // 长按已经取消过了，别把抬手当成点按
+  const p = toCanvas(e);
+  handleCanvasTap(p.x, p.y);
+});
+cv.addEventListener('contextmenu', e => { e.preventDefault(); cancelSelection(); });
 const SKILL_MAP = { q: 'meteor', w: 'freeze', e: 'overclock', r: 'mend', t: 'repel', f: 'siphon' };
 window.addEventListener('keydown', e => {
   const target = e.target;
@@ -12432,11 +12698,174 @@ function buildHelp() {
     '进度每波自动保存，也可手动点 💾 保存；开局可选择「继续梦境」' +
     '</div>';
 }
-// 屏幕适配
+/* ------------------------------------------------------------------
+ * 屏幕适配（桌面 + 手机）
+ *   1) 尺寸优先取 visualViewport：手机浏览器地址栏会动态遮挡，
+ *      innerHeight 会把被遮住的部分也算进去，直接用会让画布被顶出屏幕。
+ *   2) 刘海 / 灵动岛 / 底部横条的安全区要从可用尺寸里扣掉，否则横屏时
+ *      左边的 HUD 会被刘海压住；两侧留白不等时再做居中偏移补偿。
+ * ------------------------------------------------------------------ */
+function viewportSize() {
+  const vv = window.visualViewport;
+  const w = (vv && vv.width) ? vv.width : window.innerWidth;
+  const h = (vv && vv.height) ? vv.height : window.innerHeight;
+  return { w: w || 1280, h: h || 720 };
+}
+function safeInset() {
+  let t = 0, r = 0, b = 0, l = 0;
+  try {
+    const cs = getComputedStyle(document.documentElement);
+    const num = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
+    t = num(cs.getPropertyValue('--sat')); r = num(cs.getPropertyValue('--sar'));
+    b = num(cs.getPropertyValue('--sab')); l = num(cs.getPropertyValue('--sal'));
+  } catch (e) { /* 不支持 env() 的老浏览器：当 0 处理 */ }
+  return { t, r, b, l };
+}
+function isPortrait() { const vp = viewportSize(); return vp.h > vp.w; }
+
+/* ---------------- 手机端（触摸设备）适配 ---------------- */
+const Mobile = {
+  /** 是否触摸设备。maxTouchPoints 兜底：部分安卓浏览器不带 ontouchstart。 */
+  isTouch: ('ontouchstart' in window) || (navigator.maxTouchPoints || 0) > 0,
+  /** 短边 ≤ 500px 才算手机。平板竖屏（iPad mini 744）画布已经够大，不打扰。 */
+  isPhone: false,
+  /** 判定阈值：手机竖屏宽度最大约 430（iPhone Pro Max），留些余量到 500。 */
+  PHONE_SHORT_SIDE: 500,
+  /** 玩家已经处理过竖屏提示，不再自动弹出。 */
+  hintDismissed: false,
+  /** 是否处于全屏。 */
+  fullscreenOn: false,
+  /** 「旋转画面」竖屏模式的角度：0 = 关闭，90 / -90 = 两个旋转方向。
+   *  为什么需要两个方向：系统开了「旋转锁定」时浏览器只能报告竖屏，
+   *  拿不到手机的真实物理朝向，所以给玩家一个「翻转方向」按钮兜底。 */
+  rotated: 0,
+
+  /** 进入全屏：安卓 / 华为 / 小米等 Chromium 内核可用；iPhone Safari 不支持，返回 false。 */
+  enterFullscreen() {
+    const el = document.documentElement;
+    const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.webkitRequestFullScreen || el.msRequestFullscreen;
+    if (!fn) return Promise.resolve(false);
+    try {
+      const r = fn.call(el, { navigationUI: 'hide' });
+      return Promise.resolve(r).then(() => { this.fullscreenOn = true; return true; }, () => false);
+    } catch (e) { return Promise.resolve(false); }
+  },
+  exitFullscreen() {
+    const fn = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+    if (fn) { try { const r = fn.call(document); if (r && r.catch) r.catch(function () {}); } catch (e) {} }
+    this.fullscreenOn = false;
+  },
+  /** 锁定横屏。安卓 Chromium 要求先进入全屏；iPhone Safari 不支持。 */
+  lockLandscape() {
+    try {
+      const o = screen.orientation;
+      if (o && o.lock) return Promise.resolve(o.lock('landscape')).then(() => true, () => false);
+    } catch (e) { /* 不支持或未全屏 */ }
+    return Promise.resolve(false);
+  },
+  /** 手机上的「开始玩」：全屏 + 锁横屏，失败就退回提示 / 旋转画面。 */
+  goFullscreenLandscape() {
+    return this.enterFullscreen().then(fs => {
+      return (fs ? this.lockLandscape() : Promise.resolve(false)).then(lk => {
+        if (!lk) {
+          setTip(fs
+            ? '已全屏。请把手机横过来 —— 如果没反应，说明开了旋转锁定，可改用「旋转画面」'
+            : '这个浏览器不支持全屏，请手动把手机横过来，或用「旋转画面」', 7);
+        }
+        this.dismissHint();
+        refitAll();
+        return { fs, lk };
+      });
+    });
+  },
+  /** 竖屏兜底方案：把游戏整体转 90°，可用空间从 390×844 变成 844×390，尺寸和横屏一样大。 */
+  useRotatedLayout() {
+    this.rotated = 90;
+    document.body.classList.add('rotated');
+    this.dismissHint();
+    refitAll();
+    setTimeout(refitAll, 320);
+  },
+  /** 画面上下颠倒时翻转 180°（旋转锁定下无法自动判断方向，只能让玩家点一下） */
+  flipRotate() {
+    this.rotated = this.rotated === 90 ? -90 : 90;
+    refitAll();
+    setTimeout(refitAll, 320);
+  },
+  /** 退出旋转，回到普通竖屏，并把选择权交还给玩家 */
+  exitRotated() {
+    this.rotated = 0;
+    document.body.classList.remove('rotated');
+    this.hintDismissed = false;
+    const el = $('rotateHint'); if (el) el.classList.add('show');
+    refitAll();
+  },
+  showHint() { const el = $('rotateHint'); if (el) el.classList.add('show'); },
+  dismissHint() {
+    this.hintDismissed = true;
+    const el = $('rotateHint'); if (el) el.classList.remove('show');
+    refitAll();
+    setTimeout(refitAll, 250);
+  },
+  /** 竖屏 + 手机 才提醒横屏 */
+  refreshHint() {
+    if (!this.isTouch || this.hintDismissed) return;
+    const vp = viewportSize();
+    this.isPhone = Math.min(vp.w, vp.h) <= this.PHONE_SHORT_SIDE;
+    if (vp.h > vp.w && this.isPhone && !this.rotated) this.showHint();
+    else { const el = $('rotateHint'); if (el) el.classList.remove('show'); }
+  },
+  /** 触摸设备把键盘快捷键提示换成触摸操作说明（同时腾出高度给加大的按钮） */
+  applyHintText() {
+    const el = $('hint'); if (!el || !this.isTouch) return;
+    // 控制在 3 行以内：#hint 是 flex:1 + overflow:hidden，超出会被切掉最后一行
+    el.innerHTML = '<b>建造</b> 点卡片选中 → 点格子放置<br>' +
+      '<b>取消</b> 长按画面　<b>升级</b> 点建筑 / 铁门<br>' +
+      '<b>技能</b> 点右侧格子，波次会自动推进';
+  },
+  toggleFullscreen() {
+    if (this.fullscreenOn || document.fullscreenElement || document.webkitFullscreenElement) this.exitFullscreen();
+    else this.goFullscreenLandscape();
+  },
+};
+
 function fit() {
-  const s = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
   const wrap = document.getElementById('wrap');
-  wrap.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
+  if (!wrap) return;
+  const vp = viewportSize();
+  const p = safeInset();
+  const portrait = vp.h > vp.w;
+  if (Mobile.rotated && portrait) {
+    // 竖屏 + 旋转模式：把可用宽高对调（旋转 90° 后 844×390 就变成「宽 844、高 390」）
+    const availW = Math.max(180, vp.h - p.t - p.b);
+    const availH = Math.max(140, vp.w - p.l - p.r);
+    const s = Math.min(availW / 1280, availH / 720);
+    wrap.style.transform = 'translate(-50%,-50%) rotate(' + Mobile.rotated + 'deg) scale(' + s.toFixed(5) + ')';
+    return;
+  }
+  // 竖屏不需要给侧边刘海留白（横屏才需要），底部横条始终留
+  const insL = portrait ? 0 : p.l, insR = portrait ? 0 : p.r;
+  const availW = Math.max(180, vp.w - insL - insR);
+  const availH = Math.max(140, vp.h - p.t - p.b);
+  const s = Math.min(availW / 1280, availH / 720);
+  const dx = (insL - insR) / 2, dy = (p.t - p.b) / 2;
+  wrap.style.transform = 'translate(calc(-50% + ' + dx.toFixed(2) + 'px), calc(-50% + ' + dy.toFixed(2) + 'px)) scale(' + s.toFixed(5) + ')';
+}
+
+function initMobile() {
+  if (!Mobile.isTouch) return;                 // 桌面端完全不受影响
+  document.body.classList.add('touch');
+  Mobile.applyHintText();
+  const bf = $('btnFull'); if (bf) bf.onclick = () => Mobile.toggleFullscreen();
+  const rhFull = $('rhFull'); if (rhFull) rhFull.onclick = () => Mobile.goFullscreenLandscape();
+  const rhRot = $('rhRotate'); if (rhRot) rhRot.onclick = () => Mobile.useRotatedLayout();
+  const rhSkip = $('rhSkip'); if (rhSkip) rhSkip.onclick = () => Mobile.dismissHint();
+  const rotFlip = $('rotFlip'); if (rotFlip) rotFlip.onclick = () => Mobile.flipRotate();
+  const rotExit = $('rotExit'); if (rotExit) rotExit.onclick = () => Mobile.exitRotated();
+  // iOS Safari：拦掉页面级双指缩放（面板内部的滚动不受影响）
+  ['gesturestart', 'gesturechange'].forEach(t =>
+    document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+  Mobile.refreshHint();
 }
 function fitHUD() {
   var h = document.getElementById('hud');
@@ -12465,8 +12894,19 @@ function scrollBuildKeyIntoView(k) {
   var card = el.querySelector('.card[data-k="' + k + '"]');
   if (card && card.scrollIntoView) card.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
 }
-window.addEventListener('resize', function () { fit(); fitHUD(); updateBuildBarOverflow(); applyCompactBar(); });
-fit(); fitHUD(); updateBuildBarOverflow(); applyCompactBar();
+function refitAll() { fit(); fitHUD(); updateBuildBarOverflow(); applyCompactBar(); Mobile.refreshHint(); }
+window.addEventListener('resize', refitAll);
+// 手机转屏 / 进出全屏后浏览器上报的尺寸有延迟，补两次再算一遍
+window.addEventListener('orientationchange', function () { refitAll(); setTimeout(refitAll, 120); setTimeout(refitAll, 450); });
+['fullscreenchange', 'webkitfullscreenchange'].forEach(t =>
+  document.addEventListener(t, function () { setTimeout(refitAll, 120); setTimeout(refitAll, 450); }));
+// 地址栏收放 / 软键盘弹出：只重算缩放，不触发别的布局
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', fit);
+  window.visualViewport.addEventListener('scroll', fit);
+}
+initMobile();
+refitAll();
 
 let last = performance.now();
 const FIXED_DT = 1 / 60;   // 固定模拟步长（联机/复现的前提：模拟结果与帧率无关）

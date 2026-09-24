@@ -20,6 +20,12 @@ const EventBus = {
   /** @type {Object<string, Function[]>} 事件处理器映射 */
   _handlers: {},
 
+  /** clear() 被调用过多少次。ui.js 用它当「印章」判断自己是否需要重新注册。 */
+  generation: 0,
+
+  /** clear() 之后需要重新注册的 UI 监听（由 ui.js 的 initDreamUI 挂上）。 */
+  _uiRebind: null,
+
   /**
    * 订阅事件
    * @param {string} event - 事件名称
@@ -67,6 +73,15 @@ const EventBus = {
    */
   clear() {
     this._handlers = {};
+    this.generation++;
+    // 关键：newGame() 会调用 clear() 把全部监听清掉。dream.js 的子系统会在
+    // DreamEngine.init() 里重新注册，但 ui.js 那批「剧情之外」的演出监听
+    // （记忆碎片弹窗 / 第四面墙演出与回滚 / 深层梦境转场与 HUD / 旋律提示 /
+    // 理解路线对话 / NPC 招募提示）只在启动时注册过一次 —— 不在这里回调重注册，
+    // 玩家点「进入梦境」之后这些功能会全部静默失效。
+    if (typeof this._uiRebind === 'function') {
+      try { this._uiRebind(); } catch (e) { console.warn('[EventBus] UI 监听重新注册失败:', e); }
+    }
   },
 };
 
@@ -702,6 +717,9 @@ const FourthWall = {
       saveCorruptActive: false,
     };
     this._triggeredWaves = new Set();
+    // 上一局残留的第四面墙视觉（颜色反转 / 按钮文字被替换 / 故障滤镜 / 假崩溃）
+    // 必须一起复位，否则新一局开场就带着上一局的异常画面，而且再也回不来。
+    if (typeof revertFourthWall === 'function') { try { revertFourthWall(); } catch (e) { console.warn('[FourthWall] revert:', e); } }
     EventBus.emit('fourthWall:init', null);
   },
 
@@ -1745,6 +1763,16 @@ const DreamFragments = {
       frag_18: ['boss', 0.015],
       frag_19: ['boss', 0.01],
       frag_20: ['boss', 0.01],
+      frag_21: ['grunt', 0.06],
+      frag_22: ['sprinter', 0.05],
+      frag_23: ['phantom', 0.04],
+      frag_24: ['digger', 0.04],
+      frag_25: ['mimic', 0.035],
+      frag_26: ['wraith', 0.03],
+      frag_27: ['necromancer', 0.025],
+      frag_28: ['warden', 0.02],
+      frag_29: ['boss', 0.012],
+      frag_30: ['final', 0.05],
     };
     return (typeof DREAM_FRAGMENTS !== 'undefined' ? DREAM_FRAGMENTS : []).map(f => {
       const d = DROPS[f.id] || ['any', 0.02];
@@ -2032,6 +2060,10 @@ const DreamEngine = {
    */
   init() {
     DreamEcology.initEcology();
+    // 中立生物持有上一局的坐标与 HP，不清掉会把它们带进新一局；
+    // 生成计时器同理（否则新局开场几秒就立刻刷出生物）。
+    NeutralCreatures._creatures.length = 0;
+    this._neutralSpawnTimer = 0;
     NPCGuardians.initNPCs();
     FourthWall.initFourthWall();
     DreamSound.initSound();
