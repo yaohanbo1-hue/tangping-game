@@ -163,6 +163,7 @@ function updateHUD(dt) {
   $('hudEnemies').textContent = G.enemies.length + (G.spawnQueue.length + G.bossQueue.length);
   $('hudTimer').textContent = G.state === 'build' ? Math.ceil(G.prepTimer) + 's' : '作战中';
   $('hudTimer').className = G.state === 'build' ? 'prep' : 'fight';
+  updateWavePreview();
   const chEl = $('hudChallenge');
   if (chEl) {
     if (G.challenge && G.state === 'wave') {
@@ -210,6 +211,10 @@ function updateHUD(dt) {
   });
   $('skillBar').querySelectorAll('.skill').forEach(b => {
     const k = b.dataset.k, cd = G.skills[k], s = SKILL_DEFS[k];
+    const trial = G.trialId && POSTGAME_TRIALS.find(t => t.id === G.trialId);
+    const sealed = !!(trial && trial.noSkills);
+    b.classList.toggle('sealed', sealed);
+    b.title = sealed ? s.name + '：本局受「封印之夜」限制，无法使用' : s.name + '：' + s.desc + '（冷却 ' + s.cd + 's）';
     b.classList.toggle('cool', cd > 0);
     b.querySelector('.scd').style.height = (cd / s.cd * 100) + '%';
     b.querySelector('.scd').textContent = cd > 0 ? Math.ceil(cd) : '';
@@ -237,6 +242,38 @@ function updateHUD(dt) {
   $('achCount').textContent = got + '/' + ACHIEVEMENTS.length;
   if ($('lotPanel').classList.contains('open')) updateLotteryHUD();
 }
+let _wavePreviewKey = '';
+function updateWavePreview() {
+  const box = $('wavePreview');
+  if (!box || !G) return;
+  const visible = G.state === 'build' && !G.over;
+  box.style.display = visible ? 'block' : 'none';
+  if (!visible) { _wavePreviewKey = ''; return; }
+  const wave = G.wave + 1;
+  const key = wave + '|' + G.state;
+  if (key === _wavePreviewKey) return;
+  _wavePreviewKey = key;
+  const pool = typeof waveUnlocks === 'function' ? waveUnlocks(wave) : ['grunt'];
+  const counts = Object.create(null);
+  pool.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
+  const common = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).slice(0, 2);
+  const latest = Array.from(new Set(pool)).slice(-2);
+  const featured = Array.from(new Set(common.concat(latest))).slice(0, 4);
+  const enemyMarkup = featured.map(id => {
+    const e = ENEMY_DEFS[id];
+    return e ? '<span class="forecast-enemy" title="' + e.name + '"><i>' + e.icon + '</i>' + e.name + '</span>' : '';
+  }).join('');
+  const bossCount = wave % 5 === 0 ? 1 + Math.floor(wave / 22) : 0;
+  let bossMarkup = '';
+  if (bossCount) {
+    const bossId = wave >= finalWave() ? 'final' : bossKeyForWave(wave);
+    const boss = BOSS_DEFS[bossId] || BOSS_DEFS.final;
+    bossMarkup = '<span class="forecast-boss">' + (boss.icon || '👁️') + ' BOSS · ' + boss.name + (bossCount > 1 ? ' ×' + bossCount : '') + '</span>';
+  }
+  $('forecastTitle').textContent = '下一波 · 第 ' + wave + ' 波';
+  $('forecastEnemies').innerHTML = enemyMarkup + bossMarkup;
+  $('forecastHint').textContent = '展示可能出现的敌人；精英词缀与随机事件将在开战时揭晓。';
+}
 let detailSig = '';
 function updateDetail(force) {
   const el = $('detail');
@@ -249,7 +286,7 @@ function updateDetail(force) {
   if (s.isBed) sig = 'bed|' + G.bed.lv + '|' + Math.ceil(G.bed.hp) + '|' + (G.gold > bedUpgradeCost(G.bed.lv) ? 1 : 0);
   else if (s.isDoor) sig = 'door|' + s.door.lane + '|' + s.door.lv + '|' + Math.ceil(s.door.hp) + '|' + (G.gold > doorUpgradeCost(s.door.lv) ? 1 : 0);
   else if (s.def) sig = 'b|' + s.type + '|' + s.level + '|' + (s.branch || '') + '|' + Math.ceil(s.hp) + '|' + G.buildings.indexOf(s) +
-    '|' + (s.resN || 0) + '|' + (s.resDmg || 1) + '|' + (s.kills || 0) + '|' + (canAfford(upgradeCost(s.def, s.level)) ? 1 : 0);
+    '|' + (s.resN || 0) + '|' + (s.resDmg || 1) + '|' + (s.kills || 0) + '|' + (s.targetMode || targetModeOf(s).id) + '|' + (canAfford(upgradeCost(s.def, s.level)) ? 1 : 0);
   else return;
   if (!force && sig === detailSig) return;
   detailSig = sig;
@@ -294,6 +331,10 @@ function updateDetail(force) {
       const perK = dps / Math.max(1, s.invested) * 1000;
       html += '<div class="dst">面板 DPS ≈ <b class="hl">' + fmt1(dps) + '</b>/秒' +
         '<span class="dup2">　性价比 ' + perK.toFixed(2) + ' DPS / 千金币</span></div>';
+      if (s.type !== 'flame' && !st.gravity && !st.aoe) {
+        const targetMode = targetModeOf(s);
+        html += '<div class="target-mode-row"><span>集火优先</span><small>影响单体选敌策略</small><button id="dTargetMode" type="button" aria-label="切换炮塔攻击优先级">' + targetMode.name + ' · 切换</button></div>';
+      }
     }
     // 共鸣：相邻不同元素炮塔互相增幅（原先只有内部倍率，玩家看不到）
     const rb = resBonusOf(s);
@@ -337,18 +378,65 @@ function updateDetail(force) {
   const dm = $('dMax'); if (dm) dm.onclick = () => { Cmd.maxSelection(selected); detailSig = ''; };
   const ba = $('brA'); if (ba) ba.onclick = () => { Cmd.branchSelection(selected, 'a'); detailSig = ''; };
   const bb = $('brB'); if (bb) bb.onclick = () => { Cmd.branchSelection(selected, 'b'); detailSig = ''; };
+  const target = $('dTargetMode');
+  if (target) target.onclick = () => {
+    cycleTargetMode(selected);
+    detailSig = '';
+    saveGame(0);
+    updateDetail(true);
+  };
 }
+function runReviewMarkup() {
+  if (!G || !G.stats) return '';
+  const st = G.stats;
+  const leaks = Array.isArray(st.laneLeaks) ? st.laneLeaks : [0, 0, 0];
+  const laneDamage = Array.isArray(st.laneDamage) ? st.laneDamage : [0, 0, 0];
+  const pressure = [0, 1, 2].map(i => ({ i, value: (leaks[i] || 0) * 1000 + (laneDamage[i] || 0) }))
+    .sort((a, b) => b.value - a.value);
+  const maxPressure = Math.max(1, ...pressure.map(x => x.value));
+  const towers = Object.keys(st.towerDamage || {}).map(type => ({
+    type, damage: st.towerDamage[type] || 0, kills: (st.towerKills || {})[type] || 0,
+    name: (BUILD_DEFS[type] && BUILD_DEFS[type].name) || type,
+    icon: (BUILD_DEFS[type] && BUILD_DEFS[type].icon) || '🔧',
+  })).sort((a, b) => b.damage - a.damage).slice(0, 3);
+  const vulnerable = pressure[0];
+  const hint = st.leaks
+    ? '第 ' + (vulnerable.i + 1) + ' 路出现破门。下局可优先在这一路补门、维修台或覆盖炮塔。'
+    : (towers.length ? '防线未破。' + towers[0].name + ' 是本局主力，可围绕它的元素克制继续搭配。' : '尝试混搭不同元素炮塔，观察敌人的抗性与弱点。');
+  const history = (META.runHistory || []).filter(run => runHistoryKey(run) === runHistoryKey({ diffKey: G.diffKey, mode: G.mode, trialId: G.trialId })).slice(0, 12);
+  const historyWins = history.filter(run => run.won).length;
+  const historyBest = history.reduce((best, run) => Math.max(best, run.wave | 0), 0);
+  const historyText = history.length
+    ? '本机最近 ' + history.length + ' 次同规则挑战 · 胜率 ' + Math.round(historyWins / history.length * 100) + '% · 最远第 ' + historyBest + ' 波（仅保存在本机）'
+    : '本机还没有同规则历史记录';
+  return '<section class="run-review"><h3>🧭 防线复盘 <small>找出下一局的突破口</small></h3>' +
+    '<div class="review-lanes">' + pressure.map(x => {
+      const d = G.doors && G.doors[x.i];
+      const hp = d ? Math.max(0, Math.round((d.hp / Math.max(1, d.maxHp)) * 100)) : 0;
+      const pct = Math.round(x.value / maxPressure * 100);
+      return '<div class="review-lane"><span>第 ' + (x.i + 1) + ' 路</span><i><b style="width:' + pct + '%"></b></i>' +
+        '<small>破门 ' + (leaks[x.i] || 0) + ' 次 · 铁门剩余 ' + hp + '%</small></div>';
+    }).join('') + '</div>' +
+    '<div class="review-towers"><b>输出主力</b>' + (towers.length
+      ? towers.map(t => '<span>' + t.icon + ' ' + t.name + '　' + fmt(t.damage) + ' 伤害 · ' + t.kills + ' 击杀</span>').join('')
+      : '<span>本局没有记录到炮塔伤害</span>') + '</div>' +
+    '<div class="review-record">📊 ' + historyText + '</div>' +
+    '<p>' + hint + '</p></section>';
+}
+
 function showGameOver() {
   const o = $('overlay');
   const score = G.wave * 1200 + G.stats.kills * 12 + Math.floor(G.stats.goldTotal) + G.stats.bossKills * 500;
   const got = ACHIEVEMENTS.filter(a => G.ach[a.id]).length;
   const isEndless = G.mode === 'unlimited';
-  const title = isEndless ? '♾ 无尽模式结束' : '💀 你的美梦被打断了';
+  const trial = G.trialId && POSTGAME_TRIALS.find(t => t.id === G.trialId);
+  const title = trial ? '🌘 试炼暂时中断' : (isEndless ? '♾ 无尽模式结束' : '💀 你的美梦被打断了');
   const titleGrad = isEndless
     ? 'background:linear-gradient(135deg,#7dd3fc,#60a5fa,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 20px rgba(96,165,250,.5))'
     : 'background:linear-gradient(135deg,#fca5a5,#f87171,#ef4444);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 20px rgba(248,113,113,.5))';
   const subColor = isEndless ? '#60a5fa' : '#f87171';
-  const subText = isEndless
+  const subText = trial ? '「' + trial.name + '」进行到第 ' + G.wave + ' 波'
+    : isEndless
     ? '你在无尽模式中坚持到了第 ' + G.wave + ' 波'
     : '床铺被梦魇摧毁';
   const waveColor = isEndless ? '#7dd3fc' : '#fca5a5';
@@ -369,21 +457,45 @@ function showGameOver() {
     '<div><b>' + G.buildings.filter(b => b.branch).length + '</b><span>转职次数</span></div>' +
     '<div><b>' + got + '/' + ACHIEVEMENTS.length + '</b><span>成就</span></div>' +
     '<div style="background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(245,158,11,.1));border-color:rgba(251,191,36,.5);grid-column:span 3"><b style="font-size:36px;color:#fde68a;text-shadow:0 0 30px rgba(253,230,138,.6)">' + score + '</b><span>综合得分</span></div>' +
-    '</div>' +
+    '</div>' + runReviewMarkup() +
     '<div class="metabar"><span class="mg">💰 +' + (G.lastReward || 0) + '</span><span class="ms">本局获得金币 — 可在主菜单抽奖</span></div>' +
-    '<div class="btns"><button class="big" id="toMenu">返回主界面</button></div>' +
-    '<div class="tipend">' + (isEndless ? '无尽模式没有尽头，只有越来越强的梦魇。下次试试坚持更久！' : '提示：注意伤害类型克制（重甲怕能量、盾卫怕电磁、幽灵怕火焰）；聚能塔相邻增幅是后期输出核心。') + '</div>' +
+    '<div class="btns">' + (trial ? '<button class="big" id="retryTrial">重试「' + trial.name + '」</button>' : '') + '<button class="' + (trial ? 'alt' : 'big') + '" id="toMenu">返回主界面</button></div>' +
+    '<div class="tipend">' + (trial ? '试炼没有完成记录；调整复盘中的防线，再来一次。' : (isEndless ? '无尽模式没有尽头，只有越来越强的梦魇。下次试试坚持更久！' : '提示：注意伤害类型克制（重甲怕能量、盾卫怕电磁、幽灵怕火焰）；聚能塔相邻增幅是后期输出核心。')) + '</div>' +
     '</div>';
   $('toMenu').onclick = () => showMenu();
+  if (trial && $('retryTrial')) $('retryTrial').onclick = () => {
+    if (!startRun(trial.id)) {
+      const note = o.querySelector('.tipend');
+      if (note) note.textContent = '当前难度入场金币不足；返回主界面抽奖或完成一局后再来重试。';
+    }
+  };
 }
 function showVictory() {
   const o = $('overlay');
   const score = G.wave * 1500 + G.stats.kills * 15 + Math.floor(G.stats.goldTotal) + G.stats.bossKills * 800 + 20000;
   const got = ACHIEVEMENTS.filter(a => G.ach[a.id]).length;
+  const replyPrefix = '__story_ending_reply__:';
+  const replyNote = (G.fate && Array.isArray(G.fate.notes) ? G.fate.notes : [])
+    .slice().reverse().find(note => typeof note === 'string' && note.indexOf(replyPrefix) === 0);
+  const endingReply = replyNote ? replyNote.slice(replyPrefix.length) : '';
+  const routePrefix = '__story_route__:';
+  const routeNote = (G.fate && Array.isArray(G.fate.notes) ? G.fate.notes : [])
+    .slice().reverse().find(note => typeof note === 'string' && note.indexOf(routePrefix) === 0);
+  const storyRoute = routeNote ? routeNote.slice(routePrefix.length) : '';
+  const trial = G.trialId && POSTGAME_TRIALS.find(t => t.id === G.trialId);
+  if (typeof Music !== 'undefined') Music.play(endingReply === 'gratitude' ? 'warm' : 'morning');
+  const ending = STORY_ENDINGS.find(item => item.route === storyRoute && item.reply === endingReply);
+  const epilogue = ending ? ending.text : '你听完了留言。外面雨停了，床头灯还亮着。醒来以后，你不用从头再等一次。';
+  if (!trial && ending && META.endingIds.indexOf(ending.id) < 0) {
+    META.endingIds.push(ending.id);
+    saveMeta();
+  }
   o.style.display = 'flex';
   o.innerHTML = '<div class="panel win">' +
-    '<h1 style="font-size:52px;background:linear-gradient(135deg,#ffd166,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 35px rgba(251,191,36,.7))">👑 通关成功</h1>' +
-    '<div class="sub" style="font-size:18px;color:#fbbf24;margin-bottom:20px;text-shadow:0 0 10px rgba(251,191,36,.4)">你击败了终焉梦魇，守住了这场美梦</div>' +
+    '<h1 style="font-size:52px;background:linear-gradient(135deg,#ffd166,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 35px rgba(251,191,36,.7))">' + (trial ? '🌌 试炼完成' : '👑 通关成功') + '</h1>' +
+    '<div class="sub" style="font-size:18px;color:#fbbf24;margin-bottom:14px;text-shadow:0 0 10px rgba(251,191,36,.4)">' + (trial ? '你完成了「' + trial.name + '」，这段梦境留下了新的记录。' : '你听完那段留言，守住了回家的路') + '</div>' +
+    (ending && !trial ? '<div style="color:#fbbf24;font-size:11px;letter-spacing:2px;margin:-5px 0 8px">结局档案 · ' + ending.title + '</div>' : '') +
+    '<div style="max-width:640px;margin:0 auto 18px;padding:12px 18px;border-left:2px solid rgba(251,191,36,.55);border-radius:8px;background:rgba(251,191,36,.07);color:#fef3c7;font-size:15px;line-height:1.7">' + epilogue + '</div>' +
     '<div class="grid">' +
     '<div style="background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(245,158,11,.1));border-color:rgba(251,191,36,.5)"><b style="font-size:36px;color:#fde68a;text-shadow:0 0 30px rgba(253,230,138,.7)">' + G.wave + '</b><span>通关波次</span></div>' +
     '<div style="background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(245,158,11,.06))"><b style="font-size:28px;color:#fbbf24;text-shadow:0 0 18px rgba(251,191,36,.5)">' + G.stats.kills + '</b><span>击杀梦魇</span></div>' +
@@ -394,10 +506,10 @@ function showVictory() {
     '<div><b>' + G.bed.lv + '</b><span>床铺等级</span></div>' +
     '<div><b>' + got + '/' + ACHIEVEMENTS.length + '</b><span>成就</span></div>' +
     '<div style="background:linear-gradient(135deg,rgba(74,222,128,.18),rgba(34,197,94,.1));border-color:rgba(74,222,128,.5);grid-column:span 3"><b style="font-size:38px;color:#86efac;text-shadow:0 0 30px rgba(134,239,172,.6)">' + score + '</b><span>综合得分</span></div>' +
-    '</div>' +
+    '</div>' + runReviewMarkup() +
     '<div class="metabar"><span class="mg">💰 +' + (G.lastReward || 0) + '</span><span class="ms">本局获得金币 — 可在主菜单抽奖</span></div>' +
     '<div class="btns"><button class="big" id="toMenu2">返回主界面</button></div>' +
-    '<div class="tipend">本局已终结 — 想无限发育请在主菜单选择「♾️ 无限模式」。</div>' +
+    '<div class="tipend">' + (trial ? (G.trialFirstClear ? '首次通关额外奖励：💰 ' + trial.bonusGold : '再次挑战仍可获得结算倍率 ×' + trial.rewardMul) + '；可在主菜单继续挑战其他规则。' : '本局已终结 — 想无限发育请在主菜单选择「♾️ 无限模式」。') + '</div>' +
     '</div>';
   $('toMenu2').onclick = () => showMenu();
 }
@@ -534,6 +646,7 @@ function doDraw(n, cur) {
 }
 let menuDiff = 'normal';
 let menuMode = 'limited';
+let selectedTrial = null;
 let MENU_HTML = '';
 function ensureMenuDOM() {
   const o = $('overlay');
@@ -573,15 +686,25 @@ function syncAudioUI() {
     gameSfxButton.title = SFX.on ? '关闭战斗音效' : '开启战斗音效';
   }
 }
+function syncAccessibilityUI() {
+  if (typeof Accessibility === 'undefined') return;
+  const text = $('a11yText'), flashSelect = $('a11yFlash'), shakeSelect = $('a11yShake');
+  if (text) text.value = Accessibility.textSize;
+  if (flashSelect) flashSelect.value = Accessibility.flash;
+  if (shakeSelect) shakeSelect.value = Accessibility.shake;
+}
 function showMenu() {
   ensureMenuDOM();
+  setMenuStartFeedback('', false);
   $('startPanel').style.display = '';
   $('gachaPanel').style.display = 'none';
   $('bagPanel').style.display = 'none';
+  if ($('trialPanel')) $('trialPanel').style.display = 'none';
+  if ($('endingsPanel')) $('endingsPanel').style.display = 'none';
   $('overlay').style.display = 'flex';
   if ($('adminBar')) $('adminBar').style.display = 'none';
   paused = true;
-  if (typeof Music !== 'undefined') Music.play('menu');
+  if (typeof Music !== 'undefined') Music.play('shadow');
   updateMenu();
 }
 function updateMenu() {
@@ -591,6 +714,10 @@ function updateMenu() {
   const continueButton = $('btnContinue');
   const continueMeta = $('continueMeta');
   const saveInfo = $('saveInfo');
+  const trialButton = $('btnTrials');
+  if (trialButton) trialButton.style.display = String(Store.get('tangping_cleared', '0')) === '1' ? '' : 'none';
+  const endingsButton = $('btnEndings');
+  if (endingsButton) endingsButton.style.display = META.endingIds.length ? '' : 'none';
   const hasSave = !!(LAST_SAVE && LAST_SAVE.wave > 0);
   if (continueButton) {
     continueButton.style.display = hasSave ? '' : 'none';
@@ -649,17 +776,63 @@ function updateMenu() {
       : '<span class="eq none">未装备开局道具 — 去「🎒 仓库」装备（最多 3 件）</span>';
   }
   if (typeof syncAudioUI === 'function') syncAudioUI();
+  if (typeof syncAccessibilityUI === 'function') syncAccessibilityUI();
 }
+const FIRST_RUN_STEPS = [
+  { title: '三条走廊，三扇铁门', text: '梦魇会从不同路线靠近。每条走廊都要留意；门一旦被攻破，敌人就会进入房间攻击建筑和床铺。', tip: '先看三路的门和敌人数量，再决定把炮塔放在哪里。' },
+  { title: '先让资源循环起来', text: '床铺会持续产生金币，金币矿机能提高收入；发电机负责提供高等级升级所需的电力。炮塔建好后不会持续耗电。', tip: '可以先攒金币，再补发电机；上方资源栏会显示当前电力收支。' },
+  { title: '元素克制能省下很多火力', text: '梦魇有不同的抗性和弱点。查看敌人图鉴，搭配不同属性的炮塔；相邻的异元素炮塔还可能形成共鸣。', tip: '点开「帮助」可随时查元素关系和敌人机制。' },
+  { title: '升级后选择专精', text: '炮塔达到 Lv' + BRANCH_AT + ' 后，可在详情面板选择一条专精路线。升级门、床和建筑也能提升防线的持续能力。', tip: '专精会改变炮塔特性，按你当前最难处理的敌人来选。' },
+  { title: '准备时间里安排下一步', text: '备战倒计时结束后敌人来袭。你可以按空格提前开波，获得剩余时间折算的金币；P 键或暂停按钮可以停下模拟。', tip: '现在引导结束，游戏会继续运行。想重看时，在「帮助」面板点“重看新手引导”。' },
+];
+let _firstRunStep = 0;
+function renderFirstRunTutorial() {
+  const step = FIRST_RUN_STEPS[_firstRunStep];
+  if (!step) return;
+  $('tutorialCount').textContent = String(_firstRunStep + 1).padStart(2, '0') + ' / ' + String(FIRST_RUN_STEPS.length).padStart(2, '0');
+  $('tutorialTitle').textContent = step.title;
+  $('tutorialText').textContent = step.text;
+  $('tutorialTip').textContent = step.tip;
+  $('tutorialPrev').style.visibility = _firstRunStep ? 'visible' : 'hidden';
+  $('tutorialNext').textContent = _firstRunStep === FIRST_RUN_STEPS.length - 1 ? '开始布防' : '继续';
+}
+function openFirstRunTutorial(force) {
+  if (!force && Store.get('tangping_tutorial_v1', '') === '1') return false;
+  const el = $('tutorialOverlay');
+  if (!el) return false;
+  _firstRunStep = 0;
+  renderFirstRunTutorial();
+  el.style.display = 'flex';
+  paused = true;
+  $('btnPause').textContent = '▶';
+  $('tutorialNext').focus();
+  return true;
+}
+function closeFirstRunTutorial() {
+  const el = $('tutorialOverlay');
+  if (el) el.style.display = 'none';
+  Store.set('tangping_tutorial_v1', '1');
+  if (G && !G.over && $('overlay').style.display !== 'flex') {
+    paused = false;
+    $('btnPause').textContent = '⏸';
+  }
+}
+
 function wireMenu() {
   if (!$('btnStart')) return;
   $('btnStart').onclick = () => startRun();
+  if ($('btnTrials')) $('btnTrials').onclick = () => showTrialPanel();
+  if ($('btnEndings')) $('btnEndings').onclick = () => showEndingArchive();
   if ($('btnSaveMgr')) $('btnSaveMgr').onclick = () => showSavePanel();
   if ($('btnContinue')) $('btnContinue').onclick = () => {
     LAST_SAVE = loadSave();
     if (!LAST_SAVE) return;
     SFX.init(); Music.unlock(); Music.play('game'); $('overlay').style.display = 'none';
-    newGame(LAST_SAVE); paused = false; $('btnPause').textContent = '⏸';
-    setTip('欢迎回到梦境，第 ' + G.wave + ' 波即将继续…', 5);
+    newGame(LAST_SAVE); Music.play(Music.trackForWave(G.wave)); paused = false; $('btnPause').textContent = '⏸';
+    const restartingWave = !!(LAST_SAVE.run && (LAST_SAVE.run.state === 'wave' || LAST_SAVE.run.resumeWave));
+    setTip(restartingWave
+      ? '已恢复第 ' + G.wave + ' 波：短暂备战后从本波开头重新开始。'
+      : '欢迎回到梦境，第 ' + G.wave + ' 波即将继续…', 5);
   };
   $('btnGacha').onclick = () => openGacha();
   $('btnBag').onclick = () => openBag();
@@ -682,6 +855,27 @@ function wireMenu() {
     $('sfxVolume').onchange = () => Music.persist();
   }
   if ($('btnSoundHome')) $('btnSoundHome').onclick = () => Music.setSfx(!SFX.on);
+  [['a11yText', 'textSize'], ['a11yFlash', 'flash'], ['a11yShake', 'shake']].forEach(pair => {
+    const select = $(pair[0]);
+    if (select) select.onchange = () => Accessibility.set(pair[1], select.value);
+  });
+  if ($('endingClose')) $('endingClose').onclick = () => { $('endingsPanel').style.display = 'none'; showMenu(); };
+  if ($('trialReturn')) $('trialReturn').onclick = () => { setMenuStartFeedback('', true); $('trialPanel').style.display = 'none'; $('startPanel').style.display = ''; };
+  if ($('trialStart')) $('trialStart').onclick = () => {
+    if (!selectedTrial) { setMenuStartFeedback('先选择一项梦境试炼。', true); return; }
+    menuMode = 'limited';
+    const id = selectedTrial;
+    if (startRun(id)) $('trialPanel').style.display = 'none';
+  };
+  if ($('tutorialNext')) $('tutorialNext').onclick = () => {
+    if (_firstRunStep < FIRST_RUN_STEPS.length - 1) { _firstRunStep++; renderFirstRunTutorial(); }
+    else closeFirstRunTutorial();
+  };
+  if ($('tutorialPrev')) $('tutorialPrev').onclick = () => {
+    if (_firstRunStep > 0) { _firstRunStep--; renderFirstRunTutorial(); }
+  };
+  if ($('tutorialSkip')) $('tutorialSkip').onclick = () => closeFirstRunTutorial();
+  if ($('btnReplayTutorial')) $('btnReplayTutorial').onclick = () => openFirstRunTutorial(true);
   const setW = v => { const el = $('adWave'); if (el) el.value = Math.max(1, Math.min(999, v | 0)); };
   if ($('adM5')) $('adM5').onclick = () => setW((+$('adWave').value || 1) - 5);
   if ($('adP5')) $('adP5').onclick = () => setW((+$('adWave').value || 1) + 5);
@@ -694,12 +888,63 @@ function wireMenu() {
   if (typeof wireDreamMenuButtons === 'function') wireDreamMenuButtons();
   updateMenu();
 }
-function startRun() {
+function setMenuStartFeedback(message, inTrial) {
+  ['startFeedback', 'trialFeedback'].forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    el.textContent = '';
+    el.hidden = true;
+  });
+  if (!message) return;
+  const target = $(inTrial ? 'trialFeedback' : 'startFeedback');
+  if (target) {
+    target.textContent = message;
+    target.hidden = false;
+  }
+}
+
+function showTrialPanel() {
+  const panel = $('trialPanel');
+  if (!panel || String(Store.get('tangping_cleared', '0')) !== '1') return;
+  setMenuStartFeedback('', true);
+  selectedTrial = null;
+  $('startPanel').style.display = 'none';
+  panel.style.display = '';
+  const list = $('trialList');
+  list.innerHTML = POSTGAME_TRIALS.map(t => {
+    const done = META.trialsCleared.indexOf(t.id) >= 0;
+    return '<button class="trial-card" data-trial="' + t.id + '" type="button" aria-pressed="false">' +
+      '<span class="trial-icon">' + t.icon + '</span><span class="trial-copy"><b>' + t.name + '</b><small>' + t.desc + '</small></span>' +
+      '<span class="trial-reward">' + (done ? '已完成 · ' : '') + '奖励 ×' + t.rewardMul + '</span></button>';
+  }).join('');
+  list.querySelectorAll('.trial-card').forEach(card => {
+    card.onclick = () => {
+      selectedTrial = card.dataset.trial;
+      setMenuStartFeedback('', true);
+      list.querySelectorAll('.trial-card').forEach(other => {
+        const on = other === card;
+        other.classList.toggle('selected', on);
+        other.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      const trial = POSTGAME_TRIALS.find(t => t.id === selectedTrial);
+      $('trialStart').textContent = '进入「' + trial.name + '」';
+    };
+  });
+  $('trialStart').textContent = '选择试炼后开始';
+}
+
+function startRun(trialId) {
+  const trial = trialId && POSTGAME_TRIALS.find(t => t.id === trialId);
+  setMenuStartFeedback('', !!trial);
+  const selectedDiff = DIFFS[menuDiff] || DIFFS.normal;
+  const trialAdminFallback = !!trial && !!selectedDiff.admin;
+  if (trialAdminFallback) menuDiff = 'normal';
   const d = DIFFS[menuDiff] || DIFFS.normal;
   const freeAdm = d.admin && (META.equipped || []).indexOf('freeAdmin') >= 0;
   const cost = (d.cost > 0 && !freeAdm) ? d.cost : 0;
   if (META.gold < cost) {
-    SFX.err(); setTip('金币不足：' + d.name + ' 需要 ' + d.cost + ' 金币（去抽奖或打其他难度攒金币）', 5);
+    const message = '金币不足：' + d.name + ' 难度需要 ' + d.cost + ' 金币。去抽奖或完成其他难度来积攒金币。';
+    SFX.err(); setTip(message, 5); setMenuStartFeedback(message, !!trial);
     return false;
   }
   META.gold -= cost; saveMeta();
@@ -709,16 +954,22 @@ function startRun() {
   SaveSystem.remove(0);
   newGame();
   G.diffKey = menuDiff; G.admin = !!d.admin;
-  G.mode = menuMode; G.rebuilds = 0;
-  applyEquippedPrizes();
-  G.prepTimer = G.prepTimer * d.prepMul * ((G.prize && G.prize.prep) || 1);
+  G.mode = trial ? 'limited' : menuMode; G.rebuilds = 0; G.trialId = trial ? trial.id : null;
+  applyEquippedPrizes({ trial: !!trial });
+  if (trial) {
+    G.doors.forEach(door => { door.maxHp *= trial.doorHpMul; door.hp = door.maxHp; });
+    G.bed.maxHp *= trial.bedHpMul || 1;
+    G.bed.hp = G.bed.maxHp;
+  }
+  G.prepTimer = G.prepTimer * d.prepMul * ((G.prize && G.prize.prep) || 1) * (trial ? trial.prepMul : 1);
   G.prepTotal = G.prepTimer;
   paused = false; $('btnPause').textContent = '⏸';
   if ($('adminBar')) $('adminBar').style.display = G.admin ? 'flex' : 'none';
   if (G.admin && $('adWave')) $('adWave').value = 1;
-  setTip('难度【' + d.name + '】· ' + MODES[menuMode].name +
+  setTip((trial ? '试炼【' + trial.name + '】· ' : '') + (trialAdminFallback ? '试炼不支持管理员难度，已切换为普通；' : '') + '难度【' + d.name + '】· ' + MODES[G.mode].name +
     (d.admin ? ' — 资源无限、血量无限，顶部可自由跳波' : '') +
     (menuMode === 'unlimited' ? ' — 本局永不结束' : ''), 6);
+  openFirstRunTutorial(false);
   return true;
 }
 function rollMetaPrize() {
@@ -1104,11 +1355,16 @@ function _processStoryQueue() {
   if (!panel) return;
   panel.style.display = 'flex';
   if (typeof Music !== 'undefined') Music.setDucking(true);
-  // 需要玩家做选择时暂停游戏，读完/选完再继续（避免「选着选着床没了」）
+  // 选择剧情和带视频的主线镜头都会暂停战斗，避免玩家看剧情时防线继续受击。
   const hasChoices = !!(data.choices && data.choices.length);
-  if (hasChoices) {
+  const mediaSlots = typeof STORY_VIDEO_SLOTS !== 'undefined' ? STORY_VIDEO_SLOTS : null;
+  const mediaSlot = mediaSlots && data && data.sceneId ? mediaSlots[data.sceneId] : null;
+  const hasVideo = !!(mediaSlot && typeof mediaSlot.video === 'string' && mediaSlot.video.trim());
+  if (hasChoices || hasVideo) {
     panel.dataset.inputLocked = 'true';
     _pauseForStory();
+  } else {
+    delete panel.dataset.inputLocked;
   }
   // 暗角效果
   const vig = $('storyVignette');
@@ -1237,6 +1493,18 @@ function _applyStoryChoice(choice, data) {
       got = (r && r.got) || [];
     } catch (e) { console.warn('[story] effect failed:', e); }
   }
+  if ((choice.endingReply === 'heard' || choice.endingReply === 'gratitude') && typeof G !== 'undefined' && G && G.fate) {
+    const prefix = '__story_ending_reply__:';
+    G.fate.notes = Array.isArray(G.fate.notes) ? G.fate.notes : [];
+    G.fate.notes = G.fate.notes.filter(note => typeof note !== 'string' || note.indexOf(prefix) !== 0);
+    G.fate.notes.push(prefix + choice.endingReply);
+  }
+  if (choice.storyRoute && typeof G !== 'undefined' && G && G.fate) {
+    const prefix = '__story_route__:';
+    G.fate.notes = Array.isArray(G.fate.notes) ? G.fate.notes : [];
+    G.fate.notes = G.fate.notes.filter(note => typeof note !== 'string' || note.indexOf(prefix) !== 0);
+    G.fate.notes.push(prefix + choice.storyRoute);
+  }
   _showChoiceResult(got.length ? '✓ 实际获得：' + got.join('　')
     : (eff ? '✦ 已记入梦境日记：' + eff : '✦ 你做出了选择'), 2800);
 }
@@ -1320,6 +1588,30 @@ function showDiaryPanel() {
   if (startPanel) startPanel.style.display = 'none';
 }
 
+// === 主线结局档案 ===
+function showEndingArchive() {
+  const panel = $('endingsPanel'), list = $('endingList'), progress = $('endingProgress');
+  if (!panel || !list) return;
+  const unlocked = new Set(META.endingIds || []);
+  const count = STORY_ENDINGS.filter(ending => unlocked.has(ending.id)).length;
+  if (progress) progress.textContent = count + ' / ' + STORY_ENDINGS.length + ' 段结尾已显影';
+  list.innerHTML = STORY_ENDINGS.map(ending => {
+    const found = unlocked.has(ending.id);
+    return '<article class="ending-card' + (found ? ' revealed' : ' locked') + '" data-ending="' + ending.id + '">' +
+      '<div class="ending-card-head"><b>' + (found ? ending.title : '未显影结局') + '</b><span>' + (found ? '已抵达' : '???') + '</span></div>' +
+      '<p></p></article>';
+  }).join('');
+  list.querySelectorAll('.ending-card').forEach(card => {
+    const ending = STORY_ENDINGS.find(item => item.id === card.dataset.ending);
+    const body = card.querySelector('p');
+    if (body) body.textContent = unlocked.has(card.dataset.ending)
+      ? ending.text
+      : '完成第 55 波与第 60 波的不同回答，结尾会在醒来后留存在这里。';
+  });
+  $('startPanel').style.display = 'none';
+  panel.style.display = '';
+}
+
 // === NPC面板（人格名/职能 + 真实驻守状态） ===
 function showNPCPanel() {
   const panel = $('npcPanel');
@@ -1375,11 +1667,12 @@ function showFragmentGallery() {
     const collected = DreamFragments._collected;
     const list = $('fragmentList');
     const sub = panel.querySelector('.dream-panel-sub');
-    const unlockedCount = defs.filter(f => collected && collected.has(f.id)).length;
+    const unlockedCount = defs.filter(f => collected && collected.has(f.id) && (!f.revealWave || G && G.wave >= f.revealWave)).length;
     if (sub) sub.textContent = '散落在梦境中的记忆 — ' + unlockedCount + '/' + defs.length + ' 已收集';
     if (list) {
       list.innerHTML = defs.map(f => {
-        const unlocked = !!(collected && collected.has(f.id));
+        const spoilerLocked = !!(f.revealWave && (!G || G.wave < f.revealWave));
+        const unlocked = !spoilerLocked && !!(collected && collected.has(f.id));
         const rarity = unlocked ? DreamFragments.rarityOf(f) : 'locked';
         const rc = FRAG_RARITY_COLORS[rarity] || '#cbd5e1';
         return '<div class="fragment-card ' + rarity + '" data-id="' + f.id + '">' +
@@ -1398,7 +1691,8 @@ function showFragmentGallery() {
         const d = cards[i] && cards[i].querySelector('.fdesc');
         if (!d) return;
         const unlocked = !!(collected && collected.has(f.id));
-        d.textContent = unlocked ? (f.story || f.desc || '') : '未解锁';
+        const spoilerLocked = !!(f.revealWave && (!G || G.wave < f.revealWave));
+        d.textContent = spoilerLocked ? '记录尚未显影' : unlocked ? (f.story || f.desc || '') : '未解锁';
       });
       cards.forEach(card => {
         if (card.classList.contains('locked')) return;
@@ -1420,6 +1714,7 @@ function openFragmentDetail(id) {
   if (!box || typeof DreamFragments === 'undefined') return;
   const f = (DreamFragments.FRAGMENT_DEFS || []).find(x => x.id === id);
   if (!f) return;
+  if (f.revealWave && (!G || G.wave < f.revealWave)) return;
   const rarity = DreamFragments.rarityOf(f);
   const rc = FRAG_RARITY_COLORS[rarity] || '#cbd5e1';
   box.innerHTML =
@@ -1907,6 +2202,7 @@ function renderSavePanel() {
   if (!el || typeof SaveSystem === 'undefined') return;
   const slots = SaveSystem.list();
   const cur = (typeof G !== 'undefined' && G && !G.over) ? G : null;
+  const canSave = !!cur;
   const DIFF_ICON = { normal: '🌙', hard: '🔥', hell: '💀', admin: '👑' };
   const MODE_ICON = { limited: '⏳', unlimited: '♾️' };
 
@@ -1918,12 +2214,13 @@ function renderSavePanel() {
         '<div class="svmain"><div class="svname">空槽位</div>' +
         '<div class="svmeta">把当前进度存到这里' + (cur ? '' : '（当前没有进行中的对局）') + '</div></div>' +
         '<div class="svacts"><div class="r1">' +
-        '<button class="svbtn" data-save="' + s.slot + '"' + (cur ? '' : ' disabled') + '>存入</button>' +
+        '<button class="svbtn" data-save="' + s.slot + '"' + (canSave ? '' : ' disabled') + '>存入</button>' +
         '</div></div></div>';
     }
     const m = s.info;
     const chips = [
       '<span class="svchip">' + (MODE_ICON[m.mode] || '⏳') + (m.mode === 'unlimited' ? ' 无限模式' : ' 有限模式') + '</span>',
+      m.resumeWave ? '<span class="svchip">↻ 读档后从本波重新开始</span>' : '',
       m.quest ? '<span class="svchip q">📜 委托 ' + m.quest + '/6</span>' : '',
       m.dream ? '<span class="svchip d">💎 梦境 ' + m.dream + ' 项</span>' : '',
       m.kills ? '<span class="svchip">⚔ ' + m.kills + ' 杀</span>' : '',
@@ -1938,7 +2235,7 @@ function renderSavePanel() {
       '<div class="svacts">' +
         '<div class="r1">' +
           '<button class="svbtn" data-load="' + s.slot + '">载入</button>' +
-          (s.auto ? '' : '<button class="svbtn blue" data-save="' + s.slot + '"' + (cur ? '' : ' disabled') + '>覆盖</button>') +
+          (s.auto ? '' : '<button class="svbtn blue" data-save="' + s.slot + '"' + (canSave ? '' : ' disabled') + '>覆盖</button>') +
         '</div>' +
         '<div class="r1">' +
           '<button class="svbtn blue" data-export="' + s.slot + '">导出</button>' +
@@ -1951,7 +2248,11 @@ function renderSavePanel() {
     const slot = +b.dataset.save;
     if (!G || G.over) { svToast('当前没有可保存的对局', 'warn'); return; }
     const r = SaveSystem.write(slot, SaveSystem.capture(), slot === 0 ? '自动存档' : '手动存档');
-    if (r.ok) { renderSavePanel(); svToast('✅ 已保存到' + (slot === 0 ? '自动存档' : '槽 ' + slot)); SFX.coin(); }
+    if (r.ok) {
+      renderSavePanel();
+      svToast('✅ 已保存到' + (slot === 0 ? '自动存档' : '槽 ' + slot) + (G.state === 'wave' || G.resumeWave ? '；读档后从本波开头重新开始' : ''));
+      SFX.coin();
+    }
     else svToast(r.reason === 'quota' ? '❌ 浏览器存储空间已满' : '❌ 保存失败', 'err');
   });
   el.querySelectorAll('[data-load]').forEach(b => b.onclick = () => loadSaveSlot(+b.dataset.load));
@@ -1990,8 +2291,9 @@ function loadSaveSlot(slot) {
 
 function doLoadSlot(slot, d) {
   try {
+    const restartingWave = !!(d && d.run && (d.run.state === 'wave' || d.run.resumeWave));
     newGame(d);                       // newGame 内部会 applySave → SaveSystem.restore
-    if (typeof Music !== 'undefined') { Music.unlock(); Music.play('game'); }
+    if (typeof Music !== 'undefined') { Music.unlock(); Music.play(Music.trackForWave(G.wave)); }
     // 从主菜单载入时要把菜单收起来
     const ov = $('overlay');
     if (ov) ov.style.display = 'none';
@@ -2000,7 +2302,8 @@ function doLoadSlot(slot, d) {
     if ($('adminBar')) $('adminBar').style.display = G.admin ? 'flex' : 'none';
     if (typeof closeSavePanel === 'function') closeSavePanel();
     if (typeof updateHUD === 'function') { hudT = 0; updateHUD(0.1); }
-    setTip('已载入存档：第 ' + G.wave + ' 波 · ' + ((DIFFS[G.diffKey] || {}).name || G.diffKey), 6);
+    setTip('已载入存档：第 ' + G.wave + ' 波 · ' + ((DIFFS[G.diffKey] || {}).name || G.diffKey) +
+      (restartingWave ? '；战斗中存档已恢复为本波备战' : ''), 6);
     if (typeof SFX !== 'undefined' && SFX.up) SFX.up();
   } catch (e) {
     console.error('[Save] 载入失败:', e);

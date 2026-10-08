@@ -89,9 +89,10 @@ function render() {
 
   ctx.restore();
   if (flash > 0) {
-    ctx.fillStyle = 'rgba(255,60,80,' + (flash * 0.35) + ')';
+    const flashMul = typeof Accessibility !== 'undefined' ? Accessibility.flashMul() : 1;
+    ctx.fillStyle = 'rgba(255,60,80,' + (flash * 0.35 * flashMul) + ')';
     ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = 'rgba(255,40,60,' + (flash * 0.25) + ')';
+    ctx.fillStyle = 'rgba(255,40,60,' + (flash * 0.25 * flashMul) + ')';
     ctx.fillRect(0, 0, W, H);
     flash -= 0.035;
   }
@@ -1397,6 +1398,39 @@ function drawEnemies() {
         ctx.strokeText(txt, e.x, ty);
         ctx.fillStyle = "#fff"; ctx.fillText(txt, e.x, ty);
       }
+    }
+
+    // 目标受击前短暂显示攻击环，不改伤害节奏，让玩家看清即将承受压力的防线。
+    const attackReadyIn = e.atkCd || 0;
+    if ((e.state === "door" || e.state === "room") && attackReadyIn > 0 && attackReadyIn <= 0.34) {
+      const pulse = 0.72 + Math.sin(T * 18) * 0.18;
+      const targetLabel = e.state === "door" ? "第" + (e.lane + 1) + "路铁门" :
+        (e.target && e.target.isBed ? "床铺" : "房间建筑");
+      ctx.save();
+      ctx.globalAlpha = pulse;
+      ctx.strokeStyle = "#ff7189"; ctx.lineWidth = 2.4;
+      ctx.shadowColor = "rgba(255,77,109,.75)"; ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 12, -Math.PI / 2,
+        -Math.PI / 2 + (1 - attackReadyIn / 0.34) * 6.2832); ctx.stroke();
+      ctx.shadowBlur = 0; ctx.font = "bold 9px sans-serif"; ctx.textAlign = "center";
+      ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(0,0,0,.9)"; ctx.fillStyle = "#ffd3da";
+      ctx.strokeText("⚠ 即将攻击 " + targetLabel, e.x, e.y + e.r + 28);
+      ctx.fillText("⚠ 即将攻击 " + targetLabel, e.x, e.y + e.r + 28);
+      ctx.restore();
+    }
+    const phaseNow = e.boss && bossPhases(e)[e.phase];
+    const summonRule = e.def.summon || (phaseNow && phaseNow.summon);
+    const summonReadyIn = summonRule ? summonRule.every - (e.summonT || 0) : Infinity;
+    const specialTell = e.empT > 0 && e.empT <= 1.1 ? "📴 炮塔干扰" :
+      (e.fzT > 0 && e.fzT <= 1.1 ? "❄️ 冻结炮塔" :
+        (summonReadyIn > 0 && summonReadyIn <= 1.1 ? "🌀 即将召唤" : ""));
+    if (specialTell) {
+      ctx.save(); ctx.font = "bold 9px sans-serif"; ctx.textAlign = "center";
+      ctx.globalAlpha = 0.72 + Math.sin(T * 12) * 0.22;
+      ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(0,0,0,.9)"; ctx.fillStyle = "#b9f7ff";
+      ctx.strokeText("⚠ " + specialTell, e.x, e.y - e.r - (e.boss ? 38 : 24));
+      ctx.fillText("⚠ " + specialTell, e.x, e.y - e.r - (e.boss ? 38 : 24));
+      ctx.restore();
     }
 
     // ⑫ BOSS 名称与阶段

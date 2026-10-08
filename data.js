@@ -656,6 +656,16 @@ const MODES = {
 };
 const MODE_KEYS = Object.keys(MODES);
 
+// 主线通关后解锁的全程规则挑战。修正项由 core.js 应用，奖励倍率只影响跨局金币。
+const POSTGAME_TRIALS = [
+  { id: 'thin_doors', name: '残响门扉', icon: '🚪', desc: '三道铁门以 70% 耐久开始；门一旦破损，后续防线压力会迅速扩大。',
+    doorHpMul: 0.7, bedHpMul: 0.85, hpMul: 1, speedMul: 1, prepMul: 1, rewardMul: 1.35, bonusGold: 250 },
+  { id: 'rushing_night', name: '急促长夜', icon: '🌒', desc: '梦魇生命提高 20%、移动速度提高 22%；抓紧处理高威胁目标。',
+    doorHpMul: 1, hpMul: 1.2, speedMul: 1.22, prepMul: 0.9, rewardMul: 1.55, bonusGold: 400 },
+  { id: 'sealed_arts', name: '封印之夜', icon: '🔒', desc: '主动技能无法使用；备战时间延长 15%，通关奖励更高。',
+    doorHpMul: 1, hpMul: 1.08, speedMul: 1, prepMul: 1.15, noSkills: true, rewardMul: 1.7, bonusGold: 550 },
+];
+
 /* ============================================================
  *  元素反应 —— 不同伤害类型命中同一梦魇触发连锁效果
  * ============================================================ */

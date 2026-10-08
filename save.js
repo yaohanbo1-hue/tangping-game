@@ -15,7 +15,7 @@
 
 const SaveSystem = {
   /** 存档格式版本。每次改动快照结构都必须 +1，并在 migrate() 里补一条迁移 */
-  VERSION: 3,
+  VERSION: 6,
   /** 手动槽位数量（0 号保留给自动存档） */
   SLOTS: 3,
   /** 保留合法的 0 HP；只有缺失或非数值才回退到满血。 */
@@ -39,7 +39,7 @@ const SaveSystem = {
           const parsed = JSON.parse(raw);
           // 老版本存档没有 meta 摘要，直接取 d.meta 会让槽位在面板里显示成「空」。
           // 先走一遍迁移，再按需现算一份摘要。
-          const d = (parsed && parsed.meta) ? parsed : (this.migrate(parsed) || parsed);
+          const d = this.migrate(parsed) || parsed;
           info = (d && d.meta) ? d.meta : (d && d.run ? this._metaOf(d) : { broken: true });
         } catch (e) { info = { broken: true }; }
       }
@@ -60,6 +60,7 @@ const SaveSystem = {
       kills: (d && d.progress && d.progress.stats ? (d.progress.stats.kills | 0) : 0),
       quest: (d && d.progress && d.progress.quest) ? (d.progress.quest.idx + 1) | 0 : 0,
       dream: (d && d.dream) ? Object.keys(d.dream).length : 0,
+      resumeWave: run.state === 'wave' || !!run.resumeWave,
       at: (d && d.savedAt) || Date.now(),
       name: (d && d.name) || '',
     };
@@ -104,11 +105,21 @@ const SaveSystem = {
   /**
    * 把任意历史版本的存档升级到当前结构。
    * v2（旧单槽）：扁平字段 → 包成 { run / bed / doors / buildings / progress }
+   * v3/v4：增加可恢复的试炼标记；v5 为炮塔保存独立集火偏好；v6 记录战斗中存档的本波重开标记。
    */
   migrate(d) {
     if (!d || typeof d !== 'object') return null;
     if (d.v === this.VERSION && d.run) return d;
-    // ---- v2 → v3 ----
+    if ((d.v === 3 || d.v === 4 || d.v === 5) && d.run) {
+      const migratedRun = Object.assign({}, d.run, {
+        trialId: d.run.trialId || null,
+        resumeWave: !!d.run.resumeWave || d.run.state === 'wave',
+      });
+      const migrated = Object.assign({}, d, { v: this.VERSION, run: migratedRun });
+      migrated.meta = Object.assign({}, migrated.meta || {}, this._metaOf(migrated));
+      return migrated;
+    }
+    // ---- v2 → v6 ----
     if (d.v === 2 || (d.wave !== undefined && !d.run)) {
       const migrated = {
         v: this.VERSION,
@@ -198,12 +209,14 @@ const SaveSystem = {
         gold: G.gold, power: G.power, souls: G.souls,
         grow: G.grow, growTimer: G.growTimer,
         diffKey: G.diffKey, mode: G.mode,
-        admin: !!G.admin, winWave: G.winWave | 0,
+        admin: !!G.admin, winWave: G.winWave | 0, trialId: G.trialId || null,
+        resumeWave: !!G.resumeWave,
         prepTimer: G.prepTimer, prepTotal: G.prepTotal,
         reviveLeft: G.reviveLeft | 0,
         combo: G.combo | 0, comboT: G.comboT || 0, maxCombo: G.maxCombo | 0,
         eventId: (G.event && G.event.id) || 'none',
         eventTimer: G.eventTimer | 0,
+        challenge: G.challenge || null,
         prize: G.prize || {},
         fate: G.fate || null,
         fateWave: G.fateWave || null,
@@ -214,7 +227,7 @@ const SaveSystem = {
       bed: { lv: G.bed.lv, hp: G.bed.hp, shield: G.bed.shield || 0, shieldMax: G.bed.shieldMax || 0 },
       doors: G.doors.map(d => ({ lv: d.lv, hp: d.hp, shield: d.shield || 0, shieldMax: d.shieldMax || 0, broken: !!d.broken })),
       buildings: G.buildings.map(b => ({
-        t: b.type, c: b.col, r: b.row, lv: b.level, br: b.branch,
+        t: b.type, c: b.col, r: b.row, lv: b.level, br: b.branch, targetMode: b.targetMode || null,
         hp: b.hp, inv: b.invested, runes: b.runes || [],
         kills: b.kills | 0, shield: b.shield || 0, shieldMax: b.shieldMax || 0,
       })),
@@ -286,8 +299,10 @@ const SaveSystem = {
     if (!v.ok) console.warn('[Save] 存档有 ' + v.issues.length + ' 处异常，已尽量恢复：', v.issues);
     try {
       const run = d.run || {};
+      const resumeWave = run.state === 'wave' || !!run.resumeWave;
       G.wave = Math.max(0, Math.min(9999, run.wave | 0));
-      G.state = run.state === 'wave' ? 'build' : (run.state || 'build');   // 读档一律回到备战，避免一进来就被打
+      G.state = resumeWave ? 'build' : (run.state || 'build');   // 读档中的战斗波先进入备战，再重开同一波
+      G.resumeWave = resumeWave;
       G.gold = +(run.gold || 0); G.power = +(run.power || 0); G.souls = +(run.souls || 0);
       G.grow = Math.max(0, Math.min(25, run.grow | 0));
       G.growTimer = +run.growTimer || 0;
@@ -295,8 +310,17 @@ const SaveSystem = {
       if (run.mode && typeof MODES !== 'undefined' && MODES[run.mode]) G.mode = run.mode;
       G.admin = !!run.admin;
       G.winWave = run.winWave | 0;
-      G.prepTimer = isFinite(run.prepTimer) ? +run.prepTimer : G.prepTimer;
-      G.prepTotal = isFinite(run.prepTotal) && run.prepTotal > 0 ? +run.prepTotal : G.prepTimer;
+      G.trialId = (typeof POSTGAME_TRIALS !== 'undefined' && POSTGAME_TRIALS.some(t => t.id === run.trialId)) ? run.trialId : null;
+      if (run.state === 'wave') {
+        G.prepTimer = isFinite(run.prepTotal) && run.prepTotal > 0
+          ? +run.prepTotal
+          : Math.max(12, 24 - G.wave * 0.16) * diffCfg().prepMul * ((run.prize && run.prize.prep) || 1);
+        G.prepTotal = G.prepTimer;
+      } else {
+        G.prepTimer = isFinite(run.prepTimer) ? +run.prepTimer : G.prepTimer;
+        G.prepTotal = isFinite(run.prepTotal) && run.prepTotal > 0 ? +run.prepTotal : G.prepTimer;
+      }
+      G.challenge = run.challenge && typeof run.challenge === 'object' ? run.challenge : null;
       G.reviveLeft = run.reviveLeft | 0;
       G.combo = run.combo | 0; G.comboT = +run.comboT || 0; G.maxCombo = run.maxCombo | 0;
       G.eventTimer = +run.eventTimer || 0;
@@ -315,6 +339,10 @@ const SaveSystem = {
       if (prog.tech) Object.keys(prog.tech).forEach(k => { if (G.tech[k] !== undefined) G.tech[k] = Math.max(0, prog.tech[k] | 0); });
       if (prog.ach && typeof prog.ach === 'object') G.ach = Object.assign({}, prog.ach);
       if (prog.stats && typeof prog.stats === 'object') Object.assign(G.stats, prog.stats);
+      if (!Array.isArray(G.stats.laneLeaks)) G.stats.laneLeaks = [0, 0, 0];
+      if (!Array.isArray(G.stats.laneDamage)) G.stats.laneDamage = [0, 0, 0];
+      if (!G.stats.towerDamage || typeof G.stats.towerDamage !== 'object') G.stats.towerDamage = {};
+      if (!G.stats.towerKills || typeof G.stats.towerKills !== 'object') G.stats.towerKills = {};
       if (prog.lot && typeof prog.lot === 'object') Object.assign(G.lot, prog.lot);
       if (Array.isArray(prog.runeBag)) G.runeBag = prog.runeBag;
       if (prog.quest && typeof prog.quest === 'object') G.quest = prog.quest;
@@ -347,6 +375,7 @@ const SaveSystem = {
           const b = {
             type: v2.t, def, level: Math.max(1, Math.min(def.maxLv || 50, v2.lv | 0 || 1)),
             col: c, row: r, x: p.x, y: p.y, branch: (def.branch && v2.br) ? v2.br : null,
+            targetMode: ['front', 'strongest', 'weakest', 'nearest'].indexOf(v2.targetMode) >= 0 ? v2.targetMode : null,
             cd: 0, angle: -Math.PI / 2, target: null, pulse: 0, idle: 0,
             kills: v2.kills | 0, invested: +v2.inv || def.cost.gold,
             shield: 0, shieldMax: 0, runes: this._fixRunes(v2.runes),

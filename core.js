@@ -80,10 +80,42 @@ const Store = {
   },
   del(k) { try { localStorage.removeItem(k); } catch (e) { } },
 };
+const Accessibility = {
+  textSize: 'normal', flash: 'normal', shake: 'normal',
+  init() {
+    let p = {};
+    try { p = JSON.parse(Store.get('tangping_accessibility', '{}') || '{}'); } catch (e) { }
+    this.textSize = p.textSize === 'large' ? 'large' : 'normal';
+    this.flash = ['reduced', 'off'].indexOf(p.flash) >= 0 ? p.flash : 'normal';
+    this.shake = ['reduced', 'off'].indexOf(p.shake) >= 0 ? p.shake : 'normal';
+    this.apply();
+  },
+  set(key, value) {
+    if (key === 'textSize') this.textSize = value === 'large' ? 'large' : 'normal';
+    else if (key === 'flash') this.flash = ['reduced', 'off'].indexOf(value) >= 0 ? value : 'normal';
+    else if (key === 'shake') this.shake = ['reduced', 'off'].indexOf(value) >= 0 ? value : 'normal';
+    this.apply();
+    Store.set('tangping_accessibility', JSON.stringify({ textSize: this.textSize, flash: this.flash, shake: this.shake }));
+  },
+  apply() {
+    if (document.body) document.body.classList.toggle('large-text', this.textSize === 'large');
+    if (typeof syncAccessibilityUI === 'function') syncAccessibilityUI();
+  },
+  flashMul() { return this.flash === 'off' ? 0 : (this.flash === 'reduced' ? 0.22 : 1); },
+  shakeMul() { return this.shake === 'off' ? 0 : (this.shake === 'reduced' ? 0.28 : 1); },
+};
 const Music = {
   // MiniMax Music 3 成品放入 audio/ 后即可启用；暂缺文件时不影响游戏与音效。
-  tracks: { menu: 'audio/menu-loop.mp3', game: 'audio/game-loop.mp3', boss: 'audio/boss-loop.mp3' },
-  names: { menu: '入梦', game: '防线', boss: '终焉' },
+  tracks: {
+    menu: 'audio/menu-loop.mp3', game: 'audio/game-loop.mp3', boss: 'audio/boss-loop.mp3',
+    shadow: 'audio/lullaby-shadow.mp3', memory: 'audio/memory-corridor.mp3',
+    afterglow: 'audio/afterglow-corridor.mp3', warm: 'audio/warm-lamp.mp3',
+    morning: 'audio/morning-light.mp3',
+  },
+  names: {
+    menu: '入梦', game: '防线', boss: '终焉', shadow: 'Lullaby’s Shadow',
+    memory: 'Memory Corridor', afterglow: '余温回廊', warm: '余灯留暖', morning: '晨光漫入',
+  },
   on: true, volume: 0.34, duck: 1, current: 'menu', unlocked: false, blocked: Object.create(null),
   active: null, cache: Object.create(null), missing: Object.create(null), fades: new WeakMap(),
   init() {
@@ -139,6 +171,16 @@ const Music = {
     if (typeof syncAudioUI === 'function') syncAudioUI();
     return true;
   },
+  trackForWave(wave) {
+    if (wave === finalWave()) return 'boss';
+    if (wave > finalWave()) return 'game';
+    if (wave >= 55) return 'afterglow'; // 真相揭晓后，音乐从悬疑转为释然
+    if (wave >= 51) return 'shadow'; // 揭晓前的录音与等待主题
+    if (wave >= 36) return 'warm';
+    if (wave >= 21) return 'afterglow';
+    if (wave >= 11) return 'memory';
+    return 'game';
+  },
   _fade(audio, target, duration, pauseAtEnd) {
     if (!audio) return;
     const old = this.fades.get(audio);
@@ -184,11 +226,16 @@ const Music = {
   },
 };
 const META_KEY = 'tangping_meta';
-const META = { gold: 0, pity: 0, inv: {}, equipped: [], runs: 0, best: 0 };
+const META = { gold: 0, pity: 0, inv: {}, equipped: [], runs: 0, best: 0, trialsCleared: [], runHistory: [], endingIds: [] };
 function loadMeta() {
   try { const o = JSON.parse(Store.get(META_KEY, '{}') || '{}'); Object.assign(META, o); } catch (e) { }
   if (!META.inv || typeof META.inv !== 'object') META.inv = {};
   if (!Array.isArray(META.equipped)) META.equipped = [];
+  if (!Array.isArray(META.trialsCleared)) META.trialsCleared = [];
+  if (!Array.isArray(META.runHistory)) META.runHistory = [];
+  else META.runHistory = META.runHistory.filter(run => run && typeof run === 'object').slice(0, 40);
+  if (!Array.isArray(META.endingIds)) META.endingIds = [];
+  else META.endingIds = META.endingIds.filter(id => typeof id === 'string');
   META.gold = Math.max(0, Math.floor(META.gold || 0));
 }
 function saveMeta() { Store.set(META_KEY, JSON.stringify(META)); }
@@ -250,9 +297,12 @@ function setDoorLevel(d, lv) {
 }
 // 永久型道具：装备后永久生效，每局不消耗库存。其余为消耗型——开局自动用掉 1 个，本局持续生效。
 const PERMANENT_PRIZES = { freeAdmin: 1 };
-function applyEquippedPrizes() {
+function applyEquippedPrizes(options) {
+  const trial = !!(options && options.trial);
+  // 管理员权限与「减半」会绕过试炼本身的规则或完整波次要求。
+  const disabledInTrial = trial ? { freeAdmin: 1, halve: 1 } : null;
   G.prize = {};
-  const list = (META.equipped || []).filter(k => META_PRIZES[k] && (PERMANENT_PRIZES[k] || (META.inv[k] || 0) > 0));
+  const list = (META.equipped || []).filter(k => META_PRIZES[k] && !(disabledInTrial && disabledInTrial[k]) && (PERMANENT_PRIZES[k] || (META.inv[k] || 0) > 0));
   list.forEach(k => {
     try { META_PRIZES[k].apply(); } catch (e) { console.warn('prize', k, e); }
     if (!PERMANENT_PRIZES[k]) {          // ★ 消耗型：开局消耗 1 个
@@ -271,6 +321,8 @@ function metaReward(won) {
   let g = Math.round((G.wave * 14 + G.stats.kills * 0.6 + G.stats.bossKills * 20) * d.reward);
   if (won) g = Math.round(g * 1.5 + 300);
   g = Math.round(g * ((G.prize && G.prize.reward) || 1));
+  const trial = G.trialId && POSTGAME_TRIALS.find(t => t.id === G.trialId);
+  if (trial) g = Math.round(g * trial.rewardMul);
   return g;
 }
 function grantMetaReward(won) {
@@ -280,6 +332,22 @@ function grantMetaReward(won) {
   if (G.wave > (META.best || 0)) META.best = G.wave;
   saveMeta();
   return g;
+}
+function runHistoryKey(run) { return [run.diffKey || 'normal', run.mode || 'limited', run.trialId || ''].join('|'); }
+function recordMetaRun(won) {
+  if (!G) return null;
+  const record = {
+    at: Date.now(), won: !!won, wave: G.wave | 0, diffKey: G.diffKey || 'normal',
+    mode: G.mode || 'limited', trialId: G.trialId || '', kills: G.stats.kills | 0,
+    bosses: G.stats.bossKills | 0, leaks: G.stats.leaks | 0,
+    elapsed: Math.max(0, Math.round((performance.now() - (G.startTime || performance.now())) / 1000)),
+    laneLeaks: (G.stats.laneLeaks || [0, 0, 0]).slice(0, 3),
+    towerDamage: Object.assign({}, G.stats.towerDamage || {}),
+  };
+  META.runHistory.unshift(record);
+  META.runHistory = META.runHistory.slice(0, 40);
+  saveMeta();
+  return record;
 }
 function jumpToWave(n) {
   if (!G || !G.admin) return false;
@@ -296,11 +364,11 @@ let shake = 0, flash = 0, hitStop = 0, timeScale = 1, paused = false;
 function newGame(loadFrom) {
   EventBus.clear(); // 清理上一局事件监听，防止累积
   G = {
-    state: 'build', wave: 0,
+    state: 'build', wave: 0, resumeWave: false,
     gold: 0, power: 0, souls: 0,
     runeBag: [], challenge: null, combo: 0, comboT: 0, maxCombo: 0,
     quest: null,   // 梦境委托状态（quest.js QuestSystem 管理，随存档持久化）
-    diffKey: 'normal', admin: false, winWave: 0, prize: {}, reviveLeft: 0, lastReward: 0,
+    diffKey: 'normal', admin: false, winWave: 0, prize: {}, reviveLeft: 0, lastReward: 0, trialId: null, trialFirstClear: false,
     mode: 'limited', rebuilds: 0,
     prepTimer: 34, prepTotal: 34,
     spawnQueue: [], bossQueue: [], spawnTimer: 0,
@@ -317,7 +385,8 @@ function newGame(loadFrom) {
     lot: { ep: 0, lg: 0, n: 0 }, lastDraw: null,
     tech: {}, skills: {}, ach: {},
     event: EVENTS[0], eventTimer: 0,
-    stats: { kills: 0, bossKills: 0, goldTotal: 0, dmg: 0, build: 0, leaks: 0 },
+    stats: { kills: 0, bossKills: 0, goldTotal: 0, dmg: 0, build: 0, leaks: 0,
+      laneLeaks: [0, 0, 0], laneDamage: [0, 0, 0], towerDamage: {}, towerKills: {} },
     startTime: performance.now(),
     tipText: '', tipTimer: 0,
     over: false, upgradeFx: [], waveTransition: null, resDirty: false,
@@ -646,7 +715,7 @@ function addText(x, y, t, color = '#fff', big = false) {
   G.texts.push({ x: x + rnd(-8, 8), y, t, color, life: big ? 1.5 : 0.9, max: big ? 1.5 : 0.9, big });
 }
 const addEffect = e => G.effects.push(e);
-const shakeBy = v => { shake = Math.min(30, shake + v); };
+const shakeBy = v => { shake = Math.min(30, shake + v * (typeof Accessibility !== 'undefined' ? Accessibility.shakeMul() : 1)); };
 function setTip(t, d = 5) { G.tipText = t; G.tipTimer = d; }
 function updateEconomy(dt) {
   const g = totalGoldRate() * dt;
@@ -812,7 +881,13 @@ function damageTarget(t, dmg) {
   const defSum = (G.fate.def || 0) + (G.fateWave.def || 0);
   if (defSum > 0) dmg *= Math.max(0.4, 1 - defSum);
   if (t.shield > 0) { const a = Math.min(t.shield, dmg); t.shield -= a; dmg -= a; }
-  if (dmg > 0) t.hp -= dmg;
+  if (dmg > 0) {
+    t.hp -= dmg;
+    if (t.lane != null && t.y != null && t.def === undefined && !t.isBed) {
+      const lanes = G.stats.laneDamage || (G.stats.laneDamage = [0, 0, 0]);
+      lanes[t.lane] = (lanes[t.lane] || 0) + dmg;
+    }
+  }
   return t.hp <= 0;
 }
 function bossPhases(e) {
@@ -833,13 +908,14 @@ function spawnEnemy(type, wave, lane) {
     type = 'boss';
   }
   const L = LANES[lane !== undefined ? lane : (Math.random() * 3) | 0];
-  const hpScale = (1 + wave * 0.18 + Math.pow(Math.max(0, wave - 10), 1.4) * 0.075 + Math.pow(Math.max(0, wave - 30), 1.5) * 0.04) * (G.event.eff.hpMul || 1) * diffCfg().hpMul;
+  const trial = G.trialId && POSTGAME_TRIALS.find(t => t.id === G.trialId);
+  const hpScale = (1 + wave * 0.18 + Math.pow(Math.max(0, wave - 10), 1.4) * 0.075 + Math.pow(Math.max(0, wave - 30), 1.5) * 0.04) * (G.event.eff.hpMul || 1) * diffCfg().hpMul * (trial ? trial.hpMul : 1);
   const dmgScale = (1 + wave * 0.10) * diffCfg().dmgMul;
   const e = {
     type, def: d, lane: L.i,
     x: rnd(8, 54), y: rnd(L.y0 + 22, L.y1 - 22),
     hp: d.hp * hpScale, maxHp: d.hp * hpScale,
-    dmg: d.dmg * dmgScale, speed: d.speed * rnd(0.92, 1.08) * (G.event.eff.spdMul || 1),
+    dmg: d.dmg * dmgScale, speed: d.speed * rnd(0.92, 1.08) * (G.event.eff.spdMul || 1) * (trial ? trial.speedMul : 1),
     r: d.r, state: 'walk', target: null, atkCd: 0, door: null,
     slow: 0, slowT: 0, burn: 0, burnT: 0, burnDmg: 0, burnStack: 0,
     poison: 0, poisonT: 0, poisonDps: 0,
@@ -850,7 +926,8 @@ function spawnEnemy(type, wave, lane) {
     wob: rnd(0, 6.28), anim: 0, dead: false, boss: !!d.phases, bossKey,
     hitFlash: 0, hasteT: 0, hasteMul: 1, inCombatT: 0,
     maxPhase: d.phases ? d.phases.length - 1 : 0,
-    empT: 0, reviveT: 0, mimicRevealed: false, parasiteTarget: null,
+    empT: d.emp ? d.emp.cd : 0, fzT: d.freezeTower ? d.freezeTower.cd : 0,
+    reviveT: 0, mimicRevealed: false, parasiteTarget: null,
   };
   if (d.shieldself) { e.shield = e.maxHp * d.shieldself; e.shieldMax = e.shield; }
   if (d.phaseShield) { e.phaseShield = d.phaseShield; e.segMax = e.maxHp / (d.phaseShield + 1); e.segIdx = 0; }
@@ -934,6 +1011,13 @@ function updateEnemies(dt) {
         e.res = Object.assign({}, ph.res);
         addText(e.x, e.y - 60, ph.name + '！', '#ff4d6d', true);
         spawnParts(e.x, e.y, 34, '#ff4d6d', 5, 0.9); shakeBy(12); SFX.boom();
+        // 关键剧情 BOSS 的阶段台词之前只存放在 story.js、从未在战斗中触发。
+        // 只在剧情指定波次播放，避免无尽模式重复弹出；普通 BOSS 数值与阶段机制不变。
+        const bossStory = typeof BOSS_DIALOG !== 'undefined' && BOSS_DIALOG[e.bossKey];
+        const phaseLine = bossStory && bossStory.wave === G.wave && bossStory['phase' + np];
+        if (phaseLine && typeof showStoryDialog === 'function') {
+          showStoryDialog({ wave: G.wave, speaker: bossStory.name || e.def.name, text: phaseLine });
+        }
       }
     }
     if (e.def.stealth) {
@@ -964,10 +1048,22 @@ function updateEnemies(dt) {
     if (e.vulnT > 0) { e.vulnT -= dt; if (e.vulnT <= 0) e.vuln = 0; }
     if (e.poisonT > 0) {
       e.poisonT -= dt;
-      e.hp -= e.poisonDps * e.poison * dt;
-      G.stats.dmg += e.poisonDps * e.poison * dt;
+      const poisonDmg = e.poisonDps * e.poison * dt;
+      e.hp -= poisonDmg;
+      G.stats.dmg += poisonDmg;
+      if (e.poisonSrc && e.poisonSrc.type && BUILD_DEFS[e.poisonSrc.type]) {
+        const towerDamage = G.stats.towerDamage || (G.stats.towerDamage = {});
+        towerDamage[e.poisonSrc.type] = (towerDamage[e.poisonSrc.type] || 0) + poisonDmg;
+      }
       if (Math.random() < dt * 5) spawnParts(e.x, e.y, 1, '#a3e635', 1.1, 0.4);
-      if (e.hp <= 0) { killEnemy(e); continue; }
+      if (e.hp <= 0) {
+        if (e.poisonSrc && e.poisonSrc.kills !== undefined) {
+          e.poisonSrc.kills++;
+          const towerKills = G.stats.towerKills || (G.stats.towerKills = {});
+          towerKills[e.poisonSrc.type] = (towerKills[e.poisonSrc.type] || 0) + 1;
+        }
+        killEnemy(e); continue;
+      }
     }
     const sp_ = e.def;
     if (sp_.emp) {
@@ -1065,7 +1161,7 @@ function updateEnemies(dt) {
       if (e.def.flying) {
         const tx = BED_CX, ty = BED_CY;
         const dx = tx - e.x, dy = ty - e.y, d = Math.hypot(dx, dy);
-        if (d < 30) { e.state = 'room'; }
+        if (d < 30) { e.state = 'room'; e.atkCd = 0.34; }
         else { e.x += dx / d * sp * dt; e.y += dy / d * sp * dt; }
         e.dir = Math.atan2(dy, dx);
       } else if (e.def.burrow) {
@@ -1073,14 +1169,14 @@ function updateEnemies(dt) {
         const dx = tx - e.x, dy = ty - e.y, d = Math.max(1, Math.hypot(dx, dy));
         e.x += dx / d * sp * dt; e.y += dy / d * sp * dt;
         e.dir = Math.atan2(dy, dx);
-        if (e.x > WALL_X) { e.state = 'room'; e.x = WALL_X + 26; }
+        if (e.x > WALL_X) { e.state = 'room'; e.x = WALL_X + 26; e.atkCd = 0.34; }
       } else {
         const tx = WALL_X - 26, ty = D.y;
         const dx = tx - e.x, dy = ty - e.y, d = Math.hypot(dx, dy);
         if (e.def.targetBuilding) {
-          if (e.x >= WALL_X - 34) { e.state = 'room'; e.x = WALL_X + 26; e.y = D.y; addText(e.x, e.y - 30, '🔧 绕过铁门！', '#fb923c', true); }
+          if (e.x >= WALL_X - 34) { e.state = 'room'; e.x = WALL_X + 26; e.y = D.y; e.atkCd = 0.34; addText(e.x, e.y - 30, '🔧 绕过铁门！', '#fb923c', true); }
           else { e.x += dx / d * sp * dt; e.y += dy / d * sp * dt; }
-        } else if (d < 12) { e.state = 'door'; e.door = D; }
+        } else if (d < 12) { e.state = 'door'; e.door = D; e.atkCd = 0.34; }
         else { e.x += dx / d * sp * dt; e.y += dy / d * sp * dt; }
         e.dir = Math.atan2(dy, dx);
       }
@@ -1097,7 +1193,7 @@ function updateEnemies(dt) {
           if (e.vamp) e.hp = Math.min(e.maxHp, e.hp + e.dmg * e.vamp);
           if (d.hp <= 0) breakDoor(d);
         }
-      } else { e.state = 'room'; e.x = WALL_X + 26; e.y = d.y; }
+      } else { e.state = 'room'; e.x = WALL_X + 26; e.y = d.y; e.atkCd = 0.34; }
     } else if (e.state === 'room') {
       if (!e.target || e.target.hp <= 0 || (e.target.isBed && G.bed.hp <= 0)) {
         e.target = pickRoomTarget(e) || { x: BED_CX, y: BED_CY, isBed: true, hp: 1 };
@@ -1147,6 +1243,8 @@ function breakDoor(d) {
   d.broken = true;
   addText(WALL_X + 24, d.y - 66, '铁门被攻破！', '#ff4d6d', true);
   shakeBy(16); SFX.boom(); flash = 0.5; G.stats.leaks++;
+  const laneLeaks = G.stats.laneLeaks || (G.stats.laneLeaks = [0, 0, 0]);
+  laneLeaks[d.lane] = (laneLeaks[d.lane] || 0) + 1;
   setTip('第 ' + (d.lane + 1) + ' 道铁门被攻破！敌人涌入房间，会拆掉建筑再攻击床铺。', 6);
   G.enemies.forEach(e => { if (e.state === 'door' && e.door === d) e.state = 'room'; });
 }
@@ -1207,6 +1305,11 @@ function killEnemy(e) {
   if (e.boss) {
     G.stats.bossKills++; shakeBy(18); SFX.boom();
     addText(e.x, e.y - 50, 'BOSS 击杀！', '#ffd166', true);
+    // 最终 BOSS 的收束由胜利页呈现，避免击杀对白和结局面板同时争抢屏幕。
+    const bossStory = typeof BOSS_DIALOG !== 'undefined' && BOSS_DIALOG[e.bossKey];
+    if (!e.def.finalBoss && bossStory && bossStory.wave === G.wave && bossStory.defeat && typeof showStoryDialog === 'function') {
+      showStoryDialog({ wave: G.wave, speaker: bossStory.name || e.def.name, text: bossStory.defeat });
+    }
     if (e.def.finalBoss) { setTimeout(() => gameWin(), 900); }
   }
   else if (e.elite) SFX.hit();
@@ -1233,15 +1336,32 @@ function killEnemy(e) {
   }
   checkAchievements();
 }
+const TOWER_TARGET_MODES = [
+  { id: 'front', name: '最前目标' },
+  { id: 'strongest', name: '高生命目标' },
+  { id: 'weakest', name: '残血目标' },
+  { id: 'nearest', name: '最近目标' },
+];
+function targetModeOf(b) {
+  const fallback = b && b.type === 'laser' ? 'strongest' : 'front';
+  return TOWER_TARGET_MODES.find(m => m.id === (b && b.targetMode)) || TOWER_TARGET_MODES.find(m => m.id === fallback);
+}
+function cycleTargetMode(b) {
+  if (!b) return;
+  const current = targetModeOf(b), idx = TOWER_TARGET_MODES.indexOf(current);
+  b.targetMode = TOWER_TARGET_MODES[(idx + 1) % TOWER_TARGET_MODES.length].id;
+}
 function findTarget(b, range, mode) {
+  const priority = mode || (b && b.targetMode) || (b && b.type === 'laser' ? 'strongest' : 'front');
   let best = null, bv = -1e9;
   for (const e of G.enemies) {
     if (e.dead || e.untargetable) continue;
     if (dist(e, b) > range) continue;
     let v;
-    if (mode === 'strongest') v = e.hp + (e.boss ? 1e6 : 0);
-    else if (mode === 'weakest') v = -e.hp;
-    else v = (e.x) - (e.state === 'walk' ? 0 : 600);
+    if (priority === 'strongest') v = e.hp + (e.boss ? 1e6 : 0);
+    else if (priority === 'weakest') v = -e.hp;
+    else if (priority === 'nearest') v = -dist(e, b);
+    else v = e.x - (e.state === 'walk' ? 0 : 600);
     if (v > bv) { bv = v; best = e; }
   }
   return best;
@@ -1297,7 +1417,7 @@ function updateTowers(dt) {
     const rate = (s.rate || 1) * towerRateMul() * towerRateMulOn(b);
     b.cd -= dt * rate;
     if (b.cd > 0) continue;
-    const mode = b.type === 'laser' ? 'strongest' : 'front';
+    const mode = (b.targetMode || (b.type === 'laser' ? 'strongest' : 'front'));
     const t = findTarget(b, s.range, mode);
     if (!t) { b.cd = 0; b.idle = (b.idle || 0) + dt; continue; }
     b.cd = 1;
@@ -1533,6 +1653,7 @@ function applyDamage(e, dmg, dtype, src, chain, silent) {
     if (rx.poison) {
       e.poison = Math.min(10, (e.poison || 0) + rx.poison);
       e.poisonDps = Math.max(e.poisonDps || 0, rx.poisonDps);
+      e.poisonSrc = src;
       e.poisonT = 3;
     }
     if (rx.shred) DMG_KEYS.forEach(k => { e.res[k] = Math.max(0, (e.res[k] || 0) - rx.shred * 0.12); });
@@ -1545,8 +1666,21 @@ function applyDamage(e, dmg, dtype, src, chain, silent) {
   if (d > 0) e.hp -= d;
   e.inCombatT = 2;
   G.stats.dmg += d;
+  if (src && src.def && src.type && BUILD_DEFS[src.type]) {
+    const towerDamage = G.stats.towerDamage || (G.stats.towerDamage = {});
+    towerDamage[src.type] = (towerDamage[src.type] || 0) + d;
+  }
   if (silent) {
-    if (e.hp <= 0) { if (src && src.kills !== undefined) src.kills++; if (G.track && dtype === 'fire') G.track.killFire = (G.track.killFire || 0) + 1; killEnemy(e); }
+    if (e.hp <= 0) {
+      if (src && src.kills !== undefined) {
+        src.kills++;
+        if (src.type && BUILD_DEFS[src.type]) {
+          const towerKills = G.stats.towerKills || (G.stats.towerKills = {});
+          towerKills[src.type] = (towerKills[src.type] || 0) + 1;
+        }
+      }
+      if (G.track && dtype === 'fire') G.track.killFire = (G.track.killFire || 0) + 1; killEnemy(e);
+    }
     return d;
   }
   e.hitFlash = 0.12; // 受击白色闪烁
@@ -1562,7 +1696,16 @@ function applyDamage(e, dmg, dtype, src, chain, silent) {
   const dmgColor = d > 200 ? '#ff4d6d' : (d > 80 ? '#ffa500' : (tm > 1.05 ? '#ffe066' : (tm < 0.95 ? '#94a3b8' : '#ffffff')));
   addText(e.x + rnd(-6, 6), e.y - e.r, Math.round(d), dmgColor);
   spawnParts(e.x, e.y, crit ? 5 : 3, crit ? '#ffe066' : '#ffd6d6', crit ? 3 : 2, 0.35);
-  if (e.hp <= 0) { if (src && src.kills !== undefined) src.kills++; if (G.track && dtype === 'fire') G.track.killFire = (G.track.killFire || 0) + 1; killEnemy(e); }
+  if (e.hp <= 0) {
+    if (src && src.kills !== undefined) {
+      src.kills++;
+      if (src.type && BUILD_DEFS[src.type]) {
+        const towerKills = G.stats.towerKills || (G.stats.towerKills = {});
+        towerKills[src.type] = (towerKills[src.type] || 0) + 1;
+      }
+    }
+    if (G.track && dtype === 'fire') G.track.killFire = (G.track.killFire || 0) + 1; killEnemy(e);
+  }
   return d;
 }
 function updateBullets(dt) {
@@ -1616,9 +1759,11 @@ function buildWaveQueue(n) {
   return { rest: q, bossList };
 }
 function startWave() {
-  G.wave++;
-  if (typeof Music !== 'undefined') Music.play(G.wave === finalWave() ? 'boss' : 'game');
-  G.event = rollEvent();
+  const resumeSavedWave = !!G.resumeWave;
+  G.resumeWave = false;
+  if (!resumeSavedWave) G.wave++;
+  if (typeof Music !== 'undefined') Music.play(Music.trackForWave(G.wave));
+  if (!resumeSavedWave) G.event = rollEvent();
   const { rest, bossList } = buildWaveQueue(G.wave);
   G.spawnQueue = rest; G.bossQueue = bossList; G.spawnTimer = 0;
   G.state = 'wave';
@@ -1627,8 +1772,14 @@ function startWave() {
     const extra = Math.round(G.spawnQueue.length * (sm - 1));
     for (let i = 0; i < extra; i++) G.spawnQueue.push(G.spawnQueue[i % G.spawnQueue.length]);
   }
-  G.waveTime = 0; G.challenge = rollChallenge(G.wave);
-  G.track = { doorDmg: 0, buildLost: 0, killFire: 0, skillUsed: 0 };
+  if (!resumeSavedWave) {
+    G.waveTime = 0; G.challenge = rollChallenge(G.wave);
+    G.track = { doorDmg: 0, buildLost: 0, killFire: 0, skillUsed: 0 };
+  } else {
+    G.waveTime = 0;
+    if (!G.challenge) G.challenge = rollChallenge(G.wave);
+    G.track = { doorDmg: 0, buildLost: 0, killFire: 0, skillUsed: 0 };
+  }
   SFX.wave();
   addText(ROOM_X0 + 340, DOOR_MID_Y() - 150, '第 ' + G.wave + ' 波来袭！', '#ff6b6b', true);
   if (G.event.id !== 'none') { addText(ROOM_X0 + 340, DOOR_MID_Y() - 118, G.event.icon + ' ' + G.event.name, '#ffd166', true); setTip('本波事件【' + G.event.name + '】：' + G.event.desc, 6); }
@@ -1642,9 +1793,9 @@ function startWave() {
     flash = 0.6; shakeBy(20);
   }
   // 梦境系统：波次开始钩子
-  if (typeof DreamEngine !== 'undefined') { try { DreamEngine.onWaveStart(G.wave); } catch(e) { console.warn('DreamEngine waveStart:', e); } }
+  if (!resumeSavedWave && typeof DreamEngine !== 'undefined') { try { DreamEngine.onWaveStart(G.wave); } catch(e) { console.warn('DreamEngine waveStart:', e); } }
   // 波次剧情触发
-  if (typeof WAVE_STORY !== 'undefined') {
+  if (!resumeSavedWave && typeof WAVE_STORY !== 'undefined') {
     const story = WAVE_STORY.find(s => s.wave === G.wave);
     if (story) {
       setTimeout(() => {
@@ -1654,7 +1805,7 @@ function startWave() {
     }
   }
   // BOSS对话触发
-  if (typeof BOSS_DIALOG !== 'undefined') {
+  if (!resumeSavedWave && typeof BOSS_DIALOG !== 'undefined') {
     const bossKeys = Object.keys(BOSS_DIALOG);
     const bossDlg = bossKeys.map(k => BOSS_DIALOG[k]).find(b => b.wave === G.wave);
     if (bossDlg) {
@@ -1753,6 +1904,8 @@ function skipPrep() {
 function useSkill(key) {
   const s = SKILL_DEFS[key];
   if (!G || G.over || !s) return false;
+  const trial = G.trialId && POSTGAME_TRIALS.find(t => t.id === G.trialId);
+  if (trial && trial.noSkills) { SFX.err(); setTip('封印之夜：本局主动技能无法使用', 2.5); return false; }
   if (G.skills[key] > 0) { SFX.err(); return; }
   G.skills[key] = s.cd;
   if (G.track) G.track.skillUsed = (G.track.skillUsed || 0) + 1;
@@ -1908,6 +2061,7 @@ function gameOver() {
   }
   G.over = true; G.state = 'over';
   grantMetaReward(false);
+  recordMetaRun(false);
   SFX.lose(); shakeBy(24); flash = 0.8;
   const b = +Store.get('tangping_best', 0) || 0;
   if (G.wave > b) Store.set('tangping_best', G.wave);
@@ -1927,6 +2081,17 @@ function gameWin() {
   }
   G.over = true; G.state = 'win';
   grantMetaReward(true);
+  const trial = G.trialId && POSTGAME_TRIALS.find(t => t.id === G.trialId);
+  if (trial) {
+    G.trialFirstClear = META.trialsCleared.indexOf(trial.id) < 0;
+    if (META.trialsCleared.indexOf(trial.id) < 0) {
+      META.trialsCleared.push(trial.id);
+      META.gold += trial.bonusGold;
+      G.lastReward += trial.bonusGold;
+      saveMeta();
+    }
+  }
+  recordMetaRun(true);
   SFX.win(); flash = 0.7; shakeBy(20);
   const b = +Store.get('tangping_best', 0) || 0;
   if (G.wave > b) Store.set('tangping_best', G.wave);

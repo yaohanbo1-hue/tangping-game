@@ -1,9 +1,14 @@
 # 可选背景音乐
 
-此目录已接入 MiniMax Music 3 生成的三首曲目。替换音乐时请保留这些文件名：
+此目录包含旧版循环曲和新接入的五首剧情配乐。替换已接入曲目时请保留文件名：
 
-- `menu-loop.mp3`：主菜单
-- `game-loop.mp3`：普通战斗
+- `lullaby-shadow.mp3`：主菜单《Lullaby's Shadow》
+- `game-loop.mp3`：第 1–10 波普通战斗
+- `memory-corridor.mp3`：第 11–20 波及第 51–59 波
+- `afterglow-corridor.mp3`：第 21–35 波
+- `warm-lamp.mp3`：第 36–50 波、感恩结局
+- `morning-light.mp3`：“我听见了”结局
 - `boss-loop.mp3`：终局首领
+- `menu-loop.mp3`：旧版菜单曲，保留作素材备份，目前不播放
 
-生成提示词、循环与导出要求见项目根目录的 `MUSIC_BRIEF.md`。缺少任意曲目时游戏仍可正常运行。
+生成提示词、时长、曲目触发和导出要求见项目根目录的 `MUSIC_BRIEF.md`。缺少任意曲目时游戏仍可正常运行。

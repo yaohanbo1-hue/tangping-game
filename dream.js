@@ -1783,6 +1783,7 @@ const DreamFragments = {
         desc: f.desc || '',
         story: f.text,
         rarity: f.rarity,
+        revealWave: f.revealWave || 0,
         dropFrom: d[0],
         dropRate: d[1],
       };
@@ -1832,8 +1833,12 @@ const DreamFragments = {
     const frag = this.FRAGMENT_DEFS.find(f => f.id === fragmentId);
     if (!frag) return null;
     this._collected.add(fragmentId);
-    EventBus.emit('fragment:collect', frag);
-    return frag;
+    const spoilerLocked = !!(frag.revealWave && (!G || G.wave < frag.revealWave));
+    const announcement = spoilerLocked
+      ? Object.assign({}, frag, { name: '模糊的记忆', desc: '内容尚未显影', story: '这段记忆仍被雨声遮住。' })
+      : frag;
+    EventBus.emit('fragment:collect', announcement);
+    return announcement;
   },
 
   /**

@@ -4,6 +4,19 @@ function cellFromXY(x, y) {
 }
 function toCanvas(e) {
   const r = cv.getBoundingClientRect();
+  // 竖屏兜底布局把整个画布旋转了 90°，触点坐标需要先逆变换回画布坐标。
+  if (typeof Mobile !== 'undefined' && Mobile.rotated && isPortrait()) {
+    if (Mobile.rotated === 90) {
+      return {
+        x: (e.clientY - r.top) * (W / r.height),
+        y: (r.right - e.clientX) * (H / r.width),
+      };
+    }
+    return {
+      x: (r.bottom - e.clientY) * (W / r.height),
+      y: (e.clientX - r.left) * (H / r.width),
+    };
+  }
   return { x: (e.clientX - r.left) * (W / r.width), y: (e.clientY - r.top) * (H / r.height) };
 }
 /* ------------------------------------------------------------------
@@ -77,6 +90,11 @@ cv.addEventListener('click', e => {
 cv.addEventListener('contextmenu', e => { e.preventDefault(); cancelSelection(); });
 const SKILL_MAP = { q: 'meteor', w: 'freeze', e: 'overclock', r: 'mend', t: 'repel', f: 'siphon' };
 window.addEventListener('keydown', e => {
+  const tutorial = $('tutorialOverlay');
+  if (tutorial && tutorial.style.display === 'flex') {
+    if (e.key === 'Escape' && typeof closeFirstRunTutorial === 'function') closeFirstRunTutorial();
+    e.preventDefault(); return;
+  }
   const target = e.target;
   if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(target.tagName) ||
     (target.closest && target.closest('[role="button"]')))) return;
@@ -112,7 +130,7 @@ window.addEventListener('keydown', e => {
   if (k === 'g' || k === 'G') { togglePanel('runePanel'); return; }
   if (k === 'l' || k === 'L') { togglePanel('questPanel'); return; }
   if (k === 'k' || k === 'K') { toggleSavePanel(); return; }
-  if (k === 's' || k === 'S') { if (saveGame(0)) { setTip('💾 已保存到自动存档', 3); SFX.coin(); } return; }
+  if (k === 's' || k === 'S') { if (saveGame(0)) { setTip(G.state === 'wave' || G.resumeWave ? '💾 已保存；读档后会从本波开头重新开始。' : '💾 已保存到自动存档', 3); SFX.coin(); } return; }
   if (k.toLowerCase() === 'm') {
     if (e.shiftKey) Cmd.upgradeAllMax();
     else Cmd.maxSelection(selected);
@@ -499,10 +517,15 @@ window.addEventListener('resize', refitAll);
 // 手机转屏 / 进出全屏后浏览器上报的尺寸有延迟，补两次再算一遍
 window.addEventListener('orientationchange', function () { refitAll(); setTimeout(refitAll, 120); setTimeout(refitAll, 450); });
 ['fullscreenchange', 'webkitfullscreenchange'].forEach(t =>
-  document.addEventListener(t, function () { setTimeout(refitAll, 120); setTimeout(refitAll, 450); }));
+  document.addEventListener(t, function () {
+    Mobile.fullscreenOn = !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+    setTimeout(refitAll, 120); setTimeout(refitAll, 450);
+  }));
 // 地址栏收放 / 软键盘弹出：只重算缩放，不触发别的布局
 if (window.visualViewport) {
-  window.visualViewport.addEventListener('resize', fit);
+  // 地址栏、全屏和方向变化都可能只触发 visualViewport；重算完整触屏状态，
+  // 确保旋转提示、HUD 紧凑态和画布缩放一起更新。
+  window.visualViewport.addEventListener('resize', refitAll);
   window.visualViewport.addEventListener('scroll', fit);
 }
 initMobile();
@@ -538,6 +561,7 @@ function loop(now) {
 let LAST_SAVE = null;
 function init() {
   Music.init();
+  Accessibility.init();
   const unlockAudio = () => { Music.unlock(); SFX.init(); };
   document.addEventListener('pointerdown', unlockAudio, { once: true });
   document.addEventListener('keydown', unlockAudio, { once: true });
