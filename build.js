@@ -7,7 +7,7 @@ if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('VERSION must use MAJOR.MI
 const shell = fs.readFileSync('shell.html', 'utf8');
 if (!shell.includes('<!--VERSION-->') || !shell.includes('<!--SCRIPT-->')) throw new Error('shell.html is missing a build placeholder');
 const out = shell.replace('<!--VERSION-->', version).replace('<!--SCRIPT-->', '<script>\n' + js + '\n</script>');
-const outPath = path.join(__dirname, 'tangping.html');
+const outPath = path.join(__dirname, 'shoudengren.html');
 fs.writeFileSync(outPath, out);
 
 // GitHub Pages 根路径需要 index.html，与其内容保持一致

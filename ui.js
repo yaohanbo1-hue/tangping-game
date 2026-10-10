@@ -100,7 +100,7 @@ function buyTech(k) {
   if (techLocked(k)) { SFX.err(); setTip('前置科技未完成'); return; }
   const c = d.cost(lv);
   if (G.souls < c) { SFX.err(); setTip('灵魂不足，需要 ' + c + '🔮'); return; }
-  G.souls -= c; G.tech[k]++;
+  G.souls -= c; G.waveSpentSouls += c; G.tech[k]++;
   SFX.up();
   G.buildings.forEach(b => {
     const nh = buildingMaxHp(b.def, b.level, b.branch);
@@ -175,7 +175,7 @@ function updateHUD(dt) {
       chEl.style.display = '';
       chEl.innerHTML = '<span class="chi">' + c.def.icon + '</span><b>' + c.def.name + '</b><span class="chp ' +
         (pass ? 'ok' : 'no') + '">' + shown + '</span>';
-      chEl.title = c.def.desc(G.wave);
+      chEl.title = (c.def && typeof c.def.desc === 'function') ? c.def.desc(G.wave) : '';
     } else { chEl.style.display = 'none'; }
   }
   updateQuestHUD();   // 委托进度随 HUD 一起刷新（内部有签名缓存，不会每帧写 DOM）
@@ -283,9 +283,11 @@ function updateDetail(force) {
     return;
   }
   let sig;
-  if (s.isBed) sig = 'bed|' + G.bed.lv + '|' + Math.ceil(G.bed.hp) + '|' + (G.gold > bedUpgradeCost(G.bed.lv) ? 1 : 0);
-  else if (s.isDoor) sig = 'door|' + s.door.lane + '|' + s.door.lv + '|' + Math.ceil(s.door.hp) + '|' + (G.gold > doorUpgradeCost(s.door.lv) ? 1 : 0);
-  else if (s.def) sig = 'b|' + s.type + '|' + s.level + '|' + (s.branch || '') + '|' + Math.ceil(s.hp) + '|' + G.buildings.indexOf(s) +
+  // 血量按 5% 分档进签名：持续掉血时不必每 tick 整棵重建详情面板（会丢滚动位置、闪按钮）
+  const hpPct = (hp, maxHp) => Math.round(hp / (maxHp || 1) * 20);
+  if (s.isBed) sig = 'bed|' + G.bed.lv + '|' + hpPct(G.bed.hp, G.bed.maxHp) + '|' + (G.gold > bedUpgradeCost(G.bed.lv) ? 1 : 0);
+  else if (s.isDoor) sig = 'door|' + s.door.lane + '|' + s.door.lv + '|' + hpPct(s.door.hp, s.door.maxHp) + '|' + (G.gold > doorUpgradeCost(s.door.lv) ? 1 : 0);
+  else if (s.def) sig = 'b|' + s.type + '|' + s.level + '|' + (s.branch || '') + '|' + hpPct(s.hp, s.maxHp) + '|' + G.buildings.indexOf(s) +
     '|' + (s.resN || 0) + '|' + (s.resDmg || 1) + '|' + (s.kills || 0) + '|' + (s.targetMode || targetModeOf(s).id) + '|' + (canAfford(upgradeCost(s.def, s.level)) ? 1 : 0);
   else return;
   if (!force && sig === detailSig) return;
@@ -581,7 +583,11 @@ function updateRunePanel() {
   }
 }
 function togglePanel(id) {
-  ['techPanel', 'achPanel', 'helpPanel'].forEach(p => { if (p !== id) $(p).classList.remove('open'); });
+  // 同时只开一个面板：tech/ach/help/lot 用 .open 滑出，quest/rune/save 用内联 display
+  ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => { if (p !== id && $(p)) $(p).classList.remove('open'); });
+  ['questPanel', 'runePanel', 'savePanel'].forEach(p => {
+    if (p !== id && $(p)) { $(p).classList.remove('open'); $(p).style.display = 'none'; }
+  });
   const el = $(id);
   el.classList.toggle('open');
   // 修复线上现存 bug：runePanel 是内联 display 结构（非 .slide 滑出面板），
@@ -729,14 +735,17 @@ function updateMenu() {
   if (trialButton) trialButton.style.display = String(Store.get('tangping_cleared', '0')) === '1' ? '' : 'none';
   const endingsButton = $('btnEndings');
   if (endingsButton) endingsButton.style.display = META.endingIds.length ? '' : 'none';
-  const hasSave = !!(LAST_SAVE && LAST_SAVE.wave > 0);
+  // 存档快照的波次在 run 段里（旧写法读顶层 wave 恒为 undefined，继续按钮永远不显示）
+  const saveRun = (LAST_SAVE && LAST_SAVE.run) || null;
+  const saveBuildings = (LAST_SAVE && LAST_SAVE.buildings) || [];
+  const hasSave = !!(saveRun && saveRun.wave > 0);
   if (continueButton) {
     continueButton.style.display = hasSave ? '' : 'none';
-    continueButton.setAttribute('aria-label', hasSave ? '继续第 ' + LAST_SAVE.wave + ' 波' : '没有可继续的存档');
+    continueButton.setAttribute('aria-label', hasSave ? '继续第 ' + saveRun.wave + ' 波' : '没有可继续的存档');
   }
-  if (continueMeta) continueMeta.textContent = hasSave ? '第 ' + LAST_SAVE.wave + ' 波 · ' + ((LAST_SAVE.buildings || []).length) + ' 座建筑' : '暂无自动存档';
+  if (continueMeta) continueMeta.textContent = hasSave ? '第 ' + saveRun.wave + ' 波 · ' + saveBuildings.length + ' 座建筑' : '暂无自动存档';
   if (saveInfo) saveInfo.textContent = hasSave
-    ? '自动记录 · 第 ' + LAST_SAVE.wave + ' 波 · ' + ((LAST_SAVE.buildings || []).length) + ' 座建筑'
+    ? '自动记录 · 第 ' + saveRun.wave + ' 波 · ' + saveBuildings.length + ' 座建筑'
     : '尚无继续记录 · 新游戏会自动保存';
   const dc = $('diffCards');
   if (dc) {
@@ -945,6 +954,9 @@ function showTrialPanel() {
 }
 
 function startRun(trialId) {
+  if (startRun._busy) return false;   // 防连点：双击会重复扣入场金币
+  startRun._busy = true;
+  setTimeout(() => { startRun._busy = false; }, 600);
   const trial = trialId && POSTGAME_TRIALS.find(t => t.id === trialId);
   setMenuStartFeedback('', !!trial);
   const selectedDiff = DIFFS[menuDiff] || DIFFS.normal;
@@ -2067,6 +2079,10 @@ function hideActCard() {
   el.classList.remove('show');
   el.classList.add('out');
   setTimeout(() => { el.style.display = 'none'; el.classList.remove('out'); }, 620);
+  // 幕卡的暂停在这里配对恢复（此前依赖后续剧情框兜底解锁，剧情为空时会永久卡在暂停）。
+  // 若剧情框已经弹出，把恢复留给 hideStoryDialog，避免对白还没读完战斗就动起来。
+  const sp = $('storyDialog');
+  if (!sp || sp.style.display !== 'flex') _resumeAfterStory();
 }
 
 /** 渲染委托面板（打开时与每次进度变化后调用） */
@@ -2268,6 +2284,7 @@ function renderSavePanel() {
     const chips = [
       '<span class="svchip">' + (MODE_ICON[m.mode] || '⏳') + (m.mode === 'unlimited' ? ' 无限模式' : ' 有限模式') + '</span>',
       m.resumeWave ? '<span class="svchip">↻ 读档后从本波重新开始</span>' : '',
+      m.tooNew ? '<span class="svchip">🆕 来自新版本，暂不支持读取</span>' : '',
       m.quest ? '<span class="svchip q">📜 委托 ' + m.quest + '/6</span>' : '',
       m.dream ? '<span class="svchip d">💎 梦境 ' + m.dream + ' 项</span>' : '',
       m.kills ? '<span class="svchip">⚔ ' + m.kills + ' 杀</span>' : '',
@@ -2275,13 +2292,13 @@ function renderSavePanel() {
     return '<div class="' + cls + '"><span class="svtag">' + tag + '</span>' +
       '<div class="svmain">' +
         '<div class="svname">第 ' + m.wave + ' 波 · ' + (DIFF_ICON[m.diff] || '') + ' ' + ((DIFFS[m.diff] || {}).name || m.diff) +
-          (m.name ? '　<span style="font-size:10.5px;color:#8b85a8;font-weight:400">' + m.name + '</span>' : '') + '</div>' +
+          (m.name ? '　<span style="font-size:10.5px;color:#8b85a8;font-weight:400">' + (typeof SaveSystem !== 'undefined' ? SaveSystem._safeName(m.name) : String(m.name).replace(/[<>&"'`]/g, '')) + '</span>' : '') + '</div>' +
         '<div class="svmeta">💰 <b>' + fmt(m.gold) + '</b>　🏗 ' + m.buildings + ' 座　🕒 ' + SaveSystem.fmtTime(m.at) + '</div>' +
         '<div class="svchips">' + chips + '</div>' +
       '</div>' +
       '<div class="svacts">' +
         '<div class="r1">' +
-          '<button class="svbtn" data-load="' + s.slot + '">载入</button>' +
+          '<button class="svbtn" data-load="' + s.slot + '"' + (m.tooNew ? ' disabled title="存档来自新版本"' : '') + '>载入</button>' +
           (s.auto ? '' : '<button class="svbtn blue" data-save="' + s.slot + '"' + (canSave ? '' : ' disabled') + '>覆盖</button>') +
         '</div>' +
         '<div class="r1">' +

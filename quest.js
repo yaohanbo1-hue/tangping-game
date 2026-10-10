@@ -1,5 +1,5 @@
 // ============================================================
-//  躺平发育：梦魇防线  —  梦境委托（任务）系统
+//  守灯人：梦魇防线  —  梦境委托（任务）系统
 // ============================================================
 //  设计目标（来自需求）：
 //    · 击杀特定梦魇 → 掉落特定信物 → 可在面板里查看
@@ -68,7 +68,7 @@ const QUEST_ITEMS = {
 const QUEST_CHAPTERS = [
   {
     id: 'q1', act: '第一幕 · 入梦', title: '走廊尽头的哭声',
-    unlockWave: 4, enemy: 'phantom', need: 3, dropRate: 0.42, item: 'mist_tear',
+    unlockWave: 8, enemy: 'phantom', need: 3, dropRate: 0.42, item: 'mist_tear',
     from: '幽灵',
     hook: {
       speaker: '林小夏',
@@ -94,7 +94,7 @@ const QUEST_CHAPTERS = [
   },
   {
     id: 'q2', act: '第二幕 · 回声', title: '照不出人的镜子',
-    unlockWave: 9, enemy: 'reflector', need: 2, dropRate: 0.38, item: 'mirror_shard',
+    unlockWave: 12, enemy: 'reflector', need: 2, dropRate: 0.38, item: 'mirror_shard',
     from: '镜面梦魇',
     hook: {
       speaker: '周默',
@@ -148,7 +148,7 @@ const QUEST_CHAPTERS = [
   },
   {
     id: 'q4', act: '第四幕 · 三点零七分', title: '停住的钟摆',
-    unlockWave: 24, enemy: 'chronos', need: 2, dropRate: 0.30, item: 'broken_pendulum',
+    unlockWave: 26, enemy: 'chronos', need: 2, dropRate: 0.30, item: 'broken_pendulum',
     from: '时空梦魇',
     hook: {
       speaker: '旁白',

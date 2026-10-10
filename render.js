@@ -119,7 +119,7 @@ function render() {
 // === 梦境系统渲染 ===
 function drawDreamSystems() {
   if (typeof DreamEngine === 'undefined' || !DreamEngine._initialized) return;
-  const snap = DreamEngine.getSnapshot();
+  // 旧版这里每帧调 getSnapshot() 却不使用结果，白白制造 GC 压力（已删除）
 
   // 1. 中立生物绘制
   if (typeof NeutralCreatures !== 'undefined') {

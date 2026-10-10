@@ -26,12 +26,12 @@ const BUILD_DEFS = {
   miner: {
     name: '金币矿机', icon: '⛏️', key: '1', color: '#f5c542',
     cost: { gold: 60, power: 10 }, upkeep: 1.0, hp: 180, maxLv: 50,
-    desc: '持续挖掘金币，是躺平的经济支柱。',
+    desc: '持续挖掘金币，是整条防线的经济支柱。',
     stat: lv => ({ gold: 3 * Math.pow(2, lv - 1) }),
     statText: s => `产出 ${fmt(s.gold)} 金币/秒`,
     branch: {
       a: { name: '深井矿机', icon: '🕳️', desc: '产量大幅提升', cost: { gold: 400, soul: 12 }, mod: s => ({ gold: s.gold * 2.3 }) },
-      b: { name: '精炼厂', icon: '🧪', desc: '金币产量进一步提升', cost: { gold: 350, soul: 12 }, mod: s => ({ gold: s.gold * 1.5 }) },
+      b: { name: '精炼厂', icon: '🧪', desc: '金币产量提升，并每波产出少量灵魂', cost: { gold: 350, soul: 12 }, mod: s => ({ gold: s.gold * 1.5, souls: 2 }) },
     },
   },
   generator: {
@@ -53,7 +53,7 @@ const BUILD_DEFS = {
     stat: lv => ({ dmg: 12 + 5 * (lv - 1), rate: 1.6 + 0.14 * (lv - 1), range: 520 + 22 * (lv - 1) }),
     statText: s => `动能 ${s.dmg}  射速 ${s.rate.toFixed(2)}/秒  射程 ${s.range | 0}`,
     branch: {
-      a: { name: '加特林', icon: '🌪️', desc: '射速 x2.6，单发伤害降低', cost: { gold: 520, soul: 14 }, mod: s => ({ dmg: s.dmg * 0.5, rate: s.rate * 2.6, range: s.range }) },
+      a: { name: '加特林', icon: '🌪️', desc: '射速 x2.6，单发伤害降低', cost: { gold: 520, soul: 14 }, mod: s => ({ dmg: s.dmg * 0.62, rate: s.rate * 2.6, range: s.range }) },
       b: { name: '狙击塔', icon: '🎯', desc: '伤害 x3.4、射程 +70%，射速减半', cost: { gold: 520, soul: 14 }, mod: s => ({ dmg: s.dmg * 3.4, rate: s.rate * 0.45, range: s.range * 1.7 }) },
     },
   },
@@ -120,7 +120,7 @@ const BUILD_DEFS = {
     statText: s => `护盾 ${s.shield}  范围 ${s.range | 0}`,
     branch: {
       a: { name: '群体力场', icon: '🔵', desc: '护盾值 x2.2，范围 x1.5', cost: { gold: 620, soul: 16 }, mod: s => ({ shield: s.shield * 2.2, range: s.range * 1.5 }) },
-      b: { name: '反射力场', icon: '🪞', desc: '护盾反射 40% 近战伤害', cost: { gold: 620, soul: 16 }, mod: s => ({ shield: s.shield * 1.3, range: s.range, reflect: 0.4 }) },
+      b: { name: '反射力场', icon: '🪞', desc: '护盾在场时，范围内建筑受到的近战伤害 -40%', cost: { gold: 620, soul: 16 }, mod: s => ({ shield: s.shield * 1.3, range: s.range, reflect: 0.4 }) },
     },
   },
   amp: {
@@ -175,7 +175,7 @@ const BUILD_DEFS = {
     statText: s => `拉扯力 ${s.pull | 0}  减速 ${Math.round(s.gravSlow * 100)}%  微伤 ${s.dmg}  射程 ${s.range | 0}`,
     branch: {
       a: { name: '黑洞', icon: '🌑', desc: '拉扯力 x2.2、减速 +25%，范围 +20%', cost: { gold: 680, soul: 20 }, mod: s => ({ dmg: s.dmg, rate: 1, range: s.range * 1.2, pull: s.pull * 2.2, gravSlow: Math.min(0.85, s.gravSlow + 0.25), gravity: true }) },
-      b: { name: '奇点坍缩', icon: '💫', desc: '伤害 x6，被聚集的敌人受到额外伤害', cost: { gold: 680, soul: 20 }, mod: s => ({ dmg: s.dmg * 6, rate: 1, range: s.range, pull: s.pull * 1.3, gravSlow: s.gravSlow, gravity: true, collapse: 0.5 }) },
+      b: { name: '奇点坍缩', icon: '💫', desc: '伤害 x6、拉扯力 +30%（放弃减速控场）', cost: { gold: 680, soul: 20 }, mod: s => ({ dmg: s.dmg * 6, rate: 1, range: s.range, pull: s.pull * 1.3, gravSlow: s.gravSlow, gravity: true, collapse: 0.5 }) },
     },
   },
   prism: {
@@ -185,7 +185,7 @@ const BUILD_DEFS = {
     stat: lv => ({ dmg: 16 * 1.075 + 6.4 * 1.075 * (lv - 1), rate: 1.0 + 0.07 * (lv - 1), range: 500 + 20 * (lv - 1), split: 3 + Math.floor((lv - 1) / 8) }),
     statText: s => `能量 ${s.dmg}  分裂 ${s.split} 目标  射速 ${s.rate.toFixed(2)}/秒  射程 ${s.range | 0}`,
     branch: {
-      a: { name: '万花筒', icon: '🌈', desc: '分裂数 x2（每个目标伤害略降）', cost: { gold: 720, soul: 24 }, mod: s => ({ dmg: s.dmg * 0.62, rate: s.rate, range: s.range, split: s.split * 2 }) },
+      a: { name: '万花筒', icon: '🌈', desc: '分裂数 x2，伤害不变（清场特化）', cost: { gold: 720, soul: 24 }, mod: s => ({ dmg: s.dmg, rate: s.rate, range: s.range, split: s.split * 2 }) },
       b: { name: '聚焦棱镜', icon: '🔷', desc: '分裂数降为 2，但伤害 x4.2', cost: { gold: 720, soul: 24 }, mod: s => ({ dmg: s.dmg * 4.2, rate: s.rate * 0.85, range: s.range * 1.15, split: 2 }) },
     },
   },
@@ -193,7 +193,7 @@ const BUILD_DEFS = {
     name: '梦境银行', icon: '🏦', key: '-', color: '#ffc300',
     cost: { gold: 250, power: 20 }, upkeep: 0.5, hp: 180, maxLv: 50,
     desc: '每波结束按存款发放利息。',
-    stat: lv => ({ interest: 0.08 + 0.035 * (lv - 1) }),
+    stat: lv => ({ interest: 0.05 + 0.015 * (lv - 1) }),
     statText: s => `每波利息 ${(s.interest * 100).toFixed(1)}%`,
     branch: {
       a: { name: '投资银行', icon: '📈', desc: '利息 x2.2', cost: { gold: 600, soul: 14 }, mod: s => ({ interest: s.interest * 2.2 }) },
@@ -215,7 +215,7 @@ const ENEMY_DEFS = {
   summoner: { name: '召唤梦魇', icon: '🌀', hp: 210, speed: 28, dmg: 8, gold: 26, soul: 4, cost: 38, r: 22, color: '#f0abfc', summon: { type: 'grunt', every: 4.5, n: 2 }, res: { fire: 0.35 } },
   berserker: { name: '狂暴梦魇', icon: '😤', hp: 150, speed: 50, dmg: 18, gold: 21, soul: 3, cost: 34, r: 20, color: '#fbbf24', frenzy: { at: 0.35, spd: 2.0, dmg: 1.9 }, weak: { frost: 0.5 } },
   vampire: { name: '吸血梦魇', icon: '🧛', hp: 180, speed: 42, dmg: 16, gold: 24, soul: 4, cost: 36, r: 20, color: '#f87171', vamp: 0.4, res: { frost: 0.4 }, weak: { energy: 0.4 } },
-  boss: { name: '梦魇领主', icon: '😈', hp: 2200, speed: 22, dmg: 65, gold: 170, soul: 24, cost: 200, r: 38, color: '#ff4d6d', boss: true },
+  boss: { name: '梦魇领主', icon: '😈', hp: 1800, speed: 22, dmg: 65, gold: 170, soul: 24, cost: 200, r: 38, color: '#ff4d6d', boss: true },
 };
 const BOSS_PHASES = [
   { at: 1.0, name: '第一阶段', res: {}, speed: 1, dmg: 1 },
@@ -280,7 +280,7 @@ const TECH_DEFS = {
   economy: { name: '经济头脑', icon: '💰', tier: 1, max: 10, cost: l => 4 + l * 2, desc: '金币产出 +7%/级' },
   firepower: { name: '火力强化', icon: '💥', tier: 1, max: 10, cost: l => 3 + l * 2, desc: '所有炮塔伤害 +8%/级' },
   rapid: { name: '急速射击', icon: '⏩', tier: 2, req: { firepower: 3 }, max: 10, cost: l => 3 + l * 2, desc: '炮塔射速 +5%/级' },
-  electric: { name: '电力工程', icon: '🔌', tier: 2, req: { economy: 2 }, max: 8, cost: l => 4 + l * 3, desc: '电力容量 +15%、回复 +12%/级' },
+  electric: { name: '电力工程', icon: '🔌', tier: 2, req: { economy: 2 }, max: 8, cost: l => 4 + l * 3, desc: '发电回复 +12%/级' },
   structure: { name: '加固工程', icon: '🧱', tier: 2, max: 10, cost: l => 3 + l * 2, desc: '建筑生命 +12%/级' },
   ironwall: { name: '铁壁加强', icon: '🚪', tier: 2, req: { structure: 3 }, max: 10, cost: l => 4 + l * 3, desc: '铁门生命 +15%/级' },
   crit: { name: '致命一击', icon: '🎯', tier: 3, req: { firepower: 5 }, max: 8, cost: l => 5 + l * 3, desc: '暴击率 +4%/级（暴击 2.2 倍）' },
@@ -341,7 +341,7 @@ const ACHIEVEMENTS = [
   { id: 'k500', name: '梦魇屠夫', desc: '累计击杀 500 只梦魇', check: () => G.stats.kills >= 500, reward: { gold: 400 } },
   { id: 'k2000', name: '歼灭专家', desc: '累计击杀 2000 只梦魇', check: () => G.stats.kills >= 2000, reward: { soul: 60 } },
   { id: 'rich', name: '小富即安', desc: '金币储量达到 3000', check: () => G.gold >= 3000, reward: { soul: 20 } },
-  { id: 'growth', name: '彻底躺平', desc: '发育度达到满级 25', check: () => G.grow >= 25, reward: { soul: 30 } },
+  { id: 'growth', name: '高枕无忧', desc: '发育度达到满级 25', check: () => G.grow >= 25, reward: { soul: 30 } },
   { id: 'allbuild', name: '集大成者', desc: '同时拥有 11 种不同的建筑', check: () => new Set(G.buildings.map(b => b.type)).size >= 11, reward: { soul: 50 } },
   { id: 'branch', name: '进化之路', desc: '完成 5 次建筑转职', check: () => G.buildings.filter(b => b.branch).length >= 5, reward: { soul: 45 } },
   { id: 'nolose', name: '固若金汤', desc: '第 20 波时三扇门全部完好', check: () => G.wave >= 20 && G.doors.every(d => d.hp >= d.maxHp), reward: { soul: 55 } },
@@ -465,7 +465,7 @@ Object.assign(ENEMY_DEFS, {
 });
 const BOSS_DEFS = {
   lord: {
-    name: '梦魇领主', icon: '😈', hp: 2200, speed: 22, dmg: 65, gold: 170, soul: 24, r: 38, color: '#ff4d6d',
+    name: '梦魇领主', icon: '😈', hp: 1800, speed: 22, dmg: 65, gold: 170, soul: 24, r: 38, color: '#ff4d6d',
     phases: [
       { at: 1.0, name: '第一阶段', res: {}, speed: 1, dmg: 1 },
       { at: 0.6, name: '第二阶段', res: { kinetic: 0.35, frost: 0.35 }, speed: 1.15, dmg: 1.2, summon: { type: 'grunt', every: 3.5, n: 3 } },
@@ -658,7 +658,7 @@ const MODE_KEYS = Object.keys(MODES);
 
 // 主线通关后解锁的全程规则挑战。修正项由 core.js 应用，奖励倍率只影响跨局金币。
 const POSTGAME_TRIALS = [
-  { id: 'thin_doors', name: '残响门扉', icon: '🚪', desc: '三道铁门以 70% 耐久开始；门一旦破损，后续防线压力会迅速扩大。',
+  { id: 'thin_doors', name: '残响门扉', icon: '🚪', desc: '三道铁门以 70% 耐久开始，床铺耐久也降至 85%；门一旦破损，后续防线压力会迅速扩大。',
     doorHpMul: 0.7, bedHpMul: 0.85, hpMul: 1, speedMul: 1, prepMul: 1, rewardMul: 1.35, bonusGold: 250 },
   { id: 'rushing_night', name: '急促长夜', icon: '🌒', desc: '梦魇生命提高 20%、移动速度提高 22%；抓紧处理高威胁目标。',
     doorHpMul: 1, hpMul: 1.2, speedMul: 1.22, prepMul: 0.9, rewardMul: 1.55, bonusGold: 400 },

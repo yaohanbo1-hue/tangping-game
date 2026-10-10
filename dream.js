@@ -1,6 +1,6 @@
 /**
  * dream.js — 梦境系统引擎
- * 「躺平发育：梦魇防线」扩展系统
+ * 「守灯人：梦魇防线」扩展系统
  *
  * 包含：事件总线、梦境生态、中立生物、NPC驻守、第四面墙、
  *       梦中梦、声音系统、不战而胜、记忆碎片、梦境日记
@@ -144,11 +144,12 @@ const DreamEcology = {
       if (e.def && e.def.summon) {
         for (const o of alive) {
           if (o === e || o.dead) continue;
-          // 火焰型敌人（burn 字段或 fire 属性）在附近时引燃召唤物
-          if (o.burn > 0 || (o.def && o.def.burnDmg)) {
-            if (eDist(e, o) < 160) {
-              chain.push({ type: 'ignite', source: o.type, aoeRadius: 100 });
-            }
+          // 敌人身上的灼烧状态是 burnT/burnStack（旧条件读不存在的 burn 字段，恒为假）
+          if ((o.burnT > 0 || o.burnStack > 0) && eDist(e, o) < 160) {
+            chain.push({ type: 'ignite', source: o.type, aoeRadius: 100 });
+            // 点燃伤害：每 0.5s 烧 2% 最大生命（下限 5%，击杀仍由正常结算走）
+            if (typeof G !== 'undefined' && G.enemies.indexOf(e) >= 0) e.hp = Math.max(e.maxHp * 0.05, e.hp - e.maxHp * 0.02);
+            break;
           }
         }
       }
@@ -231,7 +232,7 @@ const NeutralCreatures = {
     },
     shadowCat: {
       name: '影子猫', icon: '🐈‍⬛', color: '#64748b',
-      /** 效果：偷金币，但保护后给稀有道具 */
+      /** 效果：偷金币；保护满波数后返还金币与灵魂 */
       effect: 'stealAndReward',
       stealRate: 2,       // 每秒偷 2 金币
       protectWaves: 5,
@@ -338,7 +339,7 @@ const NeutralCreatures = {
         c.alive = false; // 完成使命后消失
       }
 
-      // 影子猫：保护足够波次后给稀有奖励
+      // 影子猫：保护足够波次后返还金币与灵魂
       if (c.def.effect === 'stealAndReward' && c.wavesProtected >= c.def.protectWaves && !c.rewarded) {
         c.rewarded = true;
         if (typeof G !== 'undefined') {
@@ -663,9 +664,10 @@ const NPCGuardians = {
   _getBuildingsInRoom(roomId) {
     if (typeof G === 'undefined') return [];
     const laneIdx = parseInt(roomId.replace('lane_', ''), 10);
-    if (isNaN(laneIdx)) return G.buildings || [];
-    // 按行过滤：lane_0=row0, lane_1=row1, lane_2=row2
-    return (G.buildings || []).filter(b => b.row === laneIdx);
+    if (isNaN(laneIdx) || typeof LANES === 'undefined' || !LANES[laneIdx]) return G.buildings || [];
+    // 按 lane 的 y 区间判断归属：旧写法 b.row === laneIdx 会漏掉跨行排布，row3-4 的建筑吃不到房间效果
+    const L = LANES[laneIdx];
+    return (G.buildings || []).filter(b => b.y >= L.y0 && b.y <= L.y1);
   },
 
   /**
@@ -1585,8 +1587,9 @@ const MercyPath = {
     const wave = (typeof G !== 'undefined') ? (G.wave || 1) : 1;
     if (wave < this.MIN_WAVE) return false;
     if (wave - this._lastMercyWave < this.WAVE_GAP) return false;
-    enemy.mercyOffered = true;
     if (!this.checkMercy(enemy)) return false;
+    // 通过资格判定后再标记：旧实现在掷骰前就把敌人标记为「已发起」，一次失败=永远错过
+    enemy.mercyOffered = true;
     if (Math.random() > this.CHANCE) return false;
     this._lastMercyWave = wave;
     return this.startMercyDialogue(enemy);
@@ -1798,6 +1801,12 @@ const DreamFragments = {
    */
   initFragments() {
     this._collected = new Set();
+    // 碎片图鉴跨局保留（存 META）：否则每局清零，「集齐 30 块碎片」永远达不成
+    try {
+      if (typeof META !== 'undefined' && Array.isArray(META.fragments)) {
+        META.fragments.forEach(id => { if (typeof id === 'string') this._collected.add(id); });
+      }
+    } catch (e) { }
     EventBus.emit('fragments:init', null);
   },
 
@@ -1808,9 +1817,9 @@ const DreamFragments = {
    */
   tryDropFragment(enemy) {
     if (!enemy || !enemy.type) return null;
-    // 找到匹配的碎片
+    // 找到匹配的碎片：BOSS 一律归一成 type='boss'，专属掉落要按 bossKey 匹配（否则 frag_30 永不掉落）
     const candidates = this.FRAGMENT_DEFS.filter(f =>
-      f.dropFrom === enemy.type && !this._collected.has(f.id)
+      (f.dropFrom === enemy.type || (enemy.bossKey && f.dropFrom === enemy.bossKey)) && !this._collected.has(f.id)
     );
     if (!candidates.length) return null;
 
@@ -1833,6 +1842,16 @@ const DreamFragments = {
     const frag = this.FRAGMENT_DEFS.find(f => f.id === fragmentId);
     if (!frag) return null;
     this._collected.add(fragmentId);
+    // 同步写入 META：图鉴进度跨局保留，不再随单局结束蒸发
+    try {
+      if (typeof META !== 'undefined') {
+        if (!Array.isArray(META.fragments)) META.fragments = [];
+        if (META.fragments.indexOf(fragmentId) < 0) {
+          META.fragments.push(fragmentId);
+          if (typeof saveMeta === 'function') saveMeta();
+        }
+      }
+    } catch (e) { }
     const spoilerLocked = !!(frag.revealWave && (!G || G.wave < frag.revealWave));
     const announcement = spoilerLocked
       ? Object.assign({}, frag, { name: '模糊的记忆', desc: '内容尚未显影', story: '这段记忆仍被雨声遮住。' })

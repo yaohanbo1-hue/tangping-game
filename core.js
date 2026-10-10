@@ -86,8 +86,10 @@ const Accessibility = {
     let p = {};
     try { p = JSON.parse(Store.get('tangping_accessibility', '{}') || '{}'); } catch (e) { }
     this.textSize = p.textSize === 'large' ? 'large' : 'normal';
-    this.flash = ['reduced', 'off'].indexOf(p.flash) >= 0 ? p.flash : 'normal';
-    this.shake = ['reduced', 'off'].indexOf(p.shake) >= 0 ? p.shake : 'normal';
+    // 系统开了「减少动态效果」时，默认减弱闪屏/震动（玩家仍可在设置里手动改回）
+    const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.flash = ['reduced', 'off'].indexOf(p.flash) >= 0 ? p.flash : (reduceMotion ? 'reduced' : 'normal');
+    this.shake = ['reduced', 'off'].indexOf(p.shake) >= 0 ? p.shake : (reduceMotion ? 'reduced' : 'normal');
     this.apply();
   },
   set(key, value) {
@@ -226,7 +228,7 @@ const Music = {
   },
 };
 const META_KEY = 'tangping_meta';
-const META = { gold: 0, pity: 0, inv: {}, equipped: [], runs: 0, best: 0, trialsCleared: [], runHistory: [], endingIds: [] };
+const META = { gold: 0, pity: 0, inv: {}, equipped: [], runs: 0, best: 0, trialsCleared: [], runHistory: [], endingIds: [], fragments: [] };
 function loadMeta() {
   try { const o = JSON.parse(Store.get(META_KEY, '{}') || '{}'); Object.assign(META, o); } catch (e) { }
   if (!META.inv || typeof META.inv !== 'object') META.inv = {};
@@ -236,9 +238,21 @@ function loadMeta() {
   else META.runHistory = META.runHistory.filter(run => run && typeof run === 'object').slice(0, 40);
   if (!Array.isArray(META.endingIds)) META.endingIds = [];
   else META.endingIds = META.endingIds.filter(id => typeof id === 'string');
+  if (!Array.isArray(META.fragments)) META.fragments = [];
+  else META.fragments = META.fragments.filter(id => typeof id === 'string');
   META.gold = Math.max(0, Math.floor(META.gold || 0));
 }
-function saveMeta() { Store.set(META_KEY, JSON.stringify(META)); }
+function saveMeta() {
+  const r = Store.set(META_KEY, JSON.stringify(META));
+  // 局外进度写失败要让玩家知道：隐私模式/存储满时金币、库存、试炼记录会无声丢失
+  if (!r || !r.ok) {
+    console.warn('[Meta] 局外进度写入失败:', r && r.name);
+    if (G && typeof setTip === 'function') {
+      const quota = r && (r.name === 'QuotaExceededError' || r.name === 'NS_ERROR_DOM_QUOTA_REACHED');
+      setTip('⚠ 局外进度保存失败（' + (quota ? '存储空间已满' : '本地存储不可用') + '），重要进度请用存档面板导出备份', 6);
+    }
+  }
+}
 loadMeta();
 function diffCfg() { return (G && G.diffKey && DIFFS[G.diffKey]) || DIFFS.normal; }
 const finalWave = () => (G && G.winWave ? G.winWave : FINAL_WAVE);
@@ -246,6 +260,7 @@ function placeBuildingAt(type, level) {
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
     if (!G.grid[r * COLS + c] && !inBed(c, r)) {
       G.gold += BUILD_DEFS[type].cost.gold;
+      G.waveSpentGold -= BUILD_DEFS[type].cost.gold;   // 赠礼不算本波花费（与 tryBuild 的记账对冲）
       if (tryBuild(type, c, r)) {
         const b = G.buildings[G.buildings.length - 1];
         setBuildingLevel(b, level || 1);
@@ -253,6 +268,7 @@ function placeBuildingAt(type, level) {
         return b;
       }
       G.gold -= BUILD_DEFS[type].cost.gold;
+      G.waveSpentGold += BUILD_DEFS[type].cost.gold;   // 建造失败，把对冲撤回
     }
   }
   return null;
@@ -388,6 +404,10 @@ function newGame(loadFrom) {
     stats: { kills: 0, bossKills: 0, goldTotal: 0, dmg: 0, build: 0, leaks: 0,
       laneLeaks: [0, 0, 0], laneDamage: [0, 0, 0], towerDamage: {}, towerKills: {} },
     startTime: performance.now(),
+    // 本波经济基准：战斗中存档读档时按 start-spent 回滚本波净收益，防止反复存/读刷掉落
+    waveStartGold: 0, waveSpentGold: 0, waveStartSouls: 0, waveSpentSouls: 0, waveRuneIds: [],
+    // 每局唯一戳：过期的 setTimeout 回调据此识别旧局，避免跨局结算/伤害
+    runStamp: performance.now() + Math.random(),
     tipText: '', tipTimer: 0,
     over: false, upgradeFx: [], waveTransition: null, resDirty: false,
   };
@@ -424,7 +444,7 @@ function bstat(b) {
       });
     });
   }
-  if (base.range != null) base.range *= techVal('focus', 0.06);
+  if (base.range != null) base.range *= techVal('focus', 0.06) * (1 + (G.fate.range || 0) + (G.fateWave.range || 0));
   if (base.dmg != null && G.prize && G.prize.dmg) base.dmg *= G.prize.dmg;
   if (base.rate != null) base.rate *= techVal('swift', 0.08);
   b.__sf = statFrame; b.__ss = base;
@@ -482,6 +502,7 @@ function tryDropRune(wave, x, y) {
   if (Math.random() > Math.min(0.5, chance)) return null;
   const r = rollRune(wave);
   G.runeBag.push(r);
+  (G.waveRuneIds || (G.waveRuneIds = [])).push(r.id);   // 记录本波掉落：读档重开波时移除，防刷符文
   addText(x, y - 26, '🔮 ' + r.name + '（' + qualityOf(r.q).name + '）', qualityOf(r.q).color, true);
   SFX.coin(); checkAchievements();
   return r;
@@ -492,7 +513,7 @@ function totalGoldRate() {
   const bed = bedGold() * techVal('sleep', 0.12) * techVal('eternity', 0.60);
   let r = bed;
   G.buildings.forEach(b => { if (b.type === 'miner') r += (bstat(b).gold || 0) * techVal('mining', 0.10); });
-  return r * techVal('economy', 0.07) * techVal('compound', 0.25) * (G.event.eff.goldMul || 1) * (G.buff.goldBoost ? 2 : 1) * diffCfg().goldMul;
+  return r * techVal('economy', 0.07) * techVal('compound', 0.25) * (G.event.eff.goldMul || 1) * (1 + (G.buff.goldBoost || 0) + (G.fate.goldBoost || 0)) * diffCfg().goldMul;
 }
 function powerInfo() {
   let regen = 0;
@@ -555,6 +576,17 @@ function towerDmgMul(b) {
   // 血怒：建筑残血时伤害提升（此前写在 return 之后，从未生效）
   if (G.tech.berserk > 0 && b.hp < b.maxHp * 0.4) m *= 1 + G.tech.berserk * 0.25;
   if (b.resDmg) m *= b.resDmg;
+  // NPC「梦境战士」驻守增伤（含同房间羁绊加成）：房间按建筑所在 lane 的 y 区间划分
+  if (typeof NPCGuardians !== 'undefined' && typeof NPCGuardians.getNPCBuffs === 'function') {
+    for (let i = 0; i < LANES.length; i++) {
+      const L = LANES[i];
+      if (b.y >= L.y0 && b.y <= L.y1) {
+        const nb = NPCGuardians.getNPCBuffs('lane_' + i);
+        if (nb && nb.atkBoost) m *= 1 + nb.atkBoost;
+        break;
+      }
+    }
+  }
   // 剧情命运加成 + 旋律增益
   m *= 1 + (G.fate.dmg || 0) + (G.fateWave.dmg || 0);
   if (G.melodyBuff && G.melodyBuff.dmgMul) m *= G.melodyBuff.dmgMul;
@@ -569,6 +601,10 @@ function towerRateMulOn(b) {
   let m = 1;
   if ((b.freezeT || 0) > 0) m *= 0.4;
   if (b.resRate) m *= b.resRate;
+  // 萤火虫邻近攻速加成（getFireflyBuff 此前定义了却没人读）
+  if (typeof NeutralCreatures !== 'undefined' && typeof NeutralCreatures.getFireflyBuff === 'function') {
+    m *= 1 + NeutralCreatures.getFireflyBuff(b);
+  }
   if (typeof DeepDream !== 'undefined' && DeepDream.isActive()) {
     const bm = DeepDream.getBuildingModifiers();
     if (bm && bm.rateMul) m *= bm.rateMul;
@@ -611,13 +647,18 @@ function buildName(b) {
 function bedName() { return NAME_POOL.bed[clamp(G.bed.lv, 1, 50) - 1] || '床铺'; }
 function doorName(d) { return NAME_POOL.door[clamp(d.lv, 1, 50) - 1] || '铁门'; }
 const canAfford = c => !!(G && G.admin) || (G.gold >= c.gold && G.power >= (c.power || 0) && G.souls >= (c.soul || 0));
-function payCost(c) { if (G.admin) return; G.gold -= c.gold; G.power -= (c.power || 0); G.souls -= (c.soul || 0); }
+function payCost(c) {
+  if (G.admin) return;
+  G.gold -= c.gold; G.power -= (c.power || 0); G.souls -= (c.soul || 0);
+  G.waveSpentGold += c.gold || 0; G.waveSpentSouls += c.soul || 0;   // 供读档重开波时回滚核算
+}
 function tryBuild(key, c, r) {
   const def = BUILD_DEFS[key];
   if (!def || c < 0 || c >= COLS || r < 0 || r >= ROWS) return false;
   if (G.grid[r * COLS + c]) return false;
   if (!G.admin && G.gold < def.cost.gold) { SFX.err(); setTip('资源不足：需要 ' + fmt(def.cost.gold) + ' 金币'); return false; }
   G.gold -= def.cost.gold;
+  G.waveSpentGold += def.cost.gold;
   const p = cellCenter(c, r);
   const b = {
     type: key, def, level: 1, col: c, row: r, x: p.x, y: p.y,
@@ -668,6 +709,7 @@ function tryBranch(b, which) {
 function sellBuilding(b) {
   const back = Math.round(b.invested * SELL_RATE);
   G.gold += back;
+  G.waveSpentGold -= back;   // 出售退款视作负花费，读档回滚时保留
   recycleRunes(b, '出售');
   G.grid[b.row * COLS + b.col] = null;
   G.buildings.splice(G.buildings.indexOf(b), 1);
@@ -697,6 +739,8 @@ function upgradeBed() {
   payCost(c); G.bed.lv++;
   const nh = bedMaxHp(G.bed.lv);
   G.bed.hp += nh - G.bed.maxHp; G.bed.maxHp = nh;
+  // 床铺操作计入旋律序列：隐藏旋律含 'bed' 步骤，但床铺此前不进记录，旋律永远弹不出来
+  if (typeof DreamEngine !== 'undefined') { try { DreamEngine.onBuildingClick('bed'); } catch (e) { } }
   SFX.up(); addText(BED_CX, BED_CY - 64, '床铺 Lv.' + G.bed.lv, '#ffd166');
   spawnParts(BED_CX, BED_CY, 18, '#ffd166', 3);
 }
@@ -723,6 +767,10 @@ function updateEconomy(dt) {
   G.power = Math.max(0, G.power + powerNet() * dt);
   G.growTimer += dt;
   if (G.growTimer >= 8 && G.grow < 25) { G.growTimer -= 8; G.grow++; addText(BED_CX, BED_CY - 74, '发育 +1（灵魂 +2%）', '#7cf39a'); SFX.coin(); checkAchievements(); }
+  // 护盾上限每帧按现存护盾来源重算（旧逻辑只增不减，卖掉护盾塔后全队永久白嫖护盾）
+  G.bed.shieldMax = 0;
+  G.doors.forEach(d => { d.shieldMax = 0; });
+  G.buildings.forEach(o => { o.shieldMax = 0; });
   G.buildings.forEach(b => {
     const s = bstat(b);
     if (b.type === 'repair' || s.heal) {
@@ -737,9 +785,11 @@ function updateEconomy(dt) {
     }
   });
   const maxLvShield = Math.max(1, ...G.buildings.filter(b => b.type === 'shield').map(b => b.level));
-  const regen = Math.max(3, 14 - maxLvShield);
+  // 回盾速度随护盾核心等级提升（旧公式 14-等级 写反，高级核心反而回得慢）
+  const regen = 4 + maxLvShield;
   [G.bed, ...G.doors, ...G.buildings].forEach(t => {
-    if (t.shieldMax > 0 && t.shield < t.shieldMax) t.shield = Math.min(t.shieldMax, t.shield + regen * dt);
+    if (t.shieldMax <= 0) { t.shield = 0; return; }
+    if (t.shield < t.shieldMax) t.shield = Math.min(t.shieldMax, t.shield + regen * dt);
   });
   G.doors.forEach(d => {
     if (d.broken && d.hp > d.maxHp * 0.25) { d.broken = false; addText(WALL_X + 20, d.y - 70, '铁门已修复！', '#7cf39a', true); }
@@ -763,13 +813,21 @@ function applyStoryEffect(text, ctx) {
   const bucket = waveScoped ? G.fateWave : G.fate;
   const durLabel = waveScoped ? '本波' : '本局';
 
-  // 1) 金币 / 灵魂
-  const gold = t.match(/获得\s*(\d+)\s*金币/);
+  // 1) 金币 / 灵魂 / 电量（「+ N 灵魂」这类不带“获得”的写法也要认）
+  const gold = t.match(/获得\s*(\d+)\s*金币/) || t.match(/\+\s*(\d+)\s*金币/);
   if (gold) { G.gold += +gold[1]; got.push('+' + gold[1] + '💰'); }
-  const soul = t.match(/获得\s*(\d+)\s*灵魂/);
+  const soul = t.match(/获得\s*(\d+)\s*灵魂/) || t.match(/\+\s*(\d+)\s*灵魂/);
   if (soul) { G.souls += +soul[1]; got.push('+' + soul[1] + '🔮'); }
+  const power = t.match(/(?:获得\s*)?(\d+)\s*电量/);
+  if (power) { G.power += +power[1]; got.push('+' + power[1] + '⚡'); }
   const goldMul = t.match(/金币(获取|收益)\s*\+(\d+)%/);
-  if (goldMul) { G.buff.goldBoost = Math.max(G.buff.goldBoost || 0, +goldMul[2] / 100); got.push('金币产出 +' + goldMul[2] + '%' + durLabel); }
+  if (goldMul) {
+    // 按文案标注区分持续时间：本波的进 buff（endWave 清除），本局的进 fate（旧实现恒 ×2 且只持续一波）
+    const v = +goldMul[2] / 100;
+    if (waveScoped) G.buff.goldBoost = Math.max(G.buff.goldBoost || 0, v);
+    else G.fate.goldBoost = Math.max(G.fate.goldBoost || 0, v);
+    got.push('金币产出 +' + goldMul[2] + '%' + durLabel);
+  }
 
   // 2) 百分比加成：伤害 / 射速 / 防御 / 暴击 / 全属性
   const all = t.match(/全属性\s*\+(\d+)%/) || t.match(/全属性提升\s*(\d+)%/);
@@ -782,10 +840,20 @@ function applyStoryEffect(text, ctx) {
     got.push('全属性 +' + all[1] + '%（含生命）' + durLabel);
   } else {
     const dmg = t.match(/(?:炮塔|全炮塔|所有炮塔|攻击力)[^%]{0,8}?\+(\d+)%/);
-    if (dmg && !/射速/.test(t)) { bucket.dmg += +dmg[1] / 100; got.push('炮塔伤害 +' + dmg[1] + '%' + durLabel); }
+    if (dmg && !/射速|射程/.test(t)) { bucket.dmg += +dmg[1] / 100; got.push('炮塔伤害 +' + dmg[1] + '%' + durLabel); }
   }
+  const allDmg = t.match(/(所有|全部|全体)伤害\s*\+(\d+)%/);
+  if (allDmg) { bucket.dmg += +allDmg[2] / 100; got.push('所有伤害 +' + allDmg[2] + '%' + durLabel); }
+  const range = t.match(/射程[^%]{0,6}?\+(\d+)%/);
+  if (range) { bucket.range = (bucket.range || 0) + +range[1] / 100; got.push('炮塔射程 +' + range[1] + '%' + durLabel); }
   const rate = t.match(/射速[^%]{0,6}?\+(\d+)%/) || t.match(/攻速[^%]{0,6}?\+(\d+)%/);
   if (rate) { bucket.rate += +rate[1] / 100; got.push('炮塔射速 +' + rate[1] + '%' + durLabel); }
+  const bhp = t.match(/(所有|全部|全体)?(建筑|设施)[^%]{0,4}?生命[^%]{0,4}?\+(\d+)%/);
+  if (bhp) {
+    const v = +bhp[3] / 100;
+    G.buildings.forEach(b => { b.maxHp *= 1 + v; b.hp *= 1 + v; });
+    got.push('建筑生命 +' + bhp[3] + '%' + durLabel);
+  }
   const def = t.match(/(?:防御|护甲)[^%]{0,6}?\+(\d+)%/);
   if (def && !/射速/.test(t)) { bucket.def += +def[1] / 100; got.push('建筑防御 +' + def[1] + '%' + durLabel); }
   const crit = t.match(/暴击率\s*\+(\d+)%/);
@@ -818,7 +886,8 @@ function applyStoryEffect(text, ctx) {
   }
 
   // 5) 特殊机制
-  if (/免疫(控制|恐惧|眩晕)/.test(t)) { G.fate.immune = true; got.push('免疫控制（本局）'); }
+  // 「免疫所有控制效果」这类写法也要认（旧正则漏掉，第 55 波关键选项奖励丢失）
+  if (/免疫/.test(t) && /(控制|恐惧|眩晕|减益|负面)/.test(t)) { G.fate.immune = true; got.push('免疫控制（本局）'); }
   if (/永久护盾|护盾\s*\+(\d+)/.test(t)) {
     const sh = t.match(/护盾\s*\+(\d+)/);
     const v = sh ? +sh[1] : 300;
@@ -827,7 +896,7 @@ function applyStoryEffect(text, ctx) {
     got.push('永久护盾 +' + v);
   }
   if (/自动重建/.test(t)) { G.fate.autoRebuild = Math.max(G.fate.autoRebuild || 0, 0.2); got.push('建筑自动重建 20%（本局）'); }
-  if (/不再召唤额外敌人|停止召唤/.test(t)) { G.fate.noSummonWave = true; got.push('本波停止召唤'); }
+  if (/不再召唤额外敌人|停止召唤/.test(t)) { G.buff.noSummon = true; got.push('本波停止召唤'); }
   if (/超频/.test(t)) {
     const s = t.match(/超频\s*(\d+)\s*秒/);
     G.buff.overclock = Math.max(G.buff.overclock || 0, s ? +s[1] : 8);
@@ -839,18 +908,20 @@ function applyStoryEffect(text, ctx) {
     if (n) got.push(n + ' 座建筑免费升级');
   }
 
-  // 6) 深层梦境入口
+  // 6) 深层梦境入口：按当前波次进入已触发过的最深层，不再恒进第一层
   if (/深层梦境/.test(t) && typeof DeepDream !== 'undefined' && !DeepDream.isActive()) {
-    const lv = DeepDream.DEEP_LEVELS[0];
+    const levels = (DeepDream.DEEP_LEVELS || []).filter(x => (x.triggerWave | 0) <= G.wave);
+    const lv = levels.length ? levels[levels.length - 1] : (DeepDream.DEEP_LEVELS || [])[0];
     if (lv) { DeepDream.enterDeepDream(lv.id); got.push('坠入' + lv.name); }
   }
 
-  // 7) 好感度
+  // 7) 好感度（支持「林小夏、周默、赵磊好感度 +10」这类多人写法）
   const aff = t.match(/好感度\s*\+(\d+)/);
   if (aff) {
-    const who = (ctx && ctx.speaker) || (t.match(/(林小夏|周默|赵磊|艾拉|摩伊拉|凯恩|奈亚|阿尔忒弥斯)/) || [, '???'])[1];
-    G.affection[who] = (G.affection[who] || 0) + +aff[1];
-    got.push(who + ' 好感度 +' + aff[1]);
+    const names = t.match(/(林小夏|周默|赵磊|艾拉|摩伊拉|凯恩|奈亚|阿尔忒弥斯)/g) || [];
+    const whoList = names.length ? Array.from(new Set(names)) : [((ctx && ctx.speaker) || '???')];
+    whoList.forEach(w => { G.affection[w] = (G.affection[w] || 0) + +aff[1]; });
+    got.push(whoList.join('、') + ' 好感度 +' + aff[1]);
   }
 
   // 8) NPC 相关
@@ -860,15 +931,11 @@ function applyStoryEffect(text, ctx) {
     if (n) got.push('驻守：' + n);
   }
 
-  // 9) 兜底：无法量化的剧情标记 → 命运印记 + 梦境日记，绝不静默吞掉
-  if (!got.length) {
-    notes.push(t);
-    G.fate.notes.push(t);
-    if (typeof DreamDiary !== 'undefined' && typeof DreamDiary.addEntry === 'function') {
-      DreamDiary.addEntry('story', '命运印记：' + t);
-    }
-  } else if (typeof DreamDiary !== 'undefined' && typeof DreamDiary.addEntry === 'function') {
-    DreamDiary.addEntry('story', '选择回响：' + t + '（实际获得：' + got.join('、') + '）');
+  // 9) 兜底：承诺原文一律记入命运印记与梦境日记——兑现了的留痕，没兑现的也不静默吞掉
+  if (!got.length) notes.push(t);
+  G.fate.notes.push(t);
+  if (typeof DreamDiary !== 'undefined' && typeof DreamDiary.addEntry === 'function') {
+    DreamDiary.addEntry('story', got.length ? '选择回响：' + t + '（实际获得：' + got.join('、') + '）' : '命运印记：' + t);
   }
   if (got.length) setTip('✓ ' + got.join('　'), 4);
   return { got, notes };
@@ -895,7 +962,8 @@ function bossPhases(e) {
   return (BOSS_DEFS[e.bossKey] && BOSS_DEFS[e.bossKey].phases) || BOSS_PHASES;
 }
 function bossKeyForWave(n) {
-  if (n >= finalWave()) return 'final';
+  // 无尽模式没有终焉：60 波以后继续轮换 BOSS，不再全是终焉梦魇
+  if (n >= finalWave() && !(G && G.mode === 'endless')) return 'final';
   const idx = Math.floor(n / 5 - 1) % BOSS_ORDER.length;
   return BOSS_ORDER[(idx + BOSS_ORDER.length) % BOSS_ORDER.length];
 }
@@ -980,6 +1048,14 @@ function spawnEnemy(type, wave, lane) {
 function enemySpeed(e) {
   let s = e.speed;
   if (e.slowT > 0) s *= (1 - e.slow);
+  // 梦境生态链的真实效果：梦魇群聚互相加速、精英光环带动小怪（此前只记录不生效）
+  if (typeof DreamEcology !== 'undefined' && typeof DreamEcology.getEcologyChain === 'function') {
+    const chain = DreamEcology.getEcologyChain(e);
+    for (const eff of chain) {
+      if (eff.type === 'swarmBoost') s *= 1 + (eff.speedBonus || 0);
+      else if (eff.type === 'eliteAura') s *= 1 + (eff.bonus || 0) * 0.5;
+    }
+  }
   // 精英词缀狂暴 + 敌人内置狂暴（如 berserker）
   const frenzyThreshold = (e.def.frenzy && e.def.frenzy.at) || 0.35;
   const frenzySpd = (e.def.frenzy && e.def.frenzy.spd) || 1.9;
@@ -1145,7 +1221,7 @@ function updateEnemies(dt) {
     }
     const bps = e.boss ? bossPhases(e) : null;
     const sm = e.def.summon || (e.boss && e.phase > 0 && bps[e.phase] && bps[e.phase].summon);
-    if (sm) {
+    if (sm && !G.buff.noSummon) {   // 剧情奖励「本波停止召唤」的真正落点
       e.summonT += dt;
       if (e.summonT >= sm.every) {
         e.summonT = 0;
@@ -1214,6 +1290,7 @@ function updateEnemies(dt) {
           if (e.def && e.def.steal && G.gold > 0) {
             const st = Math.min(G.gold, Math.round(G.gold * e.def.steal) + 2);
             G.gold -= st;
+            G.waveSpentGold += st;   // 被偷视作本波损失，读档回滚时不白嫖回来
             addText(e.x, e.y - 40, '-' + st + '💰', '#facc15', true);
           }
           addText(t.x, t.y - 20, '-' + Math.round(dmg), '#ff6b6b');
@@ -1270,6 +1347,13 @@ function destroyBuilding(b) {
   addText(b.x, b.y, '建筑被摧毁！', '#ff4d6d', true);
   shakeBy(9); SFX.boom();
   G.resDirty = true;
+  // 「记忆之锚」：剧情奖励的自动重建（20% 概率原地免费重建，此前写了数值没人兑现）
+  if (G.fate && G.fate.autoRebuild > 0 && Math.random() < G.fate.autoRebuild && !G.grid[b.row * COLS + b.col] && !inBed(b.col, b.row)) {
+    const cost = b.def.cost.gold;
+    G.gold += cost; G.waveSpentGold -= cost;
+    if (tryBuild(b.type, b.col, b.row)) addText(b.x, b.y, '⚓ 记忆之锚：自动重建', '#7cf39a', true);
+    else { G.gold -= cost; G.waveSpentGold += cost; }
+  }
 }
 function killEnemy(e) {
   if (e.dead) return;
@@ -1277,9 +1361,12 @@ function killEnemy(e) {
   G.stats.kills++;
   G.combo = (G.combo || 0) + 1; G.comboT = 3;
   G.maxCombo = Math.max(G.maxCombo || 0, G.combo);
+  // 「连环斩杀」挑战按本波最大连击判定（track 每波重置，这里同步）
+  if (G.track) G.track.maxCombo = Math.max(G.track.maxCombo || 0, G.combo);
   if (G.combo === 10 || (G.combo > 10 && G.combo % 10 === 0))
     addText(e.x, e.y - 44, G.combo + ' 连杀！', '#ffd166', true);
-  G.gold += e.def.gold * (e.elite ? 2.5 : 1) * techVal('greed', 0.08) * (G.event.eff.rewardMul || 1);
+  const goldGain = e.def.gold * (e.elite ? 2.5 : 1) * techVal('greed', 0.08) * (G.event.eff.rewardMul || 1);
+  G.gold += goldGain;
   const soulGain = Math.round((e.def.soul + G.tech.harvest) * (G.event.eff.soulMul || 1) * (e.elite ? 2 : 1) * (1 + G.grow * 0.02) * techVal('soulstorm', 0.30) * diffCfg().soulMul);
   G.souls += soulGain;
   tryDropRune(G.wave, e.x, e.y);
@@ -1300,7 +1387,7 @@ function killEnemy(e) {
   // 精英/BOSS 击杀停顿
   if (e.boss) hitStop = 0.15;
   else if (e.elite) hitStop = 0.06;
-  addText(e.x, e.y - e.r, '+' + Math.round(e.def.gold * (e.elite ? 2.5 : 1)), '#ffd166');
+  addText(e.x, e.y - e.r, '+' + Math.round(goldGain), '#ffd166');
   if (soulGain) addText(e.x + 14, e.y - e.r - 14, '+' + soulGain + '🔮', '#c77dff');
   if (e.boss) {
     G.stats.bossKills++; shakeBy(18); SFX.boom();
@@ -1310,7 +1397,11 @@ function killEnemy(e) {
     if (!e.def.finalBoss && bossStory && bossStory.wave === G.wave && bossStory.defeat && typeof showStoryDialog === 'function') {
       showStoryDialog({ wave: G.wave, speaker: bossStory.name || e.def.name, text: bossStory.defeat });
     }
-    if (e.def.finalBoss) { setTimeout(() => gameWin(), 900); }
+    if (e.def.finalBoss && !(G.mode === 'endless')) {
+      // runStamp 守卫：重开局后旧回调不再触发结算
+      const rs = G.runStamp;
+      setTimeout(() => { if (G && G.runStamp === rs && !G.over) gameWin(); }, 900);
+    }
   }
   else if (e.elite) SFX.hit();
   // 梦境系统：敌人击杀钩子
@@ -1617,7 +1708,8 @@ function applyDamage(e, dmg, dtype, src, chain, silent) {
   const tm = typeMul(e, dtype);
   let d = dmg * tm;
   if (e.flat) d = Math.max(1, d - e.flat);
-  if (dtype === 'frost' && src) {
+  // 破甲词条按命中结算，不限伤害类型（旧实现只认 frost，腐蚀炮的破甲永不生效）
+  if (src && src.def && typeof src.def.stat === 'function') {
     const s = bstat(src);
     if (s.shred) DMG_KEYS.forEach(k => { e.res[k] = Math.max(0, (e.res[k] || 0) - s.shred * 0.1); });
   }
@@ -1751,9 +1843,11 @@ function buildWaveQueue(n) {
   const cnt = Math.min(90, 6 + Math.floor(n * 2.1)) * (G.event.eff.countMul || 1);
   const q = [];
   for (let i = 0; i < cnt; i++) q.push(pick(pool));
-  const bosses = n % 5 === 0 ? 1 + Math.floor(n / 22) : 0;
+  const isFinalWave = n >= finalWave() && !(G && G.mode === 'endless');
+  // 终局只刷一只终焉梦魇（与「击败【终焉梦魇】即可通关」的口径一致）；无尽模式永远走轮换
+  const bosses = n % 5 === 0 ? (isFinalWave ? 1 : 1 + Math.floor(n / 22)) : 0;
   const bossList = [];
-  const bossType = n >= finalWave() ? 'final' : 'boss';
+  const bossType = isFinalWave ? 'final' : 'boss';
   for (let i = 0; i < bosses; i++) bossList.push(bossType);
   q.sort(() => Math.random() - 0.5);
   return { rest: q, bossList };
@@ -1761,6 +1855,10 @@ function buildWaveQueue(n) {
 function startWave() {
   const resumeSavedWave = !!G.resumeWave;
   G.resumeWave = false;
+  // 本波经济基准：新开波与读档重开波都以当前值为基准，配合存档回滚防刷取
+  G.waveStartGold = G.gold; G.waveSpentGold = 0;
+  G.waveStartSouls = G.souls; G.waveSpentSouls = 0;
+  G.waveRuneIds = [];
   if (!resumeSavedWave) G.wave++;
   if (typeof Music !== 'undefined') Music.play(Music.trackForWave(G.wave));
   if (!resumeSavedWave) G.event = rollEvent();
@@ -1774,11 +1872,11 @@ function startWave() {
   }
   if (!resumeSavedWave) {
     G.waveTime = 0; G.challenge = rollChallenge(G.wave);
-    G.track = { doorDmg: 0, buildLost: 0, killFire: 0, skillUsed: 0 };
+    G.track = { doorDmg: 0, buildLost: 0, killFire: 0, skillUsed: 0, maxCombo: 0 };
   } else {
     G.waveTime = 0;
     if (!G.challenge) G.challenge = rollChallenge(G.wave);
-    G.track = { doorDmg: 0, buildLost: 0, killFire: 0, skillUsed: 0 };
+    G.track = { doorDmg: 0, buildLost: 0, killFire: 0, skillUsed: 0, maxCombo: 0 };
   }
   SFX.wave();
   addText(ROOM_X0 + 340, DOOR_MID_Y() - 150, '第 ' + G.wave + ' 波来袭！', '#ff6b6b', true);
@@ -1798,7 +1896,9 @@ function startWave() {
   if (!resumeSavedWave && typeof WAVE_STORY !== 'undefined') {
     const story = WAVE_STORY.find(s => s.wave === G.wave);
     if (story) {
+      const rs = G.runStamp;
       setTimeout(() => {
+        if (!G || G.runStamp !== rs) return;
         if (typeof showStoryDialog === 'function') showStoryDialog(story);
         else if (typeof EventBus !== 'undefined') EventBus.emit('story:dialog', story);
       }, 800);
@@ -1809,7 +1909,9 @@ function startWave() {
     const bossKeys = Object.keys(BOSS_DIALOG);
     const bossDlg = bossKeys.map(k => BOSS_DIALOG[k]).find(b => b.wave === G.wave);
     if (bossDlg) {
+      const rs = G.runStamp;
       setTimeout(() => {
+        if (!G || G.runStamp !== rs) return;
         if (typeof showStoryDialog === 'function') {
           showStoryDialog({ wave: bossDlg.wave, speaker: bossDlg.name || 'BOSS', text: bossDlg.intro || '...' });
         }
@@ -1853,9 +1955,9 @@ function endWave() {
   }
   G.challenge = null;
   G.state = 'build';
-  G.buff.goldBoost = 0; G.buff.dmgBoost = 0;
+  G.buff.goldBoost = 0; G.buff.dmgBoost = 0; G.buff.noSummon = false;
   // 本波限定加成到期；旋律增益按波数递减
-  G.fateWave = { dmg: 0, rate: 0, def: 0, crit: 0, critDmg: 0 };
+  G.fateWave = { dmg: 0, rate: 0, def: 0, crit: 0, critDmg: 0, range: 0 };
   if (G.melodyBuff) {
     G.melodyBuff.wavesLeft--;
     if (G.melodyBuff.wavesLeft <= 0) {
@@ -1871,7 +1973,7 @@ function endWave() {
     if (s.interest) interest += G.gold * s.interest;
     if (s.souls) soulsFromBank += s.souls;
   });
-  interest = Math.min(interest, G.gold * 0.7);
+  interest = Math.min(interest, Math.max(60, G.gold * 0.15));   // 复利上限压到 15%/波，避免银行滚雪球通胀
   if (interest > 0) { G.gold += interest; addText(BED_CX - 100, BED_CY + 46, '银行利息 +' + Math.round(interest), '#ffc300'); }
   if (soulsFromBank > 0) { G.souls += soulsFromBank; addText(BED_CX - 100, BED_CY + 64, '+' + soulsFromBank + '🔮', '#c77dff'); }
   const bonus = Math.round((45 + G.wave * 18) * (G.event.eff.rewardMul || 1));
@@ -2119,6 +2221,10 @@ function step(dt) {
   updateEffects(dt);
   G.doors.forEach(d => { d.hp = clamp(d.hp, 0, d.maxHp); });
   G.bed.hp = clamp(G.bed.hp, 0, G.bed.maxHp);
+  // 建筑血量归零必须走销毁流程：爆炸/诅咒/反伤等路径此前只扣血不清理，0 血建筑还在开火
+  for (let i = G.buildings.length - 1; i >= 0; i--) {
+    if (G.buildings[i].hp <= 0) destroyBuilding(G.buildings[i]);
+  }
   if (G.tipTimer > 0) G.tipTimer -= dt;
   if (G.waveTransition && G.waveTransition.t > 0) G.waveTransition.t -= dt;
   // 梦境系统：每帧更新
@@ -2227,7 +2333,7 @@ function upgradeRune(r) {
   if (!r) return false;
   const c = runeUpCost(r);
   if (G.souls < c) { SFX.err(); setTip('灵魂不足，需要 ' + c + '🔮', 3); return false; }
-  G.souls -= c; r.lv++;
+  G.souls -= c; G.waveSpentSouls += c; r.lv++;
   SFX.up(); setTip('符文强化至 +' + r.lv + '（效果 +' + Math.round((runeMul(r) - 1) * 100) + '%）', 3);
   return true;
 }
@@ -2240,13 +2346,17 @@ function salvageRune(runeId) {
   if (idx < 0) {
     for (const b of G.buildings) {
       for (let i = 0; i < (b.runes || []).length; i++) {
-        if (b.runes[i] && b.runes[i].id === runeId) { const rr = b.runes[i]; b.runes[i] = null; G.souls += runeSalvage(rr); SFX.coin(); setTip('分解获得 ' + runeSalvage(rr) + '🔮', 3); return true; }
+        if (b.runes[i] && b.runes[i].id === runeId) {
+          const rr = b.runes[i]; b.runes[i] = null;
+          const v = runeSalvage(rr); G.souls += v; G.waveSpentSouls -= v;
+          SFX.coin(); setTip('分解获得 ' + v + '🔮', 3); return true;
+        }
       }
     }
     return false;
   }
   const r = G.runeBag.splice(idx, 1)[0];
-  const v = runeSalvage(r); G.souls += v;
+  const v = runeSalvage(r); G.souls += v; G.waveSpentSouls -= v;
   SFX.coin(); setTip('分解「' + r.name + '」获得 ' + v + '🔮', 3);
   return true;
 }

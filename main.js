@@ -87,7 +87,12 @@ cv.addEventListener('click', e => {
   const p = toCanvas(e);
   handleCanvasTap(p.x, p.y);
 });
-cv.addEventListener('contextmenu', e => { e.preventDefault(); cancelSelection(); });
+cv.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  clearHold();
+  _holdFired = true;   // 安卓长按会同步触发 contextmenu：与 520ms 计时器互斥，避免重复取消/吞掉随后的点按
+  cancelSelection();
+});
 const SKILL_MAP = { q: 'meteor', w: 'freeze', e: 'overclock', r: 'mend', t: 'repel', f: 'siphon' };
 window.addEventListener('keydown', e => {
   const tutorial = $('tutorialOverlay');
@@ -115,7 +120,7 @@ window.addEventListener('keydown', e => {
     selectedBuildKey = null; selected = null; syncCards();
     ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => $(p).classList.remove('open'));
     if ($('itemDetail') && $('itemDetail').classList.contains('show')) { closeQuestItem(); return; }
-    ['questPanel', 'runePanel'].forEach(p => { if ($(p) && $(p).classList.contains('open')) togglePanel(p); });
+    ['questPanel', 'runePanel', 'savePanel'].forEach(p => { if ($(p) && $(p).classList.contains('open')) togglePanel(p); });
     return;
   }
   if (k === ' ') { e.preventDefault(); Cmd.skipPrep(); return; }
@@ -310,7 +315,7 @@ function buildHelp() {
     'Q/W/E/R/T/F 释放技能 · 空格 提前召唤下一波 · P 暂停 · 右键/ESC 取消<br>' +
     '建筑 / 床 / 铁门均可升到 <b>50 级</b>，<b>每级都有专属名字</b>（如激光塔 → 末影激光塔）<br>' +
     '<b>U</b> 升级选中 · <b>M</b> 升满选中 · <b>Shift+M</b> 全体升满 · <b>X</b> 出售选中<br>' +
-    '床躺着不再自动涨金币 —— 想提高产出就必须<b>升级床</b>；躺平改为累积「发育」提升灵魂获取<br>' +
+    '床躺着不再自动涨金币 —— 想提高产出就必须<b>升级床</b>；挂机会累积「发育」，提升灵魂获取<br>' +
     '铁门 50 级终极形态为 <b>金钟罩</b><br>' +
     '建筑达到 Lv' + BRANCH_AT + ' 可在详情面板转职（二选一），转职后属性大幅提升<br>' +
     '进度每波自动保存，也可手动点 💾 保存；开局可选择「继续梦境」' +
@@ -570,8 +575,10 @@ function init() {
   paused = true;
   $('bestWave').textContent = +Store.get('tangping_best', 0) || 0;
   const sv = loadSave();
-  $('btnContinue').style.display = sv && sv.wave > 0 ? '' : 'none';
-  if (sv && sv.wave > 0) $('saveInfo').textContent = '存档：第 ' + sv.wave + ' 波 · ' + (sv.buildings ? sv.buildings.length : 0) + ' 座建筑';
+  // 快照的波次在 run 段里（读顶层 wave 恒为 undefined）
+  const svRun = (sv && sv.run) || null;
+  $('btnContinue').style.display = svRun && svRun.wave > 0 ? '' : 'none';
+  if (svRun && svRun.wave > 0) $('saveInfo').textContent = '存档：第 ' + svRun.wave + ' 波 · ' + (sv.buildings ? sv.buildings.length : 0) + ' 座建筑';
   LAST_SAVE = sv;
   MENU_HTML = $('overlay').innerHTML;
   wireMenu();
@@ -581,4 +588,14 @@ function init() {
   syncAudioUI();
   requestAnimationFrame(loop);
 }
-init();
+// 启动兜底：单 script 拼接下任一模块顶层抛错都会白屏，至少要把错误亮出来
+try {
+  init();
+} catch (err) {
+  console.error('[init]', err);
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#141225;color:#f87171;font-size:16px;z-index:9999;text-align:center;padding:24px';
+  box.innerHTML = '<div style="font-size:40px">⚠️</div><div>游戏启动失败，请刷新页面重试。</div>' +
+    '<div style="color:#9d96c9;font-size:12px;max-width:560px;word-break:break-all">' + String(err && err.message || err).replace(/[<>&]/g, '') + '</div>';
+  document.body.appendChild(box);
+}

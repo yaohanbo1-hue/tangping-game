@@ -1,5 +1,5 @@
 // ============================================================
-//  躺平发育：梦魇防线  —  存档系统
+//  守灯人：梦魇防线  —  存档系统
 // ============================================================
 //  为什么单独做一个模块：
 //    旧的 saveGame() 只写了 11 个字段，实测会丢：难度 / 模式 / 命运加成（剧情
@@ -23,6 +23,20 @@ const SaveSystem = {
     const hp = value === null ? NaN : Number(value);
     return clamp(Number.isFinite(hp) ? hp : maxHp, 0, maxHp);
   },
+  /** 数值容错：脏存档里的非数值字段一律回退默认，避免 NaN 报废整局 */
+  _num(value, fallback, min, max) {
+    const n = Number(value);
+    return clamp(Number.isFinite(n) ? n : (fallback || 0), min === undefined ? -Infinity : min, max === undefined ? Infinity : max);
+  },
+  /** 写入失败的两种已知名：Chromium 用 QuotaExceededError，Firefox 用 NS_ERROR_DOM_QUOTA_REACHED */
+  _isQuota(name) {
+    return name === 'QuotaExceededError' || name === 'NS_ERROR_DOM_QUOTA_REACHED';
+  },
+  /** 存档名只作展示：去掉标签字符并限长，避免导入文件注入 HTML */
+  _safeName(name, fallback) {
+    if (typeof name !== 'string') return fallback || '';
+    return name.replace(/[<>&"'`]/g, '').trim().slice(0, 24) || (fallback || '');
+  },
   KEY: n => 'tangping_save_slot' + n,
   IDX: 'tangping_saves_index',
   LEGACY: 'tangping_save',       // v2 时代的单槽 key，会自动迁移到 0 号槽
@@ -41,6 +55,8 @@ const SaveSystem = {
           // 先走一遍迁移，再按需现算一份摘要。
           const d = this.migrate(parsed) || parsed;
           info = (d && d.meta) ? d.meta : (d && d.run ? this._metaOf(d) : { broken: true });
+          // 未来版本的存档迁移不了：标成 tooNew，让面板提示「来自新版本」而不是当成空槽。
+          if (info && !info.broken && parsed && typeof parsed.v === 'number' && parsed.v > this.VERSION) info.tooNew = true;
         } catch (e) { info = { broken: true }; }
       }
       out.push({ slot: s, auto: s === 0, info });
@@ -62,7 +78,7 @@ const SaveSystem = {
       dream: (d && d.dream) ? Object.keys(d.dream).length : 0,
       resumeWave: run.state === 'wave' || !!run.resumeWave,
       at: (d && d.savedAt) || Date.now(),
-      name: (d && d.name) || '',
+      name: this._safeName(d && d.name),
     };
   },
 
@@ -76,17 +92,18 @@ const SaveSystem = {
       d.v = this.VERSION;
       d.savedAt = Date.now();
       if (name !== undefined) d.name = name;
+      d.name = this._safeName(d.name);
       d.meta = this._metaOf(d);
       const json = JSON.stringify(d);
       const write = Store.set(this.KEY(slot), json);
       if (!write || !write.ok) {
-        return { ok: false, reason: write && write.name === 'QuotaExceededError' ? 'quota' : 'storage-blocked' };
+        return { ok: false, reason: this._isQuota(write && write.name) ? 'quota' : 'storage-blocked' };
       }
       // 回读并逐字比对：覆盖旧槽失败时，不能把仍存在的旧值误报为保存成功。
       if (Store.get(this.KEY(slot), null) !== json) return { ok: false, reason: 'storage-blocked' };
       return { ok: true, bytes: json.length };
     } catch (e) {
-      return { ok: false, reason: e && e.name === 'QuotaExceededError' ? 'quota' : 'error' };
+      return { ok: false, reason: this._isQuota(e && e.name) ? 'quota' : 'error' };
     }
   },
 
@@ -216,13 +233,23 @@ const SaveSystem = {
         combo: G.combo | 0, comboT: G.comboT || 0, maxCombo: G.maxCombo | 0,
         eventId: (G.event && G.event.id) || 'none',
         eventTimer: G.eventTimer | 0,
-        challenge: G.challenge || null,
+        // challenge.def 含函数，序列化后会丢——只存纯数据，读档时按 id 重链
+        challenge: G.challenge ? {
+          id: G.challenge.id, target: G.challenge.target,
+          prog: G.challenge.prog | 0, done: !!G.challenge.done,
+        } : null,
         prize: G.prize || {},
         fate: G.fate || null,
         fateWave: G.fateWave || null,
         affection: G.affection || {},
         melodyBuff: G.melodyBuff || null,
         buff: G.buff || null,
+        // 战斗中存档的经济基准：读档重开本波时回滚本波净收益，防止反复存/读刷击杀掉落
+        waveEcon: {
+          startGold: +G.waveStartGold || 0, spentGold: +G.waveSpentGold || 0,
+          startSouls: +G.waveStartSouls || 0, spentSouls: +G.waveSpentSouls || 0,
+          runes: (G.waveRuneIds || []).slice(),
+        },
       },
       bed: { lv: G.bed.lv, hp: G.bed.hp, shield: G.bed.shield || 0, shieldMax: G.bed.shieldMax || 0 },
       doors: G.doors.map(d => ({ lv: d.lv, hp: d.hp, shield: d.shield || 0, shieldMax: d.shieldMax || 0, broken: !!d.broken })),
@@ -303,9 +330,9 @@ const SaveSystem = {
       G.wave = Math.max(0, Math.min(9999, run.wave | 0));
       G.state = resumeWave ? 'build' : (run.state || 'build');   // 读档中的战斗波先进入备战，再重开同一波
       G.resumeWave = resumeWave;
-      G.gold = +(run.gold || 0); G.power = +(run.power || 0); G.souls = +(run.souls || 0);
-      G.grow = Math.max(0, Math.min(25, run.grow | 0));
-      G.growTimer = +run.growTimer || 0;
+      G.gold = this._num(run.gold, 0, 0); G.power = this._num(run.power, 0, 0); G.souls = this._num(run.souls, 0, 0);
+      G.grow = this._num(run.grow, 0, 0, 25);
+      G.growTimer = this._num(run.growTimer, 0, 0);
       if (run.diffKey && typeof DIFFS !== 'undefined' && DIFFS[run.diffKey]) G.diffKey = run.diffKey;
       if (run.mode && typeof MODES !== 'undefined' && MODES[run.mode]) G.mode = run.mode;
       G.admin = !!run.admin;
@@ -320,7 +347,18 @@ const SaveSystem = {
         G.prepTimer = isFinite(run.prepTimer) ? +run.prepTimer : G.prepTimer;
         G.prepTotal = isFinite(run.prepTotal) && run.prepTotal > 0 ? +run.prepTotal : G.prepTimer;
       }
-      G.challenge = run.challenge && typeof run.challenge === 'object' ? run.challenge : null;
+      // 挑战：def 含函数无法序列化，按 id 重链 CHALLENGES 定义（否则 updateHUD 每帧抛错）
+      G.challenge = null;
+      if (run.challenge && typeof run.challenge === 'object' && typeof CHALLENGES !== 'undefined') {
+        const def = CHALLENGES.find(x => x.id === run.challenge.id);
+        if (def) {
+          G.challenge = {
+            id: def.id, def,
+            target: this._num(run.challenge.target, 0),
+            prog: run.challenge.prog | 0, done: !!run.challenge.done,
+          };
+        }
+      }
       G.reviveLeft = run.reviveLeft | 0;
       G.combo = run.combo | 0; G.comboT = +run.comboT || 0; G.maxCombo = run.maxCombo | 0;
       G.eventTimer = +run.eventTimer || 0;
@@ -344,8 +382,24 @@ const SaveSystem = {
       if (!G.stats.towerDamage || typeof G.stats.towerDamage !== 'object') G.stats.towerDamage = {};
       if (!G.stats.towerKills || typeof G.stats.towerKills !== 'object') G.stats.towerKills = {};
       if (prog.lot && typeof prog.lot === 'object') Object.assign(G.lot, prog.lot);
-      if (Array.isArray(prog.runeBag)) G.runeBag = prog.runeBag;
+      if (Array.isArray(prog.runeBag)) G.runeBag = prog.runeBag.map(r => this._fixRune(r)).filter(Boolean);
       if (prog.quest && typeof prog.quest === 'object') G.quest = prog.quest;
+
+      // 战斗中存档重开本波：回滚本波净收益（击杀掉落、利息等可重复获取的部分），
+      // 本波花费随建筑保留（花费已从基准里扣除）——反复存/读不再刷资源。
+      const econ = run.waveEcon;
+      if (resumeWave && econ && typeof econ === 'object') {
+        G.gold = Math.max(0, this._num(econ.startGold, G.gold) - this._num(econ.spentGold, 0));
+        G.souls = Math.max(0, this._num(econ.startSouls, G.souls) - this._num(econ.spentSouls, 0));
+        if (Array.isArray(econ.runes) && Array.isArray(G.runeBag) && econ.runes.length) {
+          const dropIds = new Set(econ.runes);
+          G.runeBag = G.runeBag.filter(r => !(r && dropIds.has(r.id)));
+        }
+      }
+      // 重定本波经济基准：之后的读档都以当前值为新基准，多次读档不会重复回滚
+      G.waveStartGold = G.gold; G.waveSpentGold = 0;
+      G.waveStartSouls = G.souls; G.waveSpentSouls = 0;
+      G.waveRuneIds = [];
 
       if (d.bed) {
         G.bed.lv = Math.max(1, Math.min(50, d.bed.lv | 0 || 1));
@@ -397,13 +451,33 @@ const SaveSystem = {
     }
   },
 
+  /** 单个符文清洗：词条必须是已知类型且数值有限，否则丢弃该词条（防导入脏数据打成 NaN） */
+  _fixRune(r) {
+    if (!r || typeof r !== 'object' || !r.id || !Array.isArray(r.affixes)) return null;
+    const known = (typeof RUNE_AFFIXES !== 'undefined') ? RUNE_AFFIXES : null;
+    const affixes = [];
+    for (const a of r.affixes) {
+      if (!a || typeof a !== 'object') continue;
+      if (known && !known[a.k]) continue;
+      const v = Number(a.v);
+      if (!Number.isFinite(v)) continue;
+      affixes.push({ k: a.k, v: Math.max(0, Math.round(v * 10) / 10) });
+    }
+    if (!affixes.length) return null;
+    const lv = Number(r.lv);
+    return Object.assign({}, r, {
+      affixes,
+      lv: Number.isFinite(lv) ? Math.max(0, Math.min(99, Math.round(lv))) : 0,
+    });
+  },
+
   /** 符文槽数组规整（数量随「符文宗师」科技变化） */
   _fixRunes(arr) {
     const n = (typeof runeSlots === 'function') ? runeSlots() : 2;
     const out = new Array(n).fill(null);
     if (Array.isArray(arr)) for (let i = 0; i < Math.min(n, arr.length); i++) {
-      const r = arr[i];
-      if (r && r.affixes && Array.isArray(r.affixes) && r.id) out[i] = r;
+      const r = this._fixRune(arr[i]);
+      if (r) out[i] = r;
     }
     return out;
   },
@@ -414,13 +488,13 @@ const SaveSystem = {
     const d = this.read(slot);
     if (!d) return false;
     try {
-      const payload = { game: 'tangping-nightmare', v: this.VERSION, exportedAt: Date.now(), data: d };
+      const payload = { game: 'shoudengren-nightmare', v: this.VERSION, exportedAt: Date.now(), data: d };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
       a.href = url;
-      a.download = 'tangping-save-w' + (d.meta ? d.meta.wave : 0) + '-' + stamp + '.json';
+      a.download = 'shoudengren-save-w' + (d.meta ? d.meta.wave : 0) + '-' + stamp + '.json';
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 4000);
       return true;
@@ -439,7 +513,7 @@ const SaveSystem = {
       if (!d) { cb({ ok: false, reason: 'format' }); return; }
       const v = this.validate(d);
       if (!v.ok) { cb({ ok: false, reason: 'invalid', issues: v.issues }); return; }
-      const r = this.write(slot, d, d.name || '导入的存档');
+      const r = this.write(slot, d, this._safeName(d.name, '导入的存档'));
       cb(Object.assign({ ok: r.ok, reason: r.reason, meta: this._metaOf(d) }, r));
     };
     fr.onerror = () => cb({ ok: false, reason: 'read' });

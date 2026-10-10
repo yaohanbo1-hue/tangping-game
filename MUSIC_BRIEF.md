@@ -7,15 +7,15 @@
 | `audio/menu-loop.mp3` | 旧版主菜单循环（当前主菜单使用《Lullaby's Shadow》） | 55–75 秒 |
 | `audio/game-loop.mp3` | 普通防守：持续紧张但不压过战斗音效 | 65–85 秒 |
 | `audio/boss-loop.mp3` | 终局首领：威胁感、悬疑感与压迫感 | 55–75 秒 |
-| `audio/lullaby-shadow.mp3` | 主菜单：《Lullaby's Shadow》 | 90 秒 |
-| `audio/memory-corridor.mp3` | 第二幕与终章回忆主题：《Memory Corridor》 | 90 秒 |
+| `audio/lullaby-shadow.mp3` | 主菜单与第 51–54 波：《Lullaby's Shadow》 | 90 秒 |
+| `audio/memory-corridor.mp3` | 第二幕主题（第 11–20 波）：《Memory Corridor》 | 90 秒 |
 | `audio/afterglow-corridor.mp3` | 第三幕主题：《余温回廊》 | 60 秒 |
 | `audio/warm-lamp.mp3` | 第四幕与感恩结局：《余灯留暖》 | 60 秒 |
 | `audio/morning-light.mp3` | “我听见了”结局：《晨光漫入》 | 75 秒 |
 
-章节配乐按波次切换：第 1–10 波使用普通防守曲；第 11–20 波使用《Memory Corridor》；第 21–35 波使用《余温回廊》；第 36–50 波使用《余灯留暖》；第 51–59 波回到《Memory Corridor》主题；最终首领使用终局首领曲。通关后根据最终回应播放《晨光漫入》或《余灯留暖》。
+章节配乐按波次切换：第 1–10 波使用普通防守曲；第 11–20 波使用《Memory Corridor》；第 21–35 波使用《余温回廊》；第 36–50 波使用《余灯留暖》；第 51–54 波使用《Lullaby's Shadow》；第 55–59 波回到《余温回廊》；最终波使用终局首领曲。通关后根据最终回应播放结局曲：感恩结局播放《余灯留暖》，其余结局播放《晨光漫入》。
 
-以上五首 AI 成品由 WAV 转为 44.1 kHz、立体声、192 kbps MP3；源文件分别为 60、90、60、75、90 秒。游戏通过交叉淡入切换章节曲目，并按循环曲播放。
+以上五首 AI 成品由 WAV 转为 44.1 kHz、立体声、192 kbps MP3；源文件按表格顺序（Lullaby's Shadow、Memory Corridor、余温回廊、余灯留暖、晨光漫入）分别为 90、90、60、60、75 秒。游戏通过交叉淡入切换章节曲目，并按循环曲播放。
 
 ## 通用要求
 
@@ -37,4 +37,4 @@
 
 > Instrumental cinematic boss loop for the final nightmare in a dream-defense game. Ominous, suspenseful and weighty, with low restrained brass-like synth, bowed metal, distant frame drums and a subtly distorted echo of the three-note 03:07 piano motif. Create pressure and scale through layered harmony and pulse, not constant loudness; leave room for dialogue, impacts and battle effects. Keep the energy high but controlled, and make the ending reconnect naturally to the opening for repeated looping. No victory ending, no final crash, no fade-out, no vocals, no speech, no lyrics, no sudden jump scare.
 
-三首 MP3 已放入 `audio/` 并接入游戏。若后续重新生成，保留表格中的文件名即可替换曲目。
+八首 MP3 已放入 `audio/` 并接入游戏。若后续重新生成，保留表格中的文件名即可替换曲目。

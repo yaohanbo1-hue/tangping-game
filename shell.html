@@ -10,7 +10,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="躺平发育">
+<meta name="apple-mobile-web-app-title" content="守灯人">
 <meta name="format-detection" content="telephone=no,email=no,address=no">
 <!-- 国产浏览器（微信 / QQ 的 X5 内核、UC、华为浏览器）的横屏与全屏提示 -->
 <meta name="x5-orientation" content="landscape">
@@ -18,7 +18,7 @@
 <meta name="full-screen" content="yes">
 <meta name="x5-fullscreen" content="true">
 <meta name="browsermode" content="application">
-<title>躺平发育：梦魇防线</title>
+<title>守灯人：梦魇防线</title>
 <style>
 :root{
   /* 基色 rgb 三元组：供 rgba() 复用 */
@@ -28,7 +28,7 @@
   --danger-rgb:248,113,113;  /* #f87171 危险红 */
   --lime-rgb:158,240,26;     /* #9ef01a 动能绿（选中态/确认操作） */
   /* 文本层级 */
-  --text:#e6e2ff; --text-mid:#c9c3e8; --text-dim:#8b85a8; --text-faint:#6b6490; --text-note:#a5a0c4;
+  --text:#e6e2ff; --text-mid:#c9c3e8; --text-dim:#8b85a8; --text-faint:#9d96c9; --text-note:#a5a0c4;
   /* 品牌色 */
   --pri:#a78bfa; --pri-2:#c4b5fd; --pri-3:#f0abfc; --acc:#7dd3fc;
   /* 语义色 */
@@ -651,14 +651,19 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 .fourth-wall-crash .bsod-icon{font-size:64px;margin-bottom:24px;filter:grayscale(1)}
 .fourth-wall-crash .bsod-title{font-size:24px;color:#fff;margin-bottom:16px}
 .fourth-wall-crash .bsod-hint{font-size:11px;color:#555;margin-top:32px;letter-spacing:1px}
+/* ⚠️ .fourth-wall-glitch 实际挂在 #wrap 上（ui.js/dream.js 的 wrap.classList.add），
+   而 main.js fit() 全靠 #wrap 的 inline transform 做 scale/居中/旋转。
+   动画里只要出现 transform 就会顶掉它，演出期间整个游戏破版跳位。
+   这里改用 margin（等效于原来的 translate 抖动）+ clip-path（裁切撕裂）
+   + filter/opacity（色相反相闪烁），绝不触碰 transform。 */
 .fourth-wall-glitch{animation:glitch .3s infinite}
 @keyframes glitch{
-  0%{transform:translate(0);filter:none}
-  20%{transform:translate(-3px,2px);filter:hue-rotate(90deg)}
-  40%{transform:translate(3px,-2px);filter:invert(1)}
-  60%{transform:translate(-2px,-3px);filter:hue-rotate(-90deg) saturate(2)}
-  80%{transform:translate(2px,3px);filter:brightness(2) contrast(.5)}
-  100%{transform:translate(0);filter:none}}
+  0%{margin-left:0;margin-top:0;clip-path:inset(0);filter:none;opacity:1}
+  20%{margin-left:-3px;margin-top:2px;clip-path:inset(7px 0 2px 0);filter:hue-rotate(90deg);opacity:.9}
+  40%{margin-left:3px;margin-top:-2px;clip-path:inset(0 0 6px 2px);filter:invert(1);opacity:1}
+  60%{margin-left:-2px;margin-top:-3px;clip-path:inset(2px 1px 0 0);filter:hue-rotate(-90deg) saturate(2);opacity:.82}
+  80%{margin-left:2px;margin-top:3px;clip-path:inset(5px 0 0 1px);filter:brightness(2) contrast(.5);opacity:.95}
+  100%{margin-left:0;margin-top:0;clip-path:inset(0);filter:none;opacity:1}}
 .fourth-wall-corrupt{animation:corrupt .5s infinite;color:#ff0040;
   text-shadow:2px 0 #0ff,-2px 0 #f0f;font-family:monospace;letter-spacing:2px}
 @keyframes corrupt{
@@ -703,7 +708,8 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
   100%{transform:scale(1.8);opacity:.15}}
 .deep-dream-text{font-size:30px;color:var(--pri-2);text-shadow:0 0 40px rgba(var(--pri-rgb),.6),0 0 80px rgba(147,51,234,.3);
   letter-spacing:8px;animation:dreamTextPulse 2s ease-in-out infinite;z-index:1}
-.deep-dream-sub{font-size:14px;color:#7d779c;letter-spacing:4px;z-index:1;animation:dreamTextPulse 2.5s ease-in-out infinite}
+/* 辅助文字对比度：原 #7d779c 在深色底约 3:1，提到 #a49dcf 约 5.7:1（≥4.5:1） */
+.deep-dream-sub{font-size:14px;color:#a49dcf;letter-spacing:4px;z-index:1;animation:dreamTextPulse 2.5s ease-in-out infinite}
 @keyframes dreamTextPulse{
   0%,100%{opacity:.6;transform:scale(1)}
   50%{opacity:1;transform:scale(1.05)}}
@@ -1341,12 +1347,33 @@ body.touch #bottom{height:174px;padding:8px 12px;gap:10px}
 body.touch #buildBar{gap:7px;padding:5px 3px 4px;touch-action:pan-x}
 body.touch #buildBar .card{height:148px;flex-basis:88px;width:88px;padding:7px 4px 6px}
 body.touch #buildBar .card .ico{height:48px;font-size:31px}
-body.touch #right{width:250px;gap:5px}
-body.touch #skillBar .skill{height:40px;min-height:40px}
+/* 右侧控制区：技能格与按钮都放大到 44px 后，174px 底栏装不下「技能 1 行 + 按钮 2 行 + 提示」。
+   改为「技能格 3×2（138px 宽）与按钮 6×2（264px 宽）并排」，两块等高 91px，剩余高度给提示区。
+   布局预算（#bottom 内容高 = 174 - 8×2 - 1 = 157px）：
+   第 1 行 max(技能 44×2+3, 按钮 44×2+3) = 91px + 行距 5px + 提示区 61px（3 行文字约 48px）= 157px ✓ */
+body.touch #right{width:410px;display:grid;grid-template-columns:138px minmax(0,1fr);
+  grid-template-rows:auto minmax(0,1fr);grid-template-areas:"skill ctrls" "hint hint";gap:5px 8px}
+body.touch #skillBar{grid-area:skill;grid-template-columns:repeat(3,1fr)}
+body.touch #ctrls{grid-area:ctrls}
+body.touch #hint{grid-area:hint}
+body.touch #skillBar .skill{height:44px;min-height:44px}
 body.touch #skillBar .skill .sico{font-size:18px}
-body.touch #ctrls .btn{min-height:29px;padding:5px 1px;font-size:10px;line-height:1.2}
+body.touch #ctrls .btn{min-height:44px;padding:8px 2px;font-size:12px;line-height:1.2}
 body.touch #hint{font-size:9.5px;line-height:1.32;padding:4px 6px}
-body.touch #hud .btn{min-height:34px;padding:5px 7px}
+body.touch #hud .btn{min-height:34px;padding:5px 7px;font-size:13px}
+/* 手机端整体缩放约 0.54，11.5px 的 HUD 文字只剩 5-6px 不可读：数值/图标/计时器提到 16px 档 */
+body.touch #hud .stat{font-size:16px}
+body.touch #hud .stat i{font-size:15px}
+body.touch #hudTimer{font-size:16px}
+body.touch .net{font-size:12px!important}
+body.touch #hudRate{font-size:12px!important}
+/* fitHUD() 判定 HUD 溢出时的降级档：宁可字号小一档，也不要文字被 overflow:hidden 切掉 */
+body.touch #hud.compact .stat{font-size:14px}
+body.touch #hud.ultra .stat{font-size:12.5px}
+body.touch #hud.ultra .btn{font-size:11px}
+/* #right 加宽到 410px 后，建造栏右缘的渐隐/箭头跟随右移（否则会盖到按钮区上） */
+body.touch #buildBar.canScroll::after{right:410px;height:158px;bottom:8px}
+body.touch #buildBar.canScroll::before{right:419px;bottom:68px}
 body.touch .story-dialog{left:50%;bottom:18px;width:min(1120px,calc(100% - 56px));max-height:calc(100% - 36px);padding:16px 22px}
 body.touch .story-header{margin-bottom:6px}
 body.touch .story-avatar{width:42px;height:42px;font-size:22px}
@@ -1400,6 +1427,9 @@ body.rotated #rotBar{display:flex}
   #overlay::before,.home-panel.panel,.home-layout>.setup-panel,.home-side>.record-card,.home-side>.home-shortcuts,.home-bottom>.home-guide,.home-bottom>.home-audio,
   .home-header h1,.home-kicker i,.home-clock>span,.home-start-actions .big,.home-music,.home-action,.story-avatar{animation:none!important}
   .home-panel *, .story-dialog *{scroll-behavior:auto!important;transition-duration:.01ms!important}
+  /* 游戏内无限循环动画：cardGlow / towerGlow / barArrow / lshake / titleShine / dreamTextPulse */
+  .card.ok,.card.okTower,#buildBar.canScroll::before,.lotmachine,
+  .panel h1,.panel.win h1,.dream-panel-title,.deep-dream-text,.deep-dream-sub{animation:none!important}
 }
 
 /* ==================== 夜班档案主页 · 深色编辑版 ==================== */
@@ -1532,7 +1562,7 @@ body.rotated #rotBar{display:flex}
 <div id="rotateHint">
   <div class="rh-ico">📱</div>
   <h3>把手机横过来玩</h3>
-  <p>《躺平发育》是横屏塔防，竖屏下战场会被压得很小、按钮也难点。</p>
+  <p>《守灯人：梦魇防线》是横屏塔防，竖屏下战场会被压得很小、按钮也难点。</p>
   <p style="margin-top:-2px">如果手机开了「旋转锁定」，横过来屏幕不会自动转 ——<br>
      请先把手机<b>横着拿</b>，再点第二个按钮把画面转过来。</p>
   <button class="rh-btn primary" id="rhFull" type="button">全屏 + 锁定横屏</button>
@@ -1548,7 +1578,7 @@ body.rotated #rotBar{display:flex}
   <canvas id="game" width="1280" height="720"></canvas>
   <div id="fx"></div>
   <div id="hud">
-    <div class="logo">🛏️躺平发育</div>
+    <div class="logo">🏮守灯人</div>
     <div class="stat" title="当前波次"><i>🌊</i><b id="hudWave">0</b></div>
     <div class="stat" title="金币与每秒产出"><i>💰</i><b id="hudGold">0</b><span id="hudRate" style="color:#fcd34d;font-size:10.5px">+0/s</span></div>
     <div class="stat" title="电量：由发电机产出（唯一来源），只用于 Lv8 以上升级"><i>⚡</i><b id="hudPower">0</b><span id="hudNet" class="net ok">无发电机</span></div>
@@ -1713,14 +1743,14 @@ body.rotated #rotBar{display:flex}
     background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.55) 100%);
     transition:opacity .4s;opacity:0"></div>
   <!-- ========= 剧情对话框 ========= -->
-  <div id="storyDialog" class="story-dialog" style="display:none">
+  <div id="storyDialog" class="story-dialog" role="dialog" aria-modal="true" aria-labelledby="storySpeaker" style="display:none">
     <div class="story-deco"></div>
     <div class="story-header">
       <span id="storyAvatar" class="story-avatar" aria-hidden="true">◌</span>
       <div class="story-id"><span id="storySpeaker" class="story-speaker"></span><small id="storyMeta" class="story-meta">梦境记录</small></div>
     </div>
     <div id="storyMedia" class="story-media" style="display:none"></div>
-    <div id="storyText" class="story-text"></div>
+    <div id="storyText" class="story-text" aria-live="polite"></div>
     <div id="storyChoices" class="story-choices"></div>
     <button id="storyNext" class="story-next">继续 ▶</button>
   </div>
@@ -1780,7 +1810,7 @@ body.rotated #rotBar{display:flex}
       <header class="home-header">
         <div class="home-brand">
           <div class="home-kicker"><i></i> 宿舍夜班记录 <span>档案编号 03:07</span></div>
-          <h1>躺平发育</h1>
+          <h1>守灯人</h1>
           <div class="home-title-sub">梦魇防线 <span>·</span> 暴雨夜，熄灯之后</div>
         </div>
         <div class="home-header-side">

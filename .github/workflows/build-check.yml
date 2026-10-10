@@ -1,0 +1,21 @@
+name: build-check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: 构建单文件产物
+        run: node build.js
+
+      - name: 校验构建产物与仓库一致
+        run: git diff --exit-code -- shoudengren.html index.html
