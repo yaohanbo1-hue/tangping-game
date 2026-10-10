@@ -113,10 +113,10 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 #hud.ultra .btn{padding:4px 5px;font-size:10px}
 #hud.ultra .logo{font-size:13px}
 #detail{position:absolute;left:392px;bottom:148px;width:320px;max-height:340px;overflow-y:auto;
-  background:linear-gradient(135deg,rgba(255,255,255,.13),rgba(255,255,255,.035) 42%,rgba(255,255,255,.07)),rgba(18,15,38,.32);
-  backdrop-filter:blur(22px) saturate(185%);-webkit-backdrop-filter:blur(22px) saturate(185%);
-  border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:12px 14px;z-index:6;display:none;
-  text-shadow:0 1px 8px rgba(10,8,24,.55);
+  background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 42%,rgba(255,255,255,.05)),rgba(16,13,36,.14);
+  backdrop-filter:blur(4px) saturate(160%);-webkit-backdrop-filter:blur(4px) saturate(160%);
+  border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:12px 14px;z-index:6;display:none;
+  text-shadow:0 1px 6px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.7);
   box-shadow:0 12px 36px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.28)}
 #detail::-webkit-scrollbar{width:6px}
 #detail::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
@@ -723,18 +723,19 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 /* ================= BOSS 血条横幅 ================= */
 #bossBar{position:absolute;left:50%;top:62px;transform:translateX(-50%) translateY(-14px);width:640px;z-index:7;
   display:none;opacity:0;transition:opacity .35s,transform .35s;pointer-events:none;
-  background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.03) 42%,rgba(255,255,255,.06)),rgba(30,12,26,.34);
-  border:1px solid rgba(255,120,145,.38);border-radius:13px;padding:7px 12px 9px;box-sizing:border-box;
-  backdrop-filter:blur(22px) saturate(185%);-webkit-backdrop-filter:blur(22px) saturate(185%);
-  text-shadow:0 1px 8px rgba(20,6,12,.6);
+  background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 42%,rgba(255,255,255,.05)),rgba(30,12,26,.16);
+  border:1px solid rgba(255,120,145,.4);border-radius:13px;padding:7px 12px 9px;box-sizing:border-box;
+  backdrop-filter:blur(4px) saturate(160%);-webkit-backdrop-filter:blur(4px) saturate(160%);
+  text-shadow:0 1px 6px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.7);
   box-shadow:0 12px 36px rgba(0,0,0,.42),0 0 34px rgba(255,77,109,.12),inset 0 1px 0 rgba(255,255,255,.26)}
 #bossBar.show{opacity:1;transform:translateX(-50%) translateY(0)}
-#wavePreview{position:absolute;z-index:6;top:64px;left:50%;transform:translateX(-50%);width:min(520px,calc(100% - 32px));
-  padding:8px 12px;border:1px solid rgba(255,255,255,.18);border-radius:14px;
-  background:linear-gradient(135deg,rgba(255,255,255,.13),rgba(255,255,255,.035) 42%,rgba(255,255,255,.07)),rgba(18,15,38,.30);
-  box-shadow:0 12px 36px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.28);
-  backdrop-filter:blur(22px) saturate(185%);-webkit-backdrop-filter:blur(22px) saturate(185%);
-  text-shadow:0 1px 8px rgba(10,8,24,.55);pointer-events:none}
+#wavePreview{position:absolute;z-index:6;top:64px;left:50%;transform:translateX(-50%);width:min(440px,calc(100% - 32px));
+  padding:7px 11px;border:1px solid rgba(255,255,255,.22);border-radius:14px;
+  background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 42%,rgba(255,255,255,.05)),rgba(16,13,36,.12);
+  box-shadow:0 12px 36px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.22);
+  backdrop-filter:blur(3px) saturate(160%);-webkit-backdrop-filter:blur(3px) saturate(160%);
+  text-shadow:0 1px 6px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.7);pointer-events:none}
+#forecastHint{display:none}
 .forecast-head{display:flex;align-items:center;gap:8px;margin-bottom:5px;color:#e8ddff;font-size:10px;font-weight:800;letter-spacing:.5px}
 .forecast-head small{margin-left:auto;color:#948baa;font-size:8px;font-weight:500;letter-spacing:0}
 .forecast-enemies{display:flex;flex-wrap:wrap;gap:5px}
@@ -837,9 +838,9 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 /* 信物详情 */
 #itemDetail{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:440px;max-height:76%;overflow-y:auto;
   z-index:37;display:none;padding:22px 24px;border-radius:16px;box-sizing:border-box;text-align:center;
-  background:linear-gradient(135deg,rgba(255,255,255,.13),rgba(255,255,255,.04) 42%,rgba(255,255,255,.08)),rgba(24,18,42,.36);
-  border:1px solid rgba(255,220,140,.4);backdrop-filter:blur(22px) saturate(185%);-webkit-backdrop-filter:blur(22px) saturate(185%);
-  text-shadow:0 1px 8px rgba(14,10,28,.55);
+  background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.025) 42%,rgba(255,255,255,.06)),rgba(20,16,40,.20);
+  border:1px solid rgba(255,220,140,.42);backdrop-filter:blur(6px) saturate(165%);-webkit-backdrop-filter:blur(6px) saturate(165%);
+  text-shadow:0 1px 6px rgba(0,0,0,.8),0 0 3px rgba(0,0,0,.6);
   box-shadow:0 22px 60px rgba(0,0,0,.5),0 0 40px rgba(255,209,102,.1),inset 0 1px 0 rgba(255,255,255,.3)}
 #itemDetail.show{display:block;animation:dialogInXY .28s ease-out both}
 #itemDetail::-webkit-scrollbar{width:6px}
@@ -1001,12 +1002,12 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 /* ========= 梦境提示（toast） ========= */
 #dreamToast{position:absolute;right:14px;top:100px;z-index:33;display:flex;flex-direction:column;
   gap:8px;align-items:flex-end;pointer-events:none;max-width:340px}
-.dream-toast{background:linear-gradient(135deg,rgba(255,255,255,.12),rgba(255,255,255,.035) 42%,rgba(255,255,255,.07)),rgba(18,15,38,.32);
-  border:1px solid rgba(var(--pri-rgb),.35);border-left:3px solid var(--pri);border-radius:12px;
-  padding:9px 13px;color:var(--text);font-size:12px;line-height:1.65;box-shadow:0 12px 32px var(--shadow-3),inset 0 1px 0 rgba(255,255,255,.26);
-  text-shadow:0 1px 8px rgba(10,8,24,.55);
+.dream-toast{background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 42%,rgba(255,255,255,.05)),rgba(16,13,36,.14);
+  border:1px solid rgba(var(--pri-rgb),.38);border-left:3px solid var(--pri);border-radius:12px;
+  padding:9px 13px;color:var(--text);font-size:12px;line-height:1.65;box-shadow:0 12px 32px var(--shadow-3),inset 0 1px 0 rgba(255,255,255,.22);
+  text-shadow:0 1px 6px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.7);
   white-space:pre-line;animation:toastIn .35s cubic-bezier(.2,1.3,.4,1) both;
-  -webkit-backdrop-filter:blur(22px) saturate(185%);backdrop-filter:blur(22px) saturate(185%)}
+  -webkit-backdrop-filter:blur(4px) saturate(160%);backdrop-filter:blur(4px) saturate(160%)}
 .dream-toast .tt{font-weight:800;letter-spacing:1px;margin-bottom:3px;color:var(--pri-2);font-size:12.5px}
 .dream-toast.gold{border-color:rgba(var(--legend-rgb),.5);border-left-color:var(--gold-2)}
 .dream-toast.gold .tt{color:var(--gold)}
