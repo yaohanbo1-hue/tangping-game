@@ -4,7 +4,7 @@
 
 ![HTML5](https://img.shields.io/badge/HTML5-Game-E34F26?style=flat-square&logo=html5&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES6-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
-![版本](https://img.shields.io/badge/version-1.9.2-blue?style=flat-square)
+![版本](https://img.shields.io/badge/version-1.9.3-blue?style=flat-square)
 ![单文件](https://img.shields.io/badge/单文件-开箱即玩-4CAF50?style=flat-square)
 ![零依赖](https://img.shields.io/badge/依赖-0-9C27B0?style=flat-square)
 ![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-222222?style=flat-square&logo=github&logoColor=white)
