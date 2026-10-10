@@ -25,16 +25,20 @@ const STORY_ENDINGS = [
   { id: 'listen_gratitude', route: 'listen', reply: 'gratitude', title: '亲口说完的告别', text: '你等最后一个音节落下，才说：“谢谢你们把灯留给我。”小夏把声音放轻。录音停了，等待也停了；这一次，你亲口把告别说完。' },
 ];
 
-// 视频素材接口：把 video/poster 填为相对仓库根目录的路径，例如
-// video: 'assets/story/wake_0307.mp4'。当前留空，始终走文字对白作为可靠回退。
-// sceneId 是稳定镜头编号，视频可逐个补入，不必改写波次、任务或存档结构。
+// 视频素材按主线节点挂接到仓库相对路径；缺失或不支持时仍可读文字剧情。
 const STORY_VIDEO_SLOTS = {
-  wake_0307:       { title: '03:07 · 醒来', video: null, poster: null, fallback: 'dialogue' },
-  first_return:    { title: '走廊尽头的灯', video: null, poster: null, fallback: 'dialogue' },
-  ledger_four:     { title: '值夜记录', video: null, poster: null, fallback: 'dialogue' },
-  mirror_bed:      { title: '镜中空床', video: null, poster: null, fallback: 'dialogue' },
-  message_0307:    { title: '未听完的留言', video: null, poster: null, fallback: 'dialogue' },
-  morning_door:    { title: '门的两边', video: null, poster: null, fallback: 'dialogue' },
+  wake_0307:           { title: '03:07 · 醒来', video: 'assets/story/01-wake-0307.mp4', poster: null, fallback: 'dialogue' },
+  bedside_fourth:      { title: '床边的第四声', video: 'assets/story/02-bedside-fourth-knock.mp4', poster: null, fallback: 'dialogue' },
+  first_return:        { title: '走廊尽头的灯', video: 'assets/story/03-hallway-lamp.mp4', poster: null, fallback: 'dialogue' },
+  ledger_reversed:     { title: '倒放的值夜记录', video: 'assets/story/04-reversed-duty-log.mp4', poster: null, fallback: 'dialogue' },
+  mirror_bed:          { title: '镜中空床', video: 'assets/story/05-mirror-empty-bed.mp4', poster: null, fallback: 'dialogue' },
+  missing_seven:       { title: '缺失的七分钟', video: 'assets/story/06-missing-seven-minutes.mp4', poster: null, fallback: 'dialogue' },
+  lamp_returns:        { title: '应急灯回来了', video: 'assets/story/07-emergency-lamp-returns.mp4', poster: null, fallback: 'dialogue' },
+  looping_hallway:     { title: '循环的走廊', video: 'assets/story/08-looping-hallway.mp4', poster: null, fallback: 'dialogue' },
+  unfinished_message: { title: '未听完的留言', video: 'assets/story/09-unfinished-voice-message.mp4', poster: null, fallback: 'dialogue' },
+  truth_wave55:        { title: '第55波 · 真相显现', video: 'assets/story/10-wave55-truth.mp4', poster: null, fallback: 'dialogue' },
+  morning_door:        { title: '门的两边', video: 'assets/story/11-two-sides-of-door.mp4', poster: null, fallback: 'dialogue' },
+  rain_after:          { title: '雨停之后', video: 'assets/story/12-after-the-rain.mp4', poster: null, fallback: 'dialogue' },
 };
 
 // ─── 1. 角色档案 ───────────────────────────────────────────
@@ -42,7 +46,7 @@ const STORY_VIDEO_SLOTS = {
 // 新增说话人时只要在这里加一条即可，不要另外在 ui.js 里再写一份。
 const STORY_CHARACTERS = {
   player:   { name: '你',     icon: '🛏️', color: '#e2e8f0', glow: 'rgba(226,231,240,.08)', desc: '值夜记录里唯一没有签名的人。你总觉得自己漏听了一句话；醒来以前，先弄清那声“嗒”从哪里来。' },
-  xiaxia:   { name: '林小夏', icon: '🌻', color: '#fbbf24', glow: 'rgba(251,191,36,.10)',  desc: '总把应急灯放回床头再离开。她说话轻，记得谁怕黑，也记得不用把每个人都叫醒。' },
+  xiaxia:   { name: '林小夏', icon: '🌻', color: '#fbbf24', glow: 'rgba(251,191,36,.10)',  desc: '总把应急灯放在手边。她说话轻，记得谁怕黑，也记得有些问题不必急着追问。' },
   zhoumo:   { name: '周默',   icon: '📚', color: '#60a5fa', glow: 'rgba(96,165,250,.10)',  desc: '习惯把事情记下来的人。数字能帮他找到顺序；朋友的沉默，则需要留一点耐心。' },
   zhaolei:  { name: '赵磊',   icon: '😂', color: '#34d399', glow: 'rgba(52,211,153,.10)',  desc: '总想把笑话讲完的室友。笑话不太好笑，但他会记得谁笑过，也会记得把声音放轻。' },
   shadow:   { name: '???',    icon: '👁️', color: '#c77dff', glow: 'rgba(199,125,255,.15)', desc: '由雨声、缺失的七分钟和未播完的留言叠成。它用最像你的声音，反复问你最怕的问题。' },
@@ -86,7 +90,7 @@ const WAVE_STORY = [
     ],
   },
   {
-    wave: 6, speaker: '赵磊',
+    wave: 6, speaker: '赵磊', sceneId: 'bedside_fourth',
     text: '我数过了，三下，然后“嗒”。我本来想讲个笑话，清了清嗓子，最后却只说：“灯在这儿，屋里的人也都在。”我把椅子往床边挪了一点。你困了就睡，等你醒了我再讲那个不太好笑的。',
     choices: [
       { text: '赵磊你能不能正经点！', effect: '赵磊好感度 +1' },
@@ -102,7 +106,7 @@ const WAVE_STORY = [
     ],
   },
   {
-    wave: 10, speaker: '???', sceneId: 'first_return', actTitle: '第一幕 · 床边的第四声',
+    wave: 10, speaker: '???', actTitle: '第一幕 · 床边的第四声',
     text: '门后的不是脚步，是那晚的雨。你把墙垒得越高，敲门声就越近；你拼命守住的，好像不是出口，而是那七分钟的空白。可你还记得——三个人出门以后，究竟有没有回来？',
     choices: [
       { text: '你是谁？', effect: '触发深层梦境入口' },
@@ -112,7 +116,7 @@ const WAVE_STORY = [
 
   // === 第二幕：倒放的值夜表（Wave 11-20）===
   {
-    wave: 11, speaker: '林小夏',
+    wave: 11, speaker: '林小夏', sceneId: 'first_return',
     text: '走廊尽头亮起一团暖黄。我把灯举高，光从指间漏出来，和床头那盏一模一样。周默说我们去过楼下，可你记得的，是先听见敲门，再看见我们站在这里。也许梦把两张纸叠反了，边角却严丝合缝。',
     choices: [
       { text: '走，去看看。', effect: '提前发现 NPC 守梦者·艾拉' },
@@ -120,7 +124,7 @@ const WAVE_STORY = [
     ],
   },
   {
-    wave: 13, speaker: '旁白',
+    wave: 13, speaker: '旁白', sceneId: 'ledger_reversed',
     text: '录音进度忽然倒退七分钟。屏幕闪过一行字：“03:07——我们下楼取灯。”再往后全是雨声。进度条走到尽头前，床头灯的影子里有个播放键一闪而过。',
   },
   {
@@ -144,7 +148,7 @@ const WAVE_STORY = [
     text: '值夜表上有一格被折进了床垫底下。我没把纸条抽出来，只看见边角露出一个“他”字，旁边还有一道很浅的灯形压痕。小夏说，等录音播完再看。',
     choices: [
         { text: '把便条抽出来。', effect: '所有选择奖励 +50%' },
-        { text: '先别叫醒他。', effect: '解锁隐藏对话' },
+        { text: '先把便条收好，等录音播完再看。', effect: '解锁隐藏对话' },
     ],
   },
   {
@@ -152,7 +156,7 @@ const WAVE_STORY = [
     text: '梦魇们同时停下，齐齐望向床头。灯罩后的影子比刚才多出一道，轮廓却被雨水晃得支离破碎。走廊里传来录音末尾的一声“嗒”，有个影子像要转身，又停住了。',
   },
   {
-    wave: 19, speaker: '周默',
+    wave: 19, speaker: '周默', sceneId: 'missing_seven',
     text: '刻痕不像日期，更像一段被反复描过的流程：三道短痕，一段空白，再一道长痕。最后一组停在空白里。可墙上的钟曾短暂跳到 03:14——那多出来的七分钟，到底被谁从记录里擦掉了？',
     choices: [
       { text: '所以这是一个……循环？', effect: '解锁真相线索' },
@@ -173,7 +177,7 @@ const WAVE_STORY = [
     wave: 21, speaker: '赵磊',
     text: '我刚才又梦见楼梯了。雨太大，灯一闪一闪的。我记得自己有件事没做完，好像答应过谁讲完一个笑话。可梦里的钟总在倒着走，我每次快想起来时，都会听见门后有人敲三下。',
     choices: [
-      { text: '你什么意思？', effect: '赵磊揭露真相线索' },
+      { text: '你是不是还有话没讲完？', effect: '赵磊留下未完成的线索' },
       { text: '别说了，我不想听。', effect: '获得 100 金币但赵磊沉默 5 波' },
     ],
   },
@@ -198,15 +202,15 @@ const WAVE_STORY = [
     ],
   },
   {
-    wave: 26, speaker: '旁白',
+    wave: 26, speaker: '旁白', sceneId: 'looping_hallway',
     text: '走廊像旧胶片一样抖动了一下。每扇门牌都变成 03:07。数字恢复后，最远那扇门开了一条缝；门外似乎是同一间宿舍，暖光照着床头，可镜头在看清人影前突然烧成一片白。',
   },
   {
     wave: 27, speaker: '赵磊',
-    text: '我想起那张合照了。照片上有几个人影围着一团白色，边缘被水泡得发皱。背面写着四个名字，却有一个被墨迹盖住。赵磊把照片翻来覆去看了很久，最后只说：“这笔迹，我好像认得。”',
+    text: '我想起那张合照了。照片上有几个人影围着一团白色，边缘被水泡得发皱。背面写着几个名字，其中一处被墨迹盖住。赵磊把照片翻来覆去看了很久，最后只说：“这笔迹，我好像认得。”',
     choices: [
-      { text: '那你……不是真的？', effect: '赵磊揭示全部真相' },
-      { text: '就算不是真的，你们也是我的朋友。', effect: '全队获得「羁绊之力」，全属性 +20%' },
+      { text: '先把照片收好，等线索补齐再看。', effect: '赵磊留下未完成的线索' },
+      { text: '不必现在下结论，我相信你们。', effect: '全队获得「羁绊之力」，全属性 +20%' },
     ],
   },
   {
@@ -218,7 +222,7 @@ const WAVE_STORY = [
     ],
   },
   {
-    wave: 29, speaker: '旁白', sceneId: 'ledger_four', actTitle: '第三幕 · 空位属于谁',
+    wave: 29, speaker: '旁白', actTitle: '第三幕 · 空位属于谁',
     text: '[值夜记录 · 03:07]\n停电：已确认。\n楼梯：三道向下的水痕。\n时间：03:07 → 03:14。\n中间一行被雨水泡开，只剩一个“嗒”字。\n备注：灯罩上有新的指纹。\n签名栏：空白。',
   },
   {
@@ -232,19 +236,19 @@ const WAVE_STORY = [
   {
     wave: 32, speaker: '周默',
     sceneId: 'mirror_bed', actTitle: '第三幕 · 空位属于谁',
-    text: '我把本子合上，又打开，像是怕那行字会消失。“03:07，停电。03:14，灯亮。”中间那一栏被整齐地撕走了。镜子里的人影总在三道和四道之间变化；最后的“嗒”究竟是门锁、钟摆，还是录音机，我还不能确定。',
+    text: '我把本子合上，又打开，像是怕那行字会消失。“03:07，停电。03:14，灯亮。”中间那一栏被整齐地撕走了。镜子里的人影时多时少；最后的“嗒”究竟是门锁、钟摆，还是录音机，我还不能确定。',
     choices: [
-      { text: '带我去看那面镜子。', effect: '解锁最终 BOSS 真名' },
-      { text: '我已经知道答案了。', effect: '最终 BOSS 战前全属性 +30%' },
+      { text: '把镜中的变化记下来，之后再核对。', effect: '周默记下镜中的变化' },
+      { text: '先核对时间，等录音播完再判断。', effect: '周默记下缺失的时间' },
     ],
   },
   {
     wave: 34, speaker: '旁白',
-    text: '你把手从门把上收回来。门外传来椅脚轻轻挪动的声音，接着是纸页翻动，又归于安静。你没有再急着把每一段沉默都解释成离开，只把耳朵贴近门板，想分辨那声“嗒”从哪边传来。',
+    text: '你把手从门把上收回来。门外传来椅脚轻轻挪动的声音，接着是纸页翻动，又归于安静。你没有再急着替沉默下结论，只把耳朵贴近门板，想分辨那声“嗒”从哪边传来。',
   },
   {
     wave: 35, speaker: '???',
-    text: '“到了”两个字在录音里反复出现，每次都少一个音节。门没有立刻打开，梦魇也没有消失。你听见梦里的自己还在说“再等七分钟”，声音越来越小，像怕惊动谁。也许这句话不是门锁，只是有人替你争取的一点时间。',
+    text: '一段模糊的词音在录音里反复出现，每次都少一个音节。门没有立刻打开，梦魇也没有消失。你听见梦里的自己还在说“再等七分钟”，声音越来越小。也许那只是梦里反复播放的一句旧话。',
     choices: [
       { text: '自己走回去。', effect: '解锁「自主觉醒」结局' },
       { text: '再等一下……', effect: '梦境加深，最终 BOSS 更强但奖励翻倍' },
@@ -254,7 +258,7 @@ const WAVE_STORY = [
   // === 第四幕：灯一直亮着（Wave 36-50）===
   {
     wave: 38, speaker: '赵磊',
-    text: '我决定把那个笑话讲完。为什么闹钟总慢七分钟？因为它也想多睡一会儿。……我知道，还是很烂。说到最后，我忽然忘了笑点，只记得有人在很远的地方笑了一声。小夏说那声音很熟，我却怎么也想不起来是谁。',
+    text: '我决定把那个笑话讲完。为什么闹钟总慢七分钟？因为它也想多睡一会儿。……我知道，还是很烂。说到最后，我忽然忘了笑点，只听见雨声里混进一小段模糊的笑声。它很快被雷声盖住，我和小夏都没能听清。',
     choices: [
       { text: '永远记得。', effect: '赵磊化为最后一道防线（永久护盾 +500）' },
       { text: '谢谢你，赵磊。', effect: '全队获得「幽默之力」，暴击率 +20%' },
@@ -278,35 +282,35 @@ const WAVE_STORY = [
   },
   {
     wave: 45, speaker: '旁白',
-    text: '黑暗里有几个人影站在床边，镜子里却多出一道模糊的轮廓。它不在门后，也不在走廊尽头。那几个人影没有催它，只把灯调低了些。你快要看清他们的脸时，镜面又起了雾。',
+    text: '黑暗里有几道人影停在灯光边缘。一道轮廓在镜中被拉长，又被水汽慢慢抹去。你快要看清时，灯光闪了一下；再亮起时，镜面只剩下模糊的雨痕。',
   },
   {
-    wave: 48, speaker: '林小夏',
-    text: '我把应急灯放在窗边，光刚好落在被角上。那晚我好像也做过同一个动作；手伸出去，又在半空停住。现在也一样，有些话不必抢在天亮前说完。等录音播到尽头，再决定要不要叫醒谁。',
+    wave: 48, speaker: '林小夏', sceneId: 'lamp_returns',
+    text: '我把应急灯放在窗边，光刚好落在一角旧布上。这个动作让我觉得熟悉，可我想不起在哪做过。录音还剩最后一段；等你准备好，我们再一起核对，不必现在猜它的意思。',
     choices: [
-      { text: '我们一起来。', effect: '四人合力：全属性 +25%，持续到结局' },
+      { text: '我们一起守住这盏灯。', effect: '同伴支持：全属性 +25%，持续到结局' },
       { text: '最后的战斗，交给我。', effect: '单人模式：攻击力 x2，但防御 -50%' },
     ],
   },
   {
     wave: 50, speaker: '赵磊',
-    text: '我终于把那个笑话讲完了，还是不怎么好笑。连我自己都先笑出声了。结尾好像有人说了“到了”，也可能只是雨声把别的词拼成这样。我不等你立刻回答——想再听一次，我可以从头讲。',
+    text: '我终于把那个笑话讲完了，还是不怎么好笑。结尾那几个音节被雨声搅在一起，听起来像“到了”，也可能完全不是。我不等你立刻回答；想再听一次，我可以从头讲。',
     choices: [
       { text: '我会的。', effect: '赵磊永久记忆锁定' },
-      { text: '我不会忘。', effect: '解锁隐藏结局「重逢」' },
+      { text: '把最后一句也留到以后。', effect: '记下赵磊没讲完的笑话' },
     ],
   },
   // === 第五幕：听完那条语音（Wave 51-60）===
   {
-    wave: 52, speaker: '周默',
-    text: '我把录音机放在桌上，手指停在播放键旁。时间我核对过了：先是雨声和脚步，最后才是赵磊。我不会替你按下去。你准备好时再按；标签上写着：醒来再听。',
+    wave: 52, speaker: '周默', sceneId: 'unfinished_message',
+    text: '我把录音机放在桌上，手指停在播放键旁。开头是雨声和脚步，后半段断断续续，暂时听不清。我不会替你按下去。你准备好时再按；标签上写着：等雨停再听。',
     choices: [
       { text: '数学不会骗人。', effect: '周默留下最终计算结果' },
       { text: '概率不是命运。', effect: '全属性 +20%' },
     ],
   },
   {
-    wave: 55, speaker: '???', sceneId: 'message_0307', actTitle: '第五幕 · 听完那条语音',
+    wave: 55, speaker: '???', sceneId: 'truth_wave55', actTitle: '第五幕 · 听完那条语音',
     text: '录音机终于越过停在 06:59 的位置。先是周默的声音：“03:07，停电。我们下楼去拿灯。”七分钟的雨声后，小夏说：“03:14，灯放回床头了。他睡着了，别叫醒他。”赵磊压低声音：“那就让他睡吧，明天我再把笑话讲完。”\n\n你想起来了：那三下不是有人求救，是他们回来时轻轻敲的门。床头那声“嗒”只是录音机停止。三个人没有失踪，他们回来了；那晚你已经睡着，没听见最后一句。宿舍里从来没有少第四个人——你一直在床上。梦魇把你没听见的七分钟拉成一条走廊，让你以为他们还在门外。',
     choices: [
       { text: '原来你们回来了……我听见了。', effect: '恐惧转化为力量，全属性 +30%', storyRoute: 'trust' },
@@ -333,10 +337,10 @@ const BOSS_DIALOG = {
     wave: 10,
     name: '深渊巨口',
     icon: '🦑',
-    intro: '你把门修得这么牢，是怕雨进来，还是怕听见门外的人已经回来了？',
+    intro: '你把门修得这么牢，是怕雨进来，还是怕听见门外那阵一直没听清的声音？',
     phase1: '三下。停。别按播放键。',
     phase2: '雨声会一直响，直到你忘了自己在等谁。',
-    phase3: '只要不听最后一句，他们就永远还没回来。',
+    phase3: '只要不听最后一句，这场梦就能一直停在这里。',
     defeat: '黑暗退回门后。地上留下三双潮湿的鞋印，尽头的录音机亮起一格电量。',
     personality: '由暴雨、门后的等待和未完成的录音构成，专挑玩家最不敢确认的时刻发问',
   },
@@ -344,10 +348,10 @@ const BOSS_DIALOG = {
     wave: 15,
     name: '机械核心',
     icon: '🛰️',
-    intro: '记录开始。03:07，三道脚步声离开。之后七分钟，录音里只有雨。你要把空白记成“失踪”吗？',
+    intro: '记录开始。03:07，时间戳出现偏差。之后七分钟，录音里只有雨。缺失的一栏，你打算先记成什么？',
     phase1: '时间戳冲突：03:07。',
     phase2: '检测到七分钟空白。',
-    phase3: '错误：播放结束前，禁止确认归来。',
+    phase3: '错误：播放结束前，禁止提交结论。',
     defeat: '机械停了。进度条往前跳了一格，雨声里似乎多出一段脚步，又很快被静电盖住。',
     personality: '把记录缺页当作失踪证据的旧录音机，重复错误时间直到有人重新核对',
   },
@@ -355,12 +359,12 @@ const BOSS_DIALOG = {
     wave: 20,
     name: '虚空之影',
     icon: '🌑',
-    intro: '镜子里只有三个人站着。那第四个位置，真的是空的吗？',
+    intro: '镜子里有几道影子总比你慢半拍。你确定那只是反光吗？',
     phase1: '别数站着的人。',
     phase2: '镜面深处有一道影子刚才动了。',
     phase3: '你看见了什么，却不敢确认那是谁。',
     defeat: '影子没有消失。它退回镜面后，只留下一个被水汽遮住的名字。',
-    personality: '把床上熟睡的自己伪装成失踪者，让玩家追逐一个其实从未离开的空位',
+    personality: '不断改变镜中影子的数量和位置，让玩家追逐无法确认的空白',
   },
   lord: {
     wave: 25,
@@ -416,20 +420,20 @@ const DREAM_FRAGMENTS = [
     text:'斜光照过空白便笺，浮出两行字：“我们去拿灯，很快回来。”“到了，别叫醒他。”' },
   { id:'frag_14', title:'最后一课', desc:'未完的告别', icon:'📝', rarity:'epic',
     text:'老师说："人生的考试没有标准答案。"你醒了，发现自己泪流满面，但想不起为什么。' },
-  { id:'frag_15', title:'碎片拼图', desc:'拼凑的自己', icon:'🧩', rarity:'epic',
+  { id:'frag_15', title:'碎片拼图', desc:'拼凑的自己', icon:'🧩', rarity:'epic', revealWave:55,
     text:'你把记忆碎片拼在一起，看到无数面镜子围着一张床。每面镜子里都有一个不同年纪的人，唯独床边留着一道空白。' },
   { id:'frag_16', title:'没寄出的便笺', desc:'写给睡着的那个人', icon:'📨', rarity:'epic', revealWave:55,
     text:'灯罩底下压着一张折过两次的纸：“醒来后别急着道歉。灯我放回来了，笑话还欠你一个结尾。”没有署名，但最后那个歪歪扭扭的字，一看就是赵磊写的。' },
-  { id:'frag_17', title:'第一道光', desc:'从未到达的黎明', icon:'🌅', rarity:'legendary',
+  { id:'frag_17', title:'第一道光', desc:'从未到达的黎明', icon:'🌅', rarity:'legendary', revealWave:55,
     text:'所有梦魇的尽头有一扇小窗。窗外没有黎明，只有一盏亮着的走廊灯，和一双停在门外的鞋。' },
   { id:'frag_18', title:'闹钟', desc:'梦的终结者', icon:'🔔', rarity:'legendary',
     text:'闹钟。很简单的一个闹钟。但在梦境里，它是一个禁忌之物。因为闹钟意味着——梦要结束了。' },
   { id:'frag_19', title:'03:14', desc:'灯回到了床头', icon:'🔔', rarity:'legendary', revealWave:55,
     text:'闹钟停在 03:07。七分钟后，三双湿鞋印走回床边。床头灯亮着，屋里四个人，一个也没有少。' },
-  { id:'frag_20', title:'写给自己的信', desc:'来自内心的声音', icon:'💌', rarity:'legendary',
+  { id:'frag_20', title:'写给自己的信', desc:'来自内心的声音', icon:'💌', rarity:'legendary', revealWave:55,
     text:'"亲爱的我：如果你读到这里，先别相信写信的人。问问他，03:07 那时他在哪里。答案就在你记得最清楚、却一直不肯说的地方。"' },
   // ── 追加 10 块碎片：继续沿着 03:07 停电、七分钟缺口、第四双鞋的线索往下挖 ──
-  { id:'frag_21', title:'走廊的第四双鞋', desc:'门口多出来的那道水痕', icon:'👟', rarity:'common',
+  { id:'frag_21', title:'走廊的第四双鞋', desc:'门口多出来的那道水痕', icon:'👟', rarity:'common', revealWave:55,
     text:'门口摆着三双湿鞋，鞋尖朝外，像是随时准备再出去一次。第四道水痕从楼梯口一路拖到床边，却没有对应的鞋。' },
   { id:'frag_22', title:'备用灯的电量', desc:'只亮过七分钟', icon:'🔋', rarity:'common',
     text:'应急灯的指示灯还剩三格电。说明书上写着满电可连续照明两小时。它只亮过七分钟，却耗掉了第一格。' },
@@ -441,7 +445,7 @@ const DREAM_FRAGMENTS = [
     text:'草稿箱里躺着一条没发出去的消息，收件人是那个三个人的群。只有两个字："别关灯。"发送时间停在 03:07。' },
   { id:'frag_26', title:'雨声里的另一层', desc:'多出来的那个呼吸', icon:'🌧️', rarity:'epic', revealWave:55,
     text:'把录音降速到一半，雨声底下浮出第四个人的呼吸。它比雨声更慢，也比屋里的三个人更近。' },
-  { id:'frag_27', title:'床垫下的纸条', desc:'写给下一个醒着的人', icon:'📃', rarity:'epic',
+  { id:'frag_27', title:'床垫下的纸条', desc:'写给下一个醒着的人', icon:'📃', rarity:'epic', revealWave:55,
     text:'纸条上只有一句："如果你读到这里，说明轮到你了。把灯留着，别应门。"字迹很新，墨还没完全干。' },
   { id:'frag_28', title:'第四格的名字', desc:'被雨水泡开的墨迹', icon:'🖋️', rarity:'epic', revealWave:55,
     text:'值夜表的第四格被雨水泡过，墨迹散成一团。但在紫外灯下还能看出一个偏旁 —— 和你自己的姓，是同一个。' },
@@ -467,7 +471,7 @@ const NPC_DIALOG = [
   },
   {
     id: 'npc_3', name: '梦行者·凯恩', role: '斥候', icon: '👁️', abilityId: 'scout',
-    intro: '嘘，听走廊。它会把脚步声重复给你听，我能认出哪一次是回来的。先听完，再决定要不要相信。',
+    intro: '嘘，听走廊。它会把脚步声重复给你听，我能认出哪一段是回声，哪一段是原声。先听完，再决定要不要相信。',
     stationed: '提前 5 秒显示下一波敌人的类型和数量。知己知彼。',
     quest: '在不使用任何技能的情况下清空一波敌人。静默，是最强的武器。',
   },
@@ -485,7 +489,7 @@ const NPC_DIALOG = [
   },
   {
     id: 'npc_6', name: '守床人·阿尔忒弥斯', role: '守护者', icon: '🏹', abilityId: 'guardian',
-    intro: '床边的影子很小，常常被忽略。我的职责是守住它，直到你愿意认出躺在那里的人是谁。',
+    intro: '床边的影子很小，常常被忽略。我的职责是守住它，直到你愿意为这段记忆找到名字。',
     stationed: '床铺最大生命 +20%。只要床还在，希望就在。',
     quest: '在床铺生命低于 10% 的情况下存活 3 波。绝境，是最好的老师。',
   },
@@ -525,9 +529,9 @@ const DEEP_DREAM_LEVELS = [
   },
   {
     id: 'deep_3', triggerWave: 45, duration: 3, name: '意识深渊', icon: '🕳️',
-    description: '最底层的梦境。这里没有形状，没有颜色，只有纯粹的意识在流动。你是这里唯一的实体——也是唯一的入侵者。',
+    description: '最底层的梦境。这里没有固定形状和颜色，只有像潮水一样起伏的意识。远处偶尔浮现熟悉的轮廓，却无法确认它来自记忆，还是正在发生。',
     rules: '梦魇生命 ×2.8、攻击 ×1.5，并对能量额外脆弱（弱点 +50%）；你的炮塔伤害 +20%、射速 +10%，时间流速加快（×1.15）。',
-    goal: '在深层梦境中存活 3 波。深渊不会放你走，除非你自己走。',
+    goal: '在深层梦境中存活 3 波。听清回声的方向，再决定下一步。',
     reward: '100 灵魂 + 传说符文 ×1',
     rewardSpec: { souls: 100, rune: 'legendary' },
     modifier: {

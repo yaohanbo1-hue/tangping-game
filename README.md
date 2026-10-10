@@ -4,7 +4,7 @@
 
 ![HTML5](https://img.shields.io/badge/HTML5-Game-E34F26?style=flat-square&logo=html5&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES6-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
-![版本](https://img.shields.io/badge/version-1.8.1-blue?style=flat-square)
+![版本](https://img.shields.io/badge/version-1.9.1-blue?style=flat-square)
 ![单文件](https://img.shields.io/badge/单文件-开箱即玩-4CAF50?style=flat-square)
 ![零依赖](https://img.shields.io/badge/依赖-0-9C27B0?style=flat-square)
 ![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-222222?style=flat-square&logo=github&logoColor=white)
@@ -16,6 +16,8 @@
 手机、平板、电脑的浏览器都能直接打开，不用下载、不用安装。下载下来双击 `tangping.html` 也一样能玩。
 
 📱 **手机（华为 / 安卓 / 苹果）已验证适配**：横屏下铺满屏幕，刘海与底部横条不遮挡界面；竖屏会提示横屏，并支持一键全屏、强制横屏或画面转向。
+
+🎞️ **主线加入 12 段静音剧情镜头**：按波次播放，第 55 波揭晓真相，主线通关后播放结尾镜头。视频按需加载并支持手机行内播放；缺少素材或浏览器无法播放时，文字剧情仍可继续。本地运行时请把 `assets/story/` 文件夹与 HTML 放在一起；只下载 HTML 仍可游玩，但不会带上视频。
 
 ---
 

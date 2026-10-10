@@ -884,11 +884,11 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
   max-height:212px;overflow-y:auto;flex:0 1 auto}
 .story-text::-webkit-scrollbar{width:6px}
 .story-text::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
-.story-media{position:relative;z-index:1;width:min(100%,480px);height:270px;aspect-ratio:16/9;margin:8px auto 14px;flex:0 0 auto;
+.story-media{position:relative;z-index:1;width:min(100%,480px);height:auto;aspect-ratio:16/9;margin:8px auto 14px;flex:0 0 auto;
   overflow:hidden;border:1px solid color-mix(in srgb,var(--sp-c,#a78bfa) 35%,transparent);border-radius:12px;
   background:rgba(0,0,0,.42);box-shadow:0 10px 32px rgba(0,0,0,.32)}
 .story-media-video,.story-media-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#080812}
-.story-media-fallback{position:absolute;inset:auto 0 0;padding:7px 10px;background:rgba(5,6,14,.78);color:#d2cde0;font-size:11px;text-align:center}
+.story-media-fallback{position:absolute;inset:auto 0 0;padding:8px 10px;border:0;background:rgba(5,6,14,.88);color:#d2cde0;font:inherit;font-size:11px;text-align:center}.story-media-play{cursor:pointer}.story-media-play:focus-visible{outline:2px solid #fbbf24;outline-offset:2px}
 .story-media[style*="display: none"]{display:none!important}
 .story-choices{display:flex;flex-direction:column;gap:8px;margin:14px 0 10px;max-height:200px;overflow-y:auto;flex:0 1 auto}
 .story-choices::-webkit-scrollbar{width:6px}
@@ -1350,7 +1350,7 @@ body.touch #hud .btn{min-height:34px;padding:5px 7px}
 body.touch .story-dialog{left:50%;bottom:18px;width:min(1120px,calc(100% - 56px));max-height:calc(100% - 36px);padding:16px 22px}
 body.touch .story-header{margin-bottom:6px}
 body.touch .story-avatar{width:42px;height:42px;font-size:22px}
-body.touch .story-media{width:min(100%,480px);height:270px;max-height:270px;margin:5px auto 9px}
+body.touch .story-media{width:min(100%,480px,56vh);height:auto;max-height:none;margin:5px auto 9px}
 body.touch .story-text{font-size:15px;line-height:1.75;max-height:190px;padding-bottom:10px}
 body.touch .story-choices{gap:7px;margin:9px 0 7px;max-height:160px}
 body.touch .story-choice{min-height:42px;padding:10px 14px;font-size:14px}

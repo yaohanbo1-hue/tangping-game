@@ -483,6 +483,10 @@ function showVictory() {
     .slice().reverse().find(note => typeof note === 'string' && note.indexOf(routePrefix) === 0);
   const storyRoute = routeNote ? routeNote.slice(routePrefix.length) : '';
   const trial = G.trialId && POSTGAME_TRIALS.find(t => t.id === G.trialId);
+  const endingVideoSlot = !trial && typeof STORY_VIDEO_SLOTS !== 'undefined' ? STORY_VIDEO_SLOTS.rain_after : null;
+  const endingVideoMarkup = endingVideoSlot && endingVideoSlot.video
+    ? '<div class="story-media ending-story-media" id="endingStoryMedia" style="display:block;width:min(100%,560px);height:auto;aspect-ratio:16/9;margin:12px auto 18px"></div>'
+    : '';
   if (typeof Music !== 'undefined') Music.play(endingReply === 'gratitude' ? 'warm' : 'morning');
   const ending = STORY_ENDINGS.find(item => item.route === storyRoute && item.reply === endingReply);
   const epilogue = ending ? ending.text : '你听完了留言。外面雨停了，床头灯还亮着。醒来以后，你不用从头再等一次。';
@@ -494,6 +498,7 @@ function showVictory() {
   o.innerHTML = '<div class="panel win">' +
     '<h1 style="font-size:52px;background:linear-gradient(135deg,#ffd166,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 35px rgba(251,191,36,.7))">' + (trial ? '🌌 试炼完成' : '👑 通关成功') + '</h1>' +
     '<div class="sub" style="font-size:18px;color:#fbbf24;margin-bottom:14px;text-shadow:0 0 10px rgba(251,191,36,.4)">' + (trial ? '你完成了「' + trial.name + '」，这段梦境留下了新的记录。' : '你听完那段留言，守住了回家的路') + '</div>' +
+    endingVideoMarkup +
     (ending && !trial ? '<div style="color:#fbbf24;font-size:11px;letter-spacing:2px;margin:-5px 0 8px">结局档案 · ' + ending.title + '</div>' : '') +
     '<div style="max-width:640px;margin:0 auto 18px;padding:12px 18px;border-left:2px solid rgba(251,191,36,.55);border-radius:8px;background:rgba(251,191,36,.07);color:#fef3c7;font-size:15px;line-height:1.7">' + epilogue + '</div>' +
     '<div class="grid">' +
@@ -511,7 +516,13 @@ function showVictory() {
     '<div class="btns"><button class="big" id="toMenu2">返回主界面</button></div>' +
     '<div class="tipend">' + (trial ? (G.trialFirstClear ? '首次通关额外奖励：💰 ' + trial.bonusGold : '再次挑战仍可获得结算倍率 ×' + trial.rewardMul) + '；可在主菜单继续挑战其他规则。' : '本局已终结 — 想无限发育请在主菜单选择「♾️ 无限模式」。') + '</div>' +
     '</div>';
-  $('toMenu2').onclick = () => showMenu();
+  const endingVideoBox = $('endingStoryMedia');
+  if (endingVideoBox) _mountStoryVideo(endingVideoBox, endingVideoSlot);
+  $('toMenu2').onclick = () => {
+    const video = endingVideoBox && endingVideoBox.querySelector('video');
+    if (video) { video.pause(); video.onerror = null; video.removeAttribute('src'); video.load(); }
+    showMenu();
+  };
 }
 function runeAffixText(r) {
   return r.affixes.map(a => RUNE_AFFIXES[a.k].icon + RUNE_AFFIXES[a.k].name + '+' + affixVal(r, a) + '%').join('　');
@@ -1291,6 +1302,70 @@ function showStoryDialog(data) {
   if (!storyTyping && panel.style.display !== 'flex') _processStoryQueue();
 }
 
+/** 自动播放被浏览器拦截时给一个点击重试入口；始终静音，不暴露解除静音的控件。 */
+function _showStoryVideoFallback(box, video, slot, canRetry) {
+  if (!box || !video || !box.contains(video)) return;
+  const old = box.querySelector('.story-media-fallback');
+  if (old) old.remove();
+  const fallback = document.createElement(canRetry ? 'button' : 'div');
+  fallback.className = 'story-media-fallback';
+  if (canRetry) {
+    fallback.type = 'button';
+    fallback.textContent = '▶ 点击播放静音镜头';
+    fallback.onclick = () => {
+      fallback.remove();
+      try {
+        const playback = video.play();
+        if (playback && playback.catch) playback.catch(() => _showStoryVideoFallback(box, video, slot, false));
+      } catch (e) { _showStoryVideoFallback(box, video, slot, false); }
+    };
+  } else {
+    fallback.textContent = '镜头暂不可用，文字记录仍可继续。';
+  }
+  fallback.setAttribute('aria-label', (slot.title || '剧情镜头') + '播放状态');
+  box.appendChild(fallback);
+}
+
+/** 公用静音播放器：剧情框和通关结尾都按需加载，失败时仍保留文字结局。 */
+function _mountStoryVideo(box, slot) {
+  if (!box || !slot || typeof slot.video !== 'string' || !slot.video.trim()) return null;
+  const source = slot.video.trim();
+  const poster = typeof slot.poster === 'string' ? slot.poster.trim() : '';
+  if (poster) {
+    const image = document.createElement('img');
+    image.className = 'story-media-poster';
+    image.src = poster;
+    image.alt = (slot.title || '剧情镜头') + '画面';
+    image.onerror = () => { image.hidden = true; };
+    box.appendChild(image);
+  }
+  const video = document.createElement('video');
+  video.className = 'story-media-video';
+  video.muted = true;
+  video.defaultMuted = true;
+  video.volume = 0;
+  video.autoplay = true;
+  video.controls = false;
+  video.playsInline = true;
+  video.preload = 'metadata';
+  video.setAttribute('muted', '');
+  video.setAttribute('playsinline', '');
+  video.setAttribute('aria-label', slot.title || '剧情视频');
+  if (poster) video.poster = poster;
+  video.src = source;
+  video.onerror = () => {
+    if (!box.contains(video)) return;
+    video.hidden = true;
+    _showStoryVideoFallback(box, video, slot, false);
+  };
+  box.appendChild(video);
+  try {
+    const playback = video.play();
+    if (playback && playback.catch) playback.catch(() => _showStoryVideoFallback(box, video, slot, true));
+  } catch (e) { _showStoryVideoFallback(box, video, slot, true); }
+  return video;
+}
+
 /** 可选剧情视频：素材缺失、解码失败或浏览器不支持时，文字剧情照常播放。 */
 function _renderStoryMedia(data) {
   const box = $('storyMedia');
@@ -1302,35 +1377,7 @@ function _renderStoryMedia(data) {
 
   box.style.display = 'block';
   box.setAttribute('aria-label', slot.title || '剧情镜头');
-  const poster = typeof slot.poster === 'string' ? slot.poster.trim() : '';
-  if (poster) {
-    const image = document.createElement('img');
-    image.className = 'story-media-poster';
-    image.src = poster;
-    image.alt = (slot.title || '剧情镜头') + '画面';
-    image.onerror = () => { image.hidden = true; };
-    box.appendChild(image);
-  }
-
-  const source = typeof slot.video === 'string' ? slot.video.trim() : '';
-  if (!source) return;
-  const video = document.createElement('video');
-  video.className = 'story-media-video';
-  video.src = source;
-  if (poster) video.poster = poster;
-  video.controls = true;
-  video.playsInline = true;
-  video.preload = 'metadata';
-  video.setAttribute('aria-label', slot.title || '剧情视频');
-  video.onerror = () => {
-    if (!box.contains(video)) return;
-    video.hidden = true;
-    const fallback = document.createElement('div');
-    fallback.className = 'story-media-fallback';
-    fallback.textContent = '镜头暂不可用，文字记录仍可继续。';
-    box.appendChild(fallback);
-  };
-  box.appendChild(video);
+  _mountStoryVideo(box, slot);
 }
 
 function _clearStoryMedia() {

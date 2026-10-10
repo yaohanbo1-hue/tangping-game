@@ -1889,10 +1889,12 @@ const DreamFragments = {
       percentage: total > 0 ? Math.round(collected / total * 100) : 0,
       stories: this.FRAGMENT_DEFS.map(f => ({
         id: f.id,
-        name: f.name,
-        icon: f.icon,
-        desc: f.desc,
-        story: this._collected && this._collected.has(f.id) ? f.story : '???',
+        name: f.revealWave && (!G || G.wave < f.revealWave) ? '???' : f.name,
+        icon: f.revealWave && (!G || G.wave < f.revealWave) ? '❓' : f.icon,
+        desc: f.revealWave && (!G || G.wave < f.revealWave) ? '记录尚未显影' : f.desc,
+        story: f.revealWave && (!G || G.wave < f.revealWave)
+          ? '???'
+          : this._collected && this._collected.has(f.id) ? f.story : '???',
         unlocked: this._collected ? this._collected.has(f.id) : false,
       })),
     };
