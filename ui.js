@@ -6,13 +6,10 @@ function buildBuildBar() {
     const d = BUILD_DEFS[k];
     const c = document.createElement('div');
     c.className = 'card'; c.dataset.k = k;
-    const dt = d.dmgType
-      ? '<div class="dt" style="color:' + DMG[d.dmgType].color + '"><i>' + DMG[d.dmgType].icon + '</i>' + DMG[d.dmgType].name + '</div>'
-      : '<div class="dt generic"><i>🔌</i>免电</div>';
     c.style.setProperty('--dc', (d.dmgType && DMG[d.dmgType].color) || d.color || '#8b8bd6');
     const dps1 = d.tower ? towerPanelDps(d.stat(1), { type: k }) : 0;
-    c.innerHTML = '<div class="ico">' + d.icon + '</div><div class="nm">' + d.name + '</div>' + dt +
-      (dps1 ? '<div class="dps">' + fmt1(dps1) + ' DPS</div>' : '') +
+    // 紧凑卡片：图标 + 名称 + 价格一屏排下 2×8 全部建筑，属性/伤害类型移入悬停提示
+    c.innerHTML = '<div class="ico">' + d.icon + '</div><div class="nm">' + d.name + '</div>' +
       '<div class="pr"><span class="g">' + fmt(d.cost.gold) + '💰</span></div>' +
       '<div class="kb">' + d.key + '</div><div class="cnt"></div>';
     // 悬停提示里补上面板 DPS —— 建造栏太窄，塞不下更多数字
