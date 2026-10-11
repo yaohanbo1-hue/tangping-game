@@ -1,8 +1,16 @@
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
 let T = 0;
+// 渲染帧时长：闪光/震屏/开火余晖等视觉衰减按真实帧时长推进，
+// 否则 30Hz 屏会拖长一倍、144Hz 屏会快进 2.4 倍（模拟层已是固定步长，只有视觉层受影响）
+let _frameDt = 1 / 60;
 function rr(x, y, w, h, r) {
   ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+/** 同 rr，但不 beginPath：把多个圆角矩形并进同一条 path，批量填充/描边省每格的路径开销 */
+function rrAdd(x, y, w, h, r) {
   ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 }
@@ -34,10 +42,11 @@ function emoji(e, x, y, size, alpha = 1, rot = 0) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(e, 0, 0); ctx.restore();
 }
-function render() {
+function render(frameDt) {
+  _frameDt = (typeof frameDt === 'number' && isFinite(frameDt) && frameDt > 0) ? Math.min(frameDt, 0.25) : 1 / 60;
   ctx.clearRect(0, 0, W, H);
   ctx.save();
-  if (shake > 0.4) { ctx.translate(rnd(-shake, shake) * 0.5, rnd(-shake, shake) * 0.5); shake *= 0.86; } else shake = 0;
+  if (shake > 0.4) { ctx.translate(rnd(-shake, shake) * 0.5, rnd(-shake, shake) * 0.5); shake *= Math.pow(0.86, _frameDt * 60); } else shake = 0;
   drawBg(); drawCorridors(); drawRoom(); drawBuildings(); drawBed();
   drawEnemies(); drawWallsDoors(); drawBullets(); drawEffects(); drawParts(); drawTexts();
   // 战斗氛围粒子（波次中飘浮火星）
@@ -59,7 +68,7 @@ function render() {
   // 升级光环爆发特效（增强版）
   if (G.upgradeFx) {
     G.upgradeFx.forEach(f => {
-      f.t -= 0.016;
+      f.t -= _frameDt;
       const p = 1 - f.t / 0.8;
       const r = 15 + p * 50;
       // 外圈
@@ -94,7 +103,7 @@ function render() {
     ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = 'rgba(255,40,60,' + (flash * 0.25 * flashMul) + ')';
     ctx.fillRect(0, 0, W, H);
-    flash -= 0.035;
+    flash -= _frameDt * 2.1;
   }
   if (G.buff.freeze > 0) {
     // 冰冻全屏效果
@@ -171,7 +180,7 @@ function drawDreamSystems() {
 
   // 3. 深层梦境滤镜
   if (typeof DeepDream !== 'undefined' && DeepDream.isActive()) {
-    const level = DeepDream.getCurrentLevel();
+    const level = DeepDream.getCurrentLevel() || {};   // 判空：拿不到关卡定义时滤镜照画，不许抛错打断整帧
     // 紫色暗角
     ctx.save();
     const vign = ctx.createRadialGradient(W / 2, H / 2, W * 0.25, W / 2, H / 2, W * 0.7);
@@ -183,7 +192,7 @@ function drawDreamSystems() {
     ctx.font = 'bold 12px "Courier New"';
     ctx.fillStyle = '#c084fc';
     ctx.textAlign = 'center';
-    ctx.fillText(level.icon + ' ' + level.name + '  —  ' + level.desc, W / 2, 70);
+    ctx.fillText((level.icon || '🕳️') + ' ' + (level.name || '深层梦境') + '  —  ' + (level.desc || ''), W / 2, 70);
     ctx.restore();
   }
 
@@ -192,7 +201,7 @@ function drawDreamSystems() {
     const recruited = NPCGuardians.getRecruited();
     for (const npc of recruited) {
       if (!npc.active || !npc.def) continue;
-      const laneIdx = parseInt(npc.roomId.replace('lane_', ''), 10);
+      const laneIdx = parseInt((npc.roomId || '').replace('lane_', ''), 10);
       if (isNaN(laneIdx)) continue;
       ctx.save();
       ctx.font = '14px serif';
@@ -328,25 +337,36 @@ function drawRoom() {
     const pulse = 0.5 + Math.sin(T * 3.2) * 0.5;
     const isTower = !!(BUILD_DEFS[selectedBuildKey] && BUILD_DEFS[selectedBuildKey].tower);
     const rgb = isTower ? '255,190,80' : '158,240,26';
+    // 圆角柔光格：填充淡染 + 发光描边 + 圆头十字，去掉直角硬边的「表格感」。
+    // 同色样式全格一致，合并成 3 条 path 批量画（原先每格 3 条 path + save/restore + shadowBlur，
+    // 40 个空位就是 120 条路径）；save/restore 包住整段，lineCap/shadowBlur 一定还原。
+    const cells = [];
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       if (G.grid[r * COLS + c] || inBed(c, r)) continue;
-      const R = cellRect(c, r);
-      const x = R.x + 3, y = R.y + 3, w = R.w - 6, h = R.h - 6;
-      // 圆角柔光格：填充淡染 + 发光描边 + 圆头十字，去掉直角硬边的「表格感」
-      ctx.fillStyle = 'rgba(' + rgb + ',' + (0.05 + pulse * 0.06) + ')';
-      rr(x, y, w, h, 9); ctx.fill();
+      cells.push(cellRect(c, r));
+    }
+    if (cells.length) {
       ctx.save();
+      ctx.fillStyle = 'rgba(' + rgb + ',' + (0.05 + pulse * 0.06) + ')';
+      ctx.beginPath();
+      for (const R of cells) rrAdd(R.x + 3, R.y + 3, R.w - 6, R.h - 6, 9);
+      ctx.fill();
       ctx.strokeStyle = 'rgba(' + rgb + ',' + (0.38 + pulse * 0.34) + ')';
       ctx.lineWidth = 1.6;
       ctx.shadowColor = 'rgba(' + rgb + ',.5)';
       ctx.shadowBlur = 7;
-      rr(x + 1, y + 1, w - 2, h - 2, 8); ctx.stroke();
-      const cx = R.x + R.w / 2, cy = R.y + R.h / 2;
+      ctx.beginPath();
+      for (const R of cells) rrAdd(R.x + 4, R.y + 4, R.w - 8, R.h - 8, 8);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
       ctx.strokeStyle = 'rgba(' + rgb + ',' + (0.55 + pulse * 0.35) + ')';
       ctx.lineWidth = 2.6; ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(cx - 8, cy); ctx.lineTo(cx + 8, cy);
-      ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy + 8);
+      for (const R of cells) {
+        const cx = R.x + R.w / 2, cy = R.y + R.h / 2;
+        ctx.moveTo(cx - 8, cy); ctx.lineTo(cx + 8, cy);
+        ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy + 8);
+      }
       ctx.stroke();
       ctx.restore();
     }
@@ -963,7 +983,8 @@ function drawSupportArt(b, color) {
   ctx.restore();
 }
 function drawBuildings() {
-  const frameDt = typeof dt !== 'undefined' && Number.isFinite(dt) ? Math.max(0, dt) : 1 / 60;
+  // 落地/开火余晖/后座衰减统一用 render() 记录的真实帧时长（旧写法 typeof dt 恒为 undefined）
+  const frameDt = _frameDt;
   for (const b of G.buildings) {
     // 建造落地动画
     if (b.animY !== undefined && b.animY < 0) {

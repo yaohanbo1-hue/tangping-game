@@ -147,8 +147,11 @@ const DreamEcology = {
           // 敌人身上的灼烧状态是 burnT/burnStack（旧条件读不存在的 burn 字段，恒为假）
           if ((o.burnT > 0 || o.burnStack > 0) && eDist(e, o) < 160) {
             chain.push({ type: 'ignite', source: o.type, aoeRadius: 100 });
-            // 点燃伤害：每 0.5s 烧 2% 最大生命（下限 5%，击杀仍由正常结算走）
-            if (typeof G !== 'undefined' && G.enemies.indexOf(e) >= 0) e.hp = Math.max(e.maxHp * 0.05, e.hp - e.maxHp * 0.02);
+            // 点燃伤害：每 0.5s 烧 2% 最大生命（不会烧穿到 5% 以下，击杀仍由正常结算走；
+            // 直接 Math.max 会把已低于 5% 的敌人「烧回」5% 血，这里加一道上限钳制）
+            if (typeof G !== 'undefined' && G.enemies.indexOf(e) >= 0 && e.hp > e.maxHp * 0.05) {
+              e.hp = Math.max(e.maxHp * 0.05, e.hp - e.maxHp * 0.02);
+            }
             break;
           }
         }
@@ -1819,7 +1822,8 @@ const DreamFragments = {
     if (!enemy || !enemy.type) return null;
     // 找到匹配的碎片：BOSS 一律归一成 type='boss'，专属掉落要按 bossKey 匹配（否则 frag_30 永不掉落）
     const candidates = this.FRAGMENT_DEFS.filter(f =>
-      (f.dropFrom === enemy.type || (enemy.bossKey && f.dropFrom === enemy.bossKey)) && !this._collected.has(f.id)
+      (f.dropFrom === enemy.type || (enemy.bossKey && f.dropFrom === enemy.bossKey))
+      && !(this._collected && this._collected.has(f.id))
     );
     if (!candidates.length) return null;
 
@@ -1838,6 +1842,9 @@ const DreamFragments = {
    * @returns {object|null} 碎片定义，或 null（已收集过）
    */
   collectFragment(fragmentId) {
+    // _collected 只在 initFragments 里建；剧情奖励/委托奖励可能在极端时序下先到，
+    // 这里兜底懒初始化，避免「读旧存档/未初始化时收集碎片直接抛错」
+    if (!this._collected) this._collected = new Set();
     if (this._collected.has(fragmentId)) return null;
     const frag = this.FRAGMENT_DEFS.find(f => f.id === fragmentId);
     if (!frag) return null;

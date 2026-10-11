@@ -28,7 +28,7 @@ function toCanvas(e) {
  *   统一用 Pointer Events：iOS Safari 13+ / Android Chromium / 华为浏览器 / 微信 X5 都支持。
  * ------------------------------------------------------------------ */
 const CANCEL_HOLD_MS = 520;
-let _holdTimer = null, _holdStart = null, _holdFired = false;
+let _holdTimer = null, _holdStart = null, _holdFired = false, _lastTouchAt = 0;
 function cancelSelection() {
   selectedBuildKey = null; selected = null; syncCards();
 }
@@ -59,6 +59,7 @@ cv.addEventListener('mousemove', e => { const p = toCanvas(e); applyCanvasPointe
 cv.addEventListener('mouseleave', () => { hoverCell = null; mouse.x = -999; });
 cv.addEventListener('pointerdown', e => {
   if (e.pointerType !== 'touch') return;      // 鼠标/触控板继续走下面的 click
+  _lastTouchAt = Date.now();
   SFX.init();
   const p = toCanvas(e);
   applyCanvasPointer(p.x, p.y);
@@ -90,7 +91,9 @@ cv.addEventListener('click', e => {
 cv.addEventListener('contextmenu', e => {
   e.preventDefault();
   clearHold();
-  _holdFired = true;   // 安卓长按会同步触发 contextmenu：与 520ms 计时器互斥，避免重复取消/吞掉随后的点按
+  // 只有「触摸长按」合成的 contextmenu 才标记吞掉随后的 click；
+  // 鼠标右键取消若也置位，桌面端右键后紧接的第一次左键点按会被静默吃掉
+  if (_holdStart || Date.now() - _lastTouchAt < 800) _holdFired = true;   // 安卓长按会同步触发 contextmenu：与 520ms 计时器互斥，避免重复取消
   cancelSelection();
 });
 const SKILL_MAP = { q: 'meteor', w: 'freeze', e: 'overclock', r: 'mend', t: 'repel', f: 'siphon' };
@@ -101,8 +104,12 @@ window.addEventListener('keydown', e => {
     e.preventDefault(); return;
   }
   const target = e.target;
-  if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(target.tagName) ||
-    (target.closest && target.closest('[role="button"]')))) return;
+  // 文本输入（含可编辑区）里的按键一律让给输入框
+  if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+  // 焦点停在按钮/链接上时，空格回车等让给按钮自身触发；但 ESC 必须始终生效，
+  // 否则鼠标点完任意按钮（焦点留在按钮上）再按 ESC 就无法关面板/取消选择
+  if (target && e.key !== 'Escape' &&
+    (/^(BUTTON|A)$/.test(target.tagName) || (target.closest && target.closest('[role="button"]')))) return;
   // 保留浏览器的 Ctrl/Alt/Meta 系统快捷键（例如 Ctrl+S 保存网页、Ctrl+P 打印）。
   if (e.ctrlKey || e.altKey || e.metaKey) return;
   // 菜单、抽奖、仓库和结算画面打开时，不能让按键操作被遮住的游戏场景。
@@ -118,7 +125,8 @@ window.addEventListener('keydown', e => {
   const k = e.key;
   if (k === 'Escape') {
     selectedBuildKey = null; selected = null; syncCards();
-    ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => $(p).classList.remove('open'));
+    // 与 togglePanel 的互斥逻辑保持一致：滑出面板撤 .open，内联面板走 togglePanel 收起
+    ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => { if ($(p)) $(p).classList.remove('open'); });
     if ($('itemDetail') && $('itemDetail').classList.contains('show')) { closeQuestItem(); return; }
     ['questPanel', 'runePanel', 'savePanel'].forEach(p => { if ($(p) && $(p).classList.contains('open')) togglePanel(p); });
     return;
@@ -557,7 +565,7 @@ function loop(now) {
       while (simAcc >= FIXED_DT && n < 15) { step(FIXED_DT); simAcc -= FIXED_DT; n++; }
       if (n >= 15) simAcc = 0;      // 追不上就丢掉欠帧，避免雪崩
     } else simAcc = 0;
-    if (G) { render(); updateHUD(dt); }
+    if (G) { render(dt); updateHUD(dt); }   // 帧时长传给渲染层，动画衰减按真实时间推进
   } catch (err) {
     if (G) G.loopErrors = (G.loopErrors || 0) + 1;
     console.error('[loop]', err);

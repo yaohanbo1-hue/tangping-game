@@ -163,29 +163,45 @@ function updateHUD(dt) {
   updateWavePreview();
   const chEl = $('hudChallenge');
   if (chEl) {
-    if (G.challenge && G.state === 'wave') {
-      const c = G.challenge;
-      const v = c.id === 'time' ? (G.waveTime || 0) : (G.track && G.track[c.def.track]) || 0;
+    const c = G.challenge;
+    // def 判空：def 含函数无法序列化，重链失败/脏数据时不能整个 updateHUD 抛错
+    if (c && c.def && G.state === 'wave') {
+      const cdef = c.def;
+      const v = cdef.track === 'time' ? (G.waveTime || 0) : (G.track && G.track[cdef.track]) || 0;
       const tv = c.target;
-      const shown = c.id === 'time' ? v.toFixed(0) + 's/' + tv + 's' : Math.floor(v) + '/' + Math.round(tv);
-      const pass = c.def.cmp === 'le' ? v <= tv : v >= tv;
-      chEl.style.display = '';
-      chEl.innerHTML = '<span class="chi">' + c.def.icon + '</span><b>' + c.def.name + '</b><span class="chp ' +
-        (pass ? 'ok' : 'no') + '">' + shown + '</span>';
-      chEl.title = (c.def && typeof c.def.desc === 'function') ? c.def.desc(G.wave) : '';
-    } else { chEl.style.display = 'none'; }
+      const shown = cdef.track === 'time' ? v.toFixed(0) + 's/' + tv + 's' : Math.floor(v) + '/' + Math.round(tv);
+      const pass = cdef.cmp === 'le' ? v <= tv : v >= tv;
+      // 数值没变就别每 80ms 重建一次 innerHTML（签名缓存，同 updateQuestHUD）
+      const chSig = c.id + '|' + shown + '|' + pass;
+      if (chSig !== _challengeHudSig) {
+        _challengeHudSig = chSig;
+        chEl.style.display = '';
+        chEl.innerHTML = '<span class="chi">' + cdef.icon + '</span><b>' + cdef.name + '</b><span class="chp ' +
+          (pass ? 'ok' : 'no') + '">' + shown + '</span>';
+        chEl.title = (typeof cdef.desc === 'function') ? cdef.desc(G.wave) : '';
+      }
+    } else {
+      if (_challengeHudSig !== '') { _challengeHudSig = ''; chEl.innerHTML = ''; }
+      chEl.style.display = 'none';
+    }
   }
   updateQuestHUD();   // 委托进度随 HUD 一起刷新（内部有签名缓存，不会每帧写 DOM）
   updateBossBar();    // BOSS 横幅（同样有签名缓存）
   $('btnSkip').style.display = G.state === 'build' ? '' : 'none';
   if ($('questPanel') && $('questPanel').classList.contains('open')) renderQuestPanel();
-  // 建造栏角标：每种建筑已建几座（把「还能放几座」变得一眼可见）
+  // 建造栏：角标（已建几座）+ 可负担/选中态一次遍历写完（原先每 80ms 遍历两遍）
   const cnt = {};
   G.buildings.forEach(b => { cnt[b.type] = (cnt[b.type] || 0) + 1; });
   $('buildBar').querySelectorAll('.card').forEach(c => {
     const n = cnt[c.dataset.k] || 0;
     const el2 = c.querySelector('.cnt');
     if (el2) { el2.textContent = n ? n : ''; el2.style.display = n ? 'block' : 'none'; }
+    const d = BUILD_DEFS[c.dataset.k];
+    const ok = G.gold >= d.cost.gold;
+    c.classList.toggle('no', !ok);
+    c.classList.toggle('ok', ok && c.dataset.k !== selectedBuildKey);
+    c.classList.toggle('okTower', ok && !!d.tower && c.dataset.k !== selectedBuildKey);
+    c.classList.toggle('sel', c.dataset.k === selectedBuildKey);
   });
   // HUD 底边备战倒计时进度条（越接近开战越红）
   const pg = $('hudProg');
@@ -198,14 +214,6 @@ function updateHUD(dt) {
     } else pg.style.display = 'none';
   }
   _hudPulseCheck();
-  $('buildBar').querySelectorAll('.card').forEach(c => {
-    const d = BUILD_DEFS[c.dataset.k];
-    const ok = G.gold >= d.cost.gold;
-    c.classList.toggle('no', !ok);
-    c.classList.toggle('ok', ok && c.dataset.k !== selectedBuildKey);
-    c.classList.toggle('okTower', ok && !!d.tower && c.dataset.k !== selectedBuildKey);
-    c.classList.toggle('sel', c.dataset.k === selectedBuildKey);
-  });
   $('skillBar').querySelectorAll('.skill').forEach(b => {
     const k = b.dataset.k, cd = G.skills[k], s = SKILL_DEFS[k];
     const trial = G.trialId && POSTGAME_TRIALS.find(t => t.id === G.trialId);
@@ -216,18 +224,21 @@ function updateHUD(dt) {
     b.querySelector('.scd').style.height = (cd / s.cd * 100) + '%';
     b.querySelector('.scd').textContent = cd > 0 ? Math.ceil(cd) : '';
   });
-  $('techList').querySelectorAll('.tech').forEach(r => {
-    const k = r.dataset.k, d = TECH_DEFS[k], lv = G.tech[k];
-    r.querySelector('.tlv').textContent = lv + '/' + d.max;
-    r.querySelector('.tbar i').style.width = (lv / d.max * 100) + '%';
-    const btn = r.querySelector('.tbtn');
-    const locked = techLocked(k);
-    r.classList.toggle('locked', locked);
-    if (lv >= d.max) { btn.textContent = 'MAX'; btn.disabled = true; }
-    else if (locked) { btn.textContent = '🔒'; btn.disabled = true; }
-    else { const c = d.cost(lv); btn.textContent = fmt(c) + '🔮'; btn.disabled = G.souls < c; }
-  });
-  $('techSouls').textContent = fmt(G.souls);
+  // 科技面板关着的时候不必每 80ms 刷整棵列表（打开后下一 tick 自然刷新）
+  if ($('techPanel').classList.contains('open')) {
+    $('techList').querySelectorAll('.tech').forEach(r => {
+      const k = r.dataset.k, d = TECH_DEFS[k], lv = G.tech[k];
+      r.querySelector('.tlv').textContent = lv + '/' + d.max;
+      r.querySelector('.tbar i').style.width = (lv / d.max * 100) + '%';
+      const btn = r.querySelector('.tbtn');
+      const locked = techLocked(k);
+      r.classList.toggle('locked', locked);
+      if (lv >= d.max) { btn.textContent = 'MAX'; btn.disabled = true; }
+      else if (locked) { btn.textContent = '🔒'; btn.disabled = true; }
+      else { const c = d.cost(lv); btn.textContent = fmt(c) + '🔮'; btn.disabled = G.souls < c; }
+    });
+    $('techSouls').textContent = fmt(G.souls);
+  }
   if ($('achPanel').classList.contains('open')) {
     $('achList').querySelectorAll('.ach').forEach(d => {
       const got = !!G.ach[d.dataset.k];
@@ -239,6 +250,7 @@ function updateHUD(dt) {
   $('achCount').textContent = got + '/' + ACHIEVEMENTS.length;
   if ($('lotPanel').classList.contains('open')) updateLotteryHUD();
 }
+let _challengeHudSig = '';   // 挑战横幅的渲染签名（数值不变不重建 DOM）
 let _wavePreviewKey = '';
 function updateWavePreview() {
   const box = $('wavePreview');
@@ -282,12 +294,25 @@ function updateDetail(force) {
   let sig;
   // 血量按 5% 分档进签名：持续掉血时不必每 tick 整棵重建详情面板（会丢滚动位置、闪按钮）
   const hpPct = (hp, maxHp) => Math.round(hp / (maxHp || 1) * 20);
+  // 血量行单独提取成函数：分档签名会让面板少重建，但面板上的数字必须始终是当前值，
+  // 否则会把「重建那一刻」的旧血量当精确值一直显示，误导玩家（下面签名未变时只刷这一行）
+  const hpLine = s.isBed
+    ? () => '生命 ' + Math.ceil(G.bed.hp) + '/' + Math.ceil(G.bed.maxHp) + (G.bed.shieldMax ? '　护盾 ' + Math.ceil(G.bed.shield) : '')
+    : s.isDoor
+      ? () => '第 ' + (s.door.lane + 1) + ' 道门　生命 ' + Math.ceil(s.door.hp) + '/' + Math.ceil(s.door.maxHp) +
+        (s.door.shieldMax ? '　护盾 ' + Math.ceil(s.door.shield) + '/' + Math.ceil(s.door.shieldMax) : '')
+      : () => '生命 ' + Math.ceil(s.hp) + '/' + Math.ceil(s.maxHp) + (s.shieldMax ? '　护盾 ' + Math.ceil(s.shield) + '/' + Math.ceil(s.shieldMax) : '') +
+        '　运行不消耗电力' + (s.kills ? '　击杀 <b class="hl">' + s.kills + '</b>' : '');
   if (s.isBed) sig = 'bed|' + G.bed.lv + '|' + hpPct(G.bed.hp, G.bed.maxHp) + '|' + (G.gold > bedUpgradeCost(G.bed.lv) ? 1 : 0);
   else if (s.isDoor) sig = 'door|' + s.door.lane + '|' + s.door.lv + '|' + hpPct(s.door.hp, s.door.maxHp) + '|' + (G.gold > doorUpgradeCost(s.door.lv) ? 1 : 0);
   else if (s.def) sig = 'b|' + s.type + '|' + s.level + '|' + (s.branch || '') + '|' + hpPct(s.hp, s.maxHp) + '|' + G.buildings.indexOf(s) +
     '|' + (s.resN || 0) + '|' + (s.resDmg || 1) + '|' + (s.kills || 0) + '|' + (s.targetMode || targetModeOf(s).id) + '|' + (canAfford(upgradeCost(s.def, s.level)) ? 1 : 0);
   else return;
-  if (!force && sig === detailSig) return;
+  if (!force && sig === detailSig) {
+    const hpEl = $('dHpLine');
+    if (hpEl) { const t = hpLine(); if (hpEl.innerHTML !== t) hpEl.innerHTML = t; }
+    return;
+  }
   detailSig = sig;
   el.style.display = 'block';
   let html = '', act = '';
@@ -299,7 +324,7 @@ function updateDetail(force) {
       '<div class="dst">金币产出 <b class="hl">' + fmt1(bedGoldEff()) + '</b>/秒' +
       (dm !== 1 ? '　<span class="dup2">基础 ' + fmt1(bedGold()) + ' × 难度 ' + dm + '</span>' : '') +
       (nx ? '　<span class="dup2">下一级 ' + fmt1(nx) + '/秒（x2）</span>' : '') + '</div>' +
-      '<div class="dst">生命 ' + Math.ceil(G.bed.hp) + '/' + Math.ceil(G.bed.maxHp) + (G.bed.shieldMax ? '　护盾 ' + Math.ceil(G.bed.shield) : '') + '</div>' +
+      '<div class="dst" id="dHpLine">' + hpLine() + '</div>' +
       '<div class="dnote">躺得久不再自动加金币，<b>升级床</b>才是提升产出的唯一途径。</div>';
     act = G.bed.lv >= 50 ? '<span class="max">已至巅峰</span>'
       : '<button id="dUp">升级 ' + fmt(c) + '💰</button><button id="dMax" class="maxup">⏫升满</button>';
@@ -307,8 +332,7 @@ function updateDetail(force) {
     const d = s.door;
     const c = doorUpgradeCost(d.lv);
     html = '<div class="dhead"><span class="dico">🚪</span><b>' + doorName(d) + '</b><span class="dlv">Lv.' + d.lv + '/50</span></div>' +
-      '<div class="dst">第 ' + (d.lane + 1) + ' 道门　生命 ' + Math.ceil(d.hp) + '/' + Math.ceil(d.maxHp) +
-      (d.shieldMax ? '　护盾 ' + Math.ceil(d.shield) + '/' + Math.ceil(d.shieldMax) : '') + '</div>' +
+      '<div class="dst" id="dHpLine">' + hpLine() + '</div>' +
       (d.lv < 50 ? '<div class="dup">下一级 → ' + NAME_POOL.door[d.lv] + '　生命 ' + Math.ceil(doorMaxHp(d.lv + 1)) + '</div>' : '') +
       '<div class="dnote">门被攻破后，该路敌人会冲进房间拆建筑。</div>';
     act = d.lv >= 50 ? '<span class="max">已至巅峰</span>'
@@ -321,9 +345,7 @@ function updateDetail(force) {
       (s.def.noPowerUp ? '<div class="dnote">⚡ <b>持续发电来源</b>，升级永不耗电，发电速率每级 <b>x2</b></div>'
         : (s.level < FREE_POWER_LV ? '<div class="dnote">⚡ Lv' + (FREE_POWER_LV + 1) + ' 之前升级<b>不消耗电量</b></div>' : '')) +
       '<div class="dst">' + s.def.statText(st) + '</div>' +
-      '<div class="dst">生命 ' + Math.ceil(s.hp) + '/' + Math.ceil(s.maxHp) + (s.shieldMax ? '　护盾 ' + Math.ceil(s.shield) + '/' + Math.ceil(s.shieldMax) : '') +
-      '　运行不消耗电力' +
-      (s.kills ? '　击杀 <b class="hl">' + s.kills + '</b>' : '') + '</div>';
+      '<div class="dst" id="dHpLine">' + hpLine() + '</div>';
     // 面板 DPS：回答「这座炮塔到底值不值得升」
     if (s.def.tower) {
       const dps = towerPanelDps(st, s);
@@ -579,12 +601,16 @@ function updateRunePanel() {
     }
   }
 }
-function togglePanel(id) {
-  // 同时只开一个面板：tech/ach/help/lot 用 .open 滑出，quest/rune/save 用内联 display
+/** 面板互斥：收起除 id 之外的全部面板（tech/ach/help/lot 走 .open，quest/rune/save 另有内联 display） */
+function _closeOtherPanels(id) {
   ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => { if (p !== id && $(p)) $(p).classList.remove('open'); });
   ['questPanel', 'runePanel', 'savePanel'].forEach(p => {
     if (p !== id && $(p)) { $(p).classList.remove('open'); $(p).style.display = 'none'; }
   });
+}
+function togglePanel(id) {
+  // 同时只开一个面板：tech/ach/help/lot 用 .open 滑出，quest/rune/save 用内联 display
+  _closeOtherPanels(id);
   const el = $(id);
   el.classList.toggle('open');
   // 修复线上现存 bug：runePanel 是内联 display 结构（非 .slide 滑出面板），
@@ -953,7 +979,8 @@ function showTrialPanel() {
 function startRun(trialId) {
   if (startRun._busy) return false;   // 防连点：双击会重复扣入场金币
   startRun._busy = true;
-  setTimeout(() => { startRun._busy = false; }, 600);
+  clearTimeout(startRun._busyTimer);
+  startRun._busyTimer = setTimeout(() => { startRun._busy = false; startRun._busyTimer = null; }, 600);
   const trial = trialId && POSTGAME_TRIALS.find(t => t.id === trialId);
   setMenuStartFeedback('', !!trial);
   const selectedDiff = DIFFS[menuDiff] || DIFFS.normal;
@@ -963,6 +990,9 @@ function startRun(trialId) {
   const freeAdm = d.admin && (META.equipped || []).indexOf('freeAdmin') >= 0;
   const cost = (d.cost > 0 && !freeAdm) ? d.cost : 0;
   if (META.gold < cost) {
+    // 失败路径立即解锁防抖：否则 600ms 内的重试会被静默吞掉，玩家以为按钮失灵
+    clearTimeout(startRun._busyTimer);
+    startRun._busyTimer = null; startRun._busy = false;
     const message = '金币不足：' + d.name + ' 难度需要 ' + d.cost + ' 金币。去抽奖或完成其他难度来积攒金币。';
     SFX.err(); setTip(message, 5); setMenuStartFeedback(message, !!trial);
     return false;
@@ -1195,6 +1225,10 @@ function _pauseForStory() {
 function _resumeAfterStory() {
   if (!_storyPausedByUI) return;
   _storyPausedByUI = false;
+  // 菜单/结算已接管画面或对局已结束时，不要把模拟解回运行态（否则游戏会在菜单底下继续跑）
+  if (typeof G !== 'undefined' && G && G.over) return;
+  const ov = $('overlay');
+  if (ov && ov.style.display === 'flex') return;
   paused = false;
   const btn = $('btnPause');
   if (btn) btn.textContent = '⏸';
@@ -1306,7 +1340,9 @@ const STORY_SPEAKERS = (function () {
 
 function showStoryDialog(data) {
   const panel = $('storyDialog');
-  if (!panel) return;
+  // 空数据直接忽略：undefined 进队列会在 _processStoryQueue 里抛错，
+  // 面板停在 display:flex 且再也不会走 hideStoryDialog → 暂停无人恢复
+  if (!panel || !data) return;
   storyQueue.push(data);
   if (!storyTyping && panel.style.display !== 'flex') _processStoryQueue();
 }
@@ -2051,7 +2087,7 @@ function wireDreamMenuButtons() {
  *    · 委托面板 —— 当前目标进度 + 信物背包 + 六章进度
  *    · 信物详情 —— 点开读全文（lore），这是"掉落物也有叙事"的关键
  * ================================================================== */
-let _actTimer = null;
+let _actTimer = null, _actHideTimer = null;
 
 /** 章节卡演出：先暂停游戏，避免全屏遮住时被偷家 */
 function showActCard(act, title, sub) {
@@ -2065,19 +2101,29 @@ function showActCard(act, title, sub) {
   el.style.display = 'flex';
   void el.offsetWidth;
   el.classList.add('show');
-  if (_actTimer) clearTimeout(_actTimer);
+  if (_actTimer) { clearTimeout(_actTimer); _actTimer = null; }
+  // 上一张卡的淡出定时器必须清掉：否则它会把刚弹出的新卡提前收走，
+  // 而新卡的 hideActCard 看到 display=none 直接返回，配对恢复丢失 → 永久卡在暂停
+  if (_actHideTimer) { clearTimeout(_actHideTimer); _actHideTimer = null; }
   _actTimer = setTimeout(hideActCard, 2300);
 }
 
 function hideActCard() {
   const el = $('actCard');
-  if (!el || el.style.display === 'none') return;
   if (_actTimer) { clearTimeout(_actTimer); _actTimer = null; }
-  el.classList.remove('show');
-  el.classList.add('out');
-  setTimeout(() => { el.style.display = 'none'; el.classList.remove('out'); }, 620);
+  if (_actHideTimer) { clearTimeout(_actHideTimer); _actHideTimer = null; }
+  if (el && el.style.display !== 'none') {
+    el.classList.remove('show');
+    el.classList.add('out');
+    _actHideTimer = setTimeout(() => {
+      _actHideTimer = null;
+      el.style.display = 'none';
+      el.classList.remove('out');
+    }, 620);
+  }
   // 幕卡的暂停在这里配对恢复（此前依赖后续剧情框兜底解锁，剧情为空时会永久卡在暂停）。
   // 若剧情框已经弹出，把恢复留给 hideStoryDialog，避免对白还没读完战斗就动起来。
+  // 注意：即使卡片已不可见也要走到这里，保证「暂停」一定有配对的「恢复」。
   const sp = $('storyDialog');
   if (!sp || sp.style.display !== 'flex') _resumeAfterStory();
 }
@@ -2147,6 +2193,7 @@ function renderQuestPanel(force) {
 function showQuestPanel() {
   const el = $('questPanel');
   if (!el) return;
+  _closeOtherPanels('questPanel');
   renderQuestPanel();
   el.style.display = '';
   el.classList.add('open');
@@ -2375,6 +2422,7 @@ function doLoadSlot(slot, d) {
 function showSavePanel() {
   const el = $('savePanel');
   if (!el) return;
+  _closeOtherPanels('savePanel');
   renderSavePanel();
   el.style.display = '';
   el.classList.add('open');

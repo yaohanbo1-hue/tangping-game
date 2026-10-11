@@ -28,6 +28,18 @@ const SaveSystem = {
     const n = Number(value);
     return clamp(Number.isFinite(n) ? n : (fallback || 0), min === undefined ? -Infinity : min, max === undefined ? Infinity : max);
   },
+  /** 对象内的数值字段清洗：非有限数直接剔除，避免脏存档的 NaN 打穿血量/伤害/结算（布尔与列表原样保留） */
+  _cleanNums(o) {
+    if (!o || typeof o !== 'object') return o;
+    Object.keys(o).forEach(k => {
+      const v = o[k];
+      if (typeof v === 'boolean' || (v && typeof v === 'object')) return;
+      const n = Number(v);
+      if (Number.isFinite(n)) o[k] = n;
+      else delete o[k];
+    });
+    return o;
+  },
   /** 写入失败的两种已知名：Chromium 用 QuotaExceededError，Firefox 用 NS_ERROR_DOM_QUOTA_REACHED */
   _isQuota(name) {
     return name === 'QuotaExceededError' || name === 'NS_ERROR_DOM_QUOTA_REACHED';
@@ -366,12 +378,15 @@ const SaveSystem = {
         const ev = EVENTS.find(e => e.id === run.eventId);
         if (ev) G.event = ev;
       }
-      if (run.prize) Object.assign(G.prize, run.prize);
-      if (run.fate) Object.assign(G.fate, run.fate);
-      if (run.fateWave) Object.assign(G.fateWave, run.fateWave);
-      if (run.affection) G.affection = Object.assign({}, run.affection);
-      if (run.melodyBuff) G.melodyBuff = run.melodyBuff;
-      if (run.buff) Object.assign(G.buff, run.buff);
+      // 命运/奖品/增益都是 Object.assign 直灌：脏存档里的 NaN 会一路打穿血量、伤害与结算，
+      // 这里统一清洗数值字段（布尔与 notes 列表原样保留）
+      if (run.prize) { Object.assign(G.prize, run.prize); this._cleanNums(G.prize); }
+      if (run.fate) { Object.assign(G.fate, run.fate); this._cleanNums(G.fate); }
+      if (run.fateWave) { Object.assign(G.fateWave, run.fateWave); this._cleanNums(G.fateWave); }
+      if (run.affection && typeof run.affection === 'object') G.affection = this._cleanNums(Object.assign({}, run.affection));
+      if (run.melodyBuff && typeof run.melodyBuff === 'object') G.melodyBuff = this._cleanNums(run.melodyBuff);
+      if (run.buff) { Object.assign(G.buff, run.buff); this._cleanNums(G.buff); }
+      if (!Array.isArray(G.fate.notes)) G.fate.notes = [];   // notes 被脏数据顶掉后 applyStoryEffect.push 会抛错
 
       const prog = d.progress || {};
       if (prog.tech) Object.keys(prog.tech).forEach(k => { if (G.tech[k] !== undefined) G.tech[k] = Math.max(0, prog.tech[k] | 0); });
@@ -388,13 +403,12 @@ const SaveSystem = {
       // 战斗中存档重开本波：回滚本波净收益（击杀掉落、利息等可重复获取的部分），
       // 本波花费随建筑保留（花费已从基准里扣除）——反复存/读不再刷资源。
       const econ = run.waveEcon;
+      let dropIds = null;
       if (resumeWave && econ && typeof econ === 'object') {
         G.gold = Math.max(0, this._num(econ.startGold, G.gold) - this._num(econ.spentGold, 0));
         G.souls = Math.max(0, this._num(econ.startSouls, G.souls) - this._num(econ.spentSouls, 0));
-        if (Array.isArray(econ.runes) && Array.isArray(G.runeBag) && econ.runes.length) {
-          const dropIds = new Set(econ.runes);
-          G.runeBag = G.runeBag.filter(r => !(r && dropIds.has(r.id)));
-        }
+        if (Array.isArray(econ.runes) && econ.runes.length) dropIds = new Set(econ.runes);
+        if (dropIds && Array.isArray(G.runeBag)) G.runeBag = G.runeBag.filter(r => !(r && dropIds.has(r.id)));
       }
       // 重定本波经济基准：之后的读档都以当前值为新基准，多次读档不会重复回滚
       G.waveStartGold = G.gold; G.waveSpentGold = 0;
@@ -441,6 +455,11 @@ const SaveSystem = {
           G.buildings.push(b); G.grid[r * COLS + c] = b;
         });
       }
+      // 本波掉落的符文不管在背包里还是已镶到建筑上都要随回滚移除，
+      // 否则「掉落→镶嵌→存档→读档」可以把符文白嫖成两份
+      if (dropIds && dropIds.size) G.buildings.forEach(b => {
+        if (Array.isArray(b.runes)) b.runes = b.runes.map(r => (r && dropIds.has(r.id)) ? null : r);
+      });
       this.restoreDream(d.dream);
       G.resDirty = true;
       if (typeof QuestSystem !== 'undefined') QuestSystem.init();

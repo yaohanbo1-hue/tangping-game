@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="game-version" content="1.9.3">
+<meta name="game-version" content="1.9.2">
 <!-- 手机端：viewport-fit=cover 让页面铺进刘海区，安全区由 CSS 变量 + JS 缩放一起处理 -->
 <meta name="theme-color" content="#08060f">
 <meta name="color-scheme" content="dark">
@@ -114,7 +114,7 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 #hud.ultra .stat i{font-size:11px}
 #hud.ultra .btn{padding:4px 5px;font-size:10px}
 #hud.ultra .logo{font-size:13px}
-#detail{position:absolute;left:392px;bottom:148px;width:320px;max-height:340px;overflow-y:auto;
+#detail{position:absolute;left:392px;bottom:170px;width:320px;max-height:340px;overflow-y:auto;
   background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 42%,rgba(255,255,255,.05)),rgba(16,13,36,.14);
   backdrop-filter:blur(4px) saturate(160%);-webkit-backdrop-filter:blur(4px) saturate(160%);
   border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:12px 14px;z-index:6;display:none;
@@ -187,21 +187,21 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
   background:radial-gradient(64% 64% at 50% 50%,rgba(255,255,255,.07),rgba(255,255,255,0) 72%);
   filter:drop-shadow(0 2px 5px var(--shadow-1));transition:transform .2s cubic-bezier(.2,.9,.3,1.4)}
 .card:hover .ico{transform:scale(1.12)}
-.card .nm{font-size:10px;font-weight:700;margin-top:2px;text-align:center;color:#ddd8f5;line-height:1.25;text-shadow:0 1px 2px var(--shadow-2);
+.card .nm{font-size:10px;font-weight:700;margin-top:1px;text-align:center;color:#ddd8f5;line-height:1.25;text-shadow:0 1px 2px var(--shadow-2);
   max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 1px;letter-spacing:.1px}
 .card .dt{margin-top:auto;display:inline-flex;align-items:center;gap:1px;font-size:8.5px;font-weight:700;line-height:1.75;
   padding:0 7px 1px 5px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid currentColor;opacity:.95;max-width:100%;box-sizing:border-box;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card .dt i{font-style:normal;font-size:9.5px;line-height:1}
 .card .dt.generic{color:#8f8ab0;border-color:rgba(143,138,176,.35)}
-.card .pr{display:flex;flex-direction:column;align-items:center;gap:0;font-size:9.5px;width:100%;margin-top:2px;line-height:1.2}
+.card .pr{display:flex;flex-direction:column;align-items:center;gap:0;font-size:9.5px;width:100%;margin-top:1px;line-height:1.2}
 .card .pr .g{color:var(--gold);font-weight:800}
 .card .kb{position:absolute;top:4px;right:5px;font-size:8.5px;font-weight:800;line-height:1.5;
   background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:0 4px;color:var(--text-note);
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 /* 右侧控制区：必须完整塞进 150px 高的 #bottom（修复 11 个按钮 + 提示被裁掉的问题）
    预算：136px 内容高 = 技能条 36 + 间隔 5 + 按钮网格 2 行 44 + 间隔 5 + 提示 46 */
-#right{width:232px;display:flex;flex-direction:column;gap:4px;min-height:0;
+#right{width:232px;display:flex;flex-direction:column;gap:3px;min-height:0;
   border-left:1px solid rgba(255,255,255,.07);padding-left:8px;
   background:linear-gradient(90deg,rgba(255,255,255,.02),transparent 30%)}
 #skillBar{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;flex-shrink:0}
@@ -220,17 +220,21 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 .skill.sealed{filter:grayscale(.6) brightness(.78);cursor:not-allowed}
 .skill.sealed::after{content:'封印';position:absolute;right:2px;bottom:2px;z-index:4;padding:1px 3px;border:1px solid rgba(196,181,253,.3);border-radius:4px;
   background:rgba(25,18,48,.88);color:#d5c5ff;font-size:7px;line-height:1.2}
-.skill:not(.cool){border-color:rgba(158,240,26,.32)}
+/* :not(.cool) 与 .skill:hover 同权重（0,2,0），写在 hover 之后会把 hover 边框顶掉 —— 排除 hover */
+.skill:not(.cool):not(:hover){border-color:rgba(158,240,26,.32)}
 #ctrls{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;flex-shrink:0}
 #ctrls .btn{min-width:0;width:100%;padding:3px 0;font-size:9px;font-weight:700;text-align:center;letter-spacing:0;
   line-height:1.2;overflow:hidden;white-space:nowrap;border-radius:8px}
 /* 提示区：原来 3 行文字塞不进可用高度，最后一行被 overflow:hidden 切掉半截。
-   把技能条/按钮网格各收 1~2px，攒出的高度留给这里。 */
-#hint{font-size:9px;color:#9d96c9;line-height:1.5;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
-  padding:4px 8px;border-radius:8px;flex:1;min-height:0;overflow:hidden;
+   把技能条/按钮网格各收 1~2px，攒出的高度留给这里。
+   另：232px 宽的 #right 里第二行（技能/升级/出售/符文/暂停 五枚胶囊）必然折成两行，
+   实际排 4 行。胶囊行高 1.7 会把每行撑到 16.4px，4 行装不下 —— 收到 1.35（胶囊 13.5px），
+   4 行 ≈ 62px，配合 #hint 上下 padding 收 1px、#right gap 收 1px，刚好放满且不裁切。 */
+#hint{font-size:9px;color:#9d96c9;line-height:1.4;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+  padding:3px 8px;border-radius:8px;flex:1;min-height:0;overflow:hidden;
   border:1px solid rgba(255,255,255,.06);box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
 #hint b{color:#c9c2f5;font-weight:700;background:rgba(130,120,240,.2);border:1px solid rgba(145,135,245,.32);
-  border-radius:5px;padding:0 5px;margin-right:3px;font-size:8.5px;display:inline-block;line-height:1.7}
+  border-radius:5px;padding:0 5px;margin-right:3px;font-size:8.5px;display:inline-block;line-height:1.35}
 .slide{position:absolute;right:0;top:56px;width:352px;height:504px;
   background:linear-gradient(180deg,rgba(14,11,30,.92),rgba(10,8,22,.94));
   backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);
@@ -370,6 +374,8 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 #ctrls .upmax{border-color:rgba(var(--legend-rgb),.55);background:rgba(var(--legend-rgb),.16);color:var(--gold-soft)}
 #ctrls .rune{border-color:rgba(192,132,252,.5);background:rgba(192,132,252,.14);color:var(--epic-t)}
 #ctrls .upmax:hover{background:rgba(var(--legend-rgb),.32);transform:translateY(-1px)}
+/* #ctrls .rune 与 .btn:hover 同权重冲突：变体自带 background/border-color 会盖掉通用 hover 态，补一条专属 hover */
+#ctrls .rune:hover{background:rgba(192,132,252,.3);border-color:rgba(192,132,252,.7)}
 .dup{font-size:11px;color:var(--ok-2);background:rgba(124,243,154,.1);border-radius:5px;padding:4px 7px;margin-top:5px;line-height:1.5}
 .dact .maxup{flex:0 0 52px;border-color:rgba(255,224,102,.5);background:rgba(255,224,102,.14);color:var(--gold-3)}
 .dact .maxup:hover{background:rgba(255,224,102,.28)}
@@ -719,7 +725,7 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
   backdrop-filter:blur(3px) saturate(160%);-webkit-backdrop-filter:blur(3px) saturate(160%);
   text-shadow:0 1px 6px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.7);pointer-events:none}
 .forecast-head{display:flex;align-items:center;gap:8px;margin-bottom:5px;color:#e8ddff;font-size:10px;font-weight:800;letter-spacing:.5px}
-.forecast-head small{margin-left:auto;color:#948baa;font-size:8px;font-weight:500;letter-spacing:0}
+.forecast-head small{margin-left:auto;color:#a49dbc;font-size:8px;font-weight:500;letter-spacing:0}
 .forecast-enemies{display:flex;flex-wrap:wrap;gap:5px}
 .forecast-enemy,.forecast-boss{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:999px;
   background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.075);color:#d7d0e8;font-size:8.5px;white-space:nowrap}
@@ -926,9 +932,6 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 .fragment-gallery{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding-right:4px;margin:10px 0}
 .fragment-gallery::-webkit-scrollbar{width:6px}
 .fragment-gallery::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
-@keyframes legendGlow{
-  0%,100%{box-shadow:0 0 16px rgba(var(--legend-rgb),.2),0 0 40px rgba(var(--legend-rgb),.05)}
-  50%{box-shadow:0 0 28px rgba(var(--legend-rgb),.45),0 0 70px rgba(var(--legend-rgb),.15)}}
 
 /* ========= 中立生物 ========= */
 .neutral-indicator{position:absolute;z-index:7;display:flex;align-items:center;gap:4px;
@@ -1337,7 +1340,7 @@ body.touch #btnFull{display:inline-flex!important;align-items:center;justify-con
 /* 触屏布局：把有限的固定画布空间优先留给容易误触的战斗操作。 */
 body.touch #bottom{height:174px;padding:8px 12px;gap:10px}
 body.touch #buildBar{gap:6px;padding:5px 3px 4px}
-body.touch #buildBar .card{height:100%;padding:4px 3px 5px}
+body.touch #buildBar .card{height:100%;padding:4px 3px 4px}
 body.touch #buildBar .card .ico{height:34px;font-size:26px}
 /* 右侧控制区：技能格与按钮都放大到 44px 后，174px 底栏装不下「技能 1 行 + 按钮 2 行 + 提示」。
    改为「技能格 3×2（138px 宽）与按钮 6×2（264px 宽）并排」，两块等高 91px，剩余高度给提示区。
@@ -1360,8 +1363,14 @@ body.touch #hudTimer{font-size:16px}
 body.touch .net{font-size:12px!important}
 body.touch #hudRate{font-size:12px!important}
 /* fitHUD() 判定 HUD 溢出时的降级档：宁可字号小一档，也不要文字被 overflow:hidden 切掉 */
+/* 新字号（stat 16px / i 15px）后，compact/ultra 只降文字不降图标与按钮，胶囊内会撑爆：
+   补齐图标与按钮的同步降档（.stat i 原被 body.touch 的高权重规则钉在 15px）。
+   注意顺序：fitHUD 溢出时 compact 与 ultra 会同时挂上，两条同权重 —— ultra 必须写在后面才能生效 */
 body.touch #hud.compact .stat{font-size:14px}
+body.touch #hud.compact .stat i{font-size:13px}
+body.touch #hud.compact .btn{font-size:12px}
 body.touch #hud.ultra .stat{font-size:12.5px}
+body.touch #hud.ultra .stat i{font-size:11px}
 body.touch #hud.ultra .btn{font-size:11px}
 /* #right 加宽到 410px 后，建造栏右缘的渐隐/箭头跟随右移（否则会盖到按钮区上） */
 body.touch .story-dialog{left:50%;bottom:18px;width:min(1120px,calc(100% - 56px));max-height:calc(100% - 36px);padding:16px 22px}
@@ -1375,6 +1384,9 @@ body.touch .story-next{min-height:44px;padding:10px 28px}
 body.touch .panel .btn,body.touch .slide .btn{min-height:34px}
 body.touch .home-panel .btn{min-height:38px}
 body.touch .slide{width:min(460px,96%);height:calc(100% - 112px);top:56px}
+/* 底栏加高到 162/174px 后，详情面板与存档 toast 的下缘要跟着抬，避免压住建造卡片顶行 */
+body.touch #detail{bottom:182px}
+body.touch #svToast{bottom:182px}
 
 /* 手机上毛玻璃很吃 GPU：把最密集的几层模糊半径降下来（观感几乎无差别） */
 body.touch #hud,body.touch .panel,body.touch .slide,body.touch #overlay::before{
@@ -1417,9 +1429,12 @@ body.rotated #rotBar{display:flex}
   #overlay::before,.home-panel.panel,.home-layout>.setup-panel,.home-side>.record-card,.home-side>.home-shortcuts,.home-bottom>.home-guide,.home-bottom>.home-audio,
   .home-header h1,.home-kicker i,.home-clock>span,.home-start-actions .big,.home-music,.home-action,.story-avatar{animation:none!important}
   .home-panel *, .story-dialog *{scroll-behavior:auto!important;transition-duration:.01ms!important}
-  /* 游戏内无限循环动画：cardGlow / towerGlow / barArrow / lshake / titleShine / dreamTextPulse */
-  .card.ok,.card.okTower,#buildBar.canScroll::before,.lotmachine,
-  .panel h1,.panel.win h1,.dream-panel-title,.deep-dream-text,.deep-dream-sub{animation:none!important}
+  /* 游戏内无限循环动画：cardGlow / towerGlow / lshake / titleShine / dreamTextPulse /
+     btnPulse / legendGlow / mercy-pulse / dreamOrb / glitch / corrupt（补全遗漏的无限循环） */
+  .card.ok,.card.okTower,.lotmachine,
+  .panel h1,.panel.win h1,.dream-panel-title,.deep-dream-text,.deep-dream-sub,
+  .btns button.big,.fragment-card.legendary,.mercy-pulse,.deep-dream-transition::before,
+  .fourth-wall-glitch,.fourth-wall-corrupt{animation:none!important}
 }
 
 /* ==================== 夜班档案主页 · 深色编辑版 ==================== */
@@ -2143,7 +2158,7 @@ const WAVE_STORY = [
     text: '镜子里的你慢了一拍。你抬手，镜中人却望向了别处。镜面深处像有谁睁开眼，很快又被一层水汽遮住。雨声忽然远了，房间里只剩两种节奏相近的呼吸。玻璃上浮出一句话：别把没听见，当成没有发生。',
     choices: [
       { text: '面对内心。', effect: '直面心魔，全属性 +8%（本局）' },
-      { text: '闭嘴！', effect: '暴怒状态：全炮塔暴击率 +15%' },
+      { text: '闭嘴！', effect: '暴怒状态：全军暴击率 +15%' },
     ],
   },
   {
@@ -2213,7 +2228,7 @@ const WAVE_STORY = [
     wave: 40, speaker: '林小夏',
     text: '那晚我一直记得一盏灯。它明明很亮，照到走廊尽头时却像隔着一层雾。后来我常想，是不是有人在灯亮起来时说过什么；可每次想追上那句话，梦就把钟拨回 03:07。',
     choices: [
-      { text: '你是说……这不是白费的？', effect: '全属性 +15%，解锁「成长」成就' },
+      { text: '你是说……这不是白费的？', effect: '全属性 +15%，解锁「成长」印记' },
       { text: '现实里又没有梦魇。', effect: '获得 200 金币' },
     ],
   },
@@ -2234,7 +2249,7 @@ const WAVE_STORY = [
     text: '我把应急灯放在窗边，光刚好落在一角旧布上。这个动作让我觉得熟悉，可我想不起在哪做过。录音还剩最后一段；等你准备好，我们再一起核对，不必现在猜它的意思。',
     choices: [
       { text: '我们一起守住这盏灯。', effect: '同伴支持：全属性 +25%，持续到结局' },
-      { text: '最后的战斗，交给我。', effect: '单人模式：攻击力 x2，但防御 -50%' },
+      { text: '最后的战斗，交给我。', effect: '单人模式：所有炮塔伤害 +100%（本局），以攻代守。' },
     ],
   },
   {
@@ -2475,10 +2490,10 @@ const DEEP_DREAM_LEVELS = [
   {
     id: 'deep_3', triggerWave: 45, duration: 3, name: '意识深渊', icon: '🕳️',
     description: '最底层的梦境。这里没有固定形状和颜色，只有像潮水一样起伏的意识。远处偶尔浮现熟悉的轮廓，却无法确认它来自记忆，还是正在发生。',
-    rules: '梦魇生命 ×2.8、攻击 ×1.5，并对能量额外脆弱（弱点 +50%）；你的炮塔伤害 +20%、射速 +10%，时间流速加快（×1.15）。',
+    rules: '梦魇生命 ×2.8、速度 ×1.1、攻击 ×1.5，并对能量额外脆弱（弱点 +50%）；你的炮塔伤害 +20%、射速 +10%，时间流速加快（×1.15）。',
     goal: '在深层梦境中存活 3 波。听清回声的方向，再决定下一步。',
     reward: '100 灵魂 + 传说符文 ×1',
-    rewardSpec: { souls: 100, rune: 'legendary' },
+    rewardSpec: { souls: 100, rune: 'legend' },
     modifier: {
       enemyBuffs: { hpMul: 2.8, spdMul: 1.1, dmgMul: 1.5 },
       enemyNerfs: { energy: 0.5 },
@@ -2581,7 +2596,7 @@ const MERCY_ENCOUNTERS = [
     enemyType: 'splitter', name: '碎片化的自我', icon: '💔',
     dialogue: '每次被打败，我就会碎成更小的自己。我已经不记得完整的我是什么样子了。',
     reward: '获得 40 灵魂 + 稀有梦境碎片 ×1。',
-    unlock: 'achievement_puzzler',
+    unlockText: '解锁剧情：「完整的拼图」',
   },
   {
     enemyType: 'summoner', name: '孤独的召唤者', icon: '🌀',
@@ -2599,13 +2614,13 @@ const MERCY_ENCOUNTERS = [
     enemyType: 'berserker', name: '愤怒的孩子', icon: '😤',
     dialogue: '我恨这个世界！我恨所有——等等……你为什么不跑？',
     reward: '该敌人平静下来。获得 50 金币 + 10 灵魂。',
-    unlock: 'hidden_dialogue_calm',
+    unlockText: '解锁剧情：「暴怒之后的平静」',
   },
   {
     enemyType: 'wraith', name: '被遗忘的怨灵', icon: '👤',
     dialogue: '……有人记得我的名字吗？哪怕一个人也好。我等了好久好久。',
     reward: '获得「记忆之锚」：被摧毁的建筑有 20% 概率自动重建（本局）。',
-    unlock: 'hidden_ending',
+    unlockText: '解锁剧情：「被记住的名字」',
   },
 ];
 
@@ -3919,6 +3934,7 @@ function jumpToWave(n) {
   if (!G || !G.admin) return false;
   n = Math.max(1, Math.min(999, n | 0));
   G.enemies = []; G.spawnQueue = []; G.bossQueue = []; G.effects = [];
+  G.resumeWave = false;   // 跳波是新开波：清掉读档留下的「重开本波」标记，否则 startWave 不自增波次
   G.wave = n - 1;
   startWave();
   return true;
@@ -4051,6 +4067,12 @@ function tryDropRune(wave, x, y) {
   const chance = (0.012 + wave * 0.0016) * (1 + G.tech.looting * 0.2);
   if (Math.random() > Math.min(0.5, chance)) return null;
   const r = rollRune(wave);
+  // data.js 的 runeSeq 每次刷新页面都会从 1 重计，新掉的符文会撞上存档里旧符文的 id；
+  // 读档回滚按 id 移除本波掉落，撞号会把玩家的旧符文一起误删，这里兜底改成唯一 id
+  const idTaken = id => G.runeBag.some(o => o && o.id === id) ||
+    G.buildings.some(b => (b.runes || []).some(o => o && o.id === id)) ||
+    (G.waveRuneIds || []).indexOf(id) >= 0;
+  while (idTaken(r.id)) r.id = 'r' + Math.floor(Math.random() * 2147483647);
   G.runeBag.push(r);
   (G.waveRuneIds || (G.waveRuneIds = [])).push(r.id);   // 记录本波掉落：读档重开波时移除，防刷符文
   addText(x, y - 26, '🔮 ' + r.name + '（' + qualityOf(r.q).name + '）', qualityOf(r.q).color, true);
@@ -4321,17 +4343,22 @@ function updateEconomy(dt) {
   G.bed.shieldMax = 0;
   G.doors.forEach(d => { d.shieldMax = 0; });
   G.buildings.forEach(o => { o.shieldMax = 0; });
+  // 先重算全部护盾上限、再结算治疗/回盾：否则维修台的 shieldHeal 会受建筑数组顺序影响，
+  // 护盾塔排在后面时本帧读到的 o.shieldMax 还是 0，回盾时灵时不灵
+  G.buildings.forEach(b => {
+    const s = bstat(b);
+    if (b.type === 'shield' || s.shield) {
+      G.doors.forEach(d => { if (Math.abs(d.y - b.y) < 150) d.shieldMax = Math.max(d.shieldMax, s.shield); });
+      G.bed.shieldMax = Math.max(G.bed.shieldMax, s.shield * 0.8);
+      G.buildings.forEach(o => { if (dist(b, o) <= s.range) o.shieldMax = Math.max(o.shieldMax, s.shield); });
+    }
+  });
   G.buildings.forEach(b => {
     const s = bstat(b);
     if (b.type === 'repair' || s.heal) {
       G.doors.forEach(d => { if (Math.abs(d.y - b.y) < 130 && dist({ x: WALL_X, y: d.y }, b) <= s.range + 90) healTarget(d, s.heal * dt); });
       G.buildings.forEach(o => { if (o !== b && dist(b, o) <= s.range) healTarget(o, s.heal * 0.6 * dt); });
       if (s.shieldHeal) G.buildings.forEach(o => { if (o !== b && dist(b, o) <= s.range && o.shieldMax > 0) o.shield = Math.min(o.shieldMax, o.shield + s.shieldHeal * dt); });
-    }
-    if (b.type === 'shield' || s.shield) {
-      G.doors.forEach(d => { if (Math.abs(d.y - b.y) < 150) d.shieldMax = Math.max(d.shieldMax, s.shield); });
-      G.bed.shieldMax = Math.max(G.bed.shieldMax, s.shield * 0.8);
-      G.buildings.forEach(o => { if (dist(b, o) <= s.range) o.shieldMax = Math.max(o.shieldMax, s.shield); });
     }
   });
   const maxLvShield = Math.max(1, ...G.buildings.filter(b => b.type === 'shield').map(b => b.level));
@@ -4364,10 +4391,11 @@ function applyStoryEffect(text, ctx) {
   const durLabel = waveScoped ? '本波' : '本局';
 
   // 1) 金币 / 灵魂 / 电量（「+ N 灵魂」这类不带“获得”的写法也要认）
+  // 剧情/委托奖励是一次性收入：按赠礼记成负花费，读档回滚本波收益时不会把它们一起滚掉
   const gold = t.match(/获得\s*(\d+)\s*金币/) || t.match(/\+\s*(\d+)\s*金币/);
-  if (gold) { G.gold += +gold[1]; got.push('+' + gold[1] + '💰'); }
+  if (gold) { G.gold += +gold[1]; G.waveSpentGold -= +gold[1]; got.push('+' + gold[1] + '💰'); }
   const soul = t.match(/获得\s*(\d+)\s*灵魂/) || t.match(/\+\s*(\d+)\s*灵魂/);
-  if (soul) { G.souls += +soul[1]; got.push('+' + soul[1] + '🔮'); }
+  if (soul) { G.souls += +soul[1]; G.waveSpentSouls -= +soul[1]; got.push('+' + soul[1] + '🔮'); }
   const power = t.match(/(?:获得\s*)?(\d+)\s*电量/);
   if (power) { G.power += +power[1]; got.push('+' + power[1] + '⚡'); }
   const goldMul = t.match(/金币(获取|收益)\s*\+(\d+)%/);
@@ -4389,8 +4417,9 @@ function applyStoryEffect(text, ctx) {
     G.buildings.forEach(b => { b.maxHp *= 1 + v; b.hp *= 1 + v; });
     got.push('全属性 +' + all[1] + '%（含生命）' + durLabel);
   } else {
-    const dmg = t.match(/(?:炮塔|全炮塔|所有炮塔|攻击力)[^%]{0,8}?\+(\d+)%/);
-    if (dmg && !/射速|射程/.test(t)) { bucket.dmg += +dmg[1] / 100; got.push('炮塔伤害 +' + dmg[1] + '%' + durLabel); }
+    const dmg = t.match(/(?:炮塔|全炮塔|所有炮塔|攻击力)([^%]{0,8}?)\+(\d+)%/);
+    // 排除项只看关键词与加成之间的那段：「全炮塔暴击率 +15%」不能被当成炮塔伤害再吃一遍
+    if (dmg && !/射速|射程|暴击/.test(dmg[1])) { bucket.dmg += +dmg[2] / 100; got.push('炮塔伤害 +' + dmg[2] + '%' + durLabel); }
   }
   const allDmg = t.match(/(所有|全部|全体)伤害\s*\+(\d+)%/);
   if (allDmg) { bucket.dmg += +allDmg[2] / 100; got.push('所有伤害 +' + allDmg[2] + '%' + durLabel); }
@@ -4460,7 +4489,9 @@ function applyStoryEffect(text, ctx) {
 
   // 6) 深层梦境入口：按当前波次进入已触发过的最深层，不再恒进第一层
   if (/深层梦境/.test(t) && typeof DeepDream !== 'undefined' && !DeepDream.isActive()) {
-    const levels = (DeepDream.DEEP_LEVELS || []).filter(x => (x.triggerWave | 0) <= G.wave);
+    // 注意字段名：DEEP_LEVELS 由 story.js 的 triggerWave 编译而来，编译后叫 enterWave；
+    // 只认 triggerWave 会恒取 0，等于没按波次过滤，第 5 波就会被丢进最深层
+    const levels = (DeepDream.DEEP_LEVELS || []).filter(x => ((x.enterWave || x.triggerWave || 0) | 0) <= G.wave);
     const lv = levels.length ? levels[levels.length - 1] : (DeepDream.DEEP_LEVELS || [])[0];
     if (lv) { DeepDream.enterDeepDream(lv.id); got.push('坠入' + lv.name); }
   }
@@ -4512,8 +4543,9 @@ function bossPhases(e) {
   return (BOSS_DEFS[e.bossKey] && BOSS_DEFS[e.bossKey].phases) || BOSS_PHASES;
 }
 function bossKeyForWave(n) {
-  // 无尽模式没有终焉：60 波以后继续轮换 BOSS，不再全是终焉梦魇
-  if (n >= finalWave() && !(G && G.mode === 'endless')) return 'final';
+  // 终焉梦魇只守在终局波；无尽模式 60 波以后继续轮换 BOSS，不再全是终焉梦魇。
+  // 注意模式 id 是 unlimited（MODES 里没有 endless），写错键等于这条分支从未生效
+  if (n >= finalWave() && !(G && G.mode === 'unlimited' && n > finalWave())) return 'final';
   const idx = Math.floor(n / 5 - 1) % BOSS_ORDER.length;
   return BOSS_ORDER[(idx + BOSS_ORDER.length) % BOSS_ORDER.length];
 }
@@ -4888,10 +4920,12 @@ function recycleRunes(b, why) {
   return rs.length;
 }
 function destroyBuilding(b) {
+  const idx = G.buildings.indexOf(b);
+  if (idx < 0) return;   // 已经销毁过的建筑直接忽略，防止 splice(-1) 把无关建筑删掉
   if (G.track) G.track.buildLost = (G.track.buildLost || 0) + 1;
   recycleRunes(b, '被摧毁');
   G.grid[b.row * COLS + b.col] = null;
-  G.buildings.splice(G.buildings.indexOf(b), 1);
+  G.buildings.splice(idx, 1);
   if (selected === b) selected = null;
   spawnParts(b.x, b.y, 26, b.def.color, 4, 0.9);
   addText(b.x, b.y, '建筑被摧毁！', '#ff4d6d', true);
@@ -4947,7 +4981,7 @@ function killEnemy(e) {
     if (!e.def.finalBoss && bossStory && bossStory.wave === G.wave && bossStory.defeat && typeof showStoryDialog === 'function') {
       showStoryDialog({ wave: G.wave, speaker: bossStory.name || e.def.name, text: bossStory.defeat });
     }
-    if (e.def.finalBoss && !(G.mode === 'endless')) {
+    if (e.def.finalBoss) {   // 无尽模式由 gameWin 内部的「无尽继续」分支兜住，不会误判通关
       // runStamp 守卫：重开局后旧回调不再触发结算
       const rs = G.runStamp;
       setTimeout(() => { if (G && G.runStamp === rs && !G.over) gameWin(); }, 900);
@@ -5393,8 +5427,8 @@ function buildWaveQueue(n) {
   const cnt = Math.min(90, 6 + Math.floor(n * 2.1)) * (G.event.eff.countMul || 1);
   const q = [];
   for (let i = 0; i < cnt; i++) q.push(pick(pool));
-  const isFinalWave = n >= finalWave() && !(G && G.mode === 'endless');
-  // 终局只刷一只终焉梦魇（与「击败【终焉梦魇】即可通关」的口径一致）；无尽模式永远走轮换
+  const isFinalWave = n >= finalWave() && !(G && G.mode === 'unlimited' && n > finalWave());
+  // 终局波只刷一只终焉梦魇（与「击败【终焉梦魇】即可通关」的口径一致）；无尽模式 60 波以后永远走轮换
   const bosses = n % 5 === 0 ? (isFinalWave ? 1 : 1 + Math.floor(n / 22)) : 0;
   const bossList = [];
   const bossType = isFinalWave ? 'final' : 'boss';
@@ -5492,7 +5526,7 @@ function endWave() {
   if (typeof DreamEngine !== 'undefined') { try { DreamEngine.onWaveEnd(G.wave); } catch(e) { console.warn('DreamEngine waveEnd:', e); } }
   if (G.challenge && !G.challenge.done) {
     const c = G.challenge, t = c.target;
-    const v = c.id === 'time' ? G.waveTime : (G.track[c.def.track] || 0);
+    const v = c.def.track === 'time' ? G.waveTime : (G.track[c.def.track] || 0);   // 按 track 判定：id 是 'swift'，按 id 找 'time' 恒为 0，限时挑战会白给
     const pass = c.def.cmp === 'le' ? v <= t : v >= t;
     if (pass) {
       const rw = challengeRewardSouls(G.wave);
@@ -5564,10 +5598,11 @@ function useSkill(key) {
   SFX.skill();
   if (key === 'meteor') {
     const dmg = 200 + G.wave * 50;
+    const rs = G.runStamp;   // runStamp 守卫：重开局后旧陨石回调不再打到新一局的敌人与统计上
     G.enemies.forEach(e => {
       if (e.dead) return;
       addEffect({ type: 'meteor', x: e.x + rnd(-40, 40), y: e.y - 400, tx: e.x, ty: e.y, life: 0.5, maxLife: 0.5 });
-      setTimeout(() => { if (!e.dead) { applyDamage(e, dmg, 'fire'); spawnParts(e.x, e.y, 18, '#ff8c42', 4, 0.7); } }, 450);
+      setTimeout(() => { if (G && G.runStamp === rs && !e.dead) { applyDamage(e, dmg, 'fire'); spawnParts(e.x, e.y, 18, '#ff8c42', 4, 0.7); } }, 450);
     });
     setTimeout(() => { shakeBy(14); SFX.boom(); }, 460);
     addText(ROOM_X0 + 300, DOOR_MID_Y() - 170, '☄️ 陨石雨！', '#ff8c42', true);
@@ -5650,8 +5685,9 @@ function checkAchievements() {
     try { ok = a.check(); } catch (e) { ok = false; }
     if (ok) {
       G.ach[a.id] = 1;
-      if (a.reward.gold) G.gold += a.reward.gold;
-      if (a.reward.soul) G.souls += a.reward.soul;
+      // 成就奖励是一次性收入：按赠礼记成负花费，读档回滚本波收益时不会把它们一起滚掉
+      if (a.reward.gold) { G.gold += a.reward.gold; G.waveSpentGold -= a.reward.gold; }
+      if (a.reward.soul) { G.souls += a.reward.soul; G.waveSpentSouls -= a.reward.soul; }
       setTip('🏆 成就达成【' + a.name + '】！奖励 ' + (a.reward.soul ? a.reward.soul + '🔮' : '') + (a.reward.gold ? a.reward.gold + '💰' : ''), 6);
       SFX.achieve();
       addText(ROOM_X0 + 300, DOOR_MID_Y() - 130, '🏆 ' + a.name, '#ffe066', true);
@@ -5799,7 +5835,10 @@ function drawLottery(n, currency) {
   const cost = useSoul ? LOTTERY.soulCost * n : (n === 10 ? LOTTERY.tenCost : LOTTERY.cost * n);
   const has = useSoul ? G.souls : G.gold;
   if (has < cost) { SFX.err(); setTip((useSoul ? '灵魂' : '金币') + '不足，需要 ' + cost, 3); return null; }
-  if (useSoul) G.souls -= cost; else G.gold -= cost;
+  // 抽奖花费计入本波账本：读档回滚只退本波净收益、不退花费，
+  // 否则战斗中「抽奖→存档→读档」可以白嫖十连
+  if (useSoul) { G.souls -= cost; G.waveSpentSouls += cost; }
+  else { G.gold -= cost; G.waveSpentGold += cost; }
   const results = [];
   for (let i = 0; i < n; i++) {
     const item = rollLotteryItem();
@@ -5883,7 +5922,11 @@ function upgradeRune(r) {
   if (!r) return false;
   const c = runeUpCost(r);
   if (G.souls < c) { SFX.err(); setTip('灵魂不足，需要 ' + c + '🔮', 3); return false; }
-  G.souls -= c; G.waveSpentSouls += c; r.lv++;
+  G.souls -= c;
+  // 本波掉落的符文会在读档回滚时随掉落一起移除，强化花费不记账、随回滚一起退回；
+  // 旧符文照常记账，回滚不影响
+  if ((G.waveRuneIds || []).indexOf(r.id) < 0) G.waveSpentSouls += c;
+  r.lv++;
   SFX.up(); setTip('符文强化至 +' + r.lv + '（效果 +' + Math.round((runeMul(r) - 1) * 100) + '%）', 3);
   return true;
 }
@@ -5898,7 +5941,9 @@ function salvageRune(runeId) {
       for (let i = 0; i < (b.runes || []).length; i++) {
         if (b.runes[i] && b.runes[i].id === runeId) {
           const rr = b.runes[i]; b.runes[i] = null;
-          const v = runeSalvage(rr); G.souls += v; G.waveSpentSouls -= v;
+          const v = runeSalvage(rr); G.souls += v;
+          // 本波掉落的符文随回滚移除，其分解所得也要一起回滚，否则「掉→存→读」能刷灵魂
+          if ((G.waveRuneIds || []).indexOf(rr.id) < 0) G.waveSpentSouls -= v;
           SFX.coin(); setTip('分解获得 ' + v + '🔮', 3); return true;
         }
       }
@@ -5906,7 +5951,9 @@ function salvageRune(runeId) {
     return false;
   }
   const r = G.runeBag.splice(idx, 1)[0];
-  const v = runeSalvage(r); G.souls += v; G.waveSpentSouls -= v;
+  const v = runeSalvage(r); G.souls += v;
+  // 本波掉落的符文随回滚移除，其分解所得也要一起回滚，否则「掉→存→读」能刷灵魂
+  if ((G.waveRuneIds || []).indexOf(r.id) < 0) G.waveSpentSouls -= v;
   SFX.coin(); setTip('分解「' + r.name + '」获得 ' + v + '🔮', 3);
   return true;
 }
@@ -5950,6 +5997,18 @@ const SaveSystem = {
   _num(value, fallback, min, max) {
     const n = Number(value);
     return clamp(Number.isFinite(n) ? n : (fallback || 0), min === undefined ? -Infinity : min, max === undefined ? Infinity : max);
+  },
+  /** 对象内的数值字段清洗：非有限数直接剔除，避免脏存档的 NaN 打穿血量/伤害/结算（布尔与列表原样保留） */
+  _cleanNums(o) {
+    if (!o || typeof o !== 'object') return o;
+    Object.keys(o).forEach(k => {
+      const v = o[k];
+      if (typeof v === 'boolean' || (v && typeof v === 'object')) return;
+      const n = Number(v);
+      if (Number.isFinite(n)) o[k] = n;
+      else delete o[k];
+    });
+    return o;
   },
   /** 写入失败的两种已知名：Chromium 用 QuotaExceededError，Firefox 用 NS_ERROR_DOM_QUOTA_REACHED */
   _isQuota(name) {
@@ -6289,12 +6348,15 @@ const SaveSystem = {
         const ev = EVENTS.find(e => e.id === run.eventId);
         if (ev) G.event = ev;
       }
-      if (run.prize) Object.assign(G.prize, run.prize);
-      if (run.fate) Object.assign(G.fate, run.fate);
-      if (run.fateWave) Object.assign(G.fateWave, run.fateWave);
-      if (run.affection) G.affection = Object.assign({}, run.affection);
-      if (run.melodyBuff) G.melodyBuff = run.melodyBuff;
-      if (run.buff) Object.assign(G.buff, run.buff);
+      // 命运/奖品/增益都是 Object.assign 直灌：脏存档里的 NaN 会一路打穿血量、伤害与结算，
+      // 这里统一清洗数值字段（布尔与 notes 列表原样保留）
+      if (run.prize) { Object.assign(G.prize, run.prize); this._cleanNums(G.prize); }
+      if (run.fate) { Object.assign(G.fate, run.fate); this._cleanNums(G.fate); }
+      if (run.fateWave) { Object.assign(G.fateWave, run.fateWave); this._cleanNums(G.fateWave); }
+      if (run.affection && typeof run.affection === 'object') G.affection = this._cleanNums(Object.assign({}, run.affection));
+      if (run.melodyBuff && typeof run.melodyBuff === 'object') G.melodyBuff = this._cleanNums(run.melodyBuff);
+      if (run.buff) { Object.assign(G.buff, run.buff); this._cleanNums(G.buff); }
+      if (!Array.isArray(G.fate.notes)) G.fate.notes = [];   // notes 被脏数据顶掉后 applyStoryEffect.push 会抛错
 
       const prog = d.progress || {};
       if (prog.tech) Object.keys(prog.tech).forEach(k => { if (G.tech[k] !== undefined) G.tech[k] = Math.max(0, prog.tech[k] | 0); });
@@ -6311,13 +6373,12 @@ const SaveSystem = {
       // 战斗中存档重开本波：回滚本波净收益（击杀掉落、利息等可重复获取的部分），
       // 本波花费随建筑保留（花费已从基准里扣除）——反复存/读不再刷资源。
       const econ = run.waveEcon;
+      let dropIds = null;
       if (resumeWave && econ && typeof econ === 'object') {
         G.gold = Math.max(0, this._num(econ.startGold, G.gold) - this._num(econ.spentGold, 0));
         G.souls = Math.max(0, this._num(econ.startSouls, G.souls) - this._num(econ.spentSouls, 0));
-        if (Array.isArray(econ.runes) && Array.isArray(G.runeBag) && econ.runes.length) {
-          const dropIds = new Set(econ.runes);
-          G.runeBag = G.runeBag.filter(r => !(r && dropIds.has(r.id)));
-        }
+        if (Array.isArray(econ.runes) && econ.runes.length) dropIds = new Set(econ.runes);
+        if (dropIds && Array.isArray(G.runeBag)) G.runeBag = G.runeBag.filter(r => !(r && dropIds.has(r.id)));
       }
       // 重定本波经济基准：之后的读档都以当前值为新基准，多次读档不会重复回滚
       G.waveStartGold = G.gold; G.waveSpentGold = 0;
@@ -6364,6 +6425,11 @@ const SaveSystem = {
           G.buildings.push(b); G.grid[r * COLS + c] = b;
         });
       }
+      // 本波掉落的符文不管在背包里还是已镶到建筑上都要随回滚移除，
+      // 否则「掉落→镶嵌→存档→读档」可以把符文白嫖成两份
+      if (dropIds && dropIds.size) G.buildings.forEach(b => {
+        if (Array.isArray(b.runes)) b.runes = b.runes.map(r => (r && dropIds.has(r.id)) ? null : r);
+      });
       this.restoreDream(d.dream);
       G.resDirty = true;
       if (typeof QuestSystem !== 'undefined') QuestSystem.init();
@@ -6690,7 +6756,8 @@ const Cmd = {
   unsocket(b, slot) { return b ? this.dispatch({ t: 'rune', op: 'unsocket', c: b.col, r: b.row, slot }) : false; },
   upgradeRuneIn(b, slot) { return b ? this.dispatch({ t: 'rune', op: 'upgrade', c: b.col, r: b.row, slot }) : false; },
   salvage(runeId) { return this.dispatch({ t: 'runeSalvage', runeId }); },
-  draw(n, cur) { this.dispatch({ t: 'draw', n, cur }); return this.lastDraw; },   // 单机立即拿到结果；联机时结果随状态同步回来
+  // 先清空再派发：命令被拦截（剧情锁/对局结束）时返回 null，而不是把上一次的抽奖结果当新结果重复展示
+  draw(n, cur) { this.lastDraw = null; this.dispatch({ t: 'draw', n, cur }); return this.lastDraw; },   // 单机立即拿到结果；联机时结果随状态同步回来
   jump(wave) { return this.dispatch({ t: 'jump', wave }); },
 
   /** 命令日志导出（复现 bug 时贴给人看） */
@@ -6848,8 +6915,11 @@ const DreamEcology = {
           // 敌人身上的灼烧状态是 burnT/burnStack（旧条件读不存在的 burn 字段，恒为假）
           if ((o.burnT > 0 || o.burnStack > 0) && eDist(e, o) < 160) {
             chain.push({ type: 'ignite', source: o.type, aoeRadius: 100 });
-            // 点燃伤害：每 0.5s 烧 2% 最大生命（下限 5%，击杀仍由正常结算走）
-            if (typeof G !== 'undefined' && G.enemies.indexOf(e) >= 0) e.hp = Math.max(e.maxHp * 0.05, e.hp - e.maxHp * 0.02);
+            // 点燃伤害：每 0.5s 烧 2% 最大生命（不会烧穿到 5% 以下，击杀仍由正常结算走；
+            // 直接 Math.max 会把已低于 5% 的敌人「烧回」5% 血，这里加一道上限钳制）
+            if (typeof G !== 'undefined' && G.enemies.indexOf(e) >= 0 && e.hp > e.maxHp * 0.05) {
+              e.hp = Math.max(e.maxHp * 0.05, e.hp - e.maxHp * 0.02);
+            }
             break;
           }
         }
@@ -8520,7 +8590,8 @@ const DreamFragments = {
     if (!enemy || !enemy.type) return null;
     // 找到匹配的碎片：BOSS 一律归一成 type='boss'，专属掉落要按 bossKey 匹配（否则 frag_30 永不掉落）
     const candidates = this.FRAGMENT_DEFS.filter(f =>
-      (f.dropFrom === enemy.type || (enemy.bossKey && f.dropFrom === enemy.bossKey)) && !this._collected.has(f.id)
+      (f.dropFrom === enemy.type || (enemy.bossKey && f.dropFrom === enemy.bossKey))
+      && !(this._collected && this._collected.has(f.id))
     );
     if (!candidates.length) return null;
 
@@ -8539,6 +8610,9 @@ const DreamFragments = {
    * @returns {object|null} 碎片定义，或 null（已收集过）
    */
   collectFragment(fragmentId) {
+    // _collected 只在 initFragments 里建；剧情奖励/委托奖励可能在极端时序下先到，
+    // 这里兜底懒初始化，避免「读旧存档/未初始化时收集碎片直接抛错」
+    if (!this._collected) this._collected = new Set();
     if (this._collected.has(fragmentId)) return null;
     const frag = this.FRAGMENT_DEFS.find(f => f.id === fragmentId);
     if (!frag) return null;
@@ -9058,7 +9132,7 @@ const QUEST_CHAPTERS = [
           + '不过说真的，它们身上有照片。几道影子围着一团白色，背后还有没写完的名字。\n'
           + '……帮个忙，弄三张回来。我想知道照片里的人到底在看什么。',
       choices: [
-        { text: '我们当然认识。', effect: '赵磊好感度 +1，全队士气 +' },
+        { text: '我们当然认识。', effect: '赵磊好感度 +1，全队士气提升：所有炮塔伤害 +5%（本波）' },
         { text: '我不确定我们认识。', effect: '获得 300 金币，防御 +10%（本波）' },
       ],
     },
@@ -9383,8 +9457,16 @@ const QuestSystem = {
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
 let T = 0;
+// 渲染帧时长：闪光/震屏/开火余晖等视觉衰减按真实帧时长推进，
+// 否则 30Hz 屏会拖长一倍、144Hz 屏会快进 2.4 倍（模拟层已是固定步长，只有视觉层受影响）
+let _frameDt = 1 / 60;
 function rr(x, y, w, h, r) {
   ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+/** 同 rr，但不 beginPath：把多个圆角矩形并进同一条 path，批量填充/描边省每格的路径开销 */
+function rrAdd(x, y, w, h, r) {
   ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
   ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
 }
@@ -9416,10 +9498,11 @@ function emoji(e, x, y, size, alpha = 1, rot = 0) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(e, 0, 0); ctx.restore();
 }
-function render() {
+function render(frameDt) {
+  _frameDt = (typeof frameDt === 'number' && isFinite(frameDt) && frameDt > 0) ? Math.min(frameDt, 0.25) : 1 / 60;
   ctx.clearRect(0, 0, W, H);
   ctx.save();
-  if (shake > 0.4) { ctx.translate(rnd(-shake, shake) * 0.5, rnd(-shake, shake) * 0.5); shake *= 0.86; } else shake = 0;
+  if (shake > 0.4) { ctx.translate(rnd(-shake, shake) * 0.5, rnd(-shake, shake) * 0.5); shake *= Math.pow(0.86, _frameDt * 60); } else shake = 0;
   drawBg(); drawCorridors(); drawRoom(); drawBuildings(); drawBed();
   drawEnemies(); drawWallsDoors(); drawBullets(); drawEffects(); drawParts(); drawTexts();
   // 战斗氛围粒子（波次中飘浮火星）
@@ -9441,7 +9524,7 @@ function render() {
   // 升级光环爆发特效（增强版）
   if (G.upgradeFx) {
     G.upgradeFx.forEach(f => {
-      f.t -= 0.016;
+      f.t -= _frameDt;
       const p = 1 - f.t / 0.8;
       const r = 15 + p * 50;
       // 外圈
@@ -9476,7 +9559,7 @@ function render() {
     ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = 'rgba(255,40,60,' + (flash * 0.25 * flashMul) + ')';
     ctx.fillRect(0, 0, W, H);
-    flash -= 0.035;
+    flash -= _frameDt * 2.1;
   }
   if (G.buff.freeze > 0) {
     // 冰冻全屏效果
@@ -9553,7 +9636,7 @@ function drawDreamSystems() {
 
   // 3. 深层梦境滤镜
   if (typeof DeepDream !== 'undefined' && DeepDream.isActive()) {
-    const level = DeepDream.getCurrentLevel();
+    const level = DeepDream.getCurrentLevel() || {};   // 判空：拿不到关卡定义时滤镜照画，不许抛错打断整帧
     // 紫色暗角
     ctx.save();
     const vign = ctx.createRadialGradient(W / 2, H / 2, W * 0.25, W / 2, H / 2, W * 0.7);
@@ -9565,7 +9648,7 @@ function drawDreamSystems() {
     ctx.font = 'bold 12px "Courier New"';
     ctx.fillStyle = '#c084fc';
     ctx.textAlign = 'center';
-    ctx.fillText(level.icon + ' ' + level.name + '  —  ' + level.desc, W / 2, 70);
+    ctx.fillText((level.icon || '🕳️') + ' ' + (level.name || '深层梦境') + '  —  ' + (level.desc || ''), W / 2, 70);
     ctx.restore();
   }
 
@@ -9574,7 +9657,7 @@ function drawDreamSystems() {
     const recruited = NPCGuardians.getRecruited();
     for (const npc of recruited) {
       if (!npc.active || !npc.def) continue;
-      const laneIdx = parseInt(npc.roomId.replace('lane_', ''), 10);
+      const laneIdx = parseInt((npc.roomId || '').replace('lane_', ''), 10);
       if (isNaN(laneIdx)) continue;
       ctx.save();
       ctx.font = '14px serif';
@@ -9710,25 +9793,36 @@ function drawRoom() {
     const pulse = 0.5 + Math.sin(T * 3.2) * 0.5;
     const isTower = !!(BUILD_DEFS[selectedBuildKey] && BUILD_DEFS[selectedBuildKey].tower);
     const rgb = isTower ? '255,190,80' : '158,240,26';
+    // 圆角柔光格：填充淡染 + 发光描边 + 圆头十字，去掉直角硬边的「表格感」。
+    // 同色样式全格一致，合并成 3 条 path 批量画（原先每格 3 条 path + save/restore + shadowBlur，
+    // 40 个空位就是 120 条路径）；save/restore 包住整段，lineCap/shadowBlur 一定还原。
+    const cells = [];
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       if (G.grid[r * COLS + c] || inBed(c, r)) continue;
-      const R = cellRect(c, r);
-      const x = R.x + 3, y = R.y + 3, w = R.w - 6, h = R.h - 6;
-      // 圆角柔光格：填充淡染 + 发光描边 + 圆头十字，去掉直角硬边的「表格感」
-      ctx.fillStyle = 'rgba(' + rgb + ',' + (0.05 + pulse * 0.06) + ')';
-      rr(x, y, w, h, 9); ctx.fill();
+      cells.push(cellRect(c, r));
+    }
+    if (cells.length) {
       ctx.save();
+      ctx.fillStyle = 'rgba(' + rgb + ',' + (0.05 + pulse * 0.06) + ')';
+      ctx.beginPath();
+      for (const R of cells) rrAdd(R.x + 3, R.y + 3, R.w - 6, R.h - 6, 9);
+      ctx.fill();
       ctx.strokeStyle = 'rgba(' + rgb + ',' + (0.38 + pulse * 0.34) + ')';
       ctx.lineWidth = 1.6;
       ctx.shadowColor = 'rgba(' + rgb + ',.5)';
       ctx.shadowBlur = 7;
-      rr(x + 1, y + 1, w - 2, h - 2, 8); ctx.stroke();
-      const cx = R.x + R.w / 2, cy = R.y + R.h / 2;
+      ctx.beginPath();
+      for (const R of cells) rrAdd(R.x + 4, R.y + 4, R.w - 8, R.h - 8, 8);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
       ctx.strokeStyle = 'rgba(' + rgb + ',' + (0.55 + pulse * 0.35) + ')';
       ctx.lineWidth = 2.6; ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(cx - 8, cy); ctx.lineTo(cx + 8, cy);
-      ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy + 8);
+      for (const R of cells) {
+        const cx = R.x + R.w / 2, cy = R.y + R.h / 2;
+        ctx.moveTo(cx - 8, cy); ctx.lineTo(cx + 8, cy);
+        ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy + 8);
+      }
       ctx.stroke();
       ctx.restore();
     }
@@ -10345,7 +10439,8 @@ function drawSupportArt(b, color) {
   ctx.restore();
 }
 function drawBuildings() {
-  const frameDt = typeof dt !== 'undefined' && Number.isFinite(dt) ? Math.max(0, dt) : 1 / 60;
+  // 落地/开火余晖/后座衰减统一用 render() 记录的真实帧时长（旧写法 typeof dt 恒为 undefined）
+  const frameDt = _frameDt;
   for (const b of G.buildings) {
     // 建造落地动画
     if (b.animY !== undefined && b.animY < 0) {
@@ -11309,29 +11404,45 @@ function updateHUD(dt) {
   updateWavePreview();
   const chEl = $('hudChallenge');
   if (chEl) {
-    if (G.challenge && G.state === 'wave') {
-      const c = G.challenge;
-      const v = c.id === 'time' ? (G.waveTime || 0) : (G.track && G.track[c.def.track]) || 0;
+    const c = G.challenge;
+    // def 判空：def 含函数无法序列化，重链失败/脏数据时不能整个 updateHUD 抛错
+    if (c && c.def && G.state === 'wave') {
+      const cdef = c.def;
+      const v = cdef.track === 'time' ? (G.waveTime || 0) : (G.track && G.track[cdef.track]) || 0;
       const tv = c.target;
-      const shown = c.id === 'time' ? v.toFixed(0) + 's/' + tv + 's' : Math.floor(v) + '/' + Math.round(tv);
-      const pass = c.def.cmp === 'le' ? v <= tv : v >= tv;
-      chEl.style.display = '';
-      chEl.innerHTML = '<span class="chi">' + c.def.icon + '</span><b>' + c.def.name + '</b><span class="chp ' +
-        (pass ? 'ok' : 'no') + '">' + shown + '</span>';
-      chEl.title = (c.def && typeof c.def.desc === 'function') ? c.def.desc(G.wave) : '';
-    } else { chEl.style.display = 'none'; }
+      const shown = cdef.track === 'time' ? v.toFixed(0) + 's/' + tv + 's' : Math.floor(v) + '/' + Math.round(tv);
+      const pass = cdef.cmp === 'le' ? v <= tv : v >= tv;
+      // 数值没变就别每 80ms 重建一次 innerHTML（签名缓存，同 updateQuestHUD）
+      const chSig = c.id + '|' + shown + '|' + pass;
+      if (chSig !== _challengeHudSig) {
+        _challengeHudSig = chSig;
+        chEl.style.display = '';
+        chEl.innerHTML = '<span class="chi">' + cdef.icon + '</span><b>' + cdef.name + '</b><span class="chp ' +
+          (pass ? 'ok' : 'no') + '">' + shown + '</span>';
+        chEl.title = (typeof cdef.desc === 'function') ? cdef.desc(G.wave) : '';
+      }
+    } else {
+      if (_challengeHudSig !== '') { _challengeHudSig = ''; chEl.innerHTML = ''; }
+      chEl.style.display = 'none';
+    }
   }
   updateQuestHUD();   // 委托进度随 HUD 一起刷新（内部有签名缓存，不会每帧写 DOM）
   updateBossBar();    // BOSS 横幅（同样有签名缓存）
   $('btnSkip').style.display = G.state === 'build' ? '' : 'none';
   if ($('questPanel') && $('questPanel').classList.contains('open')) renderQuestPanel();
-  // 建造栏角标：每种建筑已建几座（把「还能放几座」变得一眼可见）
+  // 建造栏：角标（已建几座）+ 可负担/选中态一次遍历写完（原先每 80ms 遍历两遍）
   const cnt = {};
   G.buildings.forEach(b => { cnt[b.type] = (cnt[b.type] || 0) + 1; });
   $('buildBar').querySelectorAll('.card').forEach(c => {
     const n = cnt[c.dataset.k] || 0;
     const el2 = c.querySelector('.cnt');
     if (el2) { el2.textContent = n ? n : ''; el2.style.display = n ? 'block' : 'none'; }
+    const d = BUILD_DEFS[c.dataset.k];
+    const ok = G.gold >= d.cost.gold;
+    c.classList.toggle('no', !ok);
+    c.classList.toggle('ok', ok && c.dataset.k !== selectedBuildKey);
+    c.classList.toggle('okTower', ok && !!d.tower && c.dataset.k !== selectedBuildKey);
+    c.classList.toggle('sel', c.dataset.k === selectedBuildKey);
   });
   // HUD 底边备战倒计时进度条（越接近开战越红）
   const pg = $('hudProg');
@@ -11344,14 +11455,6 @@ function updateHUD(dt) {
     } else pg.style.display = 'none';
   }
   _hudPulseCheck();
-  $('buildBar').querySelectorAll('.card').forEach(c => {
-    const d = BUILD_DEFS[c.dataset.k];
-    const ok = G.gold >= d.cost.gold;
-    c.classList.toggle('no', !ok);
-    c.classList.toggle('ok', ok && c.dataset.k !== selectedBuildKey);
-    c.classList.toggle('okTower', ok && !!d.tower && c.dataset.k !== selectedBuildKey);
-    c.classList.toggle('sel', c.dataset.k === selectedBuildKey);
-  });
   $('skillBar').querySelectorAll('.skill').forEach(b => {
     const k = b.dataset.k, cd = G.skills[k], s = SKILL_DEFS[k];
     const trial = G.trialId && POSTGAME_TRIALS.find(t => t.id === G.trialId);
@@ -11362,18 +11465,21 @@ function updateHUD(dt) {
     b.querySelector('.scd').style.height = (cd / s.cd * 100) + '%';
     b.querySelector('.scd').textContent = cd > 0 ? Math.ceil(cd) : '';
   });
-  $('techList').querySelectorAll('.tech').forEach(r => {
-    const k = r.dataset.k, d = TECH_DEFS[k], lv = G.tech[k];
-    r.querySelector('.tlv').textContent = lv + '/' + d.max;
-    r.querySelector('.tbar i').style.width = (lv / d.max * 100) + '%';
-    const btn = r.querySelector('.tbtn');
-    const locked = techLocked(k);
-    r.classList.toggle('locked', locked);
-    if (lv >= d.max) { btn.textContent = 'MAX'; btn.disabled = true; }
-    else if (locked) { btn.textContent = '🔒'; btn.disabled = true; }
-    else { const c = d.cost(lv); btn.textContent = fmt(c) + '🔮'; btn.disabled = G.souls < c; }
-  });
-  $('techSouls').textContent = fmt(G.souls);
+  // 科技面板关着的时候不必每 80ms 刷整棵列表（打开后下一 tick 自然刷新）
+  if ($('techPanel').classList.contains('open')) {
+    $('techList').querySelectorAll('.tech').forEach(r => {
+      const k = r.dataset.k, d = TECH_DEFS[k], lv = G.tech[k];
+      r.querySelector('.tlv').textContent = lv + '/' + d.max;
+      r.querySelector('.tbar i').style.width = (lv / d.max * 100) + '%';
+      const btn = r.querySelector('.tbtn');
+      const locked = techLocked(k);
+      r.classList.toggle('locked', locked);
+      if (lv >= d.max) { btn.textContent = 'MAX'; btn.disabled = true; }
+      else if (locked) { btn.textContent = '🔒'; btn.disabled = true; }
+      else { const c = d.cost(lv); btn.textContent = fmt(c) + '🔮'; btn.disabled = G.souls < c; }
+    });
+    $('techSouls').textContent = fmt(G.souls);
+  }
   if ($('achPanel').classList.contains('open')) {
     $('achList').querySelectorAll('.ach').forEach(d => {
       const got = !!G.ach[d.dataset.k];
@@ -11385,6 +11491,7 @@ function updateHUD(dt) {
   $('achCount').textContent = got + '/' + ACHIEVEMENTS.length;
   if ($('lotPanel').classList.contains('open')) updateLotteryHUD();
 }
+let _challengeHudSig = '';   // 挑战横幅的渲染签名（数值不变不重建 DOM）
 let _wavePreviewKey = '';
 function updateWavePreview() {
   const box = $('wavePreview');
@@ -11428,12 +11535,25 @@ function updateDetail(force) {
   let sig;
   // 血量按 5% 分档进签名：持续掉血时不必每 tick 整棵重建详情面板（会丢滚动位置、闪按钮）
   const hpPct = (hp, maxHp) => Math.round(hp / (maxHp || 1) * 20);
+  // 血量行单独提取成函数：分档签名会让面板少重建，但面板上的数字必须始终是当前值，
+  // 否则会把「重建那一刻」的旧血量当精确值一直显示，误导玩家（下面签名未变时只刷这一行）
+  const hpLine = s.isBed
+    ? () => '生命 ' + Math.ceil(G.bed.hp) + '/' + Math.ceil(G.bed.maxHp) + (G.bed.shieldMax ? '　护盾 ' + Math.ceil(G.bed.shield) : '')
+    : s.isDoor
+      ? () => '第 ' + (s.door.lane + 1) + ' 道门　生命 ' + Math.ceil(s.door.hp) + '/' + Math.ceil(s.door.maxHp) +
+        (s.door.shieldMax ? '　护盾 ' + Math.ceil(s.door.shield) + '/' + Math.ceil(s.door.shieldMax) : '')
+      : () => '生命 ' + Math.ceil(s.hp) + '/' + Math.ceil(s.maxHp) + (s.shieldMax ? '　护盾 ' + Math.ceil(s.shield) + '/' + Math.ceil(s.shieldMax) : '') +
+        '　运行不消耗电力' + (s.kills ? '　击杀 <b class="hl">' + s.kills + '</b>' : '');
   if (s.isBed) sig = 'bed|' + G.bed.lv + '|' + hpPct(G.bed.hp, G.bed.maxHp) + '|' + (G.gold > bedUpgradeCost(G.bed.lv) ? 1 : 0);
   else if (s.isDoor) sig = 'door|' + s.door.lane + '|' + s.door.lv + '|' + hpPct(s.door.hp, s.door.maxHp) + '|' + (G.gold > doorUpgradeCost(s.door.lv) ? 1 : 0);
   else if (s.def) sig = 'b|' + s.type + '|' + s.level + '|' + (s.branch || '') + '|' + hpPct(s.hp, s.maxHp) + '|' + G.buildings.indexOf(s) +
     '|' + (s.resN || 0) + '|' + (s.resDmg || 1) + '|' + (s.kills || 0) + '|' + (s.targetMode || targetModeOf(s).id) + '|' + (canAfford(upgradeCost(s.def, s.level)) ? 1 : 0);
   else return;
-  if (!force && sig === detailSig) return;
+  if (!force && sig === detailSig) {
+    const hpEl = $('dHpLine');
+    if (hpEl) { const t = hpLine(); if (hpEl.innerHTML !== t) hpEl.innerHTML = t; }
+    return;
+  }
   detailSig = sig;
   el.style.display = 'block';
   let html = '', act = '';
@@ -11445,7 +11565,7 @@ function updateDetail(force) {
       '<div class="dst">金币产出 <b class="hl">' + fmt1(bedGoldEff()) + '</b>/秒' +
       (dm !== 1 ? '　<span class="dup2">基础 ' + fmt1(bedGold()) + ' × 难度 ' + dm + '</span>' : '') +
       (nx ? '　<span class="dup2">下一级 ' + fmt1(nx) + '/秒（x2）</span>' : '') + '</div>' +
-      '<div class="dst">生命 ' + Math.ceil(G.bed.hp) + '/' + Math.ceil(G.bed.maxHp) + (G.bed.shieldMax ? '　护盾 ' + Math.ceil(G.bed.shield) : '') + '</div>' +
+      '<div class="dst" id="dHpLine">' + hpLine() + '</div>' +
       '<div class="dnote">躺得久不再自动加金币，<b>升级床</b>才是提升产出的唯一途径。</div>';
     act = G.bed.lv >= 50 ? '<span class="max">已至巅峰</span>'
       : '<button id="dUp">升级 ' + fmt(c) + '💰</button><button id="dMax" class="maxup">⏫升满</button>';
@@ -11453,8 +11573,7 @@ function updateDetail(force) {
     const d = s.door;
     const c = doorUpgradeCost(d.lv);
     html = '<div class="dhead"><span class="dico">🚪</span><b>' + doorName(d) + '</b><span class="dlv">Lv.' + d.lv + '/50</span></div>' +
-      '<div class="dst">第 ' + (d.lane + 1) + ' 道门　生命 ' + Math.ceil(d.hp) + '/' + Math.ceil(d.maxHp) +
-      (d.shieldMax ? '　护盾 ' + Math.ceil(d.shield) + '/' + Math.ceil(d.shieldMax) : '') + '</div>' +
+      '<div class="dst" id="dHpLine">' + hpLine() + '</div>' +
       (d.lv < 50 ? '<div class="dup">下一级 → ' + NAME_POOL.door[d.lv] + '　生命 ' + Math.ceil(doorMaxHp(d.lv + 1)) + '</div>' : '') +
       '<div class="dnote">门被攻破后，该路敌人会冲进房间拆建筑。</div>';
     act = d.lv >= 50 ? '<span class="max">已至巅峰</span>'
@@ -11467,9 +11586,7 @@ function updateDetail(force) {
       (s.def.noPowerUp ? '<div class="dnote">⚡ <b>持续发电来源</b>，升级永不耗电，发电速率每级 <b>x2</b></div>'
         : (s.level < FREE_POWER_LV ? '<div class="dnote">⚡ Lv' + (FREE_POWER_LV + 1) + ' 之前升级<b>不消耗电量</b></div>' : '')) +
       '<div class="dst">' + s.def.statText(st) + '</div>' +
-      '<div class="dst">生命 ' + Math.ceil(s.hp) + '/' + Math.ceil(s.maxHp) + (s.shieldMax ? '　护盾 ' + Math.ceil(s.shield) + '/' + Math.ceil(s.shieldMax) : '') +
-      '　运行不消耗电力' +
-      (s.kills ? '　击杀 <b class="hl">' + s.kills + '</b>' : '') + '</div>';
+      '<div class="dst" id="dHpLine">' + hpLine() + '</div>';
     // 面板 DPS：回答「这座炮塔到底值不值得升」
     if (s.def.tower) {
       const dps = towerPanelDps(st, s);
@@ -11725,12 +11842,16 @@ function updateRunePanel() {
     }
   }
 }
-function togglePanel(id) {
-  // 同时只开一个面板：tech/ach/help/lot 用 .open 滑出，quest/rune/save 用内联 display
+/** 面板互斥：收起除 id 之外的全部面板（tech/ach/help/lot 走 .open，quest/rune/save 另有内联 display） */
+function _closeOtherPanels(id) {
   ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => { if (p !== id && $(p)) $(p).classList.remove('open'); });
   ['questPanel', 'runePanel', 'savePanel'].forEach(p => {
     if (p !== id && $(p)) { $(p).classList.remove('open'); $(p).style.display = 'none'; }
   });
+}
+function togglePanel(id) {
+  // 同时只开一个面板：tech/ach/help/lot 用 .open 滑出，quest/rune/save 用内联 display
+  _closeOtherPanels(id);
   const el = $(id);
   el.classList.toggle('open');
   // 修复线上现存 bug：runePanel 是内联 display 结构（非 .slide 滑出面板），
@@ -12099,7 +12220,8 @@ function showTrialPanel() {
 function startRun(trialId) {
   if (startRun._busy) return false;   // 防连点：双击会重复扣入场金币
   startRun._busy = true;
-  setTimeout(() => { startRun._busy = false; }, 600);
+  clearTimeout(startRun._busyTimer);
+  startRun._busyTimer = setTimeout(() => { startRun._busy = false; startRun._busyTimer = null; }, 600);
   const trial = trialId && POSTGAME_TRIALS.find(t => t.id === trialId);
   setMenuStartFeedback('', !!trial);
   const selectedDiff = DIFFS[menuDiff] || DIFFS.normal;
@@ -12109,6 +12231,9 @@ function startRun(trialId) {
   const freeAdm = d.admin && (META.equipped || []).indexOf('freeAdmin') >= 0;
   const cost = (d.cost > 0 && !freeAdm) ? d.cost : 0;
   if (META.gold < cost) {
+    // 失败路径立即解锁防抖：否则 600ms 内的重试会被静默吞掉，玩家以为按钮失灵
+    clearTimeout(startRun._busyTimer);
+    startRun._busyTimer = null; startRun._busy = false;
     const message = '金币不足：' + d.name + ' 难度需要 ' + d.cost + ' 金币。去抽奖或完成其他难度来积攒金币。';
     SFX.err(); setTip(message, 5); setMenuStartFeedback(message, !!trial);
     return false;
@@ -12341,6 +12466,10 @@ function _pauseForStory() {
 function _resumeAfterStory() {
   if (!_storyPausedByUI) return;
   _storyPausedByUI = false;
+  // 菜单/结算已接管画面或对局已结束时，不要把模拟解回运行态（否则游戏会在菜单底下继续跑）
+  if (typeof G !== 'undefined' && G && G.over) return;
+  const ov = $('overlay');
+  if (ov && ov.style.display === 'flex') return;
   paused = false;
   const btn = $('btnPause');
   if (btn) btn.textContent = '⏸';
@@ -12452,7 +12581,9 @@ const STORY_SPEAKERS = (function () {
 
 function showStoryDialog(data) {
   const panel = $('storyDialog');
-  if (!panel) return;
+  // 空数据直接忽略：undefined 进队列会在 _processStoryQueue 里抛错，
+  // 面板停在 display:flex 且再也不会走 hideStoryDialog → 暂停无人恢复
+  if (!panel || !data) return;
   storyQueue.push(data);
   if (!storyTyping && panel.style.display !== 'flex') _processStoryQueue();
 }
@@ -13197,7 +13328,7 @@ function wireDreamMenuButtons() {
  *    · 委托面板 —— 当前目标进度 + 信物背包 + 六章进度
  *    · 信物详情 —— 点开读全文（lore），这是"掉落物也有叙事"的关键
  * ================================================================== */
-let _actTimer = null;
+let _actTimer = null, _actHideTimer = null;
 
 /** 章节卡演出：先暂停游戏，避免全屏遮住时被偷家 */
 function showActCard(act, title, sub) {
@@ -13211,19 +13342,29 @@ function showActCard(act, title, sub) {
   el.style.display = 'flex';
   void el.offsetWidth;
   el.classList.add('show');
-  if (_actTimer) clearTimeout(_actTimer);
+  if (_actTimer) { clearTimeout(_actTimer); _actTimer = null; }
+  // 上一张卡的淡出定时器必须清掉：否则它会把刚弹出的新卡提前收走，
+  // 而新卡的 hideActCard 看到 display=none 直接返回，配对恢复丢失 → 永久卡在暂停
+  if (_actHideTimer) { clearTimeout(_actHideTimer); _actHideTimer = null; }
   _actTimer = setTimeout(hideActCard, 2300);
 }
 
 function hideActCard() {
   const el = $('actCard');
-  if (!el || el.style.display === 'none') return;
   if (_actTimer) { clearTimeout(_actTimer); _actTimer = null; }
-  el.classList.remove('show');
-  el.classList.add('out');
-  setTimeout(() => { el.style.display = 'none'; el.classList.remove('out'); }, 620);
+  if (_actHideTimer) { clearTimeout(_actHideTimer); _actHideTimer = null; }
+  if (el && el.style.display !== 'none') {
+    el.classList.remove('show');
+    el.classList.add('out');
+    _actHideTimer = setTimeout(() => {
+      _actHideTimer = null;
+      el.style.display = 'none';
+      el.classList.remove('out');
+    }, 620);
+  }
   // 幕卡的暂停在这里配对恢复（此前依赖后续剧情框兜底解锁，剧情为空时会永久卡在暂停）。
   // 若剧情框已经弹出，把恢复留给 hideStoryDialog，避免对白还没读完战斗就动起来。
+  // 注意：即使卡片已不可见也要走到这里，保证「暂停」一定有配对的「恢复」。
   const sp = $('storyDialog');
   if (!sp || sp.style.display !== 'flex') _resumeAfterStory();
 }
@@ -13293,6 +13434,7 @@ function renderQuestPanel(force) {
 function showQuestPanel() {
   const el = $('questPanel');
   if (!el) return;
+  _closeOtherPanels('questPanel');
   renderQuestPanel();
   el.style.display = '';
   el.classList.add('open');
@@ -13521,6 +13663,7 @@ function doLoadSlot(slot, d) {
 function showSavePanel() {
   const el = $('savePanel');
   if (!el) return;
+  _closeOtherPanels('savePanel');
   renderSavePanel();
   el.style.display = '';
   el.classList.add('open');
@@ -13570,7 +13713,7 @@ function toCanvas(e) {
  *   统一用 Pointer Events：iOS Safari 13+ / Android Chromium / 华为浏览器 / 微信 X5 都支持。
  * ------------------------------------------------------------------ */
 const CANCEL_HOLD_MS = 520;
-let _holdTimer = null, _holdStart = null, _holdFired = false;
+let _holdTimer = null, _holdStart = null, _holdFired = false, _lastTouchAt = 0;
 function cancelSelection() {
   selectedBuildKey = null; selected = null; syncCards();
 }
@@ -13601,6 +13744,7 @@ cv.addEventListener('mousemove', e => { const p = toCanvas(e); applyCanvasPointe
 cv.addEventListener('mouseleave', () => { hoverCell = null; mouse.x = -999; });
 cv.addEventListener('pointerdown', e => {
   if (e.pointerType !== 'touch') return;      // 鼠标/触控板继续走下面的 click
+  _lastTouchAt = Date.now();
   SFX.init();
   const p = toCanvas(e);
   applyCanvasPointer(p.x, p.y);
@@ -13632,7 +13776,9 @@ cv.addEventListener('click', e => {
 cv.addEventListener('contextmenu', e => {
   e.preventDefault();
   clearHold();
-  _holdFired = true;   // 安卓长按会同步触发 contextmenu：与 520ms 计时器互斥，避免重复取消/吞掉随后的点按
+  // 只有「触摸长按」合成的 contextmenu 才标记吞掉随后的 click；
+  // 鼠标右键取消若也置位，桌面端右键后紧接的第一次左键点按会被静默吃掉
+  if (_holdStart || Date.now() - _lastTouchAt < 800) _holdFired = true;   // 安卓长按会同步触发 contextmenu：与 520ms 计时器互斥，避免重复取消
   cancelSelection();
 });
 const SKILL_MAP = { q: 'meteor', w: 'freeze', e: 'overclock', r: 'mend', t: 'repel', f: 'siphon' };
@@ -13643,8 +13789,12 @@ window.addEventListener('keydown', e => {
     e.preventDefault(); return;
   }
   const target = e.target;
-  if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/.test(target.tagName) ||
-    (target.closest && target.closest('[role="button"]')))) return;
+  // 文本输入（含可编辑区）里的按键一律让给输入框
+  if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+  // 焦点停在按钮/链接上时，空格回车等让给按钮自身触发；但 ESC 必须始终生效，
+  // 否则鼠标点完任意按钮（焦点留在按钮上）再按 ESC 就无法关面板/取消选择
+  if (target && e.key !== 'Escape' &&
+    (/^(BUTTON|A)$/.test(target.tagName) || (target.closest && target.closest('[role="button"]')))) return;
   // 保留浏览器的 Ctrl/Alt/Meta 系统快捷键（例如 Ctrl+S 保存网页、Ctrl+P 打印）。
   if (e.ctrlKey || e.altKey || e.metaKey) return;
   // 菜单、抽奖、仓库和结算画面打开时，不能让按键操作被遮住的游戏场景。
@@ -13660,7 +13810,8 @@ window.addEventListener('keydown', e => {
   const k = e.key;
   if (k === 'Escape') {
     selectedBuildKey = null; selected = null; syncCards();
-    ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => $(p).classList.remove('open'));
+    // 与 togglePanel 的互斥逻辑保持一致：滑出面板撤 .open，内联面板走 togglePanel 收起
+    ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => { if ($(p)) $(p).classList.remove('open'); });
     if ($('itemDetail') && $('itemDetail').classList.contains('show')) { closeQuestItem(); return; }
     ['questPanel', 'runePanel', 'savePanel'].forEach(p => { if ($(p) && $(p).classList.contains('open')) togglePanel(p); });
     return;
@@ -14099,7 +14250,7 @@ function loop(now) {
       while (simAcc >= FIXED_DT && n < 15) { step(FIXED_DT); simAcc -= FIXED_DT; n++; }
       if (n >= 15) simAcc = 0;      // 追不上就丢掉欠帧，避免雪崩
     } else simAcc = 0;
-    if (G) { render(); updateHUD(dt); }
+    if (G) { render(dt); updateHUD(dt); }   // 帧时长传给渲染层，动画衰减按真实时间推进
   } catch (err) {
     if (G) G.loopErrors = (G.loopErrors || 0) + 1;
     console.error('[loop]', err);

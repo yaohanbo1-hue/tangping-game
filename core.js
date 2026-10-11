@@ -369,6 +369,7 @@ function jumpToWave(n) {
   if (!G || !G.admin) return false;
   n = Math.max(1, Math.min(999, n | 0));
   G.enemies = []; G.spawnQueue = []; G.bossQueue = []; G.effects = [];
+  G.resumeWave = false;   // 跳波是新开波：清掉读档留下的「重开本波」标记，否则 startWave 不自增波次
   G.wave = n - 1;
   startWave();
   return true;
@@ -501,6 +502,12 @@ function tryDropRune(wave, x, y) {
   const chance = (0.012 + wave * 0.0016) * (1 + G.tech.looting * 0.2);
   if (Math.random() > Math.min(0.5, chance)) return null;
   const r = rollRune(wave);
+  // data.js 的 runeSeq 每次刷新页面都会从 1 重计，新掉的符文会撞上存档里旧符文的 id；
+  // 读档回滚按 id 移除本波掉落，撞号会把玩家的旧符文一起误删，这里兜底改成唯一 id
+  const idTaken = id => G.runeBag.some(o => o && o.id === id) ||
+    G.buildings.some(b => (b.runes || []).some(o => o && o.id === id)) ||
+    (G.waveRuneIds || []).indexOf(id) >= 0;
+  while (idTaken(r.id)) r.id = 'r' + Math.floor(Math.random() * 2147483647);
   G.runeBag.push(r);
   (G.waveRuneIds || (G.waveRuneIds = [])).push(r.id);   // 记录本波掉落：读档重开波时移除，防刷符文
   addText(x, y - 26, '🔮 ' + r.name + '（' + qualityOf(r.q).name + '）', qualityOf(r.q).color, true);
@@ -771,17 +778,22 @@ function updateEconomy(dt) {
   G.bed.shieldMax = 0;
   G.doors.forEach(d => { d.shieldMax = 0; });
   G.buildings.forEach(o => { o.shieldMax = 0; });
+  // 先重算全部护盾上限、再结算治疗/回盾：否则维修台的 shieldHeal 会受建筑数组顺序影响，
+  // 护盾塔排在后面时本帧读到的 o.shieldMax 还是 0，回盾时灵时不灵
+  G.buildings.forEach(b => {
+    const s = bstat(b);
+    if (b.type === 'shield' || s.shield) {
+      G.doors.forEach(d => { if (Math.abs(d.y - b.y) < 150) d.shieldMax = Math.max(d.shieldMax, s.shield); });
+      G.bed.shieldMax = Math.max(G.bed.shieldMax, s.shield * 0.8);
+      G.buildings.forEach(o => { if (dist(b, o) <= s.range) o.shieldMax = Math.max(o.shieldMax, s.shield); });
+    }
+  });
   G.buildings.forEach(b => {
     const s = bstat(b);
     if (b.type === 'repair' || s.heal) {
       G.doors.forEach(d => { if (Math.abs(d.y - b.y) < 130 && dist({ x: WALL_X, y: d.y }, b) <= s.range + 90) healTarget(d, s.heal * dt); });
       G.buildings.forEach(o => { if (o !== b && dist(b, o) <= s.range) healTarget(o, s.heal * 0.6 * dt); });
       if (s.shieldHeal) G.buildings.forEach(o => { if (o !== b && dist(b, o) <= s.range && o.shieldMax > 0) o.shield = Math.min(o.shieldMax, o.shield + s.shieldHeal * dt); });
-    }
-    if (b.type === 'shield' || s.shield) {
-      G.doors.forEach(d => { if (Math.abs(d.y - b.y) < 150) d.shieldMax = Math.max(d.shieldMax, s.shield); });
-      G.bed.shieldMax = Math.max(G.bed.shieldMax, s.shield * 0.8);
-      G.buildings.forEach(o => { if (dist(b, o) <= s.range) o.shieldMax = Math.max(o.shieldMax, s.shield); });
     }
   });
   const maxLvShield = Math.max(1, ...G.buildings.filter(b => b.type === 'shield').map(b => b.level));
@@ -814,10 +826,11 @@ function applyStoryEffect(text, ctx) {
   const durLabel = waveScoped ? '本波' : '本局';
 
   // 1) 金币 / 灵魂 / 电量（「+ N 灵魂」这类不带“获得”的写法也要认）
+  // 剧情/委托奖励是一次性收入：按赠礼记成负花费，读档回滚本波收益时不会把它们一起滚掉
   const gold = t.match(/获得\s*(\d+)\s*金币/) || t.match(/\+\s*(\d+)\s*金币/);
-  if (gold) { G.gold += +gold[1]; got.push('+' + gold[1] + '💰'); }
+  if (gold) { G.gold += +gold[1]; G.waveSpentGold -= +gold[1]; got.push('+' + gold[1] + '💰'); }
   const soul = t.match(/获得\s*(\d+)\s*灵魂/) || t.match(/\+\s*(\d+)\s*灵魂/);
-  if (soul) { G.souls += +soul[1]; got.push('+' + soul[1] + '🔮'); }
+  if (soul) { G.souls += +soul[1]; G.waveSpentSouls -= +soul[1]; got.push('+' + soul[1] + '🔮'); }
   const power = t.match(/(?:获得\s*)?(\d+)\s*电量/);
   if (power) { G.power += +power[1]; got.push('+' + power[1] + '⚡'); }
   const goldMul = t.match(/金币(获取|收益)\s*\+(\d+)%/);
@@ -839,8 +852,9 @@ function applyStoryEffect(text, ctx) {
     G.buildings.forEach(b => { b.maxHp *= 1 + v; b.hp *= 1 + v; });
     got.push('全属性 +' + all[1] + '%（含生命）' + durLabel);
   } else {
-    const dmg = t.match(/(?:炮塔|全炮塔|所有炮塔|攻击力)[^%]{0,8}?\+(\d+)%/);
-    if (dmg && !/射速|射程/.test(t)) { bucket.dmg += +dmg[1] / 100; got.push('炮塔伤害 +' + dmg[1] + '%' + durLabel); }
+    const dmg = t.match(/(?:炮塔|全炮塔|所有炮塔|攻击力)([^%]{0,8}?)\+(\d+)%/);
+    // 排除项只看关键词与加成之间的那段：「全炮塔暴击率 +15%」不能被当成炮塔伤害再吃一遍
+    if (dmg && !/射速|射程|暴击/.test(dmg[1])) { bucket.dmg += +dmg[2] / 100; got.push('炮塔伤害 +' + dmg[2] + '%' + durLabel); }
   }
   const allDmg = t.match(/(所有|全部|全体)伤害\s*\+(\d+)%/);
   if (allDmg) { bucket.dmg += +allDmg[2] / 100; got.push('所有伤害 +' + allDmg[2] + '%' + durLabel); }
@@ -910,7 +924,9 @@ function applyStoryEffect(text, ctx) {
 
   // 6) 深层梦境入口：按当前波次进入已触发过的最深层，不再恒进第一层
   if (/深层梦境/.test(t) && typeof DeepDream !== 'undefined' && !DeepDream.isActive()) {
-    const levels = (DeepDream.DEEP_LEVELS || []).filter(x => (x.triggerWave | 0) <= G.wave);
+    // 注意字段名：DEEP_LEVELS 由 story.js 的 triggerWave 编译而来，编译后叫 enterWave；
+    // 只认 triggerWave 会恒取 0，等于没按波次过滤，第 5 波就会被丢进最深层
+    const levels = (DeepDream.DEEP_LEVELS || []).filter(x => ((x.enterWave || x.triggerWave || 0) | 0) <= G.wave);
     const lv = levels.length ? levels[levels.length - 1] : (DeepDream.DEEP_LEVELS || [])[0];
     if (lv) { DeepDream.enterDeepDream(lv.id); got.push('坠入' + lv.name); }
   }
@@ -962,8 +978,9 @@ function bossPhases(e) {
   return (BOSS_DEFS[e.bossKey] && BOSS_DEFS[e.bossKey].phases) || BOSS_PHASES;
 }
 function bossKeyForWave(n) {
-  // 无尽模式没有终焉：60 波以后继续轮换 BOSS，不再全是终焉梦魇
-  if (n >= finalWave() && !(G && G.mode === 'endless')) return 'final';
+  // 终焉梦魇只守在终局波；无尽模式 60 波以后继续轮换 BOSS，不再全是终焉梦魇。
+  // 注意模式 id 是 unlimited（MODES 里没有 endless），写错键等于这条分支从未生效
+  if (n >= finalWave() && !(G && G.mode === 'unlimited' && n > finalWave())) return 'final';
   const idx = Math.floor(n / 5 - 1) % BOSS_ORDER.length;
   return BOSS_ORDER[(idx + BOSS_ORDER.length) % BOSS_ORDER.length];
 }
@@ -1338,10 +1355,12 @@ function recycleRunes(b, why) {
   return rs.length;
 }
 function destroyBuilding(b) {
+  const idx = G.buildings.indexOf(b);
+  if (idx < 0) return;   // 已经销毁过的建筑直接忽略，防止 splice(-1) 把无关建筑删掉
   if (G.track) G.track.buildLost = (G.track.buildLost || 0) + 1;
   recycleRunes(b, '被摧毁');
   G.grid[b.row * COLS + b.col] = null;
-  G.buildings.splice(G.buildings.indexOf(b), 1);
+  G.buildings.splice(idx, 1);
   if (selected === b) selected = null;
   spawnParts(b.x, b.y, 26, b.def.color, 4, 0.9);
   addText(b.x, b.y, '建筑被摧毁！', '#ff4d6d', true);
@@ -1397,7 +1416,7 @@ function killEnemy(e) {
     if (!e.def.finalBoss && bossStory && bossStory.wave === G.wave && bossStory.defeat && typeof showStoryDialog === 'function') {
       showStoryDialog({ wave: G.wave, speaker: bossStory.name || e.def.name, text: bossStory.defeat });
     }
-    if (e.def.finalBoss && !(G.mode === 'endless')) {
+    if (e.def.finalBoss) {   // 无尽模式由 gameWin 内部的「无尽继续」分支兜住，不会误判通关
       // runStamp 守卫：重开局后旧回调不再触发结算
       const rs = G.runStamp;
       setTimeout(() => { if (G && G.runStamp === rs && !G.over) gameWin(); }, 900);
@@ -1843,8 +1862,8 @@ function buildWaveQueue(n) {
   const cnt = Math.min(90, 6 + Math.floor(n * 2.1)) * (G.event.eff.countMul || 1);
   const q = [];
   for (let i = 0; i < cnt; i++) q.push(pick(pool));
-  const isFinalWave = n >= finalWave() && !(G && G.mode === 'endless');
-  // 终局只刷一只终焉梦魇（与「击败【终焉梦魇】即可通关」的口径一致）；无尽模式永远走轮换
+  const isFinalWave = n >= finalWave() && !(G && G.mode === 'unlimited' && n > finalWave());
+  // 终局波只刷一只终焉梦魇（与「击败【终焉梦魇】即可通关」的口径一致）；无尽模式 60 波以后永远走轮换
   const bosses = n % 5 === 0 ? (isFinalWave ? 1 : 1 + Math.floor(n / 22)) : 0;
   const bossList = [];
   const bossType = isFinalWave ? 'final' : 'boss';
@@ -1942,7 +1961,7 @@ function endWave() {
   if (typeof DreamEngine !== 'undefined') { try { DreamEngine.onWaveEnd(G.wave); } catch(e) { console.warn('DreamEngine waveEnd:', e); } }
   if (G.challenge && !G.challenge.done) {
     const c = G.challenge, t = c.target;
-    const v = c.id === 'time' ? G.waveTime : (G.track[c.def.track] || 0);
+    const v = c.def.track === 'time' ? G.waveTime : (G.track[c.def.track] || 0);   // 按 track 判定：id 是 'swift'，按 id 找 'time' 恒为 0，限时挑战会白给
     const pass = c.def.cmp === 'le' ? v <= t : v >= t;
     if (pass) {
       const rw = challengeRewardSouls(G.wave);
@@ -2014,10 +2033,11 @@ function useSkill(key) {
   SFX.skill();
   if (key === 'meteor') {
     const dmg = 200 + G.wave * 50;
+    const rs = G.runStamp;   // runStamp 守卫：重开局后旧陨石回调不再打到新一局的敌人与统计上
     G.enemies.forEach(e => {
       if (e.dead) return;
       addEffect({ type: 'meteor', x: e.x + rnd(-40, 40), y: e.y - 400, tx: e.x, ty: e.y, life: 0.5, maxLife: 0.5 });
-      setTimeout(() => { if (!e.dead) { applyDamage(e, dmg, 'fire'); spawnParts(e.x, e.y, 18, '#ff8c42', 4, 0.7); } }, 450);
+      setTimeout(() => { if (G && G.runStamp === rs && !e.dead) { applyDamage(e, dmg, 'fire'); spawnParts(e.x, e.y, 18, '#ff8c42', 4, 0.7); } }, 450);
     });
     setTimeout(() => { shakeBy(14); SFX.boom(); }, 460);
     addText(ROOM_X0 + 300, DOOR_MID_Y() - 170, '☄️ 陨石雨！', '#ff8c42', true);
@@ -2100,8 +2120,9 @@ function checkAchievements() {
     try { ok = a.check(); } catch (e) { ok = false; }
     if (ok) {
       G.ach[a.id] = 1;
-      if (a.reward.gold) G.gold += a.reward.gold;
-      if (a.reward.soul) G.souls += a.reward.soul;
+      // 成就奖励是一次性收入：按赠礼记成负花费，读档回滚本波收益时不会把它们一起滚掉
+      if (a.reward.gold) { G.gold += a.reward.gold; G.waveSpentGold -= a.reward.gold; }
+      if (a.reward.soul) { G.souls += a.reward.soul; G.waveSpentSouls -= a.reward.soul; }
       setTip('🏆 成就达成【' + a.name + '】！奖励 ' + (a.reward.soul ? a.reward.soul + '🔮' : '') + (a.reward.gold ? a.reward.gold + '💰' : ''), 6);
       SFX.achieve();
       addText(ROOM_X0 + 300, DOOR_MID_Y() - 130, '🏆 ' + a.name, '#ffe066', true);
@@ -2249,7 +2270,10 @@ function drawLottery(n, currency) {
   const cost = useSoul ? LOTTERY.soulCost * n : (n === 10 ? LOTTERY.tenCost : LOTTERY.cost * n);
   const has = useSoul ? G.souls : G.gold;
   if (has < cost) { SFX.err(); setTip((useSoul ? '灵魂' : '金币') + '不足，需要 ' + cost, 3); return null; }
-  if (useSoul) G.souls -= cost; else G.gold -= cost;
+  // 抽奖花费计入本波账本：读档回滚只退本波净收益、不退花费，
+  // 否则战斗中「抽奖→存档→读档」可以白嫖十连
+  if (useSoul) { G.souls -= cost; G.waveSpentSouls += cost; }
+  else { G.gold -= cost; G.waveSpentGold += cost; }
   const results = [];
   for (let i = 0; i < n; i++) {
     const item = rollLotteryItem();
@@ -2333,7 +2357,11 @@ function upgradeRune(r) {
   if (!r) return false;
   const c = runeUpCost(r);
   if (G.souls < c) { SFX.err(); setTip('灵魂不足，需要 ' + c + '🔮', 3); return false; }
-  G.souls -= c; G.waveSpentSouls += c; r.lv++;
+  G.souls -= c;
+  // 本波掉落的符文会在读档回滚时随掉落一起移除，强化花费不记账、随回滚一起退回；
+  // 旧符文照常记账，回滚不影响
+  if ((G.waveRuneIds || []).indexOf(r.id) < 0) G.waveSpentSouls += c;
+  r.lv++;
   SFX.up(); setTip('符文强化至 +' + r.lv + '（效果 +' + Math.round((runeMul(r) - 1) * 100) + '%）', 3);
   return true;
 }
@@ -2348,7 +2376,9 @@ function salvageRune(runeId) {
       for (let i = 0; i < (b.runes || []).length; i++) {
         if (b.runes[i] && b.runes[i].id === runeId) {
           const rr = b.runes[i]; b.runes[i] = null;
-          const v = runeSalvage(rr); G.souls += v; G.waveSpentSouls -= v;
+          const v = runeSalvage(rr); G.souls += v;
+          // 本波掉落的符文随回滚移除，其分解所得也要一起回滚，否则「掉→存→读」能刷灵魂
+          if ((G.waveRuneIds || []).indexOf(rr.id) < 0) G.waveSpentSouls -= v;
           SFX.coin(); setTip('分解获得 ' + v + '🔮', 3); return true;
         }
       }
@@ -2356,7 +2386,9 @@ function salvageRune(runeId) {
     return false;
   }
   const r = G.runeBag.splice(idx, 1)[0];
-  const v = runeSalvage(r); G.souls += v; G.waveSpentSouls -= v;
+  const v = runeSalvage(r); G.souls += v;
+  // 本波掉落的符文随回滚移除，其分解所得也要一起回滚，否则「掉→存→读」能刷灵魂
+  if ((G.waveRuneIds || []).indexOf(r.id) < 0) G.waveSpentSouls -= v;
   SFX.coin(); setTip('分解「' + r.name + '」获得 ' + v + '🔮', 3);
   return true;
 }

@@ -114,7 +114,7 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 #hud.ultra .stat i{font-size:11px}
 #hud.ultra .btn{padding:4px 5px;font-size:10px}
 #hud.ultra .logo{font-size:13px}
-#detail{position:absolute;left:392px;bottom:148px;width:320px;max-height:340px;overflow-y:auto;
+#detail{position:absolute;left:392px;bottom:170px;width:320px;max-height:340px;overflow-y:auto;
   background:linear-gradient(135deg,rgba(255,255,255,.09),rgba(255,255,255,.02) 42%,rgba(255,255,255,.05)),rgba(16,13,36,.14);
   backdrop-filter:blur(4px) saturate(160%);-webkit-backdrop-filter:blur(4px) saturate(160%);
   border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:12px 14px;z-index:6;display:none;
@@ -187,21 +187,21 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
   background:radial-gradient(64% 64% at 50% 50%,rgba(255,255,255,.07),rgba(255,255,255,0) 72%);
   filter:drop-shadow(0 2px 5px var(--shadow-1));transition:transform .2s cubic-bezier(.2,.9,.3,1.4)}
 .card:hover .ico{transform:scale(1.12)}
-.card .nm{font-size:10px;font-weight:700;margin-top:2px;text-align:center;color:#ddd8f5;line-height:1.25;text-shadow:0 1px 2px var(--shadow-2);
+.card .nm{font-size:10px;font-weight:700;margin-top:1px;text-align:center;color:#ddd8f5;line-height:1.25;text-shadow:0 1px 2px var(--shadow-2);
   max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 1px;letter-spacing:.1px}
 .card .dt{margin-top:auto;display:inline-flex;align-items:center;gap:1px;font-size:8.5px;font-weight:700;line-height:1.75;
   padding:0 7px 1px 5px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid currentColor;opacity:.95;max-width:100%;box-sizing:border-box;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card .dt i{font-style:normal;font-size:9.5px;line-height:1}
 .card .dt.generic{color:#8f8ab0;border-color:rgba(143,138,176,.35)}
-.card .pr{display:flex;flex-direction:column;align-items:center;gap:0;font-size:9.5px;width:100%;margin-top:2px;line-height:1.2}
+.card .pr{display:flex;flex-direction:column;align-items:center;gap:0;font-size:9.5px;width:100%;margin-top:1px;line-height:1.2}
 .card .pr .g{color:var(--gold);font-weight:800}
 .card .kb{position:absolute;top:4px;right:5px;font-size:8.5px;font-weight:800;line-height:1.5;
   background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:0 4px;color:var(--text-note);
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 /* 右侧控制区：必须完整塞进 150px 高的 #bottom（修复 11 个按钮 + 提示被裁掉的问题）
    预算：136px 内容高 = 技能条 36 + 间隔 5 + 按钮网格 2 行 44 + 间隔 5 + 提示 46 */
-#right{width:232px;display:flex;flex-direction:column;gap:4px;min-height:0;
+#right{width:232px;display:flex;flex-direction:column;gap:3px;min-height:0;
   border-left:1px solid rgba(255,255,255,.07);padding-left:8px;
   background:linear-gradient(90deg,rgba(255,255,255,.02),transparent 30%)}
 #skillBar{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;flex-shrink:0}
@@ -220,17 +220,21 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 .skill.sealed{filter:grayscale(.6) brightness(.78);cursor:not-allowed}
 .skill.sealed::after{content:'封印';position:absolute;right:2px;bottom:2px;z-index:4;padding:1px 3px;border:1px solid rgba(196,181,253,.3);border-radius:4px;
   background:rgba(25,18,48,.88);color:#d5c5ff;font-size:7px;line-height:1.2}
-.skill:not(.cool){border-color:rgba(158,240,26,.32)}
+/* :not(.cool) 与 .skill:hover 同权重（0,2,0），写在 hover 之后会把 hover 边框顶掉 —— 排除 hover */
+.skill:not(.cool):not(:hover){border-color:rgba(158,240,26,.32)}
 #ctrls{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;flex-shrink:0}
 #ctrls .btn{min-width:0;width:100%;padding:3px 0;font-size:9px;font-weight:700;text-align:center;letter-spacing:0;
   line-height:1.2;overflow:hidden;white-space:nowrap;border-radius:8px}
 /* 提示区：原来 3 行文字塞不进可用高度，最后一行被 overflow:hidden 切掉半截。
-   把技能条/按钮网格各收 1~2px，攒出的高度留给这里。 */
-#hint{font-size:9px;color:#9d96c9;line-height:1.5;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
-  padding:4px 8px;border-radius:8px;flex:1;min-height:0;overflow:hidden;
+   把技能条/按钮网格各收 1~2px，攒出的高度留给这里。
+   另：232px 宽的 #right 里第二行（技能/升级/出售/符文/暂停 五枚胶囊）必然折成两行，
+   实际排 4 行。胶囊行高 1.7 会把每行撑到 16.4px，4 行装不下 —— 收到 1.35（胶囊 13.5px），
+   4 行 ≈ 62px，配合 #hint 上下 padding 收 1px、#right gap 收 1px，刚好放满且不裁切。 */
+#hint{font-size:9px;color:#9d96c9;line-height:1.4;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+  padding:3px 8px;border-radius:8px;flex:1;min-height:0;overflow:hidden;
   border:1px solid rgba(255,255,255,.06);box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
 #hint b{color:#c9c2f5;font-weight:700;background:rgba(130,120,240,.2);border:1px solid rgba(145,135,245,.32);
-  border-radius:5px;padding:0 5px;margin-right:3px;font-size:8.5px;display:inline-block;line-height:1.7}
+  border-radius:5px;padding:0 5px;margin-right:3px;font-size:8.5px;display:inline-block;line-height:1.35}
 .slide{position:absolute;right:0;top:56px;width:352px;height:504px;
   background:linear-gradient(180deg,rgba(14,11,30,.92),rgba(10,8,22,.94));
   backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);
@@ -370,6 +374,8 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 #ctrls .upmax{border-color:rgba(var(--legend-rgb),.55);background:rgba(var(--legend-rgb),.16);color:var(--gold-soft)}
 #ctrls .rune{border-color:rgba(192,132,252,.5);background:rgba(192,132,252,.14);color:var(--epic-t)}
 #ctrls .upmax:hover{background:rgba(var(--legend-rgb),.32);transform:translateY(-1px)}
+/* #ctrls .rune 与 .btn:hover 同权重冲突：变体自带 background/border-color 会盖掉通用 hover 态，补一条专属 hover */
+#ctrls .rune:hover{background:rgba(192,132,252,.3);border-color:rgba(192,132,252,.7)}
 .dup{font-size:11px;color:var(--ok-2);background:rgba(124,243,154,.1);border-radius:5px;padding:4px 7px;margin-top:5px;line-height:1.5}
 .dact .maxup{flex:0 0 52px;border-color:rgba(255,224,102,.5);background:rgba(255,224,102,.14);color:var(--gold-3)}
 .dact .maxup:hover{background:rgba(255,224,102,.28)}
@@ -719,7 +725,7 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
   backdrop-filter:blur(3px) saturate(160%);-webkit-backdrop-filter:blur(3px) saturate(160%);
   text-shadow:0 1px 6px rgba(0,0,0,.85),0 0 3px rgba(0,0,0,.7);pointer-events:none}
 .forecast-head{display:flex;align-items:center;gap:8px;margin-bottom:5px;color:#e8ddff;font-size:10px;font-weight:800;letter-spacing:.5px}
-.forecast-head small{margin-left:auto;color:#948baa;font-size:8px;font-weight:500;letter-spacing:0}
+.forecast-head small{margin-left:auto;color:#a49dbc;font-size:8px;font-weight:500;letter-spacing:0}
 .forecast-enemies{display:flex;flex-wrap:wrap;gap:5px}
 .forecast-enemy,.forecast-boss{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:999px;
   background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.075);color:#d7d0e8;font-size:8.5px;white-space:nowrap}
@@ -926,9 +932,6 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 .fragment-gallery{flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding-right:4px;margin:10px 0}
 .fragment-gallery::-webkit-scrollbar{width:6px}
 .fragment-gallery::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
-@keyframes legendGlow{
-  0%,100%{box-shadow:0 0 16px rgba(var(--legend-rgb),.2),0 0 40px rgba(var(--legend-rgb),.05)}
-  50%{box-shadow:0 0 28px rgba(var(--legend-rgb),.45),0 0 70px rgba(var(--legend-rgb),.15)}}
 
 /* ========= 中立生物 ========= */
 .neutral-indicator{position:absolute;z-index:7;display:flex;align-items:center;gap:4px;
@@ -1337,7 +1340,7 @@ body.touch #btnFull{display:inline-flex!important;align-items:center;justify-con
 /* 触屏布局：把有限的固定画布空间优先留给容易误触的战斗操作。 */
 body.touch #bottom{height:174px;padding:8px 12px;gap:10px}
 body.touch #buildBar{gap:6px;padding:5px 3px 4px}
-body.touch #buildBar .card{height:100%;padding:4px 3px 5px}
+body.touch #buildBar .card{height:100%;padding:4px 3px 4px}
 body.touch #buildBar .card .ico{height:34px;font-size:26px}
 /* 右侧控制区：技能格与按钮都放大到 44px 后，174px 底栏装不下「技能 1 行 + 按钮 2 行 + 提示」。
    改为「技能格 3×2（138px 宽）与按钮 6×2（264px 宽）并排」，两块等高 91px，剩余高度给提示区。
@@ -1360,8 +1363,14 @@ body.touch #hudTimer{font-size:16px}
 body.touch .net{font-size:12px!important}
 body.touch #hudRate{font-size:12px!important}
 /* fitHUD() 判定 HUD 溢出时的降级档：宁可字号小一档，也不要文字被 overflow:hidden 切掉 */
+/* 新字号（stat 16px / i 15px）后，compact/ultra 只降文字不降图标与按钮，胶囊内会撑爆：
+   补齐图标与按钮的同步降档（.stat i 原被 body.touch 的高权重规则钉在 15px）。
+   注意顺序：fitHUD 溢出时 compact 与 ultra 会同时挂上，两条同权重 —— ultra 必须写在后面才能生效 */
 body.touch #hud.compact .stat{font-size:14px}
+body.touch #hud.compact .stat i{font-size:13px}
+body.touch #hud.compact .btn{font-size:12px}
 body.touch #hud.ultra .stat{font-size:12.5px}
+body.touch #hud.ultra .stat i{font-size:11px}
 body.touch #hud.ultra .btn{font-size:11px}
 /* #right 加宽到 410px 后，建造栏右缘的渐隐/箭头跟随右移（否则会盖到按钮区上） */
 body.touch .story-dialog{left:50%;bottom:18px;width:min(1120px,calc(100% - 56px));max-height:calc(100% - 36px);padding:16px 22px}
@@ -1375,6 +1384,9 @@ body.touch .story-next{min-height:44px;padding:10px 28px}
 body.touch .panel .btn,body.touch .slide .btn{min-height:34px}
 body.touch .home-panel .btn{min-height:38px}
 body.touch .slide{width:min(460px,96%);height:calc(100% - 112px);top:56px}
+/* 底栏加高到 162/174px 后，详情面板与存档 toast 的下缘要跟着抬，避免压住建造卡片顶行 */
+body.touch #detail{bottom:182px}
+body.touch #svToast{bottom:182px}
 
 /* 手机上毛玻璃很吃 GPU：把最密集的几层模糊半径降下来（观感几乎无差别） */
 body.touch #hud,body.touch .panel,body.touch .slide,body.touch #overlay::before{
@@ -1417,9 +1429,12 @@ body.rotated #rotBar{display:flex}
   #overlay::before,.home-panel.panel,.home-layout>.setup-panel,.home-side>.record-card,.home-side>.home-shortcuts,.home-bottom>.home-guide,.home-bottom>.home-audio,
   .home-header h1,.home-kicker i,.home-clock>span,.home-start-actions .big,.home-music,.home-action,.story-avatar{animation:none!important}
   .home-panel *, .story-dialog *{scroll-behavior:auto!important;transition-duration:.01ms!important}
-  /* 游戏内无限循环动画：cardGlow / towerGlow / barArrow / lshake / titleShine / dreamTextPulse */
-  .card.ok,.card.okTower,#buildBar.canScroll::before,.lotmachine,
-  .panel h1,.panel.win h1,.dream-panel-title,.deep-dream-text,.deep-dream-sub{animation:none!important}
+  /* 游戏内无限循环动画：cardGlow / towerGlow / lshake / titleShine / dreamTextPulse /
+     btnPulse / legendGlow / mercy-pulse / dreamOrb / glitch / corrupt（补全遗漏的无限循环） */
+  .card.ok,.card.okTower,.lotmachine,
+  .panel h1,.panel.win h1,.dream-panel-title,.deep-dream-text,.deep-dream-sub,
+  .btns button.big,.fragment-card.legendary,.mercy-pulse,.deep-dream-transition::before,
+  .fourth-wall-glitch,.fourth-wall-corrupt{animation:none!important}
 }
 
 /* ==================== 夜班档案主页 · 深色编辑版 ==================== */

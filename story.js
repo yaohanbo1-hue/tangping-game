@@ -198,7 +198,7 @@ const WAVE_STORY = [
     text: '镜子里的你慢了一拍。你抬手，镜中人却望向了别处。镜面深处像有谁睁开眼，很快又被一层水汽遮住。雨声忽然远了，房间里只剩两种节奏相近的呼吸。玻璃上浮出一句话：别把没听见，当成没有发生。',
     choices: [
       { text: '面对内心。', effect: '直面心魔，全属性 +8%（本局）' },
-      { text: '闭嘴！', effect: '暴怒状态：全炮塔暴击率 +15%' },
+      { text: '闭嘴！', effect: '暴怒状态：全军暴击率 +15%' },
     ],
   },
   {
@@ -268,7 +268,7 @@ const WAVE_STORY = [
     wave: 40, speaker: '林小夏',
     text: '那晚我一直记得一盏灯。它明明很亮，照到走廊尽头时却像隔着一层雾。后来我常想，是不是有人在灯亮起来时说过什么；可每次想追上那句话，梦就把钟拨回 03:07。',
     choices: [
-      { text: '你是说……这不是白费的？', effect: '全属性 +15%，解锁「成长」成就' },
+      { text: '你是说……这不是白费的？', effect: '全属性 +15%，解锁「成长」印记' },
       { text: '现实里又没有梦魇。', effect: '获得 200 金币' },
     ],
   },
@@ -289,7 +289,7 @@ const WAVE_STORY = [
     text: '我把应急灯放在窗边，光刚好落在一角旧布上。这个动作让我觉得熟悉，可我想不起在哪做过。录音还剩最后一段；等你准备好，我们再一起核对，不必现在猜它的意思。',
     choices: [
       { text: '我们一起守住这盏灯。', effect: '同伴支持：全属性 +25%，持续到结局' },
-      { text: '最后的战斗，交给我。', effect: '单人模式：攻击力 x2，但防御 -50%' },
+      { text: '最后的战斗，交给我。', effect: '单人模式：所有炮塔伤害 +100%（本局），以攻代守。' },
     ],
   },
   {
@@ -530,10 +530,10 @@ const DEEP_DREAM_LEVELS = [
   {
     id: 'deep_3', triggerWave: 45, duration: 3, name: '意识深渊', icon: '🕳️',
     description: '最底层的梦境。这里没有固定形状和颜色，只有像潮水一样起伏的意识。远处偶尔浮现熟悉的轮廓，却无法确认它来自记忆，还是正在发生。',
-    rules: '梦魇生命 ×2.8、攻击 ×1.5，并对能量额外脆弱（弱点 +50%）；你的炮塔伤害 +20%、射速 +10%，时间流速加快（×1.15）。',
+    rules: '梦魇生命 ×2.8、速度 ×1.1、攻击 ×1.5，并对能量额外脆弱（弱点 +50%）；你的炮塔伤害 +20%、射速 +10%，时间流速加快（×1.15）。',
     goal: '在深层梦境中存活 3 波。听清回声的方向，再决定下一步。',
     reward: '100 灵魂 + 传说符文 ×1',
-    rewardSpec: { souls: 100, rune: 'legendary' },
+    rewardSpec: { souls: 100, rune: 'legend' },
     modifier: {
       enemyBuffs: { hpMul: 2.8, spdMul: 1.1, dmgMul: 1.5 },
       enemyNerfs: { energy: 0.5 },
@@ -636,7 +636,7 @@ const MERCY_ENCOUNTERS = [
     enemyType: 'splitter', name: '碎片化的自我', icon: '💔',
     dialogue: '每次被打败，我就会碎成更小的自己。我已经不记得完整的我是什么样子了。',
     reward: '获得 40 灵魂 + 稀有梦境碎片 ×1。',
-    unlock: 'achievement_puzzler',
+    unlockText: '解锁剧情：「完整的拼图」',
   },
   {
     enemyType: 'summoner', name: '孤独的召唤者', icon: '🌀',
@@ -654,13 +654,13 @@ const MERCY_ENCOUNTERS = [
     enemyType: 'berserker', name: '愤怒的孩子', icon: '😤',
     dialogue: '我恨这个世界！我恨所有——等等……你为什么不跑？',
     reward: '该敌人平静下来。获得 50 金币 + 10 灵魂。',
-    unlock: 'hidden_dialogue_calm',
+    unlockText: '解锁剧情：「暴怒之后的平静」',
   },
   {
     enemyType: 'wraith', name: '被遗忘的怨灵', icon: '👤',
     dialogue: '……有人记得我的名字吗？哪怕一个人也好。我等了好久好久。',
     reward: '获得「记忆之锚」：被摧毁的建筑有 20% 概率自动重建（本局）。',
-    unlock: 'hidden_ending',
+    unlockText: '解锁剧情：「被记住的名字」',
   },
 ];
 

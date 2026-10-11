@@ -232,7 +232,8 @@ const Cmd = {
   unsocket(b, slot) { return b ? this.dispatch({ t: 'rune', op: 'unsocket', c: b.col, r: b.row, slot }) : false; },
   upgradeRuneIn(b, slot) { return b ? this.dispatch({ t: 'rune', op: 'upgrade', c: b.col, r: b.row, slot }) : false; },
   salvage(runeId) { return this.dispatch({ t: 'runeSalvage', runeId }); },
-  draw(n, cur) { this.dispatch({ t: 'draw', n, cur }); return this.lastDraw; },   // 单机立即拿到结果；联机时结果随状态同步回来
+  // 先清空再派发：命令被拦截（剧情锁/对局结束）时返回 null，而不是把上一次的抽奖结果当新结果重复展示
+  draw(n, cur) { this.lastDraw = null; this.dispatch({ t: 'draw', n, cur }); return this.lastDraw; },   // 单机立即拿到结果；联机时结果随状态同步回来
   jump(wave) { return this.dispatch({ t: 'jump', wave }); },
 
   /** 命令日志导出（复现 bug 时贴给人看） */
