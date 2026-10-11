@@ -68,7 +68,7 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
   backdrop-filter:blur(16px) saturate(1.8);-webkit-backdrop-filter:blur(16px) saturate(1.8);
   border-bottom:1px solid rgba(120,100,255,.18);box-shadow:0 2px 16px var(--shadow-2),inset 0 -1px 0 var(--glass-3);z-index:5;overflow:hidden}
 #hud .logo{font-weight:800;font-size:14px;letter-spacing:1.5px;color:var(--pri);text-shadow:0 0 12px rgba(var(--pri-rgb),.5);white-space:nowrap;flex-shrink:0;margin-right:4px}
-#hud .stat{display:flex;align-items:center;gap:3px;font-size:11.5px;background:var(--glass-1);padding:3px 7px;border-radius:6px;white-space:nowrap;flex-shrink:1;min-width:0;overflow:hidden;border:1px solid var(--glass-1);transition:background .2s}
+#hud .stat{display:flex;align-items:center;gap:3px;font-size:11.5px;background:var(--glass-1);padding:3px 7px;border-radius:8px;white-space:nowrap;flex-shrink:1;min-width:0;overflow:hidden;border:1px solid rgba(255,255,255,.07);transition:background .2s;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
 #hud .stat:hover{background:rgba(255,255,255,.08)}
 #hud .stat i{font-style:normal;font-size:12px}
 #hud .stat b{font-variant-numeric:tabular-nums;font-weight:700}
@@ -98,10 +98,12 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 @keyframes flashGold{0%{background:rgba(var(--legend-rgb),.34);box-shadow:0 0 14px rgba(var(--legend-rgb),.4)}}
 @keyframes flashRed{0%{background:rgba(var(--danger-rgb),.34);box-shadow:0 0 14px rgba(var(--danger-rgb),.42)}}
 @keyframes flashSoul{0%{background:rgba(var(--pri-rgb),.34);box-shadow:0 0 14px rgba(var(--pri-rgb),.4)}}
-.btn{padding:5px 10px;border-radius:6px;border:1px solid rgba(130,120,220,.3);background:linear-gradient(180deg,rgba(100,90,200,.18),rgba(80,70,180,.12));
-  color:#cdc6f0;font-size:11.5px;cursor:pointer;white-space:nowrap;transition:all .18s;font-family:inherit;flex-shrink:0;font-weight:600;letter-spacing:.3px}
-.btn:hover{background:linear-gradient(180deg,rgba(120,110,240,.32),rgba(100,90,220,.22));border-color:rgba(150,140,255,.5);transform:translateY(-1px);box-shadow:0 3px 10px rgba(100,90,220,.25)}
-.btn:active{transform:translateY(0);background:linear-gradient(180deg,rgba(80,70,180,.25),rgba(60,50,160,.18))}
+.btn{padding:5px 10px;border-radius:9px;border:1px solid rgba(130,120,220,.32);background:linear-gradient(180deg,rgba(105,95,215,.22),rgba(80,70,180,.12));
+  color:#d3cdf5;font-size:11.5px;cursor:pointer;white-space:nowrap;transition:all .18s;font-family:inherit;flex-shrink:0;font-weight:600;letter-spacing:.3px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 2px 6px rgba(0,0,0,.18)}
+.btn:hover{background:linear-gradient(180deg,rgba(125,115,245,.36),rgba(100,90,225,.24));border-color:rgba(160,150,255,.55);transform:translateY(-1px);
+  box-shadow:0 5px 14px rgba(110,100,230,.35),inset 0 1px 0 rgba(255,255,255,.22)}
+.btn:active{transform:translateY(0);background:linear-gradient(180deg,rgba(85,75,190,.28),rgba(65,55,165,.2));box-shadow:inset 0 2px 5px rgba(0,0,0,.28)}
 .btn.hot{border-color:rgba(255,190,60,.5);background:linear-gradient(180deg,rgba(255,190,60,.2),rgba(255,170,40,.12));color:var(--gold-3)}
 .btn.hot:hover{border-color:rgba(255,190,60,.7);background:linear-gradient(180deg,rgba(255,190,60,.35),rgba(255,170,40,.22));box-shadow:0 3px 12px rgba(255,190,60,.25)}
 #hud.compact{gap:5px;padding:0 7px}
@@ -199,10 +201,13 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
   backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 /* 右侧控制区：必须完整塞进 150px 高的 #bottom（修复 11 个按钮 + 提示被裁掉的问题）
    预算：136px 内容高 = 技能条 36 + 间隔 5 + 按钮网格 2 行 44 + 间隔 5 + 提示 46 */
-#right{width:232px;display:flex;flex-direction:column;gap:4px;min-height:0}
+#right{width:232px;display:flex;flex-direction:column;gap:4px;min-height:0;
+  border-left:1px solid rgba(255,255,255,.07);padding-left:8px;
+  background:linear-gradient(90deg,rgba(255,255,255,.02),transparent 30%)}
 #skillBar{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;flex-shrink:0}
-.skill{position:relative;height:34px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,.07),var(--glass-2));
-  border:1px solid rgba(130,120,220,.22);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;
+.skill{position:relative;height:34px;border-radius:9px;background:linear-gradient(180deg,rgba(255,255,255,.08),var(--glass-2));
+  border:1px solid rgba(130,120,220,.26);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 2px 6px rgba(0,0,0,.16);
   transition:transform .16s cubic-bezier(.2,.9,.3,1.3),box-shadow .2s,background .2s,border-color .2s}
 .skill:hover{background:linear-gradient(180deg,rgba(130,120,220,.3),rgba(110,100,200,.16));border-color:rgba(150,140,255,.5);
   transform:translateY(-2px);box-shadow:0 4px 12px rgba(110,100,220,.3)}
@@ -218,12 +223,14 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
 .skill:not(.cool){border-color:rgba(158,240,26,.32)}
 #ctrls{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;flex-shrink:0}
 #ctrls .btn{min-width:0;width:100%;padding:3px 0;font-size:9px;font-weight:700;text-align:center;letter-spacing:0;
-  line-height:1.2;overflow:hidden;white-space:nowrap;border-radius:6px}
+  line-height:1.2;overflow:hidden;white-space:nowrap;border-radius:8px}
 /* 提示区：原来 3 行文字塞不进可用高度，最后一行被 overflow:hidden 切掉半截。
    把技能条/按钮网格各收 1~2px，攒出的高度留给这里。 */
-#hint{font-size:9.2px;color:#8f89b0;line-height:1.3;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
-  padding:3px 6px;border-radius:6px;flex:1;min-height:0;overflow:hidden;border:1px solid rgba(255,255,255,.035)}
-#hint b{color:#c2bce0;font-weight:700}
+#hint{font-size:9px;color:#9d96c9;line-height:1.5;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));
+  padding:4px 8px;border-radius:8px;flex:1;min-height:0;overflow:hidden;
+  border:1px solid rgba(255,255,255,.06);box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+#hint b{color:#c9c2f5;font-weight:700;background:rgba(130,120,240,.2);border:1px solid rgba(145,135,245,.32);
+  border-radius:5px;padding:0 5px;margin-right:3px;font-size:8.5px;display:inline-block;line-height:1.7}
 .slide{position:absolute;right:0;top:56px;width:352px;height:504px;
   background:linear-gradient(180deg,rgba(14,11,30,.92),rgba(10,8,22,.94));
   backdrop-filter:blur(24px) saturate(1.6);-webkit-backdrop-filter:blur(24px) saturate(1.6);

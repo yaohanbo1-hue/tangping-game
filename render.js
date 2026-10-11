@@ -331,26 +331,37 @@ function drawRoom() {
     for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
       if (G.grid[r * COLS + c] || inBed(c, r)) continue;
       const R = cellRect(c, r);
-      ctx.fillStyle = 'rgba(' + rgb + ',' + (0.08 + pulse * 0.09) + ')';
-      ctx.fillRect(R.x + 3, R.y + 3, R.w - 6, R.h - 6);
-      ctx.strokeStyle = 'rgba(' + rgb + ',' + (0.34 + pulse * 0.36) + ')';
-      ctx.lineWidth = isTower ? 2 : 1.5;
-      ctx.strokeRect(R.x + 3, R.y + 3, R.w - 6, R.h - 6);
+      const x = R.x + 3, y = R.y + 3, w = R.w - 6, h = R.h - 6;
+      // 圆角柔光格：填充淡染 + 发光描边 + 圆头十字，去掉直角硬边的「表格感」
+      ctx.fillStyle = 'rgba(' + rgb + ',' + (0.05 + pulse * 0.06) + ')';
+      rr(x, y, w, h, 9); ctx.fill();
+      ctx.save();
+      ctx.strokeStyle = 'rgba(' + rgb + ',' + (0.38 + pulse * 0.34) + ')';
+      ctx.lineWidth = 1.6;
+      ctx.shadowColor = 'rgba(' + rgb + ',.5)';
+      ctx.shadowBlur = 7;
+      rr(x + 1, y + 1, w - 2, h - 2, 8); ctx.stroke();
       const cx = R.x + R.w / 2, cy = R.y + R.h / 2;
-      ctx.strokeStyle = 'rgba(' + rgb + ',' + (0.3 + pulse * 0.35) + ')';
-      ctx.lineWidth = isTower ? 2 : 1.5;
+      ctx.strokeStyle = 'rgba(' + rgb + ',' + (0.55 + pulse * 0.35) + ')';
+      ctx.lineWidth = 2.6; ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(cx - 7, cy); ctx.lineTo(cx + 7, cy);
-      ctx.moveTo(cx, cy - 7); ctx.lineTo(cx, cy + 7);
+      ctx.moveTo(cx - 8, cy); ctx.lineTo(cx + 8, cy);
+      ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy + 8);
       ctx.stroke();
+      ctx.restore();
     }
   }
   if (hoverCell && !G.grid[hoverCell.r * COLS + hoverCell.c] && !inBed(hoverCell.c, hoverCell.r)) {
     const R = cellRect(hoverCell.c, hoverCell.r);
-    ctx.fillStyle = selectedBuildKey ? 'rgba(120,255,170,.2)' : 'rgba(255,255,255,.05)';
-    ctx.fillRect(R.x + 2, R.y + 2, R.w - 4, R.h - 4);
-    ctx.strokeStyle = selectedBuildKey ? 'rgba(180,255,120,.95)' : 'rgba(255,255,255,.2)';
-    ctx.lineWidth = 2.5; ctx.strokeRect(R.x + 2, R.y + 2, R.w - 4, R.h - 4);
+    const x = R.x + 2, y = R.y + 2, w = R.w - 4, h = R.h - 4;
+    ctx.fillStyle = selectedBuildKey ? 'rgba(120,255,170,.18)' : 'rgba(255,255,255,.05)';
+    rr(x, y, w, h, 9); ctx.fill();
+    ctx.save();
+    ctx.strokeStyle = selectedBuildKey ? 'rgba(180,255,120,.9)' : 'rgba(255,255,255,.24)';
+    ctx.lineWidth = 2;
+    if (selectedBuildKey) { ctx.shadowColor = 'rgba(160,255,120,.45)'; ctx.shadowBlur = 8; }
+    rr(x, y, w, h, 9); ctx.stroke();
+    ctx.restore();
   }
   if (selected && selected.def) {
     const R = cellRect(selected.col, selected.row);
