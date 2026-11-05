@@ -20,6 +20,7 @@ async function exercise(engine,name,mobile) {
   const page=await context.newPage(), errors=[], videos=[];
   page.setDefaultTimeout(20000);
   page.on('pageerror',e=>errors.push(e.message));
+  page.on('console',msg=>{if(msg.type()==='error' && /^\\[(loop|init)\\]/.test(msg.text())) errors.push(msg.text());});
   page.on('request',r=>{if(r.url().includes('/assets/story/'))videos.push(r.url());});
   try {
     await page.goto('http://127.0.0.1:'+server.address().port+'/');
@@ -27,6 +28,19 @@ async function exercise(engine,name,mobile) {
     await page.locator('#btnStart').click();
     await page.waitForFunction(()=>G && G.experience==='combat' && !paused);
     await page.evaluate(()=>{G.gold=500;});
+    const readiness = await page.evaluate(async () => {
+      const samples=[];
+      for(let i=0;i<6;i++) {
+        const el=document.querySelector('#buildBar [data-k="miner"]'), rect=el.getBoundingClientRect(), style=getComputedStyle(el);
+        samples.push({rect:{x:rect.x,y:rect.y,width:rect.width,height:rect.height},display:style.display,transform:style.transform,
+          className:el.className,loopErrors:G.loopErrors || 0,paused,gold:G.gold,frame:statFrame,vp:{w:innerWidth,h:innerHeight,vw:visualViewport.width,vh:visualViewport.height}});
+        await new Promise(resolve=>setTimeout(resolve,150));
+      }
+      return samples;
+    });
+    console.log(JSON.stringify({name,readiness}));
+    fs.writeFileSync(path.join(output,name+'-layout.json'),JSON.stringify({readiness,errors},null,2));
+    await page.screenshot({path:path.join(output,name+'-before-build.png')});
     await page.locator('#buildBar [data-k="miner"]').click();
     const point=await page.evaluate(()=>{const rect=cv.getBoundingClientRect(),p=cellCenter(0,0);return{x:rect.left+p.x*rect.width/W,y:rect.top+p.y*rect.height/H};});
     if(mobile) await page.touchscreen.tap(point.x,point.y); else await page.mouse.click(point.x,point.y);
@@ -91,6 +105,7 @@ async function exercise(engine,name,mobile) {
       await page.waitForTimeout(300);
       assert.ok(await page.evaluate(()=>Number.isFinite(cv.getBoundingClientRect().width)));
     }
+    assert.equal(await page.evaluate(()=>G.loopErrors || 0),0,'no swallowed game loop errors');
     assert.deepEqual(errors,[],'no browser script errors');
     return {name,engine:browser.version(),viewport:page.viewportSize(),headless:true,deviceEmulation:mobile,note:'CI software rendering; not physical phone FPS',...metrics};
   } finally {await page.screenshot({path:path.join(output,name+'-last.png')}).catch(()=>{});await context.close();await browser.close();}
@@ -99,7 +114,7 @@ async function exercise(engine,name,mobile) {
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   const results=[];
   try {
-    for(const [engine,name,mobile]of [[chromium,'desktop-chromium',false],[chromium,'android-emulated',true],[webkit,'ios-webkit-emulated',true]]) {
+    for(const [engine,name,mobile]of (process.argv.includes('--webkit-only') ? [[webkit,'ios-webkit-emulated',true]] : [[chromium,'desktop-chromium',false],[chromium,'android-emulated',true],[webkit,'ios-webkit-emulated',true]])) {
       const result=await exercise(engine,name,mobile);results.push(result);console.log(JSON.stringify(result));
       fs.writeFileSync(path.join(output,'frame-times.json'),JSON.stringify(results,null,2));
     }
