@@ -987,7 +987,9 @@ function bossKeyForWave(n) {
   const idx = Math.floor(n / 5 - 1) % BOSS_ORDER.length;
   return BOSS_ORDER[(idx + BOSS_ORDER.length) % BOSS_ORDER.length];
 }
-function spawnEnemy(type, wave, lane) {
+function spawnEnemy(type, wave, lane, summoned = false) {
+  if (summoned && ((G.summonsThisWave || 0) >= 120 || G.enemies.length >= 200)) return null;
+  if (summoned) G.summonsThisWave = (G.summonsThisWave || 0) + 1;
   let d = ENEMY_DEFS[type];
   let bossKey = null;
   if (type === 'boss' || !d) {
@@ -997,12 +999,12 @@ function spawnEnemy(type, wave, lane) {
   }
   const L = LANES[lane !== undefined ? lane : (Math.random() * 3) | 0];
   const trial = G.trialId && POSTGAME_TRIALS.find(t => t.id === G.trialId);
-  const hpScale = (1 + wave * 0.18 + Math.pow(Math.max(0, wave - 10), 1.4) * 0.075 + Math.pow(Math.max(0, wave - 30), 1.5) * 0.04) * (G.event.eff.hpMul || 1) * diffCfg().hpMul * (trial ? trial.hpMul : 1);
+  const dreamMods = typeof DeepDream !== 'undefined' && DeepDream.isActive() ? DeepDream.getEnemyModifiers() : null;
   const dmgScale = (1 + wave * 0.10) * diffCfg().dmgMul;
   const e = {
     type, def: d, lane: L.i,
     x: rnd(8, 54), y: rnd(L.y0 + 22, L.y1 - 22),
-    hp: d.hp * hpScale, maxHp: d.hp * hpScale,
+    hp: d.hp, maxHp: d.hp,
     dmg: d.dmg * dmgScale, speed: d.speed * rnd(0.92, 1.08) * (G.event.eff.spdMul || 1) * (trial ? trial.speedMul : 1),
     r: d.r, state: 'walk', target: null, atkCd: 0, door: null,
     slow: 0, slowT: 0, burn: 0, burnT: 0, burnDmg: 0, burnStack: 0,
@@ -1017,8 +1019,6 @@ function spawnEnemy(type, wave, lane) {
     empT: d.emp ? d.emp.cd : 0, fzT: d.freezeTower ? d.freezeTower.cd : 0,
     reviveT: 0, mimicRevealed: false, parasiteTarget: null,
   };
-  if (d.shieldself) { e.shield = e.maxHp * d.shieldself; e.shieldMax = e.shield; }
-  if (d.phaseShield) { e.phaseShield = d.phaseShield; e.segMax = e.maxHp / (d.phaseShield + 1); e.segIdx = 0; }
   const eliteChance = clamp((wave - 4) * 0.035, 0, 0.42);
   if (wave >= 5 && Math.random() < eliteChance && !d.boss) {
     const n = wave >= 20 && Math.random() < 0.3 ? 2 : 1;
@@ -1027,9 +1027,7 @@ function spawnEnemy(type, wave, lane) {
       const k = pool.splice((Math.random() * pool.length) | 0, 1)[0];
       e.affixes.push(k);
       const a = AFFIX[k];
-      if (a.hp) { e.maxHp *= a.hp; e.hp = e.maxHp; }
       if (a.spd) e.speed *= a.spd;
-      if (a.shield) { e.shield = e.maxHp * a.shield; e.shieldMax = e.shield; }
       if (a.allres) e.affixRes = a.allres;
       if (a.flat) e.flat = a.flat;
       if (a.regen) e.regenR = a.regen;
@@ -1040,7 +1038,6 @@ function spawnEnemy(type, wave, lane) {
     }
     e.elite = true;
   }
-  G.enemies.push(e);
   // BOSS 出场演出：震屏 + 警戒飘字 + 冲击环（纯视觉，数值零改动；x 有偏移避免被左缘裁切）
   if (e.boss) {
     shakeBy(12); SFX.boom();
@@ -1051,7 +1048,6 @@ function spawnEnemy(type, wave, lane) {
   if (typeof DeepDream !== 'undefined' && DeepDream.isActive()) {
     const mods = DeepDream.getEnemyModifiers();
     if (mods) {
-      if (mods.hpMul) { e.maxHp *= mods.hpMul; e.hp = e.maxHp; }
       if (mods.spdMul) e.speed *= mods.spdMul;
       if (mods.dmgMul) e.dmg *= mods.dmgMul;
       if (mods.resAll) { for (const k in e.res) e.res[k] = Math.min(0.9, e.res[k] + mods.resAll); }
@@ -1063,6 +1059,15 @@ function spawnEnemy(type, wave, lane) {
       for (const k in nerfs) e.weak[k] = (e.weak[k] || 0) + nerfs[k];
     }
   }
+  const health = EnemyBalance.health(d, wave, {
+    difficulty: diffCfg().hpMul, event: G.event.eff.hpMul, trial: trial && trial.hpMul,
+    dream: dreamMods && dreamMods.hpMul, affixes: e.affixes,
+  });
+  e.hp = e.maxHp = health.hp;
+  e.healthFactors = health.factors;
+  if (health.shield > 0) e.shield = e.shieldMax = health.shield;
+  if (d.phaseShield) { e.phaseShield = d.phaseShield; e.segMax = e.maxHp / (d.phaseShield + 1); e.segIdx = 0; }
+  G.enemies.push(e);
   return e;
 }
 function enemySpeed(e) {
@@ -1201,7 +1206,8 @@ function updateEnemies(dt) {
       if (e.reviveT >= sp_.revive.every) {
         e.reviveT = 0;
         for (let k = 0; k < sp_.revive.n; k++) {
-          const c = spawnEnemy(Math.random() < 0.5 ? 'grunt' : 'swarm', G.wave, e.lane);
+          const c = spawnEnemy(Math.random() < 0.5 ? 'grunt' : 'swarm', G.wave, e.lane, true);
+          if (!c) break;
           c.x = e.x - rnd(0, 24); c.y = e.y + rnd(-28, 28);
         }
         addText(e.x, e.y - e.r - 14, '💀 亡魂复活！', '#a855f7');
@@ -1245,7 +1251,7 @@ function updateEnemies(dt) {
       e.summonT += dt;
       if (e.summonT >= sm.every) {
         e.summonT = 0;
-        for (let k = 0; k < sm.n; k++) { const c = spawnEnemy(sm.type, G.wave, e.lane); c.x = e.x - rnd(0, 20); c.y = e.y + rnd(-24, 24); c.state = e.state; }
+        for (let k = 0; k < sm.n; k++) { const c = spawnEnemy(sm.type, G.wave, e.lane, true); if (!c) break; c.x = e.x - rnd(0, 20); c.y = e.y + rnd(-24, 24); c.state = e.state; }
         addText(e.x, e.y - e.r - 14, '召唤！', '#f0abfc');
       }
     }
@@ -1436,7 +1442,8 @@ function killEnemy(e) {
   if (e.splitN || e.def.split) {
     const n = e.splitN || e.def.split;
     for (let i = 0; i < n; i++) {
-      const c = spawnEnemy('grunt', G.wave, e.lane);
+      const c = spawnEnemy('grunt', G.wave, e.lane, true);
+      if (!c) break;
       c.x = e.x + rnd(-18, 18); c.y = e.y + rnd(-18, 18); c.state = e.state;
     }
   }
@@ -1867,11 +1874,26 @@ function buildWaveQueue(n) {
   for (let i = 0; i < cnt; i++) q.push(pick(pool));
   const isFinalWave = n >= finalWave() && !(G && G.mode === 'unlimited' && n > finalWave());
   // 终局波只刷一只终焉梦魇（与「击败【终焉梦魇】即可通关」的口径一致）；无尽模式 60 波以后永远走轮换
-  const bosses = n % 5 === 0 ? (isFinalWave ? 1 : 1 + Math.floor(n / 22)) : 0;
+  const bosses = n % 5 === 0 ? (isFinalWave ? 1 : Math.min(3, 1 + Math.floor(n / 22))) : 0;
   const bossList = [];
   const bossType = isFinalWave ? 'final' : 'boss';
   for (let i = 0; i < bosses; i++) bossList.push(bossType);
-  q.sort(() => Math.random() - 0.5);
+  for (let i=q.length-1; i>0; i--) {
+    const j=(Math.random()*(i+1))|0;
+    [q[i],q[j]]=[q[j],q[i]];
+  }
+  if (n>=25) {
+    // Three readable lane teams: durable vanguard, counterable support, fast flanker.
+    const frontline=n>=34 ? 'juggernaut' : 'bulwark';
+    const support=n>=28 ? 'weaver' : n>=27 ? 'necromancer' : 'healer';
+    const disrupt=n>=29 ? 'reaper' : 'emp';
+    for (let lane=0; lane<3; lane++) {
+      q[lane]={type:frontline,lane};
+      q[lane+3]={type:lane===1 ? disrupt : support,lane};
+      q[lane+6]={type:'sprinter',lane};
+    }
+    for (let i=9; i<q.length; i++) q[i]={type:q[i],lane:(i+n)%3};
+  }
   return { rest: q, bossList };
 }
 function startWave() {
@@ -1885,7 +1907,7 @@ function startWave() {
   if (typeof Music !== 'undefined') Music.play(Music.trackForWave(G.wave));
   if (!resumeSavedWave) G.event = rollEvent();
   const { rest, bossList } = buildWaveQueue(G.wave);
-  G.spawnQueue = rest; G.bossQueue = bossList; G.spawnTimer = 0;
+  G.spawnQueue = rest; G.bossQueue = bossList; G.spawnTimer = 0; G.summonsThisWave = 0;
   G.state = 'wave';
   const sm = diffCfg().spawnMul;
   if (sm > 1 && G.spawnQueue.length) {
@@ -1952,10 +1974,10 @@ function updateWave(dt) {
   G.waveTime = (G.waveTime || 0) + dt;
   if (G.comboT > 0) { G.comboT -= dt; if (G.comboT <= 0) G.combo = 0; }
   G.spawnTimer -= dt;
-  if (G.spawnTimer <= 0 && (G.spawnQueue.length || G.bossQueue.length)) {
+  if (G.spawnTimer <= 0 && G.enemies.length < 256 && (G.spawnQueue.length || G.bossQueue.length)) {
     const interval = Math.max(0.20, 0.85 - G.wave * 0.018);
-    const type = G.spawnQueue.length ? G.spawnQueue.shift() : G.bossQueue.shift();
-    spawnEnemy(type, G.wave);
+    const entry = G.spawnQueue.length ? G.spawnQueue.shift() : G.bossQueue.shift();
+    spawnEnemy(typeof entry === 'string' ? entry : entry.type, G.wave, typeof entry === 'string' ? undefined : entry.lane);
     G.spawnTimer = interval;
   }
   if (!G.spawnQueue.length && !G.bossQueue.length && !G.enemies.length) endWave();

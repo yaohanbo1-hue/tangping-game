@@ -27,7 +27,7 @@ function createGame(seed = 1) {
     clearInterval(id) { timers.delete(id); }, requestAnimationFrame() { return 0; },
   };
   const context = vm.createContext(sandbox);
-  const files = ['story.js','data.js','names.js','core.js','campaign.js','save.js','net.js','dream.js','quest.js','ui.js'];
+  const files = ['story.js','data.js','names.js','balance.js','core.js','campaign.js','save.js','net.js','dream.js','quest.js','ui.js'];
   vm.runInContext(files.map(file => fs.readFileSync(path.join(__dirname,'..',file),'utf8')).join('\n'), context);
   return {
     run: code => vm.runInContext(code, context), storage, elements, errors,

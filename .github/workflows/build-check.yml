@@ -20,6 +20,19 @@ jobs:
       - name: 纯战斗与剧情状态回归
         run: node tests/campaign.test.js
 
+      - name: 敌人生命与无限边界回归
+        run: node tests/balance.test.js
+
+
+      - name: 可重复战斗对照模拟
+        run: node tests/simulate.js
+
+      - name: 保存模拟原始结果
+        uses: actions/upload-artifact@v4
+        with:
+          name: balance-simulation
+          path: artifacts/balance-simulation.json
+
       - name: 构建单文件产物
         run: node build.js
 
