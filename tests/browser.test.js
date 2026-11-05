@@ -15,7 +15,10 @@ const server=http.createServer((req,res)=>{
   fs.createReadStream(file).pipe(res);
 });
 async function exercise(engine,name,mobile) {
-  const browser=await engine.launch();
+  // WPE's GPU path can stop delivering animation frames on GPU-less Linux CI.
+  // Use its actual CPU raster backend; keep all UI actions and frame measurements real.
+  const browser=await engine.launch(process.platform==='linux' && engine===webkit
+    ? {env:{...process.env,WEBKIT_SKIA_ENABLE_CPU_RENDERING:'1'}} : {});
   const context=await browser.newContext({viewport:mobile?{width:844,height:390}:{width:1440,height:900},isMobile:mobile,hasTouch:mobile,deviceScaleFactor:1});
   const page=await context.newPage(), errors=[], videos=[];
   page.setDefaultTimeout(20000);
