@@ -14,6 +14,9 @@ jobs:
         with:
           node-version: 20
 
+      - name: 存档基线回归
+        run: node tests/smoke.test.js
+
       - name: 构建单文件产物
         run: node build.js
 
