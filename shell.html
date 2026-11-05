@@ -1631,6 +1631,7 @@ body.rotated #rotBar{display:flex}
         <button class="btn" id="btnUpTower" title="所有炮塔各升 1 级">🔫塔升</button>
         <button class="btn upmax" id="btnMaxSel" title="把选中的建筑/床/门一次性升到满级（M）">⏫满级</button>
         <button class="btn upmax" id="btnMaxAll" title="所有建筑、床、门全部升到能升的最高（Shift+M）">⏫全满</button>
+        <button class="btn" id="btnStoryPlayback" title="剧情播放开关">剧情 开</button>
         <button class="btn" id="btnSound" title="音效开关">🔊音</button>
         <button class="btn" id="btnSave" title="存档管理（K）：自动存档 / 3 个手动槽 / 导出导入">🗂存档</button>
       </div>
@@ -1838,6 +1839,11 @@ body.rotated #rotBar{display:flex}
           <div class="diffs" id="diffCards"></div>
           <div class="home-label">梦境规则</div>
           <div class="modes" id="modeCards"></div>
+          <div class="home-label">玩法体验 <small>可独立组合有限／无限、难度与试炼</small></div>
+          <div class="modes" id="experienceCards">
+            <button class="mode on" data-experience="story" type="button" aria-pressed="true"><div class="mn">剧情模式</div><div class="md">对话、抉择、镜头与四种结局</div></button>
+            <button class="mode" data-experience="combat" type="button" aria-pressed="false"><div class="mn">纯战斗模式</div><div class="md">直接布防、挑战 Boss、领奖推进</div></button>
+          </div>
           <div class="setup-summary" id="setupSummary"></div>
           <div class="loadout-head"><span>开局道具</span><span id="equipCount">0 / 3 已装备</span></div>
           <div class="equipped" id="equipRow"></div>
@@ -1895,6 +1901,7 @@ body.rotated #rotBar{display:flex}
             <label><span>战斗音效音量</span><input id="sfxVolume" type="range" min="0" max="1" step="0.01" value="0.72"><output id="sfxVolumeValue">72%</output></label>
             <button id="btnSoundHome" type="button">🔊 战斗音效：开启</button>
             <div class="access-controls" aria-label="无障碍显示设置">
+              <label>剧情播放<select id="storyPlayback"><option value="on">开</option><option value="off">关</option></select></label>
               <label>界面文字<select id="a11yText"><option value="normal">标准</option><option value="large">大字</option></select></label>
               <label>闪屏效果<select id="a11yFlash"><option value="normal">正常</option><option value="reduced">减弱</option><option value="off">关闭</option></select></label>
               <label>画面震动<select id="a11yShake"><option value="normal">正常</option><option value="reduced">减弱</option><option value="off">关闭</option></select></label>

@@ -15,7 +15,7 @@
 
 const SaveSystem = {
   /** 存档格式版本。每次改动快照结构都必须 +1，并在 migrate() 里补一条迁移 */
-  VERSION: 6,
+  VERSION: 7,
   /** 手动槽位数量（0 号保留给自动存档） */
   SLOTS: 3,
   /** 保留合法的 0 HP；只有缺失或非数值才回退到满血。 */
@@ -82,7 +82,7 @@ const SaveSystem = {
     return {
       wave: run.wave | 0,
       diff: run.diffKey || 'normal',
-      mode: run.mode || 'limited',
+      mode: run.mode || 'limited', experience: run.experience === 'combat' ? 'combat' : 'story',
       gold: Math.round(run.gold || 0),
       buildings: (d && d.buildings ? d.buildings.length : 0),
       kills: (d && d.progress && d.progress.stats ? (d.progress.stats.kills | 0) : 0),
@@ -139,9 +139,10 @@ const SaveSystem = {
   migrate(d) {
     if (!d || typeof d !== 'object') return null;
     if (d.v === this.VERSION && d.run) return d;
-    if ((d.v === 3 || d.v === 4 || d.v === 5) && d.run) {
+    if ((d.v === 3 || d.v === 4 || d.v === 5 || d.v === 6) && d.run) {
       const migratedRun = Object.assign({}, d.run, {
         trialId: d.run.trialId || null,
+        experience: d.run.experience === 'combat' ? 'combat' : 'story',
         resumeWave: !!d.run.resumeWave || d.run.state === 'wave',
       });
       const migrated = Object.assign({}, d, { v: this.VERSION, run: migratedRun });
@@ -237,7 +238,9 @@ const SaveSystem = {
         wave: G.wave, state: G.state,
         gold: G.gold, power: G.power, souls: G.souls,
         grow: G.grow, growTimer: G.growTimer,
-        diffKey: G.diffKey, mode: G.mode,
+        diffKey: G.diffKey, mode: G.mode, experience: G.experience || 'story',
+        storyState: G.storyState || null,
+        elapsed: Math.max(0, (performance.now() - G.startTime) / 1000),
         admin: !!G.admin, winWave: G.winWave | 0, trialId: G.trialId || null,
         resumeWave: !!G.resumeWave,
         prepTimer: G.prepTimer, prepTotal: G.prepTotal,
@@ -347,6 +350,9 @@ const SaveSystem = {
       G.growTimer = this._num(run.growTimer, 0, 0);
       if (run.diffKey && typeof DIFFS !== 'undefined' && DIFFS[run.diffKey]) G.diffKey = run.diffKey;
       if (run.mode && typeof MODES !== 'undefined' && MODES[run.mode]) G.mode = run.mode;
+      G.experience = run.experience === 'combat' ? 'combat' : 'story';
+      if (typeof StoryFlow !== 'undefined') StoryFlow.restore(run.storyState, G.wave);
+      G.startTime = performance.now() - this._num(run.elapsed, 0, 0, 31536000) * 1000;
       G.admin = !!run.admin;
       G.winWave = run.winWave | 0;
       G.trialId = (typeof POSTGAME_TRIALS !== 'undefined' && POSTGAME_TRIALS.some(t => t.id === run.trialId)) ? run.trialId : null;
@@ -461,6 +467,9 @@ const SaveSystem = {
         if (Array.isArray(b.runes)) b.runes = b.runes.map(r => (r && dropIds.has(r.id)) ? null : r);
       });
       this.restoreDream(d.dream);
+      if (typeof StoryFlow !== 'undefined') StoryFlow.recoverPending();
+      G.waveStartGold = G.gold; G.waveSpentGold = 0;
+      G.waveStartSouls = G.souls; G.waveSpentSouls = 0;
       G.resDirty = true;
       if (typeof QuestSystem !== 'undefined') QuestSystem.init();
       return true;

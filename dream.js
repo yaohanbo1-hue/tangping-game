@@ -738,6 +738,7 @@ const FourthWall = {
         this._triggeredWaves.add(waveNum);
         // 同一波次里 WAVE_STORY（剧情框）已经讲过同一段话时：
         // 第四面墙只保留「视觉演出」，文字交给剧情框，避免同一句讲两遍
+        if (!StoryFlow.allowed()) continue;
         const silent = this._isDupWithWaveStory(evt);
         this.applyEffect({ type: evt.type, params: evt.params, wave: waveNum, title: evt.title, content: evt.content, silent });
       }
@@ -1584,6 +1585,7 @@ const MercyPath = {
    * @returns {boolean} 是否真的触发了理解
    */
   tryTrigger(enemy) {
+    if (!StoryFlow.allowed()) return false;
     if (!enemy || enemy.dead || enemy.mercyOffered || enemy.boss) return false;
     if (this._activeDialogue) return false;
     if (this._completed && this._completed.has('__all__')) return false;
@@ -2092,6 +2094,7 @@ const DreamEngine = {
    * 在 newGame() 之后调用
    */
   init() {
+    DeepDream._active = null; DeepDream._wavesInDeep = 0;
     DreamEcology.initEcology();
     // 中立生物持有上一局的坐标与 HP，不清掉会把它们带进新一局；
     // 生成计时器同理（否则新局开场几秒就立刻刷出生物）。

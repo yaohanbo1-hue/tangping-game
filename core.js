@@ -283,19 +283,20 @@ function placeBuildingAt(type, level) {
  *   · 剧情奖励「所有建筑免费升级」只留等级项 → 建筑最大生命被砍掉一大截
  * 现在统一走这三个函数，且都写成 function 声明以便前面的代码提前调用。
  * ================================================================== */
+const storyHpMul = () => ((G.fate && G.fate.hpMul) || 1) * ((G.fateWave && G.fateWave.hpMul) || 1);
 const prizeHpMul = () => (G && G.prize && G.prize.hp) || 1;
-const buildingHpMul = () => techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * prizeHpMul();
+const buildingHpMul = () => techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * prizeHpMul() * storyHpMul();
 /** 建筑最大生命：def + 等级 + 是否已转职 */
 function buildingMaxHp(def, level, branch) {
   return def.hp * (1 + (Math.max(1, level) - 1) * 0.35) * buildingHpMul() * (branch ? 1.3 : 1);
 }
 /** 铁门最大生命：等级 */
 function doorMaxHp(lv) {
-  return (420 + 200 * (Math.max(1, lv) - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50) * prizeHpMul();
+  return (420 + 200 * (Math.max(1, lv) - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50) * prizeHpMul() * storyHpMul();
 }
 /** 床铺最大生命：等级 */
 function bedMaxHp(lv) {
-  return (420 + 95 * (Math.max(1, lv) - 1)) * techVal('fortress', 0.50) * prizeHpMul();
+  return (420 + 95 * (Math.max(1, lv) - 1)) * techVal('fortress', 0.50) * prizeHpMul() * storyHpMul() + ((G.fate && G.fate.shield) || 0);
 }
 function setBuildingLevel(b, lv) {
   b.level = Math.max(1, Math.min(b.def.maxLv || 50, lv));
@@ -349,12 +350,12 @@ function grantMetaReward(won) {
   saveMeta();
   return g;
 }
-function runHistoryKey(run) { return [run.diffKey || 'normal', run.mode || 'limited', run.trialId || ''].join('|'); }
+function runHistoryKey(run) { return [run.diffKey || 'normal', run.mode || 'limited', run.experience || 'story', run.trialId || ''].join('|'); }
 function recordMetaRun(won) {
   if (!G) return null;
   const record = {
     at: Date.now(), won: !!won, wave: G.wave | 0, diffKey: G.diffKey || 'normal',
-    mode: G.mode || 'limited', trialId: G.trialId || '', kills: G.stats.kills | 0,
+    mode: G.mode || 'limited', experience: G.experience || 'story', trialId: G.trialId || '', kills: G.stats.kills | 0,
     bosses: G.stats.bossKills | 0, leaks: G.stats.leaks | 0,
     elapsed: Math.max(0, Math.round((performance.now() - (G.startTime || performance.now())) / 1000)),
     laneLeaks: (G.stats.laneLeaks || [0, 0, 0]).slice(0, 3),
@@ -379,6 +380,7 @@ let mouse = { x: -999, y: -999 };
 let hoverCell = null, selected = null, selectedBuildKey = null;
 let shake = 0, flash = 0, hitStop = 0, timeScale = 1, paused = false;
 function newGame(loadFrom) {
+  if (typeof resetStoryPresentation === 'function') resetStoryPresentation(false);
   EventBus.clear(); // 清理上一局事件监听，防止累积
   G = {
     state: 'build', wave: 0, resumeWave: false,
@@ -386,7 +388,7 @@ function newGame(loadFrom) {
     runeBag: [], challenge: null, combo: 0, comboT: 0, maxCombo: 0,
     quest: null,   // 梦境委托状态（quest.js QuestSystem 管理，随存档持久化）
     diffKey: 'normal', admin: false, winWave: 0, prize: {}, reviveLeft: 0, lastReward: 0, trialId: null, trialFirstClear: false,
-    mode: 'limited', rebuilds: 0,
+    mode: 'limited', experience: 'story', storyState: { events: {} }, rebuilds: 0,
     prepTimer: 34, prepTotal: 34,
     spawnQueue: [], bossQueue: [], spawnTimer: 0,
     grid: new Array(COLS * ROWS).fill(null),
@@ -846,6 +848,7 @@ function applyStoryEffect(text, ctx) {
   const all = t.match(/全属性\s*\+(\d+)%/) || t.match(/全属性提升\s*(\d+)%/);
   if (all) {
     const v = +all[1] / 100;
+    bucket.hpMul = (bucket.hpMul || 1) * (1 + v);
     bucket.dmg += v; bucket.rate += v; bucket.def += v; bucket.crit += v * 0.5;
     G.bed.maxHp *= 1 + v; G.bed.hp *= 1 + v;
     G.doors.forEach(d => { d.maxHp *= 1 + v; d.hp *= 1 + v; });
@@ -1911,8 +1914,9 @@ function startWave() {
   }
   // 梦境系统：波次开始钩子
   if (!resumeSavedWave && typeof DreamEngine !== 'undefined') { try { DreamEngine.onWaveStart(G.wave); } catch(e) { console.warn('DreamEngine waveStart:', e); } }
+  StoryFlow.onWave(G.wave);
   // 波次剧情触发
-  if (!resumeSavedWave && typeof WAVE_STORY !== 'undefined') {
+  if (!resumeSavedWave && StoryFlow.allowed() && typeof WAVE_STORY !== 'undefined') {
     const story = WAVE_STORY.find(s => s.wave === G.wave);
     if (story) {
       const rs = G.runStamp;
@@ -1924,7 +1928,7 @@ function startWave() {
     }
   }
   // BOSS对话触发
-  if (!resumeSavedWave && typeof BOSS_DIALOG !== 'undefined') {
+  if (!resumeSavedWave && StoryFlow.allowed() && typeof BOSS_DIALOG !== 'undefined') {
     const bossKeys = Object.keys(BOSS_DIALOG);
     const bossDlg = bossKeys.map(k => BOSS_DIALOG[k]).find(b => b.wave === G.wave);
     if (bossDlg) {

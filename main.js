@@ -179,6 +179,7 @@ function bindUI() {
     if (storyDialog && storyDialog.dataset.inputLocked === 'true') return;
     paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸';
   };
+  $('btnStoryPlayback').onclick = () => StoryFlow.setPlayback(!StoryFlow.playback);
   $('btnSound').onclick = () => Music.setSfx(!SFX.on);
   $('btnSpeed').onclick = () => { timeScale = timeScale === 1 ? 2 : timeScale === 2 ? 3 : 1; $('btnSpeed').textContent = timeScale + '×'; };
   $('btnSave').onclick = () => toggleSavePanel();

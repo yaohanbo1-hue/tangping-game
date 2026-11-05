@@ -17,6 +17,9 @@ jobs:
       - name: 存档基线回归
         run: node tests/smoke.test.js
 
+      - name: 纯战斗与剧情状态回归
+        run: node tests/campaign.test.js
+
       - name: 构建单文件产物
         run: node build.js
 

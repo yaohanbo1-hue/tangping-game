@@ -424,7 +424,7 @@ function runReviewMarkup() {
   const hint = st.leaks
     ? '第 ' + (vulnerable.i + 1) + ' 路出现破门。下局可优先在这一路补门、维修台或覆盖炮塔。'
     : (towers.length ? '防线未破。' + towers[0].name + ' 是本局主力，可围绕它的元素克制继续搭配。' : '尝试混搭不同元素炮塔，观察敌人的抗性与弱点。');
-  const history = (META.runHistory || []).filter(run => runHistoryKey(run) === runHistoryKey({ diffKey: G.diffKey, mode: G.mode, trialId: G.trialId })).slice(0, 12);
+  const history = (META.runHistory || []).filter(run => runHistoryKey(run) === runHistoryKey({ diffKey: G.diffKey, mode: G.mode, experience: G.experience, trialId: G.trialId })).slice(0, 12);
   const historyWins = history.filter(run => run.won).length;
   const historyBest = history.reduce((best, run) => Math.max(best, run.wave | 0), 0);
   const historyText = history.length
@@ -492,6 +492,7 @@ function showGameOver() {
   };
 }
 function showVictory() {
+  if (!StoryFlow.endingEligible()) { showCombatVictory(); return; }
   const o = $('overlay');
   const score = G.wave * 1500 + G.stats.kills * 15 + Math.floor(G.stats.goldTotal) + G.stats.bossKills * 800 + 20000;
   const got = ACHIEVEMENTS.filter(a => G.ach[a.id]).length;
@@ -686,6 +687,7 @@ function doDraw(n, cur) {
 }
 let menuDiff = 'normal';
 let menuMode = 'limited';
+let menuExperience = 'story';
 let selectedTrial = null;
 let MENU_HTML = '';
 function ensureMenuDOM() {
@@ -726,7 +728,18 @@ function syncAudioUI() {
     gameSfxButton.title = SFX.on ? '关闭战斗音效' : '开启战斗音效';
   }
 }
+function syncStoryPlaybackUI() {
+  const select = $('storyPlayback');
+  if (select) select.value = StoryFlow.playback ? 'on' : 'off';
+  const button = $('btnStoryPlayback');
+  if (button) {
+    button.textContent = '剧情 ' + (StoryFlow.playback ? '开' : '关');
+    button.setAttribute('aria-pressed', StoryFlow.playback ? 'true' : 'false');
+    button.title = G && G.experience === 'combat' ? '纯战斗模式始终跳过演出；此偏好仅影响剧情模式' : '切换后续剧情播放';
+  }
+}
 function syncAccessibilityUI() {
+  syncStoryPlaybackUI();
   if (typeof Accessibility === 'undefined') return;
   const text = $('a11yText'), flashSelect = $('a11yFlash'), shakeSelect = $('a11yShake');
   if (text) text.value = Accessibility.textSize;
@@ -787,6 +800,15 @@ function updateMenu() {
       el.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); choose(); } };
     });
   }
+  const experiences = $('experienceCards');
+  if (experiences) {
+    experiences.querySelectorAll('[data-experience]').forEach(button => {
+      const on = button.dataset.experience === menuExperience;
+      button.classList.toggle('on', on);
+      button.setAttribute('aria-pressed', on ? 'true' : 'false');
+      button.onclick = () => { menuExperience = button.dataset.experience; updateMenu(); };
+    });
+  }
   const mc = $('modeCards');
   if (mc) {
     mc.innerHTML = MODE_KEYS.map(k => {
@@ -807,7 +829,7 @@ function updateMenu() {
   if (summary) {
     const admFree = selectedDiff.admin && (META.equipped || []).indexOf('freeAdmin') >= 0;
     const cost = selectedDiff.cost && !admFree ? selectedDiff.cost : 0;
-    summary.textContent = selectedDiff.name + ' · ' + selectedMode.name +
+    summary.textContent = (menuExperience === 'combat' ? '纯战斗模式' : '剧情模式') + ' · ' + selectedDiff.name + ' · ' + selectedMode.name +
       (cost ? ' · 入场消耗 ' + cost + ' 金币' : ' · 免费入场') +
       (selectedDiff.admin ? ' · 管理员规则' : ' · 结算奖励 ×' + selectedDiff.reward);
   }
@@ -898,6 +920,7 @@ function wireMenu() {
     $('sfxVolume').onchange = () => Music.persist();
   }
   if ($('btnSoundHome')) $('btnSoundHome').onclick = () => Music.setSfx(!SFX.on);
+  if ($('storyPlayback')) $('storyPlayback').onchange = ev => StoryFlow.setPlayback(ev.target.value === 'on');
   [['a11yText', 'textSize'], ['a11yFlash', 'flash'], ['a11yShake', 'shake']].forEach(pair => {
     const select = $(pair[0]);
     if (select) select.onchange = () => Accessibility.set(pair[1], select.value);
@@ -1004,6 +1027,8 @@ function startRun(trialId) {
   SaveSystem.remove(0);
   newGame();
   G.diffKey = menuDiff; G.admin = !!d.admin;
+  G.experience = menuExperience;
+  syncStoryPlaybackUI();
   G.mode = trial ? 'limited' : menuMode; G.rebuilds = 0; G.trialId = trial ? trial.id : null;
   applyEquippedPrizes({ trial: !!trial });
   if (trial) {
@@ -1019,7 +1044,7 @@ function startRun(trialId) {
   setTip((trial ? '试炼【' + trial.name + '】· ' : '') + (trialAdminFallback ? '试炼不支持管理员难度，已切换为普通；' : '') + '难度【' + d.name + '】· ' + MODES[G.mode].name +
     (d.admin ? ' — 资源无限、血量无限，顶部可自由跳波' : '') +
     (menuMode === 'unlimited' ? ' — 本局永不结束' : ''), 6);
-  openFirstRunTutorial(false);
+  if (G.experience !== 'combat') openFirstRunTutorial(false);
   return true;
 }
 function rollMetaPrize() {
@@ -1213,6 +1238,7 @@ let _storyPausedByUI = false;
 
 /** 剧情阅读时暂停游戏（仅当游戏正在进行） */
 function _pauseForStory() {
+  if (!StoryFlow.allowed()) return;
   if (typeof G === 'undefined' || typeof paused === 'undefined') return;
   if (G.over || paused) return;
   paused = true;
@@ -1308,6 +1334,7 @@ function updateDeepHUD() {
 
 // === 剧情对话框（沉浸版）===
 let storyQueue = [];
+let currentStory = null;
 let storyTyping = false;
 let _storyTimer = null;
 let _storyAutoNext = null;
@@ -1339,10 +1366,11 @@ const STORY_SPEAKERS = (function () {
 })();
 
 function showStoryDialog(data) {
+  if (!data || !StoryFlow.begin(data)) return;
   const panel = $('storyDialog');
   // 空数据直接忽略：undefined 进队列会在 _processStoryQueue 里抛错，
   // 面板停在 display:flex 且再也不会走 hideStoryDialog → 暂停无人恢复
-  if (!panel || !data) return;
+  if (!panel) { StoryFlow.skip(data); return; }
   storyQueue.push(data);
   if (!storyTyping && panel.style.display !== 'flex') _processStoryQueue();
 }
@@ -1373,6 +1401,7 @@ function _showStoryVideoFallback(box, video, slot, canRetry) {
 
 /** 公用静音播放器：剧情框和通关结尾都按需加载，失败时仍保留文字结局。 */
 function _mountStoryVideo(box, slot) {
+  if (!StoryFlow.allowed()) return;
   if (!box || !slot || typeof slot.video !== 'string' || !slot.video.trim()) return null;
   const source = slot.video.trim();
   const poster = typeof slot.poster === 'string' ? slot.poster.trim() : '';
@@ -1443,6 +1472,8 @@ function _clearStoryMedia() {
 function _processStoryQueue() {
   if (!storyQueue.length) { hideStoryDialog(); return; }
   const data = storyQueue.shift();
+  currentStory = data;
+  if (!StoryFlow.allowed()) { StoryFlow.skip(data); _processStoryQueue(); return; }
   const panel = $('storyDialog');
   if (!panel) return;
   panel.style.display = 'flex';
@@ -1556,9 +1587,12 @@ function _renderStoryChoices(data) {
 function _applyStoryChoice(choice, data) {
   if (!choice) { _processStoryQueue(); return; }
   const eff = choice.effect || '';
+  const event = StoryFlow.state().events[StoryFlow.key(data)];
+  if (event && event.status === 'settled') return;
 
   // ---- 特殊抉择：理解 / 攻击（不是文案效果，走 MercyPath 的真实结算）----
   if (eff.indexOf('__mercy_') === 0) {
+    StoryFlow.state().events[StoryFlow.key(data)] = { wave: G.wave, status: 'settled', method: 'manual' };
     const isComplete = eff.indexOf('__mercy_complete__') === 0;
     const encId = eff.replace('__mercy_complete__', '').replace('__mercy_refuse__', '');
     let line = '✦ 你做出了选择';
@@ -1578,25 +1612,8 @@ function _applyStoryChoice(choice, data) {
     return;
   }
 
-  let got = [];
-  if (eff && typeof applyStoryEffect === 'function') {
-    try {
-      const r = applyStoryEffect(eff, { speaker: data && data.speaker });
-      got = (r && r.got) || [];
-    } catch (e) { console.warn('[story] effect failed:', e); }
-  }
-  if ((choice.endingReply === 'heard' || choice.endingReply === 'gratitude') && typeof G !== 'undefined' && G && G.fate) {
-    const prefix = '__story_ending_reply__:';
-    G.fate.notes = Array.isArray(G.fate.notes) ? G.fate.notes : [];
-    G.fate.notes = G.fate.notes.filter(note => typeof note !== 'string' || note.indexOf(prefix) !== 0);
-    G.fate.notes.push(prefix + choice.endingReply);
-  }
-  if (choice.storyRoute && typeof G !== 'undefined' && G && G.fate) {
-    const prefix = '__story_route__:';
-    G.fate.notes = Array.isArray(G.fate.notes) ? G.fate.notes : [];
-    G.fate.notes = G.fate.notes.filter(note => typeof note !== 'string' || note.indexOf(prefix) !== 0);
-    G.fate.notes.push(prefix + choice.storyRoute);
-  }
+  const result = StoryFlow.settle(data, choice, 'manual');
+  const got = (result && result.got) || [];
   _showChoiceResult(got.length ? '✓ 实际获得：' + got.join('　')
     : (eff ? '✦ 已记入梦境日记：' + eff : '✦ 你做出了选择'), 2800);
 }
@@ -1619,6 +1636,7 @@ function _showChoiceResult(line, autoMs) {
 }
 
 function hideStoryDialog() {
+  currentStory = null;
   if (_storyTimer) { clearInterval(_storyTimer); _storyTimer = null; }
   clearTimeout(_storyAutoNext);
   _clearStoryMedia();
@@ -1842,6 +1860,7 @@ function _storyPanelOpen() {
  * @param {object} [data] - { title, content }
  */
 function showFakeCrash(data) {
+  if (!StoryFlow.allowed()) return;
   if (_storyPanelOpen()) {
     _fwPending = data || {};
     clearTimeout(_fwPendingTimer);
@@ -1854,6 +1873,7 @@ function showFakeCrash(data) {
 
 /** 释放排队的第四面墙演出 */
 function _flushPendingFourthWall() {
+  if (!StoryFlow.allowed()) return;
   clearTimeout(_fwPendingTimer);
   if (!_fwPending) return;
   const d = _fwPending;
@@ -1899,6 +1919,7 @@ function hideFakeCrash() {
  * @param {object} data - { type|subType, title, content }
  */
 function applyUICorrupt(data) {
+  if (!StoryFlow.allowed()) return;
   if (!data) return;
   const type = data.subType || data.type;
   if (!type) return;
@@ -1931,6 +1952,7 @@ function applyUICorrupt(data) {
  * @param {object} data - { text, title }
  */
 function showChatMessage(data) {
+  if (!StoryFlow.allowed()) return;
   const chat = $('fourthWallChat');
   if (!chat) return;
   // 同波剧情框已经讲过这段话 → 不再重复一次气泡
@@ -1957,6 +1979,7 @@ function showChatMessage(data) {
  * @param {object} [data] - { title, content }
  */
 function showSaveCorrupt(data) {
+  if (!StoryFlow.allowed()) return;
   const wrap = document.getElementById('wrap');
   if (wrap) {
     wrap.classList.add('fourth-wall-glitch');
@@ -1993,6 +2016,7 @@ let _deepTransTimer = null;
  * @param {object} data - 深层关卡定义（story.js DEEP_DREAM_LEVELS 编译而来）
  */
 function showDeepDreamTransition(data) {
+  if (!StoryFlow.allowed()) return;
   const overlay = $('deepDreamTransition');
   if (!overlay) return;
   const text = overlay.querySelector('.deep-dream-text');
@@ -2023,6 +2047,7 @@ function hideDeepDreamTransition() {
 
 // === 碎片弹出 ===
 function showFragmentPopup(data) {
+  if (!StoryFlow.allowed()) return;
   if (!data) return;
   if (typeof addText === 'function' && data.x != null && data.y != null) {
     addText(data.x, data.y - 40, (data.icon || '💎') + ' ' + (data.name || data.title || '记忆碎片') + '！', '#fbbf24', true);
@@ -2034,6 +2059,7 @@ function showFragmentPopup(data) {
 
 // === 理解对话（不战而胜）：逐条播台词 → 由玩家决定理解或攻击 ===
 function showMercyDialog(data) {
+  if (!StoryFlow.allowed()) { StoryFlow.cancelMercy(); return; }
   if (!data || typeof MercyPath === 'undefined') return;
   const encounter = data.encounter || {};
   const encId = encounter.id || '';
@@ -2091,6 +2117,7 @@ let _actTimer = null, _actHideTimer = null;
 
 /** 章节卡演出：先暂停游戏，避免全屏遮住时被偷家 */
 function showActCard(act, title, sub) {
+  if (!StoryFlow.allowed()) return;
   const el = $('actCard');
   if (!el) return;
   _pauseForStory();
@@ -2439,4 +2466,60 @@ function toggleSavePanel() {
   const el = $('savePanel');
   if (!el) return;
   if (el.classList.contains('open')) closeSavePanel(); else showSavePanel();
+}
+
+/** Dispose presentation timers before a settings change, load or restart. */
+function resetStoryPresentation(settle) {
+  if (settle && G) {
+    if (currentStory) StoryFlow.skip(currentStory);
+    storyQueue.forEach(data => StoryFlow.skip(data));
+  }
+  StoryFlow.cancelMercy();
+  clearTimeout(_fwPendingTimer); _fwPending = null; _fwPendingTimer = null;
+  clearTimeout(_fwCrashTimer); clearTimeout(_fwChatTimer); clearTimeout(_fwRevertTimer);
+  clearTimeout(_actTimer); clearTimeout(_actHideTimer); _actTimer = null; _actHideTimer = null;
+  hideStoryDialog();
+  hideFakeCrash();
+  revertFourthWall();
+  hideDeepDreamTransition();
+  ['actCard', 'fourthWallChat'].forEach(id => {
+    const el = $(id);
+    if (el) el.style.display = 'none';
+  });
+  const toast = $('dreamToast');
+  if (toast) toast.innerHTML = '';
+  const act = $('actCard');
+  if (act) act.classList.remove('show', 'out');
+  if (typeof FourthWall !== 'undefined' && FourthWall._state) {
+    FourthWall._state.activeEffects = [];
+    FourthWall._state.chatMessages = [];
+    FourthWall._state.corruptTimer = 0;
+  }
+  if (!settle) _storyPausedByUI = false;
+}
+function showCombatVictory() {
+  const elapsed = Math.max(0, Math.round((performance.now() - G.startTime) / 1000));
+  const score = G.wave * 1500 + G.stats.kills * 15 + Math.floor(G.stats.goldTotal) + G.stats.bossKills * 800 + 20000;
+  const grade = G.stats.leaks === 0 ? 'S' : G.stats.leaks <= 3 ? 'A' : 'B';
+  const summary = [
+    [Math.floor(elapsed / 60) + ':' + String(elapsed % 60).padStart(2, '0'), '耗时'],
+    [G.stats.kills, '击杀'], [fmt(G.stats.dmg), '总输出'],
+    [fmt(G.gold), '剩余金币'], [fmt(G.power), '剩余电力'], [fmt(G.souls), '剩余灵魂'],
+    [G.stats.leaks || 0, '破门次数'], [Math.round(G.bed.hp / G.bed.maxHp * 100) + '%', '床铺剩余'],
+    [grade + ' · ' + fmt(score), '评分'],
+  ];
+  if (typeof Music !== 'undefined') Music.play('morning');
+  const overlay = $('overlay');
+  overlay.style.display = 'flex';
+  overlay.innerHTML = '<div class="panel win"><h1>防线守住了</h1>' +
+    '<div class="sub">' + (G.experience === 'combat' ? '纯战斗模式' : '剧情模式 · 演出已跳过') + ' · 第 ' + G.wave + ' 波通关</div>' +
+    '<div class="grid">' + summary.map(row => '<div><b>' + row[0] + '</b><span>' + row[1] + '</span></div>').join('') + '</div>' +
+    runReviewMarkup() + '<div class="metabar">本局获得金币：+' + (G.lastReward || 0) + '</div>' +
+    '<div class="btns"><button class="big" id="restartCombat" type="button">再守一次</button>' +
+    '<button class="big" id="toMenu2" type="button">返回主菜单</button></div></div>';
+  $('restartCombat').onclick = () => {
+    menuExperience = G.experience; menuDiff = G.diffKey; menuMode = G.mode;
+    startRun(G.trialId);
+  };
+  $('toMenu2').onclick = showMenu;
 }
