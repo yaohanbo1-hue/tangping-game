@@ -33,3 +33,26 @@ const EnemyBalance = {
     return { hp, shield: Math.min(1e150,hp*shieldFraction), factors };
   },
 };
+
+// Production and investment share one source; late levels have a longer payback.
+const EconomyBalance = {
+  production(level) {
+    const lv=Math.max(1,Math.min(50,Number.isFinite(+level)?+level:1));
+    return Math.pow(2,Math.min(7,lv-1))*Math.pow(1.8,Math.max(0,lv-8));
+  },
+  interest(raw, balance, income) {
+    return Math.max(0,Math.min(raw,balance*0.15,Math.max(60,income*18)));
+  },
+};
+
+// Unlocks pace choices, rather than weakening purchased technology or old saves.
+const TechProgression = {
+  unlockWave: {1:0,2:5,3:15,4:30},
+  levelCap(def,wave,admin=false) {
+    if(admin) return def.max;
+    const start=this.unlockWave[def.tier] || 0;
+    if(wave<start) return 0;
+    const cap=def.tier===1 ? 3+Math.floor(wave/6) : 1+Math.floor((wave-start)/(def.tier===4?6:5));
+    return Math.min(def.max,cap);
+  },
+};

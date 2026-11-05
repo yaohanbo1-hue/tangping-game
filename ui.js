@@ -39,9 +39,9 @@ function buildSkillBar() {
 }
 function buildTechPanel() {
   const el = $('techList'); el.innerHTML = '';
-  [1, 2, 3].forEach(tier => {
+  [1, 2, 3, 4].forEach(tier => {
     const h = document.createElement('div');
-    h.className = 'tierh'; h.textContent = tier === 1 ? '第一层' : tier === 2 ? '第二层（需前置）' : '第三层（需前置）';
+    h.className = 'tierh'; h.textContent = ['','第一层','第二层','第三层','第四层'][tier] + (tier>1 ? ' · 第'+TechProgression.unlockWave[tier]+'波开启' : '');
     el.appendChild(h);
     TECH_KEYS.filter(k => TECH_DEFS[k].tier === tier).forEach(k => {
       const d = TECH_DEFS[k];
@@ -88,13 +88,14 @@ function syncCards() {
 }
 function techLocked(k) {
   const d = TECH_DEFS[k];
+  if(G.tech[k]>=TechProgression.levelCap(d,G.wave,G.admin)) return true;
   if (!d.req) return false;
   return Object.keys(d.req).some(rk => G.tech[rk] < d.req[rk]);
 }
 function buyTech(k) {
   const d = TECH_DEFS[k], lv = G.tech[k];
   if (lv >= d.max) return;
-  if (techLocked(k)) { SFX.err(); setTip('前置科技未完成'); return; }
+  if (techLocked(k)) { SFX.err(); setTip('需要前置科技或更高波次：本波可升至 Lv.'+TechProgression.levelCap(d,G.wave,G.admin)); return; }
   const c = d.cost(lv);
   if (G.souls < c) { SFX.err(); setTip('灵魂不足，需要 ' + c + '🔮'); return; }
   G.souls -= c; G.waveSpentSouls += c; G.tech[k]++;
@@ -228,13 +229,14 @@ function updateHUD(dt) {
   if ($('techPanel').classList.contains('open')) {
     $('techList').querySelectorAll('.tech').forEach(r => {
       const k = r.dataset.k, d = TECH_DEFS[k], lv = G.tech[k];
-      r.querySelector('.tlv').textContent = lv + '/' + d.max;
+      const cap=TechProgression.levelCap(d,G.wave,G.admin);
+      r.querySelector('.tlv').textContent = lv + '/' + d.max + (cap<d.max ? ' · 本波上限 '+cap : '');
       r.querySelector('.tbar i').style.width = (lv / d.max * 100) + '%';
       const btn = r.querySelector('.tbtn');
       const locked = techLocked(k);
       r.classList.toggle('locked', locked);
       if (lv >= d.max) { btn.textContent = 'MAX'; btn.disabled = true; }
-      else if (locked) { btn.textContent = '🔒'; btn.disabled = true; }
+      else if (locked) { btn.textContent = '🔒'; btn.disabled = true; btn.title='需要前置科技或更高波次'; }
       else { const c = d.cost(lv); btn.textContent = fmt(c) + '🔮'; btn.disabled = G.souls < c; }
     });
     $('techSouls').textContent = fmt(G.souls);
@@ -2300,13 +2302,14 @@ function updateBossBar() {
   const hp = clamp(boss.hp / boss.maxHp, 0, 1);
   const bdef = (typeof BOSS_DEFS !== 'undefined' && BOSS_DEFS[boss.bossKey]) ? BOSS_DEFS[boss.bossKey] : null;
   const phN = bdef ? ((bdef.phases[boss.phase] || {}).name || '') : '';
-  const sig = boss.maxHp + '|' + Math.round(hp * 1000) + '|' + boss.phase;
+  const transitioning=(boss.phaseBarrier || 0)>0;
+  const sig = boss.maxHp + '|' + Math.round(hp * 1000) + '|' + boss.phase+'|'+transitioning;
   if (sig === _bossBarSig) return;
   _bossBarSig = sig;
   el.style.display = 'block';
   requestAnimationFrame(() => el.classList.add('show'));
   $('bbName').textContent = '😈 ' + (bdef ? bdef.name : boss.def.name);
-  $('bbPhase').textContent = phN;
+  $('bbPhase').textContent = phN+(transitioning?' · 转换护甲':'');
   $('bbPhase').style.display = phN ? '' : 'none';
   $('bbHp').textContent = Math.ceil(boss.hp) + ' / ' + Math.ceil(boss.maxHp) + '　(' + Math.round(hp * 100) + '%)';
   $('bbFill').style.width = (hp * 100).toFixed(1) + '%';

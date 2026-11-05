@@ -30,6 +30,8 @@ async function exercise(engine,name,mobile) {
     await page.locator('#experienceCards [data-experience="combat"]').click();
     await page.locator('#btnStart').click();
     await page.waitForFunction(()=>G && G.experience==='combat' && !paused);
+    assert.equal(await page.locator('#techList .tech').count(),28,'all four technology tiers are mounted');
+    assert.equal(await page.locator('#techList [data-k="annihilation"]').count(),1,'tier four remains available in the UI');
     await page.evaluate(()=>{G.gold=500;});
     const readiness = await page.evaluate(async () => {
       const samples=[];

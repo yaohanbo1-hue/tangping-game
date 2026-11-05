@@ -439,13 +439,17 @@ function bstat(b) {
   const base = (b.branch && b.def.branch && b.def.branch[b.branch]) ? b.def.branch[b.branch].mod(s, b) : s;
   if (b.runes && b.runes.length) {
     const rm = 1 + G.tech.runemaster * 0.15;
+    const totals = {};
     b.runes.forEach(r => {
       if (!r) return;
       r.affixes.forEach(a => {
         const A = RUNE_AFFIXES[a.k];
-        if (A) A.apply(base, affixVal(r, a) * rm);
+        if (A) totals[a.k] = (totals[a.k] || 0) + affixVal(r, a) * rm;
       });
     });
+    // Identical affixes add their advertised percentages instead of compounding
+    // once per socket. Six sockets remain valuable without exponential DPS growth.
+    Object.keys(totals).forEach(k => RUNE_AFFIXES[k].apply(base,totals[k]));
   }
   if (base.range != null) base.range *= techVal('focus', 0.06) * (1 + (G.fate.range || 0) + (G.fateWave.range || 0));
   if (base.dmg != null && G.prize && G.prize.dmg) base.dmg *= G.prize.dmg;
@@ -516,8 +520,8 @@ function tryDropRune(wave, x, y) {
   SFX.coin(); checkAchievements();
   return r;
 }
-function bedGold() { return 8 * Math.pow(2, G.bed.lv - 1); }
-function bedGoldOf(lv) { return 8 * Math.pow(2, lv - 1); }
+function bedGold() { return bedGoldOf(G.bed.lv); }
+function bedGoldOf(lv) { return 8 * EconomyBalance.production(lv); }
 function totalGoldRate() {
   const bed = bedGold() * techVal('sleep', 0.12) * techVal('eternity', 0.60);
   let r = bed;
@@ -671,7 +675,7 @@ function tryBuild(key, c, r) {
   const p = cellCenter(c, r);
   const b = {
     type: key, def, level: 1, col: c, row: r, x: p.x, y: p.y,
-    hp: def.hp * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1), maxHp: def.hp * techVal('structure', 0.12) * techVal('vitality', 0.10) * techVal('fortress', 0.50) * ((G.prize && G.prize.hp) || 1),
+    hp: buildingMaxHp(def,1), maxHp: buildingMaxHp(def,1),
     shield: 0, shieldMax: 0, cd: 0, angle: -Math.PI / 2, target: null, branch: null,
     invested: def.cost.gold, pulse: 0, kills: 0, runes: new Array(runeSlots()).fill(null), fireFx: 0,
   };
@@ -1106,11 +1110,13 @@ function updateEnemies(dt) {
       const phs = bossPhases(e);
       let np = 0;
       for (let k = 1; k < phs.length; k++) if (p <= phs[k].at) np = k;
+      np = Math.min(e.phase+1,Math.max(np,e.phaseNext || 0));
       if (np > e.phase) {
         e.phase = np;
+        e.phaseNext = 0;
         const ph = phs[np];
         e.res = Object.assign({}, ph.res);
-        addText(e.x, e.y - 60, ph.name + '！', '#ff4d6d', true);
+        addText(e.x, e.y - 60, ph.name + ' · 转换护甲', '#ff4d6d', true);
         spawnParts(e.x, e.y, 34, '#ff4d6d', 5, 0.9); shakeBy(12); SFX.boom();
         // 关键剧情 BOSS 的阶段台词之前只存放在 story.js、从未在战斗中触发。
         // 只在剧情指定波次播放，避免无尽模式重复弹出；普通 BOSS 数值与阶段机制不变。
@@ -1121,6 +1127,7 @@ function updateEnemies(dt) {
         }
       }
     }
+    if(e.boss && e.phaseBarrier>0) { e.phaseBarrier=Math.max(0,e.phaseBarrier-dt); continue; }
     if (e.def.stealth) {
       e.stealthT += dt;
       const cyc = e.stealthT % 6;
@@ -1150,12 +1157,7 @@ function updateEnemies(dt) {
     if (e.poisonT > 0) {
       e.poisonT -= dt;
       const poisonDmg = e.poisonDps * e.poison * dt;
-      e.hp -= poisonDmg;
-      G.stats.dmg += poisonDmg;
-      if (e.poisonSrc && e.poisonSrc.type && BUILD_DEFS[e.poisonSrc.type]) {
-        const towerDamage = G.stats.towerDamage || (G.stats.towerDamage = {});
-        towerDamage[e.poisonSrc.type] = (towerDamage[e.poisonSrc.type] || 0) + poisonDmg;
-      }
+      EnemyDamage.commit(e,poisonDmg,e.poisonSrc,true);
       if (Math.random() < dt * 5) spawnParts(e.x, e.y, 1, '#a3e635', 1.1, 0.4);
       if (e.hp <= 0) {
         if (e.poisonSrc && e.poisonSrc.kills !== undefined) {
@@ -1649,18 +1651,18 @@ function fire_(b, t, s) {
     SFX.shoot();
   }
 }
-function triggerReaction(e, rx, baseDmg) {
+function triggerReaction(e, rx, baseDmg, src) {
   const fx = (baseDmg || 20);
   if (rx.id === 'steam') {
     const d = fx * 1.6;
-    e.hp -= d; G.stats.dmg += d;
+    EnemyDamage.commit(e,d,src);
     addText(e.x, e.y - 30, '💨 蒸汽 ' + Math.round(d), '#e0f2fe', true);
     spawnParts(e.x, e.y, 16, '#e0f2fe', 3, 0.6);
     e.slow = Math.max(e.slow || 0, 0.35); e.slowT = 2;
   } else if (rx.id === 'overload') {
     const d = fx * 1.2;
-    G.enemies.forEach(o => { if (!o.dead && dist(o, e) < 110) { o.hp -= d * 0.8; G.stats.dmg += d * 0.8; } });
-    e.hp -= d; G.stats.dmg += d;
+    G.enemies.slice().forEach(o => { if (o!==e && !o.dead && dist(o, e) < 110) { EnemyDamage.commit(o,d*0.8,src); EnemyDamage.finish(o,src,'fire'); } });
+    EnemyDamage.commit(e,d,src);
     addText(e.x, e.y - 30, '💥 过载 ' + Math.round(d), '#fbbf24', true);
     spawnParts(e.x, e.y, 22, '#fbbf24', 4, 0.6); shakeBy(4);
     // 注意 max 字段：缺了它 updateEffects 会算出 NaN 半径，createRadialGradient 直接抛异常
@@ -1685,11 +1687,10 @@ function triggerReaction(e, rx, baseDmg) {
     addText(e.x, e.y - 30, '🧬 腐蚀 破抗', '#f0abfc', true);
     spawnParts(e.x, e.y, 12, '#f0abfc', 3, 0.6);
   }
-  const dead = e.hp <= 0;
-  if (dead && !e.dead) killEnemy(e);
+  EnemyDamage.finish(e,src,rx.id==='overload'?'fire':null);
 }
 /* 元素标记登记 + 反应触发。从 applyDamage 里抽出来，便于 DoT 按节流频率单独调用 */
-function touchElement(e, dtype, baseDmg) {
+function touchElement(e, dtype, baseDmg, src) {
   if (!dtype || e.boss || e.dead) return false;
   if (!e.elem) e.elem = {};
   let reacted = null, other = null;
@@ -1699,7 +1700,7 @@ function touchElement(e, dtype, baseDmg) {
   if (reacted) {
     e.elem[other] = 0; e.elem[dtype] = 0;
     G.stats.reactions = (G.stats.reactions || 0) + 1;
-    triggerReaction(e, reacted, baseDmg);
+    triggerReaction(e, reacted, baseDmg,src);
     return true;
   }
   e.elem[dtype] = 5;
@@ -1717,14 +1718,14 @@ function touchElement(e, dtype, baseDmg) {
 const DOT_MERGE_INTERVAL = 0.5;
 function dotDamage(e, dps, dtype, src, dt) {
   if (e.dead || !(dps > 0)) return 0;
-  const d = applyDamage(e, dps * dt, dtype, src, false, true);
+  const d = applyDamage(e, dps * dt, dtype, src, false, true, dt);
   if (d > 0 && !e.dead) {
     e.dotAcc = (e.dotAcc || 0) + d;
     e.dotT = (e.dotT || 0) + dt;
     if (e.dotT >= DOT_MERGE_INTERVAL) {
       addText(e.x + rnd(-5, 5), e.y - e.r, Math.round(e.dotAcc), (DMG[dtype] && DMG[dtype].color) || '#ffd6d6');
       e.dotAcc = 0; e.dotT = 0;
-      touchElement(e, dtype, dps * DOT_MERGE_INTERVAL);
+      touchElement(e, dtype, dps * DOT_MERGE_INTERVAL,src);
     }
   }
   return d;
@@ -1732,36 +1733,20 @@ function dotDamage(e, dps, dtype, src, dt) {
 /**
  * @param {boolean} [silent] - true = 持续伤害帧结算：不弹数字/不闪光/不触发反伤与适应
  */
-function applyDamage(e, dmg, dtype, src, chain, silent) {
-  if (e.dead) return 0;
+function applyDamage(e, dmg, dtype, src, chain, silent, damageInterval) {
+  if (e.dead || (e.phaseBarrier || 0)>0 || !Number.isFinite(dmg) || dmg<=0) return 0;
   const tm = typeMul(e, dtype);
   let d = dmg * tm;
-  if (e.flat) d = Math.max(1, d - e.flat);
+  if (e.flat) d = silent ? Math.max(0,d-e.flat*(damageInterval || 1)) : Math.max(1,d-e.flat);
   // 破甲词条按命中结算，不限伤害类型（旧实现只认 frost，腐蚀炮的破甲永不生效）
   if (src && src.def && typeof src.def.stat === 'function') {
     const s = bstat(src);
     if (s.shred) DMG_KEYS.forEach(k => { e.res[k] = Math.max(0, (e.res[k] || 0) - s.shred * 0.1); });
   }
   // 元素反应：不同伤害类型叠加触发连锁
-  if (!silent) touchElement(e, dtype, dmg);
+  if (!silent) touchElement(e, dtype, dmg,src);
+  if(e.dead) return 0;
   if (e.vulnT > 0 && e.vuln > 1) d *= e.vuln;
-  if (e.phaseShield && e.segIdx < e.phaseShield && d > 0) {
-    const gate = e.maxHp - e.segMax * (e.segIdx + 1);
-    if (e.hp - d <= gate) {
-      d = Math.max(0, e.hp - gate);
-      e.segIdx++;
-      addText(e.x, e.y - 46, '🛡 护盾破碎 ' + e.segIdx + '/' + e.phaseShield, '#a8a29e', true);
-      spawnParts(e.x, e.y, 26, '#d6d3d1', 4, 0.7); shakeBy(6);
-      e.stun = Math.max(e.stun || 0, 0.35);
-      if (e.state === 'walk') e.x = Math.max(20, e.x - 34);
-    }
-  }
-  // 反伤：DoT 帧不反，否则火焰塔会被镜面梦魇每帧反弹致死
-  if (!silent && e.def && e.def.reflect && src && src.def && d > 0) {
-    const rb = d * e.def.reflect;
-    damageTarget(src, rb);
-    if (Math.random() < 0.3) addText(e.x, e.y - 44, '🪞 反弹 ' + Math.round(rb), '#e2e8f0');
-  }
   // 适应：同样只在真正的「一击」上累积，否则一帧就叠满抗性
   if (!silent && e.def && e.def.adapt && dtype && d > 0) {
     e.res[dtype] = Math.min(0.7, (e.res[dtype] || 0) + e.def.adapt);
@@ -1783,13 +1768,12 @@ function applyDamage(e, dmg, dtype, src, chain, silent) {
       G.enemies.forEach(o => { if (!o.dead && o !== e && dist(o, e) < rx.splash) applyDamage(o, d * 0.45, dtype, src, true); });
     }
   }
-  if (e.shield > 0) { const a = Math.min(e.shield, d); e.shield -= a; d -= a; }
-  if (d > 0) e.hp -= d;
-  e.inCombatT = 2;
-  G.stats.dmg += d;
-  if (src && src.def && src.type && BUILD_DEFS[src.type]) {
-    const towerDamage = G.stats.towerDamage || (G.stats.towerDamage = {});
-    towerDamage[src.type] = (towerDamage[src.type] || 0) + d;
+  d=EnemyDamage.commit(e,d,src);
+  // Reflect the damage actually absorbed, not arbitrarily large overkill.
+  if (!silent && e.def && e.def.reflect && src && src.def && d>0) {
+    const reflected=d*e.def.reflect;
+    damageTarget(src,reflected);
+    if(Math.random()<0.3) addText(e.x,e.y-44,'反弹 '+Math.round(reflected),'#e2e8f0');
   }
   if (silent) {
     if (e.hp <= 0) {
@@ -2018,7 +2002,7 @@ function endWave() {
     if (s.interest) interest += G.gold * s.interest;
     if (s.souls) soulsFromBank += s.souls;
   });
-  interest = Math.min(interest, Math.max(60, G.gold * 0.15));   // 复利上限压到 15%/波，避免银行滚雪球通胀
+  interest = EconomyBalance.interest(interest,G.gold,totalGoldRate());
   if (interest > 0) { G.gold += interest; addText(BED_CX - 100, BED_CY + 46, '银行利息 +' + Math.round(interest), '#ffc300'); }
   if (soulsFromBank > 0) { G.souls += soulsFromBank; addText(BED_CX - 100, BED_CY + 64, '+' + soulsFromBank + '🔮', '#c77dff'); }
   const bonus = Math.round((45 + G.wave * 18) * (G.event.eff.rewardMul || 1));

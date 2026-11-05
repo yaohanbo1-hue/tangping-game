@@ -23,6 +23,14 @@ jobs:
       - name: 敌人生命与无限边界回归
         run: node tests/balance.test.js
 
+      - name: 经济、科技与真实伤害回归
+        run: |
+          node tests/economy.test.js
+          node tests/combat.test.js
+
+      - name: 从零资源的完整战役与策略矩阵
+        run: node tests/campaign-matrix.js
+
 
       - name: 可重复战斗对照模拟
         run: node tests/simulate.js
@@ -31,7 +39,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: balance-simulation
-          path: artifacts/balance-simulation.json
+          path: |
+            artifacts/balance-simulation.json
+            artifacts/campaign-matrix.json
 
       - name: 构建单文件产物
         run: node build.js

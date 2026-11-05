@@ -27,7 +27,7 @@ const BUILD_DEFS = {
     name: '金币矿机', icon: '⛏️', key: '1', color: '#f5c542',
     cost: { gold: 60, power: 10 }, upkeep: 1.0, hp: 180, maxLv: 50,
     desc: '持续挖掘金币，是整条防线的经济支柱。',
-    stat: lv => ({ gold: 3 * Math.pow(2, lv - 1) }),
+    stat: lv => ({ gold: 3 * EconomyBalance.production(lv) }),
     statText: s => `产出 ${fmt(s.gold)} 金币/秒`,
     branch: {
       a: { name: '深井矿机', icon: '🕳️', desc: '产量大幅提升', cost: { gold: 400, soul: 12 }, mod: s => ({ gold: s.gold * 2.3 }) },

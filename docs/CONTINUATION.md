@@ -1,15 +1,13 @@
 # 当前执行检查点
 
-开发工作树：`C:\Users\hambu\Documents\Codex\tangping-game-v2`。仅在此独立仓库工作，用户 home 根仓库不是游戏项目。分支 `codex/v2-reconstruction`。
+开发工作树：`C:\Users\hambu\Documents\Codex\tangping-game-v2`，分支 `codex/v2-reconstruction`。不要操作 home 根仓库；main 不改动。完整 v2.0 目标仍未完成，VERSION 保持 1.9.2，草稿 PR https://github.com/yaohanbo1-hue/tangping-game/pull/1 禁止合并。逐项清单见 V2_STATUS.md。
 
-目标仍为原始完整 v2.0；未完成，禁止发布或合并。剩余逐项清单见 V2_STATUS.md。
+原先 GitHub ref 更新服务错误已经恢复，远端成功推进到 `9fa50f4`，其 Linux build 与 browser CI 均绿：[42129308510](https://github.com/yaohanbo1-hue/tangping-game/actions/runs/42129308510)。无需再次创建等价提交。
 
-本地提交 `1e66fcb93c93e9a3b03025ec2d432730ddf7d268` 包含已验证报告与 Playwright 1.63.0/CPU raster CI 设置。远端仍为 `2becb988c54193a16eec943b64e1ab1288717b1a`：git push 返回 GitHub `fatal error in commit_refs_rules`；GitHub 工具 update_ref 返回 GraphQL 服务端错误。两条途径均非自动审批拒绝。API 已创建等价树 `dcb33f1a1576fc1fe839b28556c517cbbb04b667` 与提交 `7f61041498c9a5e00659eb37aaef353d603905df`，但尚未成功移动远端分支。请先复查远端 head，不要盲目改写历史；本地与 API 提交的树相同。
+当前新增阶段：真实经济/伤害的完整战役、经济与科技推进、同类符文加算、实际输出统计、Boss 阶段阈值、持续伤害帧率一致性。Node 共 1474 项全过，构建同步。本机 Chromium153 桌面/Android 仿真与 WebKit26.6 iOS 仿真全部真实交互通过（含第四层科技可见）。六场从零资源的真实运营均打完 60 波，原始 `artifacts/campaign-matrix.json`，精简追踪 `docs/campaign-validation.json`，说明 CAMPAIGN_VALIDATION.md。困难/地狱完美策略仍零破门，终焉约 3.6 秒，禁止宣称最终难度完成。
 
-本机 Node24.13.1 可执行，Playwright 1.63.0 及其 WebKit26.6 已安装。Node 存档23 + campaign255 + balance1064 全过，node build.js 与两个 HTML 一致。本机 WebKit26.6 真实交互测试通过，压力平均250.65ms/帧，P95 341ms，性能远未达标。新版 Linux CPU renderer CI 尚未触发，不能宣称 CI 已绿。
+浏览器压力 WebKit 平均 268.62ms/帧、P95 353ms；当前性能远未达标。旧空场 A/B 定位绘制/合成成本明显，见 PERFORMANCE.md。仿真浏览器不等于真实手机。真实截图和帧时间在 `artifacts/browser/`，它们被 gitignore 排除。
 
-此前 Linux CI：Chromium 桌面/仿真触控通过；WebKit27.2 在开局后 rAF 停在9帧，无 JS 错误，点击稳定性等待超时。同版本 Windows 可运行。上游1.64 CPU raster 有已确认的退出崩溃，故固定1.63.0并指定Linux CPU raster复测，尚未证实它能解决本仓库的停帧。
+下一步战场美术：create-game-assets 技能已读取并告知使用。Canvas 程序化场景锁定暖金床头灯、深蓝雨夜三走廊、紫红梦魇。新艺术必须有真实轮廓/材质/灯具/雨影与门体损坏修复，缓存静态图层、不消耗战斗随机数，截图核验。之后仍要完整推进 16 建筑/32 转职、35 怪物/10 词缀、五 Boss 独立技能、全套 UI、剧情音频、防剧透审计、画质设置及性能等原始要求，不能缩小任务。
 
-真实截图与性能原始文件：`artifacts/browser/`（本机）、`artifacts/ci-browser/`（下载的失败CI工件）；这些路径已被 .gitignore 排除。不要把旧有紫色场景和现成 Canvas 建筑声称为本轮美术重制。`tests/profile-render.js` 的对照已证实绘制/合成成本显著：同一空战场正常10.95FPS，关CSS效果14.94，隐藏Canvas24.98，同时关闭39.92（Windows WebKit27.2 headless，不是物理手机）。
-
-没有仍在运行的本地测试会话或后台服务。下一步优先恢复远端ref更新并验证Linux浏览器，再继续正常经济/伤害的完整通关、经济校准和三路雨夜新美术。无需用户确认或唤醒用户。
+本地测试进程已结束；后续以实际进程/CI 状态为准。无需唤醒或询问睡眠中的用户。
