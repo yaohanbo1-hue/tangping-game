@@ -1,0 +1,14 @@
+{
+  "name": "shoudengren-nightmare-defense",
+  "version": "1.9.2",
+  "private": true,
+  "scripts": {
+    "test": "node tests/smoke.test.js && node tests/campaign.test.js && node tests/balance.test.js",
+    "test:browser": "node tests/browser.test.js",
+    "simulate": "node tests/simulate.js",
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
+  }
+}

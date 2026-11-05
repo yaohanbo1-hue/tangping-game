@@ -38,3 +38,23 @@ jobs:
 
       - name: 校验构建产物与仓库一致
         run: git diff --exit-code -- shoudengren.html index.html
+
+  browser:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: 安装固定版本浏览器测试工具
+        run: npm install --ignore-scripts --package-lock=false
+      - name: 安装浏览器
+        run: npx playwright install --with-deps chromium webkit
+      - name: 浏览器交互、触控与帧时间
+        run: node tests/browser.test.js
+      - name: 保存实际画面与帧时间
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-evidence
+          path: artifacts/browser/
