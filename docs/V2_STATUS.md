@@ -20,6 +20,7 @@
 - 16 建筑/32 转职原创机械外观和通用状态已接入，48 外观、等级演进、选中/真实范围、降低动态、缓存及实战绘制隔离通过真实 Canvas 测试。11 类实际命中反馈和模拟轨迹隔离新增 27 项，Node 合计 1952 项。样板和限制见 BUILDING_ART.md；本阶段新 CI 待推送后核验。
 - 建筑美术提交 `8cad214` 的 Linux [42139100228](https://github.com/yaohanbo1-hue/tangping-game/actions/runs/42139100228) build/browser 均通过，含新原生外观与状态回归。
 - 敌人行动100项通过，Node合计2052项；复现并修复35普通怪/5Boss的控制后继续近身攻击、主动能力不受控、持续武器冻缓无效，以及死灵假复活。真实残骸复苏和触控时间冻结打断见 ENEMY_AUDIT.md；未据此声称全部35能力与新美术完成。
+- b4782b6的Linux [42142215644](https://github.com/yaohanbo1-hue/tangping-game/actions/runs/42142215644) build/browser均通过。第二轮另增155项真实能力回归（Node合计2207），修复吸血/寄生/阶段攻击/目标选择/床铺范围伤害；45词缀组合仅验证控制和可击杀，不算完整平衡。六场运营再通、三浏览器及寄生真实触控打断通过；详见ENEMY_AUDIT.md，新提交CI另核。
 
 ## 已接入但仍需增强验证
 
@@ -42,4 +43,4 @@
 10. 性能：未接入高/中/低画质与全面降低动态；真实帧时间需检查 CI 工件并进一步测物理设备，不保证 FPS。
 11. 交付：草稿 PR 已建立；只有全部关键验收真实通过后才将 VERSION/README/CHANGELOG 更新为正式 2.0.0，禁止自动合并。
 
-现在本地开发工作树为 `C:\Users\hambu\Documents\Codex\tangping-game-v2`，跟踪同名开发分支。它由已有独立仓库的 worktree 创建，未改动该仓库 main 或用户主目录仓库。后续复查分支最新状态与 CI，不依赖工具内存或“已完成”的文字。
+现在本地开发副本为 `D:\CodexArtifacts\tangping-game\workspace`，跟踪同名开发分支。C盘反复写满后从b4782b6独立克隆到D盘，原worktree、父仓库main及用户主目录仓库保留。浏览器临时配置仅在测试进程中放到artifacts所在磁盘；不修改用户系统TEMP。后续复查分支最新状态与CI，不依赖工具内存或“已完成”的文字。

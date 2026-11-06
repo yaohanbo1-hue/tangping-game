@@ -725,12 +725,15 @@ function tryBranch(b, which) {
   return true;
 }
 function sellBuilding(b) {
+  const idx=G.buildings.indexOf(b);
+  if(idx<0)return;
   const back = Math.round(b.invested * SELL_RATE);
   G.gold += back;
   G.waveSpentGold -= back;   // 出售退款视作负花费，读档回滚时保留
   recycleRunes(b, '出售');
   G.grid[b.row * COLS + b.col] = null;
-  G.buildings.splice(G.buildings.indexOf(b), 1);
+  G.buildings.splice(idx, 1);
+  EnemyParasite.releaseBuilding(b);
   if (selected === b) selected = null;
   SFX.coin();
   // 出售金币粒子爆发
@@ -974,19 +977,19 @@ function applyStoryEffect(text, ctx) {
   return { got, notes };
 }
 function damageTarget(t, dmg) {
+  if (!t || !Number.isFinite(dmg) || dmg <= 0 || !(t.hp > 0)) return !!t && t.hp <= 0;
   if (G.admin && t && t.dead === undefined) return false;
-  if (G.track && t && t.lane != null && t.y != null && t.def === undefined && !t.isBed)
-    G.track.doorDmg = (G.track.doorDmg || 0) + Math.max(0, dmg);
   // 剧情加成的防御：建筑受伤减免（最高 60%）
   const defSum = (G.fate.def || 0) + (G.fateWave.def || 0);
   if (defSum > 0) dmg *= Math.max(0.4, 1 - defSum);
-  if (t.shield > 0) { const a = Math.min(t.shield, dmg); t.shield -= a; dmg -= a; }
-  if (dmg > 0) {
-    t.hp -= dmg;
-    if (t.lane != null && t.y != null && t.def === undefined && !t.isBed) {
-      const lanes = G.stats.laneDamage || (G.stats.laneDamage = [0, 0, 0]);
-      lanes[t.lane] = (lanes[t.lane] || 0) + dmg;
-    }
+  const absorbed = Math.min(Math.max(0, t.shield || 0), dmg);
+  if (absorbed > 0) t.shield -= absorbed;
+  const bodyLoss = Math.min(t.hp, Math.max(0, dmg - absorbed));
+  t.hp -= bodyLoss;
+  if (t.lane != null && t.y != null && t.def === undefined && !t.isBed) {
+    if (G.track) G.track.doorDmg = (G.track.doorDmg || 0) + absorbed + bodyLoss;
+    const lanes = G.stats.laneDamage || (G.stats.laneDamage = [0, 0, 0]);
+    lanes[t.lane] = (lanes[t.lane] || 0) + bodyLoss;
   }
   return t.hp <= 0;
 }
@@ -1034,7 +1037,7 @@ function spawnEnemy(type, wave, lane, summoned = false) {
     hitFlash: 0, hasteT: 0, hasteMul: 1, inCombatT: 0,
     maxPhase: d.phases ? d.phases.length - 1 : 0,
     empT: d.emp ? d.emp.cd : 0, fzT: d.freezeTower ? d.freezeTower.cd : 0,
-    reviveT: 0, mimicRevealed: false, parasiteTarget: null,
+    reviveT: 0, mimicRevealed: false, parasiteTarget: null, vamp: d.vamp || 0,
   };
   const eliteChance = clamp((wave - 4) * 0.035, 0, 0.42);
   if (wave >= 5 && Math.random() < eliteChance && !d.boss) {
@@ -1048,7 +1051,7 @@ function spawnEnemy(type, wave, lane, summoned = false) {
       if (a.allres) e.affixRes = a.allres;
       if (a.flat) e.flat = a.flat;
       if (a.regen) e.regenR = a.regen;
-      if (a.vamp) e.vamp = a.vamp;
+      if (a.vamp) e.vamp = Math.max(e.vamp, a.vamp);
       if (a.frenzy) e.frenzyOn = true;
       if (a.split) e.splitN = a.split;
       if (a.explode) e.explodeN = a.explode;
@@ -1099,9 +1102,8 @@ function enemySpeed(e) {
     }
   }
   // 精英词缀狂暴 + 敌人内置狂暴（如 berserker）
-  const frenzyThreshold = (e.def.frenzy && e.def.frenzy.at) || 0.35;
   const frenzySpd = (e.def.frenzy && e.def.frenzy.spd) || 1.9;
-  if ((e.frenzyOn || e.def.frenzy) && e.hp < e.maxHp * frenzyThreshold) s *= frenzySpd;
+  if (enemyIsFrenzied(e)) s *= frenzySpd;
   if (e.phase > 0 && e.boss) {
     const bps = bossPhases(e);
     if (bps[e.phase]) s *= bps[e.phase].speed;
@@ -1219,20 +1221,7 @@ function updateEnemies(dt) {
         }
       });
     }
-    if (!incapacitated && sp_.parasite) {
-      if (!e.parasiteTarget || e.parasiteTarget.hp <= 0 || G.buildings.indexOf(e.parasiteTarget) < 0) {
-        let best = null, bd = 260;
-        G.buildings.forEach(b => { if (b.def.tower) { const d2 = dist(b, e); if (d2 < bd) { bd = d2; best = b; } } });
-        e.parasiteTarget = best;
-      }
-      if (e.parasiteTarget) {
-        const t = e.parasiteTarget;
-        damageTarget(t, sp_.parasite.dps * dt);
-        e.hp = Math.min(e.maxHp, e.hp + sp_.parasite.dps * 0.5 * dt);
-        if (Math.random() < dt * 6) addEffect({ type: 'arc', x: e.x, y: e.y, x2: t.x, y2: t.y, life: 0.15, maxLife: 0.15 });
-        if (t.hp <= 0) { destroyBuilding(t); e.parasiteTarget = null; }
-      }
-    }
+    const channeling = sp_.parasite && EnemyParasite.update(e,dt,incapacitated);
     if (sp_.mimic) {
       let near = false;
       for (const b of G.buildings) { if (dist(b, e) < 190) { near = true; break; } }
@@ -1262,7 +1251,7 @@ function updateEnemies(dt) {
       }
     }
     if (G.buff.freeze > 0 && Math.random() < dt * 3) spawnParts(e.x, e.y, 1, '#7fdfff', 0.6, 0.5);
-    if(incapacitated)continue;
+    if(incapacitated || channeling)continue;
     const sp = enemySpeed(e);
     const L = LANES[e.lane];
     const D = G.doors[e.lane];
@@ -1295,16 +1284,15 @@ function updateEnemies(dt) {
         e.atkCd -= dt;
         if (e.atkCd <= 0) {
           e.atkCd = 0.85;
-          damageTarget(d, e.dmg * (e.def.buildingBonus || 1));
+          const dealt = enemyStrike(e, d, enemyAttackDamage(e));
           if (G.tech.thorn > 0) { applyDamage(e, e.dmg * G.tech.thorn * 0.2, 'kinetic'); G.track && (G.track.doorDmg = G.track.doorDmg || 0); }
-          addText(WALL_X - 30, e.y + rnd(-30, 30), '-' + Math.round(e.dmg), '#ff6b6b');
+          addText(WALL_X - 30, e.y + rnd(-30, 30), '-' + Math.round(dealt), '#ff6b6b');
           spawnParts(WALL_X - 16, e.y, 6, '#ff9e6b', 2, 0.4); shakeBy(1.6); SFX.hit();
-          if (e.vamp) e.hp = Math.min(e.maxHp, e.hp + e.dmg * e.vamp);
           if (d.hp <= 0) breakDoor(d);
         }
       } else { e.state = 'room'; e.x = WALL_X + 26; e.y = d.y; e.atkCd = 0.34; }
     } else if (e.state === 'room') {
-      if (!e.target || e.target.hp <= 0 || (e.target.isBed && G.bed.hp <= 0)) {
+      if (!e.target || e.target.hp <= 0 || (e.target.isBed ? G.bed.hp <= 0 : !G.buildings.includes(e.target))) {
         e.target = pickRoomTarget(e) || { x: BED_CX, y: BED_CY, isBed: true, hp: 1 };
       }
       const t = e.target;
@@ -1315,18 +1303,18 @@ function updateEnemies(dt) {
         if (e.atkCd <= 0) {
           e.atkCd = 0.8;
           const tgt = t.isBed ? G.bed : t;
-          let dmg = e.dmg * (e.def.buildingBonus || 1);
+          let dmg = enemyAttackDamage(e);
           if (!t.isBed && t.shield > 0) {
             G.buildings.forEach(o => { const s = bstat(o); if (s.reflect && dist(o, t) <= s.range) dmg *= (1 - s.reflect); });
           }
-          damageTarget(tgt, dmg);
+          const dealt = enemyStrike(e, tgt, dmg);
           if (e.def && e.def.steal && G.gold > 0) {
             const st = Math.min(G.gold, Math.round(G.gold * e.def.steal) + 2);
             G.gold -= st;
             G.waveSpentGold += st;   // 被偷视作本波损失，读档回滚时不白嫖回来
             addText(e.x, e.y - 40, '-' + st + '💰', '#facc15', true);
           }
-          addText(t.x, t.y - 20, '-' + Math.round(dmg), '#ff6b6b');
+          addText(t.x, t.y - 20, '-' + Math.round(dealt), '#ff6b6b');
           spawnParts(t.x, t.y, 5, '#ff9e6b', 2, 0.4);
           if (t.isBed) {
             shakeBy(5); flash = 0.25; // 床铺受击：强震 + 闪屏
@@ -1334,7 +1322,6 @@ function updateEnemies(dt) {
             shakeBy(1.8);
           }
           SFX.hit();
-          if (e.vamp) e.hp = Math.min(e.maxHp, e.hp + dmg * e.vamp);
           if (!t.isBed && tgt.hp <= 0) { destroyBuilding(tgt); e.target = null; }
           if (t.isBed && G.bed.hp <= 0) { gameOver(); return; }
         }
@@ -1344,8 +1331,11 @@ function updateEnemies(dt) {
   }
 }
 function pickRoomTarget(e) {
+  if (e.def.flying) return { x: BED_CX, y: BED_CY, isBed: true, hp: G.bed.hp };
   let best = null, bd = 1e9;
-  G.buildings.forEach(b => { const d = dist(e, b); if (d < bd) { bd = d; best = b; } });
+  const weapons = e.type === 'rustbug' && G.buildings.some(b => b.hp > 0 && b.def.tower);
+  G.buildings.forEach(b => { if (!(b.hp > 0) || (weapons && !b.def.tower)) return;
+    const d = dist(e, b); if (d < bd) { bd = d; best = b; } });
   return best;
 }
 function breakDoor(d) {
@@ -1377,6 +1367,7 @@ function destroyBuilding(b) {
   recycleRunes(b, '被摧毁');
   G.grid[b.row * COLS + b.col] = null;
   G.buildings.splice(idx, 1);
+  EnemyParasite.releaseBuilding(b);
   if (selected === b) selected = null;
   spawnParts(b.x, b.y, 26, b.def.color, 4, 0.9);
   addText(b.x, b.y, '建筑被摧毁！', '#ff4d6d', true);
@@ -1393,7 +1384,7 @@ function destroyBuilding(b) {
 function killEnemy(e) {
   if (e.dead) return;
   e.dead = true;
-  EnemyRemains.cancel(e);EnemyRemains.record(e);
+  EnemyRemains.cancel(e);EnemyParasite.cancel(e);EnemyRemains.record(e);
   G.stats.kills++;
   G.combo = (G.combo || 0) + 1; G.comboT = 3;
   G.maxCombo = Math.max(G.maxCombo || 0, G.combo);
@@ -1444,7 +1435,7 @@ function killEnemy(e) {
   if (!e.revived && typeof DreamEngine !== 'undefined') { try { DreamEngine.onEnemyKilled(e); } catch(err) { console.warn('DreamEngine enemyKilled:', err); } }
   if (e.def.curse) {
     const c = e.def.curse;
-    addEffect({ type: 'curse', x: e.x, y: e.y, r: c.r, life: c.dur, maxLife: c.dur });
+    addEffect({ type: 'curse', x: e.x, y: e.y, r: c.r, dps: c.dps, life: c.dur, maxLife: c.dur });
     addText(e.x, e.y - 20, '☠️ 诅咒区域', '#94a3b8');
   }
   if (e.splitN || e.def.split) {
@@ -1455,12 +1446,13 @@ function killEnemy(e) {
       c.x = e.x + rnd(-18, 18); c.y = e.y + rnd(-18, 18); c.state = e.state;
     }
   }
-  const ex = e.explodeN || e.def.explode;
+  const ex = Math.max(e.explodeN || 0, e.def.explode || 0);
   if (ex) {
     addEffect({ type: 'boom', x: e.x, y: e.y, r: 0, max: 130, life: 0.45, maxLife: 0.45 });
     SFX.boom(); shakeBy(8);
     G.doors.forEach(d => { if (dist({ x: WALL_X, y: d.y }, e) < 130) { damageTarget(d, ex); if (d.hp <= 0) breakDoor(d); } });
-    G.buildings.forEach(b => { if (dist(b, e) < 130) damageTarget(b, ex); });
+    for (const b of G.buildings.slice()) { if (dist(b, e) < 130 && damageTarget(b, ex)) destroyBuilding(b); }
+    if (dist({ x: BED_CX, y: BED_CY }, e) < 130 && damageTarget(G.bed, ex)) gameOver();
   }
   checkAchievements();
 }
@@ -2125,13 +2117,15 @@ function updateSkills(dt) {
 function updateEffects(dt) {
   for (let i = G.effects.length - 1; i >= 0; i--) {
     const e = G.effects[i];
+    const activeDt = Math.min(dt,Math.max(0,e.life));
     e.life -= dt;
     if (e.type === 'meteor') { e.x += (e.tx - e.x) * dt * 5; e.y += (e.ty - e.y) * dt * 5; }
     if (e.type === 'boom') { const mx = (e.max != null) ? e.max : e.r; e.r = mx * (1 - e.life / e.maxLife); }
     if (e.type === 'curse') {
-      const dps = 26;
-      G.buildings.forEach(b => { if (dist(b, e) < e.r) damageTarget(b, dps * dt); });
-      G.doors.forEach(d => { if (dist({ x: WALL_X, y: d.y }, e) < e.r) { damageTarget(d, dps * dt); if (d.hp <= 0) breakDoor(d); } });
+      const damage = (e.dps == null ? 26 : e.dps) * activeDt;
+      for (const b of G.buildings.slice()) { if (dist(b, e) < e.r && damageTarget(b, damage)) destroyBuilding(b); }
+      G.doors.forEach(d => { if (dist({ x: WALL_X, y: d.y }, e) < e.r) { damageTarget(d, damage); if (d.hp <= 0) breakDoor(d); } });
+      if (dist({ x: BED_CX, y: BED_CY }, e) < e.r && damageTarget(G.bed, damage)) gameOver();
       if (Math.random() < dt * 10) spawnParts(e.x + rnd(-e.r, e.r), e.y + rnd(-e.r, e.r), 1, '#94a3b8', 0.8, 0.6);
     }
     if (e.life <= 0) G.effects.splice(i, 1);

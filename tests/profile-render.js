@@ -1,4 +1,5 @@
 // Isolate raster/compositor cost without changing the simulation.
+require('./browser-env');
 const { webkit } = require('playwright');
 const fs = require('node:fs');
 const path = require('node:path');

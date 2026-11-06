@@ -1,4 +1,5 @@
 // Real Canvas checks, native captures and render-only invariants.
+require('./browser-env');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium}=require('playwright');

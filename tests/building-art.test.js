@@ -1,5 +1,6 @@
 // Native-scale catalog plus live render invariants. This is visual verification,
 // separate from the legal player-policy campaign and branch combat regression.
+require('./browser-env');
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..'),output=path.join(root,'artifacts','buildings');

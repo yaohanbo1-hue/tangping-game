@@ -1,6 +1,5 @@
 {
   "note": "Fixed player policy with legal purchases and real 60Hz combat; not a physical player trial.",
-  "validation": "After enemy control and true corpse revival fixes; not final difficulty acceptance",
   "results": [
     {
       "profile": "balanced",
@@ -2204,5 +2203,6 @@
         }
       ]
     }
-  ]
+  ],
+  "validation": "After actual vampire, parasite, target selection, curse/explosion and phase attack fixes; not final difficulty acceptance"
 }

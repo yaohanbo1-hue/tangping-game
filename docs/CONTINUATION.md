@@ -1,6 +1,6 @@
 # 当前执行检查点
 
-只在 `C:\Users\hambu\Documents\Codex\tangping-game-v2` 独立 worktree、分支 `codex/v2-reconstruction` 工作。home根仓库不是游戏项目；main未改动（本地81079f6），禁止合并。完整2.0目标未完成，VERSION保持1.9.2。草稿PR https://github.com/yaohanbo1-hue/tangping-game/pull/1 。剩余逐项要求见V2_STATUS.md，不缩小原始范围。
+当前只在 `D:\CodexArtifacts\tangping-game\workspace` 独立副本、分支 `codex/v2-reconstruction` 工作。C盘反复写满，原C盘worktree及父仓库保留；D副本从b4782b6继承同一分支历史，origin指向GitHub。home根仓库不是游戏项目；main未改动（本地81079f6），禁止合并。完整2.0目标未完成，VERSION保持1.9.2。草稿PR https://github.com/yaohanbo1-hue/tangping-game/pull/1 。剩余逐项要求见V2_STATUS.md，不缩小原始范围。
 
 已推送基础阶段：纯战斗/剧情播放与奖励账本分离、旧档v7迁移、HP平滑倍率/三路编队、真实伤害统计和Boss阶段阈值、经济/科技校准、从零60波、雨夜场景、建筑机制修复。d9b6cfb的Linux build/browser CI均绿：[42135913487](https://github.com/yaohanbo1-hue/tangping-game/actions/runs/42135913487)。此前GitHub ref错误已恢复，不要重复创建等价提交。
 
@@ -35,3 +35,11 @@ C盘再次满导致build写入失败，旧index测试曾误跑（已不计入，
 六场真实运营再次全通：普通均衡两种子2553.78/2585.93秒、经济2508.38、输出2509.42、困难2660.40、地狱2812.83，均零破门/视频/结局串档。终焉仍约3.6秒，不能验收高难。最新docs/campaign-validation.json已更新；54场旧HP对照仍为c2acaa2阶段，不假称敌人修复后又跑过。当前所有本地测试会话已正常结束。新行动提交推送后再查新head CI。
 
 下一步继续35普通怪各特殊能力/前摇/反制的真实审计和35新形态、10词缀新标识，再5Boss新机制/专属美术。不要重复先前基线与已过的48建筑整套重做。仍未完成全UI、剧情音频、防剧透、画质/性能、分支平衡等完整范围。
+
+## 第二轮敌人结算
+
+新tests/enemy-abilities.test.js155项已复现23条旧行为失败并修复，Node合计2207。吸血40%本体赋值/实际损伤回血、寄生0.6s/8s/3s/260距离及控制打断、狂暴和五Boss阶段攻击倍率、飞行扑床/锈蚀优先炮塔、爆炸/诅咒床铺伤害及余时/过量统计均已回归。45个词缀两两组合的控制/击杀测试不是平衡验收。即时清理出售目标、重复出售防退款也通过。enemyCastCue共用真实冷却，旧重复预警已移除；寄生触控时间冻结、连线和范围打断真实Chromium通过。docs/images/parasite-channel.png是实拍旧怪物形状，不能算新怪美术。
+
+六场真实运营再跑结果与b4782b6完全一致（完整docs/campaign-validation.json更新）；近防线机制另由受控战斗测试触发。当前三浏览器交互均通过，平均帧间隔142.69/166.11/203.95ms，软件栅格且同时跑战役，不是性能改善证据。全部本地会话50093/1040/1735均已正常结束。b4782b6远端build/browser均绿42142215644。
+
+C盘再次0字节，新D副本继续工作。node_modules通过junction复用原安装，artifacts通过junction放D runtime-artifacts。tests/browser-env.js仅修改测试进程临时目录；npm命令需显式`--cache D:\CodexArtifacts\tangping-game\npm-cache`避免npm日志写满C。不要移除用户文件，不要继续尝试被策略阻止的目录迁移。

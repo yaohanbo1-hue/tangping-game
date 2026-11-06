@@ -227,12 +227,22 @@ function drawRemains() {
   ctx.restore();
 }
 function drawEnemyCasts() {
-  ctx.save();ctx.strokeStyle='rgba(190,157,211,.6)';ctx.lineWidth=1.2;ctx.setLineDash([3,4]);
+  ctx.save();ctx.lineWidth=1.2;
   for(const e of G.enemies) {
-    if(e.dead || !e.raiseCast)continue;
-    for(const c of e.raiseCast.corpses) {ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(c.x,c.y);ctx.stroke();}
-    bar(e.x-23,e.y-e.r-18,46,3,1-e.raiseCast.left/e.raiseCast.total,'#bda4d1');
-    ctx.font='9px sans-serif';ctx.fillStyle='#d0bbdf';ctx.textAlign='center';ctx.fillText('复苏 '+Math.max(0,e.raiseCast.left).toFixed(1)+'s',e.x,e.y-e.r-23);
+    const cue=enemyCastCue(e);if(!cue)continue;
+    ctx.strokeStyle=cue.color;ctx.globalAlpha=.65;ctx.setLineDash([3,4]);
+    if(e.raiseCast)for(const c of e.raiseCast.corpses) {ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(c.x,c.y);ctx.stroke();}
+    if(e.parasiteTarget) {
+      const t=e.parasiteTarget;ctx.setLineDash(e.parasiteWindup>0?[3,4]:[]);
+      ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.quadraticCurveTo((e.x+t.x)/2,(e.y+t.y)/2-12,t.x,t.y);ctx.stroke();
+      ctx.strokeRect(t.x-13,t.y-13,26,26);
+    }
+    if(cue.range) {
+      ctx.globalAlpha=.28;ctx.beginPath();ctx.arc(e.x,e.y,cue.range,-.3,.3);ctx.stroke();
+    }
+    ctx.globalAlpha=1;ctx.setLineDash([]);
+    bar(e.x-23,e.y-e.r-18,46,3,1-cue.left/cue.total,cue.color);
+    ctx.font='9px sans-serif';ctx.fillStyle=cue.color;ctx.textAlign='center';ctx.fillText(cue.label+' '+Math.max(0,cue.left).toFixed(1)+'s',e.x,e.y-e.r-23);
   }
   ctx.restore();
 }
@@ -642,7 +652,8 @@ function drawEnemies() {
 
     // 目标受击前短暂显示攻击环，不改伤害节奏，让玩家看清即将承受压力的防线。
     const attackReadyIn = e.atkCd || 0;
-    if ((e.state === "door" || e.state === "room") && attackReadyIn > 0 && attackReadyIn <= 0.34) {
+    if (!e.parasiteTarget && e.stun<=0 && G.buff.freeze<=0 &&
+      (e.state === "door" || (e.state === "room" && e.target && dist(e,e.target)<=26)) && attackReadyIn > 0 && attackReadyIn <= 0.34) {
       const pulse = 0.72 + Math.sin(T * 18) * 0.18;
       const targetLabel = e.state === "door" ? "第" + (e.lane + 1) + "路铁门" :
         (e.target && e.target.isBed ? "床铺" : "房间建筑");
@@ -656,20 +667,6 @@ function drawEnemies() {
       ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(0,0,0,.9)"; ctx.fillStyle = "#ffd3da";
       ctx.strokeText("⚠ 即将攻击 " + targetLabel, e.x, e.y + e.r + 28);
       ctx.fillText("⚠ 即将攻击 " + targetLabel, e.x, e.y + e.r + 28);
-      ctx.restore();
-    }
-    const phaseNow = e.boss && bossPhases(e)[e.phase];
-    const summonRule = e.def.summon || (phaseNow && phaseNow.summon);
-    const summonReadyIn = summonRule ? summonRule.every - (e.summonT || 0) : Infinity;
-    const specialTell = e.empT > 0 && e.empT <= 1.1 ? "📴 炮塔干扰" :
-      (e.fzT > 0 && e.fzT <= 1.1 ? "❄️ 冻结炮塔" :
-        (summonReadyIn > 0 && summonReadyIn <= 1.1 ? "🌀 即将召唤" : ""));
-    if (specialTell) {
-      ctx.save(); ctx.font = "bold 9px sans-serif"; ctx.textAlign = "center";
-      ctx.globalAlpha = 0.72 + Math.sin(T * 12) * 0.22;
-      ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(0,0,0,.9)"; ctx.fillStyle = "#b9f7ff";
-      ctx.strokeText("⚠ " + specialTell, e.x, e.y - e.r - (e.boss ? 38 : 24));
-      ctx.fillText("⚠ " + specialTell, e.x, e.y - e.r - (e.boss ? 38 : 24));
       ctx.restore();
     }
 

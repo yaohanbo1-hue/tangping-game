@@ -30,6 +30,7 @@ jobs:
           node tests/buildings.test.js
           node tests/visual-events.test.js
           node tests/enemies.test.js
+          node tests/enemy-abilities.test.js
 
       - name: 从零资源的完整战役与策略矩阵
         run: node tests/campaign-matrix.js
