@@ -297,7 +297,7 @@ function buildHelp() {
       if (d.flying) sp.push('飞行·无视门'); if (d.stealth) sp.push('隐身'); if (d.heal) sp.push('治疗光环');
       if (d.burrow) sp.push('钻地·无视门'); if (d.emp) sp.push('EMP瘫痪'); if (d.mimic) sp.push('拟态');
       if (d.curse) sp.push('亡语诅咒'); if (d.parasite) sp.push('寄生'); if (d.ward) sp.push('守望护盾');
-      if (d.revive) sp.push('亡魂复活'); if (d.freezeTower) sp.push('冻结炮塔'); if (d.swarm) sp.push('群体');
+      if (d.revive) sp.push('残骸复苏·可打断'); if (d.freezeTower) sp.push('冻缓炮塔'); if (d.swarm) sp.push('群体');
       if (d.buildingBonus) sp.push('建筑克星x' + d.buildingBonus); if (d.devour) sp.push('吞噬');
       if (d.summon) sp.push('召唤'); if (d.split) sp.push('分裂'); if (d.explode) sp.push('自爆');
       if (d.shieldself) sp.push('自带护盾'); if (d.vamp) sp.push('吸血'); if (d.frenzy) sp.push('残血狂暴');

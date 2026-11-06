@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 // A matrix run uses one source snapshot even if a developer edits files meanwhile.
-const files = ['story.js','data.js','names.js','balance.js','combat.js','core.js','campaign.js','save.js','net.js','dream.js','quest.js','ui.js'];
+const files = ['story.js','data.js','names.js','balance.js','combat.js','enemy-actions.js','core.js','campaign.js','save.js','net.js','dream.js','quest.js','ui.js'];
 const sourceText=files.map(file => fs.readFileSync(path.join(__dirname,'..',file),'utf8')).join('\n');
 function createGame(seed = 1) {
   let time = 1000, next = 1, rng = seed >>> 0, videos = 0;

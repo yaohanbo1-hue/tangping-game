@@ -48,8 +48,8 @@ function render(frameDt) {
   ctx.clearRect(0, 0, W, H);
   ctx.save();
   if (shake > 0.4) { ctx.translate(visualRand(-shake,shake,0)*.5,visualRand(-shake,shake,1)*.5); shake *= Math.pow(0.86, _frameDt * 60); } else shake = 0;
-  drawBg(); drawCorridors(); drawRoom(); drawBuildings(); drawBed();
-  drawEnemies(); drawWallsDoors(); drawBullets(); drawEffects(); drawParts(); drawTexts();
+  drawBg(); drawCorridors(); drawRoom(); drawRemains(); drawBuildings(); drawBed();
+  drawEnemyCasts(); drawEnemies(); drawWallsDoors(); drawBullets(); drawEffects(); drawParts(); drawTexts();
   // 战斗氛围粒子（波次中飘浮火星）
   if (G.state === 'wave') {
     ctx.save();
@@ -216,6 +216,26 @@ function drawDreamSystems() {
 function drawBg() { SceneArt.drawBase(ctx); }
 function sceneMotion() { return Accessibility.flash === 'normal' && Accessibility.shake === 'normal'; }
 function drawCorridors() { SceneArt.drawWeather(ctx,T,sceneMotion()); }
+function drawRemains() {
+  ctx.save();
+  for(const c of G.corpses || []) {
+    ctx.globalAlpha=Math.min(1,c.life/3)*(c.claimed ? .55 : .22);
+    ctx.strokeStyle=c.claimed?'#ba9fcd':'#87959b';ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.ellipse(c.x,c.y,9,4,0,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(c.x-4,c.y-3);ctx.lineTo(c.x+3,c.y+2);ctx.moveTo(c.x+4,c.y-3);ctx.lineTo(c.x-3,c.y+2);ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawEnemyCasts() {
+  ctx.save();ctx.strokeStyle='rgba(190,157,211,.6)';ctx.lineWidth=1.2;ctx.setLineDash([3,4]);
+  for(const e of G.enemies) {
+    if(e.dead || !e.raiseCast)continue;
+    for(const c of e.raiseCast.corpses) {ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(c.x,c.y);ctx.stroke();}
+    bar(e.x-23,e.y-e.r-18,46,3,1-e.raiseCast.left/e.raiseCast.total,'#bda4d1');
+    ctx.font='9px sans-serif';ctx.fillStyle='#d0bbdf';ctx.textAlign='center';ctx.fillText('复苏 '+Math.max(0,e.raiseCast.left).toFixed(1)+'s',e.x,e.y-e.r-23);
+  }
+  ctx.restore();
+}
 function drawRoom() {
   if (selectedBuildKey) {
     const pulse = 0.5 + Math.sin(T * 3.2) * 0.5;
@@ -389,7 +409,7 @@ function drawBuildings() {
     if(b.shield>0)gbar(b.x-27,R.y+10,54,2.5,b.shield/Math.max(1,b.shieldMax||b.maxHp),'#81c8d5');
     if(b.empT>0 || b.freezeT>0) {
       ctx.fillStyle='#1b3d50';rr(b.x-17,b.y-8,34,15,2);ctx.fill();
-      ctx.font='bold 9px sans-serif';ctx.fillStyle='#c5e6e8';ctx.fillText(b.empT>0?'瘫痪':'冻结',b.x,b.y+3);
+      ctx.font='bold 9px sans-serif';ctx.fillStyle='#c5e6e8';ctx.fillText(b.empT>0?'瘫痪':'霜缓',b.x,b.y+3);
     }
     if(!b.branch && b.level>=BRANCH_AT) {ctx.font='8px sans-serif';ctx.fillStyle='#d6b57c';ctx.fillText('可转职',b.x,R.y+16);}
     if(b.def.dmgType) {ctx.fillStyle=DMG[b.def.dmgType].color;ctx.fillRect(R.x+R.w-13,R.y+15,4,4);}

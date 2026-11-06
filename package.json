@@ -3,7 +3,7 @@
   "version": "1.9.2",
   "private": true,
   "scripts": {
-    "test": "node tests/smoke.test.js && node tests/campaign.test.js && node tests/balance.test.js && node tests/economy.test.js && node tests/combat.test.js && node tests/buildings.test.js && node tests/visual-events.test.js",
+    "test": "node tests/smoke.test.js && node tests/campaign.test.js && node tests/balance.test.js && node tests/economy.test.js && node tests/combat.test.js && node tests/buildings.test.js && node tests/visual-events.test.js && node tests/enemies.test.js",
     "test:campaign": "node tests/campaign-matrix.js",
     "test:browser": "node tests/browser.test.js",
     "test:art": "node tests/scene-art.test.js && node tests/building-art.test.js",

@@ -393,7 +393,7 @@ function newGame(loadFrom) {
     prepTimer: 34, prepTotal: 34,
     spawnQueue: [], bossQueue: [], spawnTimer: 0,
     grid: new Array(COLS * ROWS).fill(null),
-    buildings: [], enemies: [], bullets: [], effects: [], parts: [], texts: [],
+    buildings: [], enemies: [], corpses: [], bullets: [], effects: [], parts: [], texts: [],
     doors: LANES.map(l => ({ lane: l.i, y: l.doorY, hp: 420, maxHp: 420, lv: 1, shield: 0, shieldMax: 0, broken: false })),
     bed: { hp: 420, maxHp: 420, lv: 1, shield: 0, shieldMax: 0 },
     grow: 0, growTimer: 0,
@@ -1001,9 +1001,12 @@ function bossKeyForWave(n) {
   const idx = Math.floor(n / 5 - 1) % BOSS_ORDER.length;
   return BOSS_ORDER[(idx + BOSS_ORDER.length) % BOSS_ORDER.length];
 }
+function admitEnemySummon() {
+  if((G.summonsThisWave || 0)>=120 || G.enemies.length>=200)return false;
+  G.summonsThisWave=(G.summonsThisWave || 0)+1;return true;
+}
 function spawnEnemy(type, wave, lane, summoned = false) {
-  if (summoned && ((G.summonsThisWave || 0) >= 120 || G.enemies.length >= 200)) return null;
-  if (summoned) G.summonsThisWave = (G.summonsThisWave || 0) + 1;
+  if(summoned && !admitEnemySummon())return null;
   let d = ENEMY_DEFS[type];
   let bossKey = null;
   if (type === 'boss' || !d) {
@@ -1016,7 +1019,7 @@ function spawnEnemy(type, wave, lane, summoned = false) {
   const dreamMods = typeof DeepDream !== 'undefined' && DeepDream.isActive() ? DeepDream.getEnemyModifiers() : null;
   const dmgScale = (1 + wave * 0.10) * diffCfg().dmgMul;
   const e = {
-    type, def: d, lane: L.i,
+    type, def: d, lane: L.i, summoned,
     x: rnd(8, 54), y: rnd(L.y0 + 22, L.y1 - 22),
     hp: d.hp, maxHp: d.hp,
     dmg: d.dmg * dmgScale, speed: d.speed * rnd(0.92, 1.08) * (G.event.eff.spdMul || 1) * (trial ? trial.speedMul : 1),
@@ -1108,9 +1111,11 @@ function enemySpeed(e) {
   return s;
 }
 function updateEnemies(dt) {
+  EnemyRemains.age(dt);
   for (let i = G.enemies.length - 1; i >= 0; i--) {
     const e = G.enemies[i];
     if (e.dead) { G.enemies.splice(i, 1); continue; }
+    const incapacitated=e.stun>0 || G.buff.freeze>0;
     e.anim += dt;
     if (e.hitFlash > 0) e.hitFlash -= dt;
     if (e.slowT > 0) e.slowT -= dt;
@@ -1179,7 +1184,8 @@ function updateEnemies(dt) {
       }
     }
     const sp_ = e.def;
-    if (sp_.emp) {
+    if(sp_.revive && EnemyRemains.updateCaster(e,dt,incapacitated))continue;
+    if (!incapacitated && sp_.emp) {
       e.empT -= dt;
       if (e.empT <= 0) {
         e.empT = sp_.emp.cd;
@@ -1194,7 +1200,7 @@ function updateEnemies(dt) {
         }
       }
     }
-    if (sp_.freezeTower) {
+    if (!incapacitated && sp_.freezeTower) {
       e.fzT = (e.fzT || 0) - dt;
       if (e.fzT <= 0) {
         e.fzT = sp_.freezeTower.cd;
@@ -1213,19 +1219,7 @@ function updateEnemies(dt) {
         }
       });
     }
-    if (sp_.revive) {
-      e.reviveT += dt;
-      if (e.reviveT >= sp_.revive.every) {
-        e.reviveT = 0;
-        for (let k = 0; k < sp_.revive.n; k++) {
-          const c = spawnEnemy(Math.random() < 0.5 ? 'grunt' : 'swarm', G.wave, e.lane, true);
-          if (!c) break;
-          c.x = e.x - rnd(0, 24); c.y = e.y + rnd(-28, 28);
-        }
-        addText(e.x, e.y - e.r - 14, '💀 亡魂复活！', '#a855f7');
-      }
-    }
-    if (sp_.parasite) {
+    if (!incapacitated && sp_.parasite) {
       if (!e.parasiteTarget || e.parasiteTarget.hp <= 0 || G.buildings.indexOf(e.parasiteTarget) < 0) {
         let best = null, bd = 260;
         G.buildings.forEach(b => { if (b.def.tower) { const d2 = dist(b, e); if (d2 < bd) { bd = d2; best = b; } } });
@@ -1249,7 +1243,7 @@ function updateEnemies(dt) {
     if (e.regenR && e.hp < e.maxHp) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * e.regenR * dt);
     if (e.shieldMax && e.shield < e.shieldMax && !e.inCombatT) e.shield = Math.min(e.shieldMax, e.shield + e.shieldMax * 0.06 * dt);
     if (e.inCombatT > 0) e.inCombatT -= dt;
-    if (e.def.heal && Math.floor(e.anim * 2) !== Math.floor((e.anim - dt) * 2)) {
+    if (!incapacitated && e.def.heal && Math.floor(e.anim * 2) !== Math.floor((e.anim - dt) * 2)) {
       G.enemies.forEach(o => {
         if (o !== e && !o.dead && dist(o, e) < 120 && o.hp < o.maxHp) {
           o.hp = Math.min(o.maxHp, o.hp + e.def.heal);
@@ -1259,7 +1253,7 @@ function updateEnemies(dt) {
     }
     const bps = e.boss ? bossPhases(e) : null;
     const sm = e.def.summon || (e.boss && e.phase > 0 && bps[e.phase] && bps[e.phase].summon);
-    if (sm && !G.buff.noSummon) {   // 剧情奖励「本波停止召唤」的真正落点
+    if (!incapacitated && sm && !G.buff.noSummon) {   // 剧情奖励「本波停止召唤」的真正落点
       e.summonT += dt;
       if (e.summonT >= sm.every) {
         e.summonT = 0;
@@ -1268,6 +1262,7 @@ function updateEnemies(dt) {
       }
     }
     if (G.buff.freeze > 0 && Math.random() < dt * 3) spawnParts(e.x, e.y, 1, '#7fdfff', 0.6, 0.5);
+    if(incapacitated)continue;
     const sp = enemySpeed(e);
     const L = LANES[e.lane];
     const D = G.doors[e.lane];
@@ -1398,6 +1393,7 @@ function destroyBuilding(b) {
 function killEnemy(e) {
   if (e.dead) return;
   e.dead = true;
+  EnemyRemains.cancel(e);EnemyRemains.record(e);
   G.stats.kills++;
   G.combo = (G.combo || 0) + 1; G.comboT = 3;
   G.maxCombo = Math.max(G.maxCombo || 0, G.combo);
@@ -1405,11 +1401,11 @@ function killEnemy(e) {
   if (G.track) G.track.maxCombo = Math.max(G.track.maxCombo || 0, G.combo);
   if (G.combo === 10 || (G.combo > 10 && G.combo % 10 === 0))
     addText(e.x, e.y - 44, G.combo + ' 连杀！', '#ffd166', true);
-  const goldGain = e.def.gold * (e.elite ? 2.5 : 1) * techVal('greed', 0.08) * (G.event.eff.rewardMul || 1);
+  const goldGain = e.revived?0:e.def.gold * (e.elite ? 2.5 : 1) * techVal('greed', 0.08) * (G.event.eff.rewardMul || 1);
   G.gold += goldGain;
-  const soulGain = Math.round((e.def.soul + G.tech.harvest) * (G.event.eff.soulMul || 1) * (e.elite ? 2 : 1) * (1 + G.grow * 0.02) * techVal('soulstorm', 0.30) * diffCfg().soulMul);
+  const soulGain = e.revived?0:Math.round((e.def.soul + G.tech.harvest) * (G.event.eff.soulMul || 1) * (e.elite ? 2 : 1) * (1 + G.grow * 0.02) * techVal('soulstorm', 0.30) * diffCfg().soulMul);
   G.souls += soulGain;
-  tryDropRune(G.wave, e.x, e.y);
+  if(!e.revived)tryDropRune(G.wave, e.x, e.y);
   // 增强击杀粒子效果
   const pCount = e.boss ? 50 : (e.elite ? 28 : 18);
   const pSpd = e.boss ? 7 : (e.elite ? 4.5 : 3.5);
@@ -1427,7 +1423,7 @@ function killEnemy(e) {
   // 精英/BOSS 击杀停顿
   if (e.boss) hitStop = 0.15;
   else if (e.elite) hitStop = 0.06;
-  addText(e.x, e.y - e.r, '+' + Math.round(goldGain), '#ffd166');
+  if(goldGain>0)addText(e.x, e.y - e.r, '+' + Math.round(goldGain), '#ffd166');
   if (soulGain) addText(e.x + 14, e.y - e.r - 14, '+' + soulGain + '🔮', '#c77dff');
   if (e.boss) {
     G.stats.bossKills++; shakeBy(18); SFX.boom();
@@ -1445,7 +1441,7 @@ function killEnemy(e) {
   }
   else if (e.elite) SFX.hit();
   // 梦境系统：敌人击杀钩子
-  if (typeof DreamEngine !== 'undefined') { try { DreamEngine.onEnemyKilled(e); } catch(err) { console.warn('DreamEngine enemyKilled:', err); } }
+  if (!e.revived && typeof DreamEngine !== 'undefined') { try { DreamEngine.onEnemyKilled(e); } catch(err) { console.warn('DreamEngine enemyKilled:', err); } }
   if (e.def.curse) {
     const c = e.def.curse;
     addEffect({ type: 'curse', x: e.x, y: e.y, r: c.r, life: c.dur, maxLife: c.dur });
@@ -1513,6 +1509,7 @@ function updateTowers(dt) {
     }
     if (!b.def.tower || !fire) continue;
     if (b.freezeT > 0) b.freezeT -= dt;
+    const controlRate=b.freezeT>0 ? .4 : 1;
     if (b.type === 'flame') {
       const targets = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       b.flameOn = targets.length > 0;
@@ -1521,7 +1518,7 @@ function updateTowers(dt) {
         // 灼烧叠层：仅在持续被喷到期间累积，离开火舌后会衰减（以前叠满 5 层就永久不减）
         if (s.stack) e.burnStack = Math.min(5, (e.burnStack || 0) + dt * 1.2);
         e.flameOn = true;
-        let d = s.dmg * towerDmgMul(b) * (1 + (e.burnStack || 0) * 0.35);
+        let d = s.dmg * towerDmgMul(b) * controlRate * (1 + (e.burnStack || 0) * 0.35);
         // 灼烧残留：离开火舌后仍持续 1.4 秒。注意以前 burnDmg 直接等于接触伤害，
         // 而 updateEnemies 的灼烧结算与直接伤害同时生效 → 火焰塔实际打出双倍面板 DPS。
         e.burnT = Math.max(e.burnT, 1.4);
@@ -1536,10 +1533,10 @@ function updateTowers(dt) {
     if (s.gravity) {
       const targets = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       b.gravOn = targets.length > 0;
-      const gm = s.dmg * towerDmgMul(b);
+      const gm = s.dmg * towerDmgMul(b) * controlRate;
       targets.forEach(e => {
         const dx = b.x - e.x, dy = b.y - e.y, d = Math.hypot(dx, dy) || 1;
-        if (d > 26) { const sp = s.pull * dt * (e.boss ? 0.28 : 1); e.x += dx / d * sp; e.y += dy / d * sp; }
+        if (d > 26) { const sp = s.pull * dt * controlRate * (e.boss ? 0.28 : 1); e.x += dx / d * sp; e.y += dy / d * sp; }
         e.slow = Math.max(e.slow || 0, s.gravSlow); e.slowT = Math.max(e.slowT || 0, 0.4);
         dotDamage(e, gm, 'energy', b, dt);
       });
@@ -1907,6 +1904,7 @@ function buildWaveQueue(n) {
   return { rest: q, bossList };
 }
 function startWave() {
+  EnemyRemains.clear();
   const resumeSavedWave = !!G.resumeWave;
   G.resumeWave = false;
   // 本波经济基准：新开波与读档重开波都以当前值为基准，配合存档回滚防刷取
