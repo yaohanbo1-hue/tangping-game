@@ -55,14 +55,8 @@ html,body{height:100%;background:var(--bg-0);overflow:hidden;font-family:"PingFa
 body{position:fixed;inset:0;width:100%;height:100%;-webkit-user-select:none;user-select:none}
 #wrap{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center center;background:var(--bg-1);border-radius:10px;box-shadow:0 0 60px rgba(120,80,255,.25);overflow:hidden}
 canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-/* 梦境氛围层：仅覆盖走廊区域（56–556），不遮挡 HUD 与底部操作栏 */
-#fx{position:absolute;left:0;top:56px;width:1280px;height:500px;pointer-events:none;z-index:4;
-  background:
-    radial-gradient(130% 82% at 50% 46%,transparent 42%,rgba(6,3,18,.5) 100%),
-    repeating-linear-gradient(180deg,rgba(180,160,255,.026) 0 1px,transparent 1px 3px);
-  box-shadow:inset 0 0 90px rgba(90,60,200,.1)}
-#fx::after{content:'';position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(150,120,255,.045),transparent 20%,transparent 80%,rgba(60,30,120,.06))}
+/* Scene atmosphere is drawn below entities in the cached Canvas environment. */
+#fx{display:none;pointer-events:none}
 #hud{position:absolute;left:0;top:0;width:1280px;height:56px;display:flex;align-items:center;gap:5px;padding:0 10px;
   background:linear-gradient(180deg,rgba(15,20,40,.96),rgba(12,16,32,.98));
   backdrop-filter:blur(16px) saturate(1.8);-webkit-backdrop-filter:blur(16px) saturate(1.8);
@@ -9712,6 +9706,266 @@ const QuestSystem = {
   },
 };
 
+/* ==== scene-art.js ==== */
+// Original procedural environment art. All state here is presentation-only;
+// no combat RNG, timers, entity mutations or collision geometry.
+const SceneArt = (() => {
+  const TAU=Math.PI*2, doorHistory=new WeakMap(), bedHistory=new WeakMap();
+  const palette={night:'#080f1c',stone:'#172735',edge:'#3b5261',gold:'#eab96a',danger:'#eb6685'};
+  let floor=null, lampGlow=null, fog=null, builds=0;
+  const noise=n=>{const v=Math.sin(n*127.1+311.7)*43758.5453;return v-Math.floor(v);};
+  function canvas(w,h) { const el=document.createElement('canvas');el.width=w;el.height=h;return el; }
+  function box(c,x,y,w,h,color) { c.fillStyle=color;c.fillRect(x,y,w,h); }
+  function path(c,points,fill,stroke,width=1) {
+    c.beginPath();points.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();
+    if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke();}
+  }
+  function round(c,x,y,w,h,r,fill,stroke) {
+    c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);
+    c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();
+    if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=1;c.stroke();}
+  }
+  function line(c,x,y,x2,y2,color,width=1) {
+    c.strokeStyle=color;c.lineWidth=width;c.beginPath();c.moveTo(x,y);c.lineTo(x2,y2);c.stroke();
+  }
+  function ellipse(c,x,y,rx,ry,color) {
+    c.fillStyle=color;c.beginPath();c.ellipse(x,y,rx,ry,0,0,TAU);c.fill();
+  }
+  function glow(size,stops) {
+    const el=canvas(size,size),c=el.getContext('2d'),r=size/2,g=c.createRadialGradient(r,r,0,r,r,r);
+    stops.forEach(s=>g.addColorStop(s[0],s[1]));c.fillStyle=g;c.fillRect(0,0,size,size);return el;
+  }
+  function makeFloor() {
+    floor=canvas(W,H);const c=floor.getContext('2d');builds++;
+    box(c,0,0,W,H,palette.night);
+    // A cold exterior strip and actual masonry, rather than a full-screen grid.
+    box(c,0,ARENA_TOP,40,ARENA_BOT-ARENA_TOP,'#070d17');
+    for(let y=ARENA_TOP;y<ARENA_BOT;y+=24) {
+      box(c,4,y,29,22,'#152331');line(c,5,y+1,32,y+1,'#263b4a');
+    }
+    for(const L of LANES) corridor(c,L);
+    room(c);
+    // Continuous wall cap and skirting have a different material from the floor.
+    box(c,ROOM_X0,HUD_H,ROOM_X1-ROOM_X0,10,'#0c1721');
+    box(c,ROOM_X0,ARENA_TOP-3,ROOM_X1-ROOM_X0,3,'#53616a');
+    box(c,ROOM_X0,ARENA_BOT,ROOM_X1-ROOM_X0,9,'#0b151e');
+    line(c,ROOM_X0,ARENA_BOT,ROOM_X1,ARENA_BOT,'#65706b',2);
+    box(c,ROOM_X1-5,ARENA_TOP,5,ARENA_BOT-ARENA_TOP,'#111c25');
+    line(c,ROOM_X1-5,ARENA_TOP,ROOM_X1-5,ARENA_BOT,'#687267');
+    // Wall cable, clipped notices and vents stay outside the building centres.
+    line(c,ROOM_X1-10,ARENA_TOP+12,ROOM_X1-10,198,'#a08151',2);
+    round(c,ROOM_X0+22,ARENA_TOP+7,88,15,2,'#263740','#52636a');
+    c.font='8px monospace';c.fillStyle='#b1bfb8';c.textAlign='left';c.fillText('DORM / 03:07',ROOM_X0+29,ARENA_TOP+18);
+    for(let i=0;i<6;i++) box(c,ROOM_X0+127+i*6,ARENA_TOP+9,3,9,'#08141e');
+    // A dedicated bedside mat frames the two occupied cells.
+    round(c,1155,170,99,188,6,'#313b3b','#697068');
+    round(c,1160,175,89,178,4,null,'#927c55');
+    for(let i=0;i<10;i++)line(c,1161+i*9,350,1161+i*9,354,'#b29a6d');
+    lampGlow=glow(256,[[0,'rgba(255,218,144,.48)'],[.24,'rgba(237,175,78,.23)'],[.65,'rgba(220,151,65,.07)'],[1,'rgba(220,151,65,0)']]);
+    fog=glow(128,[[0,'rgba(114,152,174,.24)'],[.5,'rgba(69,101,129,.12)'],[1,'rgba(69,101,129,0)']]);
+  }
+  function corridor(c,L) {
+    const x=CORRIDOR_X0,y=L.y0,w=WALL_X-x,h=L.y1-y;
+    box(c,x,y,w,h,L.i===1?'#152534':'#182a39');
+    // Staggered slate tiles and restrained chips, baked once.
+    for(let row=0;row<6;row++) for(let col=0;col<7;col++) {
+      const tx=x+col*58-(row%2)*29,ty=y+row*28;
+      c.save();c.beginPath();c.rect(x,y,w,h);c.clip();
+      box(c,tx+1,ty+1,56,26,noise(col*13+row+L.i*55)>.5?'#1a2e3e':'#1c3040');
+      line(c,tx+3,ty+2,tx+54,ty+2,'rgba(118,148,166,.10)');
+      if((col+row)%4===0)line(c,tx+8,ty+20,tx+18,ty+19,'rgba(108,142,163,.12)');
+      c.restore();
+    }
+    box(c,x,y,w,30,'#101d2b');box(c,x,y+28,w,5,'#080f1a');
+    line(c,x,y+27,WALL_X,y+27,'#405566');
+    // A pair of recessed rain windows in each corridor wall.
+    for(const wx of [96,237]) {
+      round(c,wx-4,y+2,104,26,2,'#060e19','#4a6372');
+      box(c,wx,y+5,96,18,'#274452');
+      for(let i=0;i<8;i++)box(c,wx+i*13,y+5,3,18,'rgba(93,139,159,.10)');
+      box(c,wx+45,y+4,4,21,'#0b1823');box(c,wx,y+13,96,2,'#101e2b');
+      line(c,wx-3,y+28,wx+102,y+28,'#75929d');
+      // Window projection on wet slate, with mullion shadows and glints.
+      path(c,[[wx,y+34],[wx+93,y+34],[wx+110,y+107],[wx+8,y+97]],'rgba(80,124,149,.12)');
+      path(c,[[wx+44,y+34],[wx+49,y+34],[wx+61,y+103],[wx+55,y+102]],'#172b3b');
+      line(c,wx+9,y+67,wx+103,y+71,'rgba(7,16,27,.5)',3);
+    }
+    // Pipes, brackets and puddles use metal/glass value bands distinct from enemies.
+    line(c,52,y+8,87,y+8,'#50616d',3);line(c,53,y+11,87,y+11,'#192938',2);
+    for(const px of [56,79])box(c,px,y+4,3,11,'#687a81');
+    ellipse(c,168,L.doorY+39,63,7,'rgba(6,14,24,.43)');
+    ellipse(c,168,L.doorY+37,54,3,'rgba(105,150,171,.16)');
+    line(c,133,L.doorY+36,182,L.doorY+36,'rgba(143,187,200,.16)');
+    ellipse(c,288,L.doorY-25,36,4,'rgba(4,12,22,.42)');
+    line(c,267,L.doorY-26,301,L.doorY-26,'rgba(126,171,191,.16)');
+    const dark=c.createLinearGradient(x,0,x+66,0);dark.addColorStop(0,'#040914');dark.addColorStop(1,'rgba(4,9,20,0)');
+    c.fillStyle=dark;c.fillRect(x,y,66,h);
+    // The pink fissure marks the spawn edge, leaving the floor calm.
+    path(c,[[47,y+39],[54,y+53],[49,y+84],[55,y+112],[48,y+145]],null,'#6b345b',3);
+    round(c,60,y+39,24,18,2,'#152532','#465a66');
+    c.fillStyle='#a5bdc9';c.font='bold 10px monospace';c.textAlign='center';c.fillText('0'+(L.i+1),72,y+52);
+    // Low floor guides point toward the actual opening.
+    for(const px of [108,214,320])path(c,[[px,L.doorY-3],[px+6,L.doorY],[px,L.doorY+3]],null,'rgba(124,156,170,.25)');
+    box(c,x,L.y1-6,w,6,'#080f18');line(c,x,L.y1-6,WALL_X,L.y1-6,'#425767');
+    line(c,x,L.y1-1,WALL_X,L.y1-1,'#152b3b');
+  }
+  function room(c) {
+    const w=ROOM_X1-ROOM_X0,h=ARENA_BOT-ARENA_TOP;
+    box(c,ROOM_X0,ARENA_TOP,w,h,'#182932');
+    // Broad timber boards have fine grain, bevels and offset end joints.
+    for(let r=0;r<ROWS;r++) for(let col=0;col<COLS;col++) {
+      const x=ROOM_X0+col*CW,y=ARENA_TOP+r*CH;
+      for(let p=0;p<3;p++) {
+        const px=x+p*CW/3;
+        box(c,px+1,y+1,CW/3-2,CH-2,noise(col*37+r*11+p)>.5?'#25343b':'#22323a');
+        line(c,px+2,y+2,px+CW/3-2,y+2,'rgba(154,165,148,.10)');
+        line(c,px+2,y+CH-2,px+CW/3-2,y+CH-2,'#14232c');
+        for(let g=0;g<3;g++) {
+          const sx=px+7+noise(col*49+r*61+g*7+p)*20,sy=y+8+noise(g*29+col+r*13+p*19)*55;
+          line(c,sx,sy,sx+noise(g*7+col)*4,Math.min(y+CH-6,sy+22),'rgba(9,22,29,.19)');
+        }
+      }
+      // Four short brackets make a build cell readable without a glowing table.
+      c.strokeStyle='rgba(137,161,159,.18)';c.lineWidth=1;c.beginPath();
+      for(const [dx,dy,sx,sy]of [[5,5,1,1],[CW-5,5,-1,1],[5,CH-5,1,-1],[CW-5,CH-5,-1,-1]]) {
+        c.moveTo(x+dx,y+dy+sy*6);c.lineTo(x+dx,y+dy);c.lineTo(x+dx+sx*6,y+dy);
+      }c.stroke();
+    }
+    const light=c.createLinearGradient(ROOM_X0,0,ROOM_X1,0);
+    light.addColorStop(0,'rgba(5,19,31,.40)');light.addColorStop(.6,'rgba(7,18,27,.04)');light.addColorStop(1,'rgba(173,124,66,.09)');
+    c.fillStyle=light;c.fillRect(ROOM_X0,ARENA_TOP,w,h);
+  }
+  function ensure() { if(!floor || floor.width!==W || floor.height!==H)makeFloor(); }
+  function drawBase(c) {ensure();c.drawImage(floor,0,0);}
+  function drawWeather(c,time,motion=true) {
+    ensure();const t=motion?time:0;c.save();
+    c.beginPath();c.rect(CORRIDOR_X0,ARENA_TOP,WALL_X-CORRIDOR_X0,ARENA_BOT-ARENA_TOP);c.clip();
+    for(const L of LANES) {
+      c.strokeStyle='rgba(176,207,220,.28)';c.lineWidth=.8;c.beginPath();
+      for(let i=0;i<16;i++) {
+        const wx=i<8?96:237,x=wx+3+noise(i+L.i*13)*89;
+        const y=L.y0+5+((noise(i*3+4)*19+t*(18+noise(i)*14))%18);
+        c.moveTo(x,y);c.lineTo(x-2,Math.min(L.y0+24,y+5));
+      }c.stroke();
+      // Reflected rain is softer and never passes over combat entities.
+      c.strokeStyle='rgba(128,171,190,.10)';c.beginPath();
+      for(let i=0;i<8;i++) {
+        const x=112+i*29+Math.sin(t*.25+i)*3,y=L.y0+46+((t*17+i*13)%53);
+        c.moveTo(x,y);c.lineTo(x+2,y+8);
+      }c.stroke();
+      c.globalAlpha=.35;c.drawImage(fog,37+Math.sin(t*.3+L.i)*13,L.doorY-29,125,55);
+      c.globalAlpha=.18;c.drawImage(fog,214+Math.sin(t*.21+L.i)*20,L.doorY+25,150,40);
+    }
+    c.restore();
+    // The warm pool breathes slowly; it is under buildings, enemies and warnings.
+    c.save();c.globalAlpha=motion ? .76+Math.sin(t*1.3)*.07 : .76;
+    c.drawImage(lampGlow,1092,75,300,300);c.restore();
+  }
+  function healing(history,entity,dt) {
+    let s=history.get(entity);
+    if(!s){s={hp:entity.hp,repair:0};history.set(entity,s);}
+    if(entity.hp>s.hp+.01)s.repair=.6;
+    s.hp=entity.hp;s.repair=Math.max(0,s.repair-dt);return s.repair;
+  }
+  function drawDoor(c,L,D,time,dt,motion=true) {
+    const x=WALL_X,y=D.y,half=L.doorHalf,p=Math.max(0,Math.min(1,D.hp/D.maxHp)),broken=D.broken||D.hp<=0;
+    const repair=healing(doorHistory,D,dt);c.save();
+    // Heavy jambs and inset masonry. The opening matches the collision gap.
+    for(const [a,b]of [[L.y0,y-half],[y+half,L.y1]]) {
+      box(c,x-9,a,18,b-a,'#111b24');box(c,x-9,a,4,b-a,'#586873');
+      box(c,x+5,a,4,b-a,'#35434c');
+      for(let by=a+10;by<b-3;by+=18)line(c,x-4,by,x+5,by,'#24343f');
+    }
+    box(c,x-21,y-half-6,42,6,'#0c141f');box(c,x-19,y-half-7,38,2,'#7b8c8d');
+    box(c,x-21,y+half,42,7,'#0a121c');line(c,x-18,y+half,x+18,y+half,'#64787e',2);
+    for(let i=0;i<5;i++)path(c,[[x-19+i*8,y+half+1],[x-15+i*8,y+half+1],[x-19+i*8,y+half+6],[x-23+i*8,y+half+6]],'#77684b');
+    box(c,x-19,y-half,4,half*2,'#1d2d3a');box(c,x+15,y-half,4,half*2,'#526977');
+    if(broken) {
+      // An open route, buckled steel and dropped fasteners; no ghost solid slab.
+      path(c,[[x-14,y-half],[x-1,y-half+4],[x-8,y-half+25],[x-14,y-half+34]],'#3c4c59','#69818c');
+      path(c,[[x-13,y+half-13],[x+11,y+half-18],[x+18,y+half-5],[x-7,y+half]],'#344754','#627b88');
+      line(c,x-3,y+half-10,x+11,y+half-8,'#1a2c37',2);
+      ellipse(c,x+23,y+half+7,2,1,'#8a9292');ellipse(c,x-24,y+half+8,2,1,'#778b95');
+    } else {
+      const level=Math.min(4,Math.floor((D.lv-1)/10));
+      path(c,[[x-14,y-half+6],[x-9,y-half],[x+10,y-half],[x+14,y-half+5],[x+14,y+half-5],[x+9,y+half],[x-10,y+half],[x-14,y+half-5]],'#526977','#a0adb0');
+      path(c,[[x-11,y-half+7],[x-6,y-half+3],[x+10,y-half+3],[x+10,y+half-4],[x-10,y+half-4]],'#415764');
+      const wooden=D.lv<=5;
+      box(c,x-10,y-half+10,16,half*2-20,wooden?'#64513f':'#344b5a');
+      line(c,x-9,y-half+9,x-9,y+half-9,wooden?'#a18760':'#74939c');line(c,x+10,y-half+7,x+10,y+half-7,'#1a2b38',2);
+      if(wooden) for(let i=0;i<3;i++)line(c,x-6+i*5,y-half+12,x-5+i*5,y+half-11,'#493c32');
+      // Crossbars, hinges and an independent latch create a steel-door silhouette.
+      for(const off of [-22,22]) {
+        box(c,x-16,y+off-3,32,6,'#172a36');box(c,x-15,y+off-3,30,2,'#7d939a');
+        box(c,x-18,y+off-5,5,10,'#62747c');
+        ellipse(c,x-15,y+off,1.2,1.2,'#bec6bd');ellipse(c,x+11,y+off,1.1,1.1,'#a7b2ae');
+      }
+      round(c,x-1,y-8,11,16,2,'#1b2c37','#8b9d9f');box(c,x+5,y-2,8,3,palette.gold);
+      box(c,x-5,y-half+13,7,3,p<.3?palette.danger:'#a3d7bb');
+      for(let i=0;i<level;i++)box(c,x-8+i*4,y+half-13,2,5,'#e6be78');
+      if(p<.7) {
+        line(c,x-7,y-15,x+2,y-7,'#112530',2);line(c,x+2,y-7,x-3,y+2,'#10212d',2);
+        line(c,x-6,y-14,x+1,y-7,'#8e8990');
+      }
+      if(p<.4) {
+        line(c,x+3,y+8,x-6,y+17,'#0a1925',2);line(c,x-6,y+17,x+3,y+29,'#0a1925',2);
+        path(c,[[x-12,y+16],[x-8,y+19],[x-9,y+25]],null,'#a4817c');
+      }
+      if(D.shield>0)round(c,x-17,y-half-2,34,half*2+4,4,null,'#77cbd8');
+      if(p<.3) {c.strokeStyle=palette.danger;c.lineWidth=2;c.strokeRect(x-20,y-half-3,40,half*2+6);}
+    }
+    if(repair>0) {
+      c.globalAlpha=Math.min(1,repair*2);line(c,x-10,y+6,x+10,y+6,'#9cdbc0',2);
+      for(let i=0;i<4;i++){const n=noise(i+Math.floor((motion?time:0)*14));line(c,x+2,y+6,x+2+n*12,y-1+i*6,'#ffe4a0');}
+    }
+    c.restore();
+  }
+  function drawBed(c,B,time,dt,motion=true) {
+    ensure();const x=BED_CX,y=175,bx=x-32,w=66,h=167;
+    const hp=Math.max(0,Math.min(1,B.hp/B.maxHp)),t=motion?time:0,breathe=Math.sin(t*1.3)*.8;
+    const repair=healing(bedHistory,B,dt);c.save();
+    // Feet and rails support a solid wood frame, edged with brass.
+    ellipse(c,x+5,270,43,91,'rgba(3,11,18,.43)');
+    for(const dx of [-29,28])box(c,x+dx,336,7,10,'#1e211f');
+    round(c,bx-4,y,w+8,h,5,'#463c33','#b09a6c');
+    box(c,bx-1,y+8,3,h-16,'#8f7855');box(c,bx+w-2,y+8,4,h-16,'#292c29');
+    round(c,bx,y+3,w,28,4,'#655944','#b6a074');
+    line(c,bx+7,y+11,bx+w-7,y+11,'#a18e69');
+    round(c,bx+4,y+27,w-8,h-36,4,'#acb9b5','#d3d8c7');
+    round(c,x-25,y+32,50,23,5,'#e7dfc8','#b0b7ad');
+    line(c,x-21,y+36,x+21,y+36,'#fff1d5');
+    // Sleeping child and fabric folds, no emoji or text used as the subject.
+    ellipse(c,x-2,y+49+breathe*.2,11,9,'#d8ac85');
+    path(c,[[x-13,y+48],[x-12,y+41],[x-6,y+38],[x+4,y+40],[x+9,y+45],[x+2,y+44],[x-4,y+46]],'#27313a');
+    line(c,x-7,y+50,x-3,y+51,'#6f5549');line(c,x+1,y+51,x+5,y+50,'#6f5549');
+    const qy=y+57+breathe;
+    round(c,bx+6,qy,w-12,97,5,'#466577','#85a4a7');
+    path(c,[[bx+7,qy+8],[x-5,qy+3],[bx+w-8,qy+8],[bx+w-8,qy+17],[x,qy+12],[bx+7,qy+19]],'#6c8990');
+    path(c,[[bx+7,qy+19],[bx+13,qy+24],[bx+12,qy+86],[bx+7,qy+91]],'#344e60');
+    line(c,bx+18,qy+29,bx+22,qy+67,'#5f7e86');line(c,x+11,qy+31,x+15,qy+84,'#3b586b');
+    path(c,[[bx+7,qy+86],[x-3,qy+91],[bx+w-7,qy+85],[bx+w-7,qy+96],[bx+7,qy+96]],'#2e485b');
+    for(let i=0;i<5;i++)line(c,bx+9+i*9,qy+93,bx+13+i*9,qy+93,'#9eae9f');
+    // A stitched lamp emblem on the quilt ties the silhouette to the title.
+    path(c,[[x+9,qy+65],[x+15,qy+65],[x+19,qy+75],[x+5,qy+75]],'#d5bd81');
+    line(c,x+12,qy+75,x+12,qy+82,'#d5bd81',2);line(c,x+7,qy+83,x+17,qy+83,'#d5bd81');
+    // Emergency bedside lamp, table, switch and winding supply lead.
+    round(c,1237,190,21,27,2,'#514735','#99845d');box(c,1239,195,17,2,'#292e2b');
+    ellipse(c,1248,190,8,3,'#bd9b58');box(c,1246,176,3,14,'#c4a366');
+    path(c,[[1239,162],[1255,162],[1259,178],[1235,178]],'#c0a26d','#f3d599');
+    box(c,1236,176,22,3,'#f0cf87');line(c,1242,165,1240,175,'#e3c384');
+    box(c,1246,163,2,12,'#ad895a');ellipse(c,1247,180,4,2,'#ffe6a6');
+    line(c,1255,188,1257,194,'#bfa675');box(c,1244,202,6,2,'#b9c394');
+    if(hp<.5) {
+      path(c,[[x-9,qy+40],[x-3,qy+46],[x-8,qy+53],[x+1,qy+58]],null,'#132f43',2);
+      if(hp<.3)round(c,bx-7,y-3,w+14,h+6,6,null,palette.danger);
+    }
+    if(repair>0) {c.globalAlpha=repair;round(c,x-13,qy+39,18,18,2,'#a1c5a9');c.globalAlpha=1;}
+    c.restore();
+  }
+  return {drawBase,drawWeather,drawDoor,drawBed,noise,palette,
+    stats:()=>({builds,bytes:floor?4*(floor.width*floor.height+256*256+128*128):0})};
+})();
+
 /* ==== render.js ==== */
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
@@ -9757,11 +10011,12 @@ function emoji(e, x, y, size, alpha = 1, rot = 0) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(e, 0, 0); ctx.restore();
 }
+function visualRand(a,b,seed) { return a+(b-a)*SceneArt.noise(seed+(T*60|0)*37.3); }
 function render(frameDt) {
   _frameDt = (typeof frameDt === 'number' && isFinite(frameDt) && frameDt > 0) ? Math.min(frameDt, 0.25) : 1 / 60;
   ctx.clearRect(0, 0, W, H);
   ctx.save();
-  if (shake > 0.4) { ctx.translate(rnd(-shake, shake) * 0.5, rnd(-shake, shake) * 0.5); shake *= Math.pow(0.86, _frameDt * 60); } else shake = 0;
+  if (shake > 0.4) { ctx.translate(visualRand(-shake,shake,0)*.5,visualRand(-shake,shake,1)*.5); shake *= Math.pow(0.86, _frameDt * 60); } else shake = 0;
   drawBg(); drawCorridors(); drawRoom(); drawBuildings(); drawBed();
   drawEnemies(); drawWallsDoors(); drawBullets(); drawEffects(); drawParts(); drawTexts();
   // 战斗氛围粒子（波次中飘浮火星）
@@ -9927,127 +10182,10 @@ function drawDreamSystems() {
   }
 }
 
-// 星空粒子系统（增强版）
-const stars = [];
-for (let i = 0; i < 100; i++) {
-  stars.push({
-    x: Math.random() * 1280,
-    y: Math.random() * 720,
-    s: 0.3 + Math.random() * 2.8,
-    sp: 0.1 + Math.random() * 0.45,
-    a: Math.random(),
-    phase: Math.random() * Math.PI * 2,
-    color: Math.random() < 0.3 ? '#c084fc' : (Math.random() < 0.5 ? '#a855f7' : '#818cf8')
-  });
-}
-function drawStars() {
-  const overlay = document.getElementById('overlay');
-  const inMenu = overlay && overlay.style.display !== 'none';
-  const alpha = inMenu ? 1.0 : 0.3; // 游戏中也显示但更暗
-  stars.forEach(star => {
-    star.a = (0.25 + 0.55 * Math.sin(T * 1.5 + star.phase)) * alpha;
-    star.y -= star.sp * (inMenu ? 1 : 0.3); // 游戏中星星几乎不动
-    if (star.y < -5) { star.y = 725; star.x = Math.random() * 1280; }
-    ctx.fillStyle = star.color + Math.round(clamp(star.a, 0, 1) * 255).toString(16).padStart(2, '0');
-    ctx.beginPath();
-    ctx.arc(star.x, star.y, star.s, 0, Math.PI * 2);
-    ctx.fill();
-    // 光晕（大星星）
-    if (star.s > 1.5) {
-      ctx.fillStyle = star.color + Math.round(clamp(star.a * 0.27, 0, 1) * 255).toString(16).padStart(2, '0');
-      ctx.beginPath();
-      ctx.arc(star.x, star.y, star.s * 3, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    // 十字闪光（最大的星星）
-    if (star.s > 2.2 && inMenu) {
-      ctx.strokeStyle = star.color + Math.round(clamp(star.a * 0.47, 0, 1) * 255).toString(16).padStart(2, '0');
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(star.x - star.s * 2, star.y); ctx.lineTo(star.x + star.s * 2, star.y);
-      ctx.moveTo(star.x, star.y - star.s * 2); ctx.lineTo(star.x, star.y + star.s * 2);
-      ctx.stroke();
-    }
-  });
-}
-function drawBg() {
-  const g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, '#141026'); g.addColorStop(0.5, '#1a1330'); g.addColorStop(1, '#0e0b1c');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  drawStars();
-  // 动态网格线（微弱脉动）
-  const gridAlpha = 0.04 + Math.sin(T * 0.8) * 0.015;
-  ctx.strokeStyle = 'rgba(168,85,247,' + gridAlpha + ')';
-  ctx.lineWidth = 0.5;
-  for (let x = 0; x < W; x += 80) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-  for (let y = 0; y < H; y += 80) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-  // 飘动的微光点（梦境氛围粒子）
-  for (let i = 0; i < 24; i++) {
-    const px = (i * 137 + T * (6 + i * 2.5)) % W;
-    const py = (i * 199 + Math.sin(T * 0.4 + i * 0.9) * 40) % H;
-    const a = 0.08 + Math.sin(T * 1.8 + i * 1.3) * 0.06;
-    const r = 1 + Math.sin(T * 1.2 + i) * 0.8;
-    // 交替颜色：紫/蓝/青
-    const hue = i % 3 === 0 ? '199,125,255' : (i % 3 === 1 ? '96,165,250' : '52,211,253');
-    ctx.fillStyle = 'rgba(' + hue + ',' + a + ')';
-    ctx.beginPath(); ctx.arc(px, py, r, 0, 6.2832); ctx.fill();
-  }
-}
-function drawCorridors() {
-  const x0 = CORRIDOR_X0, x1 = WALL_X;
-  LANES.forEach((L, i) => {
-    const y0 = L.y0, y1 = L.y1;
-    ctx.fillStyle = i % 2 ? '#171331' : '#191430';
-    ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-    ctx.strokeStyle = 'rgba(120,110,180,.12)'; ctx.lineWidth = 1;
-    for (let x = x0; x < x1; x += 44) { ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke(); }
-    for (let y = y0; y < y1; y += 44) { ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x1, y); ctx.stroke(); }
-    const g = ctx.createLinearGradient(0, y0, 0, y0 + 44);
-    g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g; ctx.fillRect(x0, y0, x1 - x0, 44);
-    // 危险脉冲光效（波次进行中增强）
-    const inWave = G.state === 'wave';
-    const pulseBase = inWave ? 0.6 : 0.4;
-    const pulseAmp = inWave ? 0.35 : 0.2;
-    const pulse = pulseBase + Math.sin(T * (inWave ? 3.5 : 2) + i * 1.2) * pulseAmp;
-    ctx.fillStyle = 'rgba(255,60,110,' + (0.1 + pulse * 0.12) + ')';
-    ctx.fillRect(x0, y0, 26, y1 - y0);
-    // 通道入口雾气
-    const fogGrad = ctx.createLinearGradient(x0, y0, x0 + 60, y0);
-    fogGrad.addColorStop(0, 'rgba(148,163,184,' + (inWave ? 0.12 : 0.06) + ')');
-    fogGrad.addColorStop(1, 'transparent');
-    ctx.fillStyle = fogGrad; ctx.fillRect(x0, y0, 60, y1 - y0);
-    ctx.save(); ctx.translate(x0 + 13, (y0 + y1) / 2); ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = 'rgba(255,140,160,.55)'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText('梦魇通道 ' + (i + 1), 0, 0); ctx.restore();
-    if (i < 2) {
-      ctx.fillStyle = '#2e2750'; ctx.fillRect(x0, y1 - 5, x1 - x0, 10);
-      ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fillRect(x0, y1 - 5, x1 - x0, 3);
-    }
-  });
-}
+function drawBg() { SceneArt.drawBase(ctx); }
+function sceneMotion() { return Accessibility.flash === 'normal' && Accessibility.shake === 'normal'; }
+function drawCorridors() { SceneArt.drawWeather(ctx,T,sceneMotion()); }
 function drawRoom() {
-  const y0 = ARENA_TOP, y1 = ARENA_BOT;
-  // 房间背景（带微弱渐变）
-  const roomGrad = ctx.createLinearGradient(ROOM_X0, y0, ROOM_X0, y1);
-  roomGrad.addColorStop(0, '#241c42');
-  roomGrad.addColorStop(0.5, '#221a3d');
-  roomGrad.addColorStop(1, '#1e1636');
-  ctx.fillStyle = roomGrad; ctx.fillRect(ROOM_X0, y0, ROOM_X1 - ROOM_X0, y1 - y0);
-  ctx.fillStyle = 'rgba(90,70,150,.12)';
-  ctx.fillRect(ROOM_X0 + 10, y0 + 10, ROOM_X1 - ROOM_X0 - 20, y1 - y0 - 20);
-  // 网格线（更柔和）
-  ctx.strokeStyle = 'rgba(140,130,220,.13)'; ctx.lineWidth = 0.8;
-  for (let c = 0; c <= COLS; c++) { const x = ROOM_X0 + c * CW; ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke(); }
-  for (let r = 0; r <= ROWS; r++) { const y = y0 + r * CH; ctx.beginPath(); ctx.moveTo(ROOM_X0, y); ctx.lineTo(ROOM_X1, y); ctx.stroke(); }
-  // 房间边框发光
-  ctx.save();
-  ctx.strokeStyle = 'rgba(168,85,247,.2)';
-  ctx.lineWidth = 3;
-  ctx.shadowColor = 'rgba(168,85,247,.3)';
-  ctx.shadowBlur = 12;
-  ctx.strokeRect(ROOM_X0 + 1, y0 + 1, ROOM_X1 - ROOM_X0 - 2, y1 - y0 - 2);
-  ctx.restore();
   if (selectedBuildKey) {
     const pulse = 0.5 + Math.sin(T * 3.2) * 0.5;
     const isTower = !!(BUILD_DEFS[selectedBuildKey] && BUILD_DEFS[selectedBuildKey].tower);
@@ -10120,72 +10258,24 @@ function drawRoom() {
       ctx.setLineDash([]); ctx.lineDashOffset = 0;
     }
   }
-  ctx.fillStyle = 'rgba(200,190,255,.22)'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left';
-  ctx.fillText('你的宿舍 · 点击空位建造', ROOM_X0 + 8, y0 + 14);
 }
 function drawWallsDoors() {
-  LANES.forEach(L => {
-    const D = G.doors[L.i];
-    ctx.fillStyle = '#3b3160';
-    ctx.fillRect(WALL_X - 8, L.y0, 16, D.y - L.doorHalf - L.y0);
-    ctx.fillRect(WALL_X - 8, D.y + L.doorHalf, 16, L.y1 - (D.y + L.doorHalf));
-    ctx.fillStyle = 'rgba(255,255,255,.06)';
-    ctx.fillRect(WALL_X - 8, L.y0, 6, D.y - L.doorHalf - L.y0);
-    ctx.fillRect(WALL_X - 8, D.y + L.doorHalf, 6, L.y1 - (D.y + L.doorHalf));
-    const broken = D.broken || D.hp <= 0;
-    const p = D.hp / D.maxHp;
-    ctx.save();
-    if (broken) ctx.globalAlpha = 0.22;
-    const g = ctx.createLinearGradient(WALL_X - 14, 0, WALL_X + 14, 0);
-    g.addColorStop(0, broken ? '#4a3a3a' : '#6e7ba8'); g.addColorStop(0.5, broken ? '#3a2e2e' : '#9aa8d8'); g.addColorStop(1, broken ? '#4a3a3a' : '#5e6a94');
-    ctx.fillStyle = g; ctx.fillRect(WALL_X - 14, D.y - L.doorHalf, 28, L.doorHalf * 2);
-    ctx.strokeStyle = '#20203a'; ctx.lineWidth = 2; ctx.strokeRect(WALL_X - 14, D.y - L.doorHalf, 28, L.doorHalf * 2);
-    ctx.fillStyle = 'rgba(0,0,0,.3)';
-    for (let i = -1; i <= 1; i++) ctx.fillRect(WALL_X - 14, D.y + i * 22 - 3, 28, 6);
-    // 损毁裂纹效果（HP 低于 50% 时出现）
-    if (!broken && p < 0.5) {
-      ctx.save();
-      ctx.globalAlpha = (1 - p) * 0.6;
-      ctx.strokeStyle = '#1a1a2e';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(WALL_X - 8, D.y - 15); ctx.lineTo(WALL_X + 2, D.y - 5); ctx.lineTo(WALL_X - 3, D.y + 8);
-      ctx.moveTo(WALL_X + 4, D.y - 12); ctx.lineTo(WALL_X + 10, D.y + 2);
-      if (p < 0.25) {
-        ctx.moveTo(WALL_X - 10, D.y + 5); ctx.lineTo(WALL_X, D.y + 18);
-        ctx.moveTo(WALL_X + 6, D.y + 8); ctx.lineTo(WALL_X + 12, D.y + 20);
-      }
-      ctx.stroke();
-      ctx.restore();
+  for(const L of LANES) {
+    const D=G.doors[L.i],broken=D.broken||D.hp<=0,p=clamp(D.hp/D.maxHp,0,1);
+    SceneArt.drawDoor(ctx,L,D,T,_frameDt,sceneMotion());
+    if(!broken) {
+      bar(WALL_X-40,D.y-L.doorHalf-13,80,7,p,p>.5?'#8dc4b0':p>.25?'#e8bd70':'#f8758f');
+      if(D.shield>0)bar(WALL_X-40,D.y-L.doorHalf-21,80,4,D.shield/(D.shieldMax||1),'#77cbd8');
     }
-    if (D.shield > 0) {
-      ctx.strokeStyle = 'rgba(93,230,255,' + (0.4 + 0.3 * Math.sin(T * 4)) + ')'; ctx.lineWidth = 3;
-      ctx.strokeRect(WALL_X - 17, D.y - L.doorHalf - 3, 34, L.doorHalf * 2 + 6);
+    ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#07131c';
+    const label=broken?'通道已破 · '+doorName(D):doorName(D);
+    ctx.strokeText(label,WALL_X,D.y+L.doorHalf+18);ctx.fillStyle=broken?'#f8758f':'#c6d0ca';
+    ctx.fillText(label,WALL_X,D.y+L.doorHalf+18);
+    if(!broken) {ctx.font='9px monospace';ctx.fillStyle='#cfb981';ctx.fillText('Lv.'+D.lv,WALL_X,D.y+L.doorHalf+29);}
+    if(!broken && p<.3) {
+      ctx.fillStyle='#f8758f';ctx.font='bold 10px sans-serif';ctx.fillText('危险',WALL_X,D.y-L.doorHalf-26);
     }
-    ctx.restore();
-    if (!broken) {
-      bar(WALL_X - 40, D.y - L.doorHalf - 13, 80, 7, p, p > 0.5 ? '#4ade80' : p > 0.25 ? '#fbbf24' : '#f87171', 'rgba(255,255,255,.25)');
-      if (D.shield > 0) bar(WALL_X - 40, D.y - L.doorHalf - 21, 80, 4, D.shield / (D.shieldMax || 1), '#5de6ff');
-      const dn = doorName(D);
-      ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
-      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.85)';
-      ctx.strokeText(dn, WALL_X, D.y + L.doorHalf + 15);
-      ctx.fillStyle = D.lv >= 50 ? '#ffd166' : '#cbd5e1';
-      ctx.fillText(dn, WALL_X, D.y + L.doorHalf + 15);
-      ctx.font = '9px sans-serif'; ctx.fillStyle = '#9ef01a';
-      ctx.fillText('Lv' + D.lv + '/50', WALL_X, D.y + L.doorHalf + 26);
-    } else {
-      ctx.fillStyle = '#f87171'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('已损毁', WALL_X, D.y);
-      ctx.font = '10px sans-serif'; ctx.fillStyle = '#c77dff';
-      ctx.fillText(doorName(D), WALL_X, D.y + L.doorHalf + 15);
-    }
-    if (!broken && p < 0.3) {
-      ctx.strokeStyle = 'rgba(248,113,113,' + (0.3 + 0.3 * Math.sin(T * 8)) + ')'; ctx.lineWidth = 3;
-      ctx.strokeRect(WALL_X - 16, D.y - L.doorHalf - 2, 32, L.doorHalf * 2 + 4);
-    }
-  });
-  G.doors.forEach(D => { ctx.beginPath(); ctx.arc(WALL_X + 6, D.y, 4, 0, 6.2832); ctx.fillStyle = '#ffd166'; ctx.fill(); });
+  }
 }
 /** 各炮塔的炮管/炮口造型 —— 让 10 种武器在战场上不用看名字也能一眼分辨 */
 /* ==================================================================
@@ -10811,121 +10901,8 @@ function drawBuildings() {
   }
 }
 function drawBed() {
-  const x = BED_CX, y = BED_CY;
-  const R = cellRect(7, 1);
-  const bedH = R.h * 2, bedX = R.x + 12, bedY = R.y + 9;
-  const bedW = R.w - 24, bedD = bedH - 22;
-  const gp = clamp((G.grow || 0) / 25, 0, 1);
-  const hp = G.bed.maxHp > 0 ? clamp(G.bed.hp / G.bed.maxHp, 0, 1) : 1;
-  const breathe = Math.sin(T * 1.35) * 1.2;
-
-  // 床是防线核心：先绘制随发育等级增强的柔和灵光，再画木框和寝具。
-  const bedGlow = ctx.createRadialGradient(x, y, 10, x, y, 82);
-  bedGlow.addColorStop(0, 'rgba(93,130,190,' + (0.13 + gp * 0.12) + ')');
-  bedGlow.addColorStop(0.58, 'rgba(93,80,160,.08)');
-  bedGlow.addColorStop(1, 'transparent');
-  ctx.fillStyle = bedGlow; ctx.beginPath(); ctx.arc(x, y, 82, 0, 6.2832); ctx.fill();
-  ctx.fillStyle = 'rgba(0,0,0,.34)';
-  ctx.beginPath(); ctx.ellipse(x + 5, y + 8, bedW * .66, bedD * .48, 0, 0, 6.2832); ctx.fill();
-
-  const growGrad = ctx.createRadialGradient(x, y, 32, x, y, 54 + gp * 18);
-  growGrad.addColorStop(0, 'rgba(124,243,154,' + (0.025 + gp * 0.11) + ')');
-  growGrad.addColorStop(.72, 'rgba(124,243,154,' + (0.035 + gp * 0.13) + ')');
-  growGrad.addColorStop(1, 'rgba(124,243,154,0)');
-  ctx.fillStyle = growGrad; ctx.beginPath(); ctx.arc(x, y, 72, 0, 6.2832); ctx.fill();
-
-  // 深色木框、软包床头与黄铜包角，让床在密集战场中仍然一眼可辨。
-  const wood = ctx.createLinearGradient(bedX, bedY, bedX + bedW, bedY + bedD);
-  wood.addColorStop(0, '#473955'); wood.addColorStop(.48, '#302940'); wood.addColorStop(1, '#211e32');
-  ctx.fillStyle = wood; rr(bedX, bedY, bedW, bedD, 12); ctx.fill();
-  ctx.strokeStyle = 'rgba(223,193,139,.55)'; ctx.lineWidth = 1.3;
-  rr(bedX + 1, bedY + 1, bedW - 2, bedD - 2, 11); ctx.stroke();
-  ctx.fillStyle = 'rgba(218,190,143,.52)';
-  [[bedX + 5, bedY + 6], [bedX + bedW - 5, bedY + 6],
-    [bedX + 5, bedY + bedD - 6], [bedX + bedW - 5, bedY + bedD - 6]].forEach(p => {
-    ctx.beginPath(); ctx.arc(p[0], p[1], 1.5, 0, 6.2832); ctx.fill();
-  });
-
-  const headY = bedY + 5, headH = 29;
-  const head = ctx.createLinearGradient(bedX, headY, bedX, headY + headH);
-  head.addColorStop(0, '#76658e'); head.addColorStop(1, '#403854');
-  ctx.fillStyle = head; rr(bedX + 5, headY, bedW - 10, headH, 8); ctx.fill();
-  ctx.strokeStyle = 'rgba(233,218,187,.35)'; ctx.lineWidth = 1;
-  rr(bedX + 8, headY + 3, bedW - 16, headH - 6, 6); ctx.stroke();
-  ctx.fillStyle = 'rgba(232,217,182,.9)';
-  ctx.beginPath(); ctx.arc(x, headY + headH / 2, 2.1, 0, 6.2832); ctx.fill();
-  ctx.fillStyle = 'rgba(198,179,234,.8)';
-  ctx.beginPath(); ctx.arc(x - 12, headY + headH / 2, 1, 0, 6.2832); ctx.arc(x + 12, headY + headH / 2, 1, 0, 6.2832); ctx.fill();
-
-  const mattress = { x: bedX + 7, y: headY + headH - 1, w: bedW - 14, h: bedD - headH - 11 };
-  const matGrad = ctx.createLinearGradient(mattress.x, mattress.y, mattress.x + mattress.w, mattress.y + mattress.h);
-  matGrad.addColorStop(0, '#ddd9ed'); matGrad.addColorStop(.46, '#b9bbd5'); matGrad.addColorStop(1, '#8589ad');
-  ctx.fillStyle = matGrad; rr(mattress.x, mattress.y, mattress.w, mattress.h, 8); ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 1;
-  rr(mattress.x + 1, mattress.y + 1, mattress.w - 2, mattress.h - 2, 7); ctx.stroke();
-
-  // 枕头、侧躺的孩子与绗缝被面；轻微呼吸只移动被角，不影响碰撞或战斗判定。
-  const pillow = { x: x - 24, y: mattress.y + 5, w: 48, h: 25 };
-  const pillowGrad = ctx.createLinearGradient(pillow.x, pillow.y, pillow.x, pillow.y + pillow.h);
-  pillowGrad.addColorStop(0, '#fff4e5'); pillowGrad.addColorStop(1, '#c7c7e2');
-  ctx.fillStyle = pillowGrad; rr(pillow.x, pillow.y, pillow.w, pillow.h, 8); ctx.fill();
-  ctx.strokeStyle = 'rgba(115,111,153,.4)'; ctx.lineWidth = 1;
-  rr(pillow.x + 3, pillow.y + 3, pillow.w - 6, pillow.h - 6, 6); ctx.stroke();
-
-  const faceX = x - 3, faceY = pillow.y + 18 + breathe * .25;
-  ctx.fillStyle = '#e9bb9e'; ctx.beginPath(); ctx.ellipse(faceX, faceY, 12, 9, .08, 0, 6.2832); ctx.fill();
-  ctx.fillStyle = '#302b42'; ctx.beginPath(); ctx.ellipse(faceX - 1, faceY - 5, 12, 6, -.12, Math.PI, 6.2832); ctx.fill();
-  ctx.strokeStyle = 'rgba(72,54,59,.82)'; ctx.lineWidth = 1.2;
-  ctx.beginPath(); ctx.moveTo(faceX - 7, faceY + 1); ctx.quadraticCurveTo(faceX - 5, faceY + 3, faceX - 3, faceY + 1);
-  ctx.moveTo(faceX + 1, faceY + 1); ctx.quadraticCurveTo(faceX + 3, faceY + 3, faceX + 5, faceY + 1); ctx.stroke();
-
-  const quilt = { x: mattress.x + 3, y: pillow.y + 23 + breathe, w: mattress.w - 6, h: mattress.y + mattress.h - pillow.y - 28 };
-  const quiltGrad = ctx.createLinearGradient(quilt.x, quilt.y, quilt.x + quilt.w, quilt.y + quilt.h);
-  quiltGrad.addColorStop(0, '#6d91b5'); quiltGrad.addColorStop(.52, '#526d91'); quiltGrad.addColorStop(1, '#34455f');
-  ctx.fillStyle = quiltGrad; rr(quilt.x, quilt.y, quilt.w, quilt.h, 10); ctx.fill();
-  ctx.save(); rr(quilt.x, quilt.y, quilt.w, quilt.h, 10); ctx.clip();
-  ctx.strokeStyle = 'rgba(222,232,246,.30)'; ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(quilt.x + 6, quilt.y + 13); ctx.quadraticCurveTo(x, quilt.y + 4, quilt.x + quilt.w - 6, quilt.y + 14);
-  ctx.moveTo(quilt.x + 8, quilt.y + quilt.h * .47); ctx.quadraticCurveTo(x - 5, quilt.y + quilt.h * .40, quilt.x + quilt.w - 8, quilt.y + quilt.h * .49);
-  ctx.moveTo(quilt.x + 7, quilt.y + quilt.h - 11); ctx.quadraticCurveTo(x, quilt.y + quilt.h - 18, quilt.x + quilt.w - 7, quilt.y + quilt.h - 11);
-  ctx.stroke();
-  ctx.strokeStyle = 'rgba(220,228,244,.22)'; ctx.lineWidth = .7;
-  for (let i = 0; i < 4; i++) {
-    const sy = quilt.y + 21 + i * 16;
-    if (sy < quilt.y + quilt.h - 8) { ctx.beginPath(); ctx.moveTo(quilt.x + 7, sy); ctx.lineTo(quilt.x + 11, sy + 2); ctx.stroke(); }
-  }
-  // 缝在被角上的小月亮，呼应主界面停在 03:07 的梦境意象。
-  const moonX = x + 17, moonY = quilt.y + quilt.h - 17;
-  ctx.fillStyle = 'rgba(244,218,164,.9)'; ctx.beginPath(); ctx.arc(moonX, moonY, 4.2, 0, 6.2832); ctx.fill();
-  ctx.fillStyle = '#435b79'; ctx.beginPath(); ctx.arc(moonX + 2, moonY - 1.5, 4, 0, 6.2832); ctx.fill();
-  ctx.fillStyle = 'rgba(242,228,190,.9)'; ctx.beginPath(); ctx.arc(moonX - 9, moonY - 5, 1, 0, 6.2832); ctx.arc(moonX + 8, moonY + 4, .8, 0, 6.2832); ctx.fill();
-  if (hp < .3) {
-    ctx.globalAlpha = .45 + Math.sin(T * 5) * .12;
-    ctx.strokeStyle = 'rgba(255,135,151,.86)'; ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.moveTo(quilt.x + 9, quilt.y + 9); ctx.lineTo(quilt.x + 14, quilt.y + 19);
-    ctx.lineTo(quilt.x + 10, quilt.y + 27); ctx.moveTo(quilt.x + 14, quilt.y + 19); ctx.lineTo(quilt.x + 20, quilt.y + 22); ctx.stroke();
-    ctx.globalAlpha = 1;
-  }
-  ctx.restore();
-
-  // 发育等级光点沿床侧缓慢巡游，保留原有效果但降低遮挡。
-  if (gp > .2) {
-    const count = Math.min(5, Math.floor((G.grow || 0) / 5));
-    for (let i = 0; i < count; i++) {
-      const angle = T * .42 + i * (Math.PI * 2 / Math.max(1, count));
-      const radius = 54 + gp * 13;
-      const px = x + Math.cos(angle) * radius, py = y + Math.sin(angle) * radius;
-      ctx.globalAlpha = .28 + Math.sin(T * 2.5 + i) * .16;
-      ctx.fillStyle = '#9bf4b4'; ctx.beginPath(); ctx.arc(px, py, 1.5, 0, 6.2832); ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  const zt = (T * .7) % 1;
-  ctx.save(); ctx.globalAlpha = 1 - zt; ctx.fillStyle = 'rgba(221,232,255,.78)';
-  ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('z', x - 18 - zt * 8, mattress.y + 11 - zt * 20); ctx.restore();
+  const x=BED_CX,R=cellRect(7,1),hp=clamp(G.bed.hp/G.bed.maxHp,0,1);
+  SceneArt.drawBed(ctx,G.bed,T,_frameDt,sceneMotion());
   if (G.bed.shield > 0) {
     const shieldPulse = .42 + Math.sin(T * 2.2) * .1;
     ctx.strokeStyle = 'rgba(93,230,255,' + shieldPulse + ')'; ctx.lineWidth = 2;
@@ -11283,12 +11260,12 @@ function drawEffects() {
       ctx.shadowColor = '#c77dff'; ctx.shadowBlur = 16;
       ctx.strokeStyle = '#e9d5ff'; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(e.x, e.y);
-      for (let i = 1; i <= 5; i++) { const t = i / 5; ctx.lineTo(e.x + (e.x2 - e.x) * t + rnd(-12, 12), e.y + (e.y2 - e.y) * t + rnd(-12, 12)); }
+      for (let i = 1; i <= 5; i++) { const t = i / 5; ctx.lineTo(e.x + (e.x2 - e.x) * t + visualRand(-12,12,i+e.x), e.y + (e.y2 - e.y) * t + visualRand(-12,12,i+e.y+17)); }
       ctx.stroke();
       // 内层白芯
       ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(e.x, e.y);
-      for (let i = 1; i <= 5; i++) { const t = i / 5; ctx.lineTo(e.x + (e.x2 - e.x) * t + rnd(-8, 8), e.y + (e.y2 - e.y) * t + rnd(-8, 8)); }
+      for (let i = 1; i <= 5; i++) { const t = i / 5; ctx.lineTo(e.x + (e.x2 - e.x) * t + visualRand(-8,8,i+e.x), e.y + (e.y2 - e.y) * t + visualRand(-8,8,i+e.y+17)); }
       ctx.stroke(); ctx.restore();
     } else if (e.type === 'ring') {
       ctx.save(); ctx.globalAlpha = p * 0.75; ctx.strokeStyle = e.color || '#f0abfc';

@@ -55,14 +55,8 @@ html,body{height:100%;background:var(--bg-0);overflow:hidden;font-family:"PingFa
 body{position:fixed;inset:0;width:100%;height:100%;-webkit-user-select:none;user-select:none}
 #wrap{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center center;background:var(--bg-1);border-radius:10px;box-shadow:0 0 60px rgba(120,80,255,.25);overflow:hidden}
 canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-/* 梦境氛围层：仅覆盖走廊区域（56–556），不遮挡 HUD 与底部操作栏 */
-#fx{position:absolute;left:0;top:56px;width:1280px;height:500px;pointer-events:none;z-index:4;
-  background:
-    radial-gradient(130% 82% at 50% 46%,transparent 42%,rgba(6,3,18,.5) 100%),
-    repeating-linear-gradient(180deg,rgba(180,160,255,.026) 0 1px,transparent 1px 3px);
-  box-shadow:inset 0 0 90px rgba(90,60,200,.1)}
-#fx::after{content:'';position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(150,120,255,.045),transparent 20%,transparent 80%,rgba(60,30,120,.06))}
+/* Scene atmosphere is drawn below entities in the cached Canvas environment. */
+#fx{display:none;pointer-events:none}
 #hud{position:absolute;left:0;top:0;width:1280px;height:56px;display:flex;align-items:center;gap:5px;padding:0 10px;
   background:linear-gradient(180deg,rgba(15,20,40,.96),rgba(12,16,32,.98));
   backdrop-filter:blur(16px) saturate(1.8);-webkit-backdrop-filter:blur(16px) saturate(1.8);

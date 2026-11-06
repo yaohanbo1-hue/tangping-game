@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const files = ['story.js', 'data.js', 'names.js', 'balance.js', 'combat.js', 'core.js', 'campaign.js', 'save.js', 'net.js', 'dream.js', 'quest.js', 'render.js', 'ui.js', 'main.js'];
+const files = ['story.js', 'data.js', 'names.js', 'balance.js', 'combat.js', 'core.js', 'campaign.js', 'save.js', 'net.js', 'dream.js', 'quest.js', 'scene-art.js', 'render.js', 'ui.js', 'main.js'];
 const js = files.map(f => '/* ==== ' + f + ' ==== */\n' + fs.readFileSync(f, 'utf8')).join('\n');
 const version = fs.readFileSync('VERSION', 'utf8').trim();
 if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('VERSION must use MAJOR.MINOR.PATCH format');

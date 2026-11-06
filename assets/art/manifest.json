@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "art_direction_brief": "docs/ART_DIRECTION.md",
+  "scope": "Battlefield environment stage; building, enemy, Boss and UI families remain pending.",
+  "source": {
+    "kind": "original-procedural-canvas",
+    "url_or_tool": "scene-art.js",
+    "creator": "Codex for yaohanbo1-hue/tangping-game",
+    "license": "MIT (repository LICENSE)",
+    "attribution": "No external raster art used in this stage."
+  },
+  "visual_locks": ["orthographic view", "blue stone / blue grey wood", "warm gold bedside lamp", "hard metal bevels", "readable dangerous states"],
+  "assets": [
+    {"id":"rain-corridors","path":"scene-art.js#corridor","role":"three lane slate floors, rain windows, pipes, puddles and wall projections","status":"integrated","technical":{"dimensions":"340x163.33 per lane","anchor":"existing lane bounds","frames":1,"alpha":false,"filtering":"Canvas vector baked at native scale"},"variants":["lane 01","lane 02","lane 03"],"states":["static","rain","fog","reduced motion"],"collision":"none; uses existing lane geometry"},
+    {"id":"dorm-floor","path":"scene-art.js#room","role":"board floor, cell brackets, wall cap, skirting, bedside mat and wall equipment","status":"integrated","technical":{"dimensions":"880x490","anchor":"380,66","frames":1,"alpha":false,"filtering":"native Canvas"},"variants":["8x5 grid"],"states":["static"],"collision":"none"},
+    {"id":"reinforced-door","path":"scene-art.js#drawDoor","role":"physical door silhouette, gap, reinforcement and damage feedback","status":"integrated","technical":{"dimensions":"42x94 plus UI labels","anchor":"380,lane.doorY","frames":"procedural","alpha":true,"filtering":"native Canvas"},"variants":["wood core levels 1-5","steel core levels 6-50","reinforcement marks per ten levels"],"states":["idle","shielded","dented below 70%","cracked below 40%","critical below 30%","broken","repair"],"collision":"unchanged existing door gap"},
+    {"id":"sleeping-bed","path":"scene-art.js#drawBed","role":"wood frame, sleeping child, pillow, stitched quilt and bedside table","status":"integrated","technical":{"dimensions":"110x196","anchor":"cell 7,1 through cell 7,2","frames":"procedural","alpha":true,"filtering":"native Canvas"},"variants":["blue grey quilt / brass wood frame"],"states":["idle breathing","torn below 50%","critical below 30%","repair patch","shield shown by render.js"],"collision":"unchanged two bed cells"},
+    {"id":"bedside-light","path":"scene-art.js#drawWeather","role":"emergency lamp shade, supply lead, warm light pool","status":"integrated","technical":{"dimensions":"256x256 reusable light texture","anchor":"1247,178","frames":"procedural","alpha":true,"filtering":"linear Canvas light sprite"},"variants":["warm gold"],"states":["slow breathing","reduced motion"],"collision":"none"}
+  ],
+  "verification": {
+    "native_scale_reviewed": true,
+    "in_engine_reviewed": true,
+    "technical_checks_passed": true,
+    "approved_by": "Codex under delegated user art direction; environment target only",
+    "command": "node tests/scene-art.test.js",
+    "evidence": "docs/ART_DIRECTION.md; Actions browser-evidence artifact"
+  }
+}
