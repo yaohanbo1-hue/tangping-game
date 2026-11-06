@@ -73,6 +73,12 @@ const SceneArt = (() => {
     for(const wx of [96,237]) {
       round(c,wx-4,y+2,104,26,2,'#060e19','#4a6372');
       box(c,wx,y+5,96,18,'#274452');
+      // Distant dormitory roofs sit behind the glass and its nearer mullions.
+      for(let block=0;block<3;block++) {
+        const bx=wx+4+block*30,roof=y+9+Math.floor(noise(block+L.i*7)*4);
+        path(c,[[bx,roof+3],[bx+12,roof-2],[bx+25,roof+3],[bx+25,y+23],[bx,y+23]],'#142a38',null);
+        box(c,bx+5,roof+7,3,2,'#53656a');box(c,bx+16,roof+7,3,2,'#3e5b66');
+      }
       for(let i=0;i<8;i++)box(c,wx+i*13,y+5,3,18,'rgba(93,139,159,.10)');
       box(c,wx+45,y+4,4,21,'#0b1823');box(c,wx,y+13,96,2,'#101e2b');
       line(c,wx-3,y+28,wx+102,y+28,'#75929d');

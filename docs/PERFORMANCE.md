@@ -28,4 +28,16 @@ Linux WPE 27.2 在旧 CI 的特殊现象：开始后 statFrame 固定在 9，计
 
 新场景同机 WebKit26.6 空场暂停的 3 秒对照：正常 17.58 FPS，关闭 CSS 动画/阴影/滤镜 38.13 FPS，仅隐藏 Canvas 20.58 FPS，同时关闭两者 52.37 FPS。这将后续优先项指向 DOM 模糊合成与动态样式；旧数据来自另一 WebKit 版本，不能拿来计算新场景加速比。原始 `webkit-render-profile.json` 保留在本机 artifacts。
 
+## 建筑组件阶段实测
+
+同机 Windows / Playwright1.63、DPR1、headless，在新的 16 建筑组件及命中反馈上重跑 180 帧：
+
+| 引擎/视口 | 平均帧间隔 ms | P95 ms | JS render 平均 ms | 结束敌人/建筑 |
+|---|---:|---:|---:|---:|
+| Chromium153 桌面 1440×900 | 170.01 | 266.6 | 10.71 | 87 / 32 |
+| Chromium153 Android 仿真 844×390 | 115.75 | 199.9 | 8.90 | 112 / 32 |
+| WebKit26.6 iOS 仿真 844×390 | 160.58 | 210 | 8.68 | 80 / 32 |
+
+三浏览器交互均过。主体改为缓存底盘/旋转头、去除旧常驻巨型光雾；联系表缓存 3,153,920 字节，16 建筑实景 3,563,520 字节，热缓存30帧零重建。新命中事件最多在现有effects少于96时追加，持续武器合并反馈。实时敌人组成不同，不能据上两张表计算严格加速比；性能仍未达目标，仿真不是物理手机。原始证据仍在 artifacts/browser 和 artifacts/buildings。
+
 所有原始截图和 frame-times.json 留在 Actions `browser-evidence` 工件。本机临时文件在 artifacts/，不混入游戏发布文件。

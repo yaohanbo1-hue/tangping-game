@@ -53,6 +53,7 @@ const server=http.createServer((req,res)=>{
       for(const [k,col,row]of [['turret',0,0],['frost',0,1],['laser',0,2],['tesla',0,3],['flame',0,4],['poison',1,4],['gravity',1,3],['missile',1,1],['miner',2,0],['repair',2,2]]) {
         tryBuild(k,col,row);setBuildingLevel(G.buildings.at(-1),6);
       }
+      G.buildings.forEach(b=>{b.animY=0;b.animBounce=0;});
       G.texts=[];G.parts=[];G.tipTimer=0;shake=0;
       for(let i=0;i<3;i++)spawnEnemy(['grunt','bulwark','healer'][i],25,i);
       G.enemies.forEach(e=>{e.x=290;});

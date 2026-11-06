@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
   "art_direction_brief": "docs/ART_DIRECTION.md",
-  "scope": "Battlefield environment stage; building, enemy, Boss and UI families remain pending.",
+  "scope": "Environment and building families integrated; enemy, Boss and UI art remain pending.",
+  "catalogs": ["assets/art/buildings.json"],
   "source": {
     "kind": "original-procedural-canvas",
     "url_or_tool": "scene-art.js",

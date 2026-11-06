@@ -28,6 +28,7 @@ jobs:
           node tests/economy.test.js
           node tests/combat.test.js
           node tests/buildings.test.js
+          node tests/visual-events.test.js
 
       - name: 从零资源的完整战役与策略矩阵
         run: node tests/campaign-matrix.js
@@ -64,6 +65,7 @@ jobs:
       - name: 浏览器交互、触控与帧时间
         run: |
           node tests/scene-art.test.js
+          node tests/building-art.test.js
           node tests/browser.test.js
       - name: 保存实际画面与帧时间
         if: always()
@@ -73,3 +75,4 @@ jobs:
           path: |
             artifacts/browser/
             artifacts/scene/
+            artifacts/buildings/

@@ -777,6 +777,11 @@ function addText(x, y, t, color = '#fff', big = false) {
   G.texts.push({ x: x + rnd(-8, 8), y, t, color, life: big ? 1.5 : 0.9, max: big ? 1.5 : 0.9, big });
 }
 const addEffect = e => G.effects.push(e);
+function emitHitFx(enemy,source) {
+  if(!source || !source.def || !BUILD_DEFS[source.type] || G.effects.length>=96) return;
+  addEffect({type:'impact',weapon:source.type,x:enemy.x,y:enemy.y,color:source.def.color,
+    target:source.type==='poison'?enemy:null,life:.26,maxLife:.26});
+}
 const shakeBy = v => { shake = Math.min(30, shake + v * (typeof Accessibility !== 'undefined' ? Accessibility.shakeMul() : 1)); };
 function setTip(t, d = 5) { G.tipText = t; G.tipTimer = d; }
 function updateEconomy(dt) {
@@ -1503,7 +1508,7 @@ function updateTowers(dt) {
       b.zcd = (b.zcd || 0) - dt;
       if (b.zcd <= 0) {
         const t = findTarget(b, s.zapRange, 'front');
-        if (t) { b.zcd = 1.4; applyDamage(t, s.zapDmg * towerDmgMul(b), 'shock', b); addEffect({ type: 'arc', x: b.x, y: b.y, x2: t.x, y2: t.y, life: 0.2, maxLife: 0.2 }); SFX.zap(); }
+        if (t) { b.zcd = 1.4; b.fireFx=.2; b.recoil=1; applyDamage(t, s.zapDmg * towerDmgMul(b), 'shock', b); addEffect({ type: 'arc', x: b.x, y: b.y, x2: t.x, y2: t.y, life: 0.2, maxLife: 0.2 }); SFX.zap(); }
       }
     }
     if (!b.def.tower || !fire) continue;
@@ -1734,6 +1739,7 @@ function dotDamage(e, dps, dtype, src, dt) {
     if (e.dotT >= DOT_MERGE_INTERVAL) {
       addText(e.x + rnd(-5, 5), e.y - e.r, Math.round(e.dotAcc), (DMG[dtype] && DMG[dtype].color) || '#ffd6d6');
       e.dotAcc = 0; e.dotT = 0;
+      emitHitFx(e,src);
       touchElement(e, dtype, dps * DOT_MERGE_INTERVAL,src);
     }
   }
@@ -1778,6 +1784,7 @@ function applyDamage(e, dmg, dtype, src, chain, silent, damageInterval) {
     }
   }
   d=EnemyDamage.commit(e,d,src);
+  if(!silent && d>0)emitHitFx(e,src);
   // Reflect the damage actually absorbed, not arbitrarily large overkill.
   if (!silent && e.def && e.def.reflect && src && src.def && d>0) {
     const reflected=d*e.def.reflect;
