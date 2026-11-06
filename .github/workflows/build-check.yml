@@ -27,6 +27,7 @@ jobs:
         run: |
           node tests/economy.test.js
           node tests/combat.test.js
+          node tests/buildings.test.js
 
       - name: 从零资源的完整战役与策略矩阵
         run: node tests/campaign-matrix.js

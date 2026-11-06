@@ -2767,7 +2767,7 @@ const BUILD_DEFS = {
     statText: s => `电磁 ${s.dmg}  连锁 ${s.chain}  射程 ${s.range | 0}`,
     branch: {
       a: { name: '雷暴之眼', icon: '⛈️', desc: '连锁目标翻倍', cost: { gold: 620, soul: 16 }, mod: s => ({ dmg: s.dmg * 1.15, rate: s.rate * 1.2, range: s.range * 1.25, chain: s.chain * 2 }) },
-      b: { name: '电磁脉冲', icon: '📴', desc: '命中范围眩晕，连锁减少', cost: { gold: 620, soul: 16 }, mod: s => ({ dmg: s.dmg * 2.2, rate: s.rate * 0.8, range: s.range, chain: s.chain, stun: 0.7, splash: 70 }) },
+      b: { name: '电磁脉冲', icon: '📴', desc: '命中周围 70 范围眩晕 0.7 秒，连锁数减半', cost: { gold: 620, soul: 16 }, mod: s => ({ dmg: s.dmg * 2.2, rate: s.rate * 0.8, range: s.range, chain: Math.max(1,Math.floor(s.chain*.5)), stun: 0.7, splash: 70 }) },
     },
   },
   flame: {
@@ -2778,7 +2778,7 @@ const BUILD_DEFS = {
     statText: s => `火焰 ${s.dmg}/秒（+50% 灼烧残留）  范围 ${s.radius | 0}`,
     branch: {
       a: { name: '炼狱风暴', icon: '🌋', desc: '范围与灼烧大幅提升', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.8, range: s.range * 1.35, radius: s.radius * 1.6 }) },
-      b: { name: '熔岩印记', icon: '🩸', desc: '灼烧可无限叠加，伤害递增', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.3, range: s.range, radius: s.radius * 1.2, stack: true }) },
+      b: { name: '熔岩印记', icon: '🩸', desc: '持续接触叠加灼烧，最多 5 层；离开后衰减', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.3, range: s.range, radius: s.radius * 1.2, stack: true }) },
     },
   },
   repair: {
@@ -2789,7 +2789,7 @@ const BUILD_DEFS = {
     statText: s => `修复 ${s.heal}/秒  范围 ${s.range | 0}`,
     branch: {
       a: { name: '纳米工厂', icon: '🔬', desc: '修复速度 x2.6，范围扩大', cost: { gold: 480, soul: 13 }, mod: s => ({ heal: s.heal * 2.6, range: s.range * 1.4 }) },
-      b: { name: '护盾发生器', icon: '🛡️', desc: '改为持续附加护盾', cost: { gold: 480, soul: 13 }, mod: s => ({ heal: s.heal * 0.5, range: s.range * 1.3, shieldHeal: 18 }) },
+      b: { name: '护盾发生器', icon: '🛡️', desc: '修复减半，提供基础护盾；附近建筑每秒额外回盾 18', cost: { gold: 480, soul: 13 }, mod: s => ({ heal: s.heal * 0.5, range: s.range * 1.3, shield: 70+s.heal*2, shieldHeal: 18 }) },
     },
   },
   shield: {
@@ -2821,7 +2821,7 @@ const BUILD_DEFS = {
     stat: lv => ({ dmg: 9 * 1.075 + 3.6 * 1.075 * (lv - 1), rate: 1.15 + 0.09 * (lv - 1), range: 400 + 16 * (lv - 1), poison: 1, poisonDps: 7 * 1.075 + 2.4 * 1.075 * (lv - 1), maxStack: 8 }),
     statText: s => `剧毒 ${s.dmg}  毒伤 ${s.poisonDps}/秒/层  上限 ${s.maxStack} 层  射程 ${s.range | 0}`,
     branch: {
-      a: { name: '瘟疫之源', icon: '🦠', desc: '毒伤 x2.2，毒层上限 +4，可传染邻近敌人', cost: { gold: 620, soul: 18 }, mod: s => ({ dmg: s.dmg * 1.15, poisonDps: s.poisonDps * 2.2, maxStack: s.maxStack + 4, spread: true, range: s.range }) },
+      a: { name: '瘟疫之源', icon: '🦠', desc: '毒伤 x2.2、毒层上限 +4；传染 90 范围内最近 3 个目标（半毒伤）', cost: { gold: 620, soul: 18 }, mod: s => ({ dmg: s.dmg * 1.15, poisonDps: s.poisonDps * 2.2, maxStack: s.maxStack + 4, spread: true, range: s.range }) },
       b: { name: '腐蚀炮', icon: '☠️', desc: '伤害 x2.6，毒液附带破甲（降低全抗性）', cost: { gold: 620, soul: 18 }, mod: s => ({ dmg: s.dmg * 2.6, poisonDps: s.poisonDps * 0.7, maxStack: s.maxStack, shred: 0.9, range: s.range * 1.1 }) },
     },
   },
@@ -3978,6 +3978,7 @@ function bedMaxHp(lv) {
 }
 function setBuildingLevel(b, lv) {
   b.level = Math.max(1, Math.min(b.def.maxLv || 50, lv));
+  b.__sf=-1;
   b.maxHp = buildingMaxHp(b.def, b.level, b.branch); b.hp = b.maxHp;
 }
 function setBedLevel(lv) {
@@ -4114,7 +4115,9 @@ let statFrame = 0;
 function bstat(b) {
   if (b.__sf === statFrame && b.__ss) return b.__ss;
   const s = b.def.stat(b.level);
-  const base = (b.branch && b.def.branch && b.def.branch[b.branch]) ? b.def.branch[b.branch].mod(s, b) : s;
+  // Branch definitions override selected properties; omitted cadence/behaviour
+  // stays intact (poison branches previously lost both their rate and poison).
+  const base = (b.branch && b.def.branch && b.def.branch[b.branch]) ? Object.assign({},s,b.def.branch[b.branch].mod(s,b)) : s;
   if (b.runes && b.runes.length) {
     const rm = 1 + G.tech.runemaster * 0.15;
     const totals = {};
@@ -4132,6 +4135,8 @@ function bstat(b) {
   if (base.range != null) base.range *= techVal('focus', 0.06) * (1 + (G.fate.range || 0) + (G.fateWave.range || 0));
   if (base.dmg != null && G.prize && G.prize.dmg) base.dmg *= G.prize.dmg;
   if (base.rate != null) base.rate *= techVal('swift', 0.08);
+  if (base.slow != null) base.slow=clamp(base.slow,0,.85);
+  if (base.gravSlow != null) base.gravSlow=clamp(base.gravSlow,0,.85);
   b.__sf = statFrame; b.__ss = base;
   return base;
 }
@@ -4374,7 +4379,7 @@ function tryUpgrade(b) {
   if (b.level >= b.def.maxLv) { SFX.err(); return false; }
   const c = upgradeCost(b.def, b.level);
   if (!canAfford(c)) { SFX.err(); setTip('资源不足，无法升级'); return false; }
-  payCost(c); b.level++; b.invested += c.gold;
+  payCost(c); b.level++; b.invested += c.gold; b.__sf=-1;
   const nh = buildingMaxHp(b.def, b.level, b.branch);
   b.hp += nh - b.maxHp; b.maxHp = nh;
   if (!G.upgradeFx) G.upgradeFx = [];
@@ -4390,7 +4395,7 @@ function tryBranch(b, which) {
   const br = b.def.branch && b.def.branch[which];
   if (!br || b.branch || b.level < BRANCH_AT) { SFX.err(); return false; }
   if (!canAfford(br.cost)) { SFX.err(); setTip('资源不足，无法转职'); return false; }
-  payCost(br.cost); b.branch = which; b.invested += br.cost.gold;
+  payCost(br.cost); b.branch = which; b.invested += br.cost.gold; b.__sf=-1;
   b.maxHp *= 1.3; b.hp = b.maxHp;
   SFX.achieve(); spawnParts(b.x, b.y, 30, '#ffe066', 4);
   addText(b.x, b.y - 26, '转职：' + br.name, '#ffe066', true);
@@ -4754,7 +4759,7 @@ function spawnEnemy(type, wave, lane, summoned = false) {
 }
 function enemySpeed(e) {
   let s = e.speed;
-  if (e.slowT > 0) s *= (1 - e.slow);
+  if (e.slowT > 0) s *= (1 - clamp(e.slow,0,.85));
   // 梦境生态链的真实效果：梦魇群聚互相加速、精英光环带动小怪（此前只记录不生效）
   if (typeof DreamEcology !== 'undefined' && typeof DreamEcology.getEcologyChain === 'function') {
     const chain = DreamEcology.getEcologyChain(e);
@@ -5293,7 +5298,11 @@ function fire_(b, t, s) {
       applyDamage(e, s.dmg * mul * Math.pow(0.84, i), dtype, b);
       if (s.stun) e.stun = Math.max(e.stun || 0, s.stun * (e.boss ? 0.4 : 1));
       if (s.splash) {
-        G.enemies.forEach(o => { if (!o.dead && !hit.has(o) && dist(o, e) < s.splash) applyDamage(o, s.dmg * mul * 0.5, dtype, b); });
+        G.enemies.forEach(o => {
+          if(o.dead || dist(o,e)>=s.splash) return;
+          if(!hit.has(o))applyDamage(o,s.dmg*mul*.5,dtype,b);
+          if(s.stun && !o.dead)o.stun=Math.max(o.stun || 0,s.stun*(o.boss ? .4 : 1));
+        });
       }
       px = e.x; py = e.y;
     });
@@ -5318,7 +5327,7 @@ function fire_(b, t, s) {
         dmg: s.dmg * mul, crit: critRoll(b), type: b.type, dtype,
         slow: s.slow || 0, freezeChance: s.freezeChance || 0, shred: s.shred || 0,
         splash: s.splash || 0, poisonStack: s.poison ? 1 : 0, poisonDps: s.poisonDps || 0, poisonMax: s.maxStack || 0,
-        r: br, color: b.def.color, src: b, life: 0,
+        poisonSpread: !!s.spread, r: br, color: b.def.color, src: b, life: 0,
       });
     }
     b.fireFx = 0.2; // 开火脉冲
@@ -5491,6 +5500,13 @@ function applyDamage(e, dmg, dtype, src, chain, silent, damageInterval) {
   }
   return d;
 }
+function inflictPoison(target,shot,potency=1) {
+  if(target.dead) return;
+  target.poison=Math.min(shot.poisonMax || 8,(target.poison || 0)+(shot.poisonStack || 1));
+  const dps=shot.poisonDps*potency;
+  if(dps>=(target.poisonDps || 0)) {target.poisonDps=dps;target.poisonSrc=shot.src;}
+  target.poisonT=Math.max(target.poisonT || 0,3.2);
+}
 function updateBullets(dt) {
   for (let i = G.bullets.length - 1; i >= 0; i--) {
     const b = G.bullets[i];
@@ -5503,14 +5519,17 @@ function updateBullets(dt) {
         applyDamage(t, b.dmg * b.crit, b.dtype, b.src);
         if (b.splash) {
           G.enemies.forEach(o => {
-            if (!o.dead && o !== t && dist(o, b) < b.splash) applyDamage(o, b.dmg * b.crit * 0.55, b.dtype, b.src);
+            if (!o.dead && o !== t && dist(o, t) < b.splash) applyDamage(o, b.dmg * b.crit * 0.55, b.dtype, b.src);
           });
           spawnParts(b.tx, b.ty, 12, '#fb7185', 3, 0.5); shakeBy(2);
         }
         if (b.poisonStack) {
-          t.poison = Math.min(b.poisonMax || 8, (t.poison || 0) + b.poisonStack);
-          t.poisonDps = Math.max(t.poisonDps || 0, b.poisonDps);
-          t.poisonT = 3.2;
+          inflictPoison(t,b);
+          if(b.poisonSpread) {
+            const nearby=G.enemies.filter(o=>o!==t && !o.dead && !o.untargetable && dist(o,t)<=90)
+              .sort((a,z)=>dist(a,t)-dist(z,t)).slice(0,3);
+            nearby.forEach(o=>inflictPoison(o,b,.5));
+          }
         }
         if (b.slow) { t.slow = Math.max(t.slow || 0, b.slow); t.slowT = 2.0; }
         if (b.freezeChance && Math.random() < b.freezeChance) t.stun = Math.max(t.stun || 0, 0.9);

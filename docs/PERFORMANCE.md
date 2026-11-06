@@ -16,7 +16,7 @@ Linux WPE 27.2 在旧 CI 的特殊现象：开始后 statFrame 固定在 9，计
 
 新场景固定内容烘焙到离屏图层，移除旧 CSS 紫色扫描叠层；动态雨雾及床头灯保留。像素缓存 4,014,080 字节，60 帧只构建一次，无逐帧背景渐变/纹理生成。`render.js` 不再调用战斗随机数。
 
-本机 Windows / Playwright1.63 / DPR1 / headless，`tests/browser.test.js` 的 180 帧压力回归：
+场景提交 `629c8b0`，本机 Windows / Playwright1.63 / DPR1 / headless，`tests/browser.test.js` 的 180 帧压力回归：
 
 | 引擎/视口 | 平均帧间隔 ms | P95 ms | JS render 平均 ms | 结束时敌人/建筑 |
 |---|---:|---:|---:|---:|

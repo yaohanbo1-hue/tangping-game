@@ -300,6 +300,7 @@ function bedMaxHp(lv) {
 }
 function setBuildingLevel(b, lv) {
   b.level = Math.max(1, Math.min(b.def.maxLv || 50, lv));
+  b.__sf=-1;
   b.maxHp = buildingMaxHp(b.def, b.level, b.branch); b.hp = b.maxHp;
 }
 function setBedLevel(lv) {
@@ -436,7 +437,9 @@ let statFrame = 0;
 function bstat(b) {
   if (b.__sf === statFrame && b.__ss) return b.__ss;
   const s = b.def.stat(b.level);
-  const base = (b.branch && b.def.branch && b.def.branch[b.branch]) ? b.def.branch[b.branch].mod(s, b) : s;
+  // Branch definitions override selected properties; omitted cadence/behaviour
+  // stays intact (poison branches previously lost both their rate and poison).
+  const base = (b.branch && b.def.branch && b.def.branch[b.branch]) ? Object.assign({},s,b.def.branch[b.branch].mod(s,b)) : s;
   if (b.runes && b.runes.length) {
     const rm = 1 + G.tech.runemaster * 0.15;
     const totals = {};
@@ -454,6 +457,8 @@ function bstat(b) {
   if (base.range != null) base.range *= techVal('focus', 0.06) * (1 + (G.fate.range || 0) + (G.fateWave.range || 0));
   if (base.dmg != null && G.prize && G.prize.dmg) base.dmg *= G.prize.dmg;
   if (base.rate != null) base.rate *= techVal('swift', 0.08);
+  if (base.slow != null) base.slow=clamp(base.slow,0,.85);
+  if (base.gravSlow != null) base.gravSlow=clamp(base.gravSlow,0,.85);
   b.__sf = statFrame; b.__ss = base;
   return base;
 }
@@ -696,7 +701,7 @@ function tryUpgrade(b) {
   if (b.level >= b.def.maxLv) { SFX.err(); return false; }
   const c = upgradeCost(b.def, b.level);
   if (!canAfford(c)) { SFX.err(); setTip('资源不足，无法升级'); return false; }
-  payCost(c); b.level++; b.invested += c.gold;
+  payCost(c); b.level++; b.invested += c.gold; b.__sf=-1;
   const nh = buildingMaxHp(b.def, b.level, b.branch);
   b.hp += nh - b.maxHp; b.maxHp = nh;
   if (!G.upgradeFx) G.upgradeFx = [];
@@ -712,7 +717,7 @@ function tryBranch(b, which) {
   const br = b.def.branch && b.def.branch[which];
   if (!br || b.branch || b.level < BRANCH_AT) { SFX.err(); return false; }
   if (!canAfford(br.cost)) { SFX.err(); setTip('资源不足，无法转职'); return false; }
-  payCost(br.cost); b.branch = which; b.invested += br.cost.gold;
+  payCost(br.cost); b.branch = which; b.invested += br.cost.gold; b.__sf=-1;
   b.maxHp *= 1.3; b.hp = b.maxHp;
   SFX.achieve(); spawnParts(b.x, b.y, 30, '#ffe066', 4);
   addText(b.x, b.y - 26, '转职：' + br.name, '#ffe066', true);
@@ -1076,7 +1081,7 @@ function spawnEnemy(type, wave, lane, summoned = false) {
 }
 function enemySpeed(e) {
   let s = e.speed;
-  if (e.slowT > 0) s *= (1 - e.slow);
+  if (e.slowT > 0) s *= (1 - clamp(e.slow,0,.85));
   // 梦境生态链的真实效果：梦魇群聚互相加速、精英光环带动小怪（此前只记录不生效）
   if (typeof DreamEcology !== 'undefined' && typeof DreamEcology.getEcologyChain === 'function') {
     const chain = DreamEcology.getEcologyChain(e);
@@ -1615,7 +1620,11 @@ function fire_(b, t, s) {
       applyDamage(e, s.dmg * mul * Math.pow(0.84, i), dtype, b);
       if (s.stun) e.stun = Math.max(e.stun || 0, s.stun * (e.boss ? 0.4 : 1));
       if (s.splash) {
-        G.enemies.forEach(o => { if (!o.dead && !hit.has(o) && dist(o, e) < s.splash) applyDamage(o, s.dmg * mul * 0.5, dtype, b); });
+        G.enemies.forEach(o => {
+          if(o.dead || dist(o,e)>=s.splash) return;
+          if(!hit.has(o))applyDamage(o,s.dmg*mul*.5,dtype,b);
+          if(s.stun && !o.dead)o.stun=Math.max(o.stun || 0,s.stun*(o.boss ? .4 : 1));
+        });
       }
       px = e.x; py = e.y;
     });
@@ -1640,7 +1649,7 @@ function fire_(b, t, s) {
         dmg: s.dmg * mul, crit: critRoll(b), type: b.type, dtype,
         slow: s.slow || 0, freezeChance: s.freezeChance || 0, shred: s.shred || 0,
         splash: s.splash || 0, poisonStack: s.poison ? 1 : 0, poisonDps: s.poisonDps || 0, poisonMax: s.maxStack || 0,
-        r: br, color: b.def.color, src: b, life: 0,
+        poisonSpread: !!s.spread, r: br, color: b.def.color, src: b, life: 0,
       });
     }
     b.fireFx = 0.2; // 开火脉冲
@@ -1813,6 +1822,13 @@ function applyDamage(e, dmg, dtype, src, chain, silent, damageInterval) {
   }
   return d;
 }
+function inflictPoison(target,shot,potency=1) {
+  if(target.dead) return;
+  target.poison=Math.min(shot.poisonMax || 8,(target.poison || 0)+(shot.poisonStack || 1));
+  const dps=shot.poisonDps*potency;
+  if(dps>=(target.poisonDps || 0)) {target.poisonDps=dps;target.poisonSrc=shot.src;}
+  target.poisonT=Math.max(target.poisonT || 0,3.2);
+}
 function updateBullets(dt) {
   for (let i = G.bullets.length - 1; i >= 0; i--) {
     const b = G.bullets[i];
@@ -1825,14 +1841,17 @@ function updateBullets(dt) {
         applyDamage(t, b.dmg * b.crit, b.dtype, b.src);
         if (b.splash) {
           G.enemies.forEach(o => {
-            if (!o.dead && o !== t && dist(o, b) < b.splash) applyDamage(o, b.dmg * b.crit * 0.55, b.dtype, b.src);
+            if (!o.dead && o !== t && dist(o, t) < b.splash) applyDamage(o, b.dmg * b.crit * 0.55, b.dtype, b.src);
           });
           spawnParts(b.tx, b.ty, 12, '#fb7185', 3, 0.5); shakeBy(2);
         }
         if (b.poisonStack) {
-          t.poison = Math.min(b.poisonMax || 8, (t.poison || 0) + b.poisonStack);
-          t.poisonDps = Math.max(t.poisonDps || 0, b.poisonDps);
-          t.poisonT = 3.2;
+          inflictPoison(t,b);
+          if(b.poisonSpread) {
+            const nearby=G.enemies.filter(o=>o!==t && !o.dead && !o.untargetable && dist(o,t)<=90)
+              .sort((a,z)=>dist(a,t)-dist(z,t)).slice(0,3);
+            nearby.forEach(o=>inflictPoison(o,b,.5));
+          }
         }
         if (b.slow) { t.slow = Math.max(t.slow || 0, b.slow); t.slowT = 2.0; }
         if (b.freezeChance && Math.random() < b.freezeChance) t.stun = Math.max(t.stun || 0, 0.9);

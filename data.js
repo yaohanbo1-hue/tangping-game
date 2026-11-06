@@ -87,7 +87,7 @@ const BUILD_DEFS = {
     statText: s => `电磁 ${s.dmg}  连锁 ${s.chain}  射程 ${s.range | 0}`,
     branch: {
       a: { name: '雷暴之眼', icon: '⛈️', desc: '连锁目标翻倍', cost: { gold: 620, soul: 16 }, mod: s => ({ dmg: s.dmg * 1.15, rate: s.rate * 1.2, range: s.range * 1.25, chain: s.chain * 2 }) },
-      b: { name: '电磁脉冲', icon: '📴', desc: '命中范围眩晕，连锁减少', cost: { gold: 620, soul: 16 }, mod: s => ({ dmg: s.dmg * 2.2, rate: s.rate * 0.8, range: s.range, chain: s.chain, stun: 0.7, splash: 70 }) },
+      b: { name: '电磁脉冲', icon: '📴', desc: '命中周围 70 范围眩晕 0.7 秒，连锁数减半', cost: { gold: 620, soul: 16 }, mod: s => ({ dmg: s.dmg * 2.2, rate: s.rate * 0.8, range: s.range, chain: Math.max(1,Math.floor(s.chain*.5)), stun: 0.7, splash: 70 }) },
     },
   },
   flame: {
@@ -98,7 +98,7 @@ const BUILD_DEFS = {
     statText: s => `火焰 ${s.dmg}/秒（+50% 灼烧残留）  范围 ${s.radius | 0}`,
     branch: {
       a: { name: '炼狱风暴', icon: '🌋', desc: '范围与灼烧大幅提升', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.8, range: s.range * 1.35, radius: s.radius * 1.6 }) },
-      b: { name: '熔岩印记', icon: '🩸', desc: '灼烧可无限叠加，伤害递增', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.3, range: s.range, radius: s.radius * 1.2, stack: true }) },
+      b: { name: '熔岩印记', icon: '🩸', desc: '持续接触叠加灼烧，最多 5 层；离开后衰减', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.3, range: s.range, radius: s.radius * 1.2, stack: true }) },
     },
   },
   repair: {
@@ -109,7 +109,7 @@ const BUILD_DEFS = {
     statText: s => `修复 ${s.heal}/秒  范围 ${s.range | 0}`,
     branch: {
       a: { name: '纳米工厂', icon: '🔬', desc: '修复速度 x2.6，范围扩大', cost: { gold: 480, soul: 13 }, mod: s => ({ heal: s.heal * 2.6, range: s.range * 1.4 }) },
-      b: { name: '护盾发生器', icon: '🛡️', desc: '改为持续附加护盾', cost: { gold: 480, soul: 13 }, mod: s => ({ heal: s.heal * 0.5, range: s.range * 1.3, shieldHeal: 18 }) },
+      b: { name: '护盾发生器', icon: '🛡️', desc: '修复减半，提供基础护盾；附近建筑每秒额外回盾 18', cost: { gold: 480, soul: 13 }, mod: s => ({ heal: s.heal * 0.5, range: s.range * 1.3, shield: 70+s.heal*2, shieldHeal: 18 }) },
     },
   },
   shield: {
@@ -141,7 +141,7 @@ const BUILD_DEFS = {
     stat: lv => ({ dmg: 9 * 1.075 + 3.6 * 1.075 * (lv - 1), rate: 1.15 + 0.09 * (lv - 1), range: 400 + 16 * (lv - 1), poison: 1, poisonDps: 7 * 1.075 + 2.4 * 1.075 * (lv - 1), maxStack: 8 }),
     statText: s => `剧毒 ${s.dmg}  毒伤 ${s.poisonDps}/秒/层  上限 ${s.maxStack} 层  射程 ${s.range | 0}`,
     branch: {
-      a: { name: '瘟疫之源', icon: '🦠', desc: '毒伤 x2.2，毒层上限 +4，可传染邻近敌人', cost: { gold: 620, soul: 18 }, mod: s => ({ dmg: s.dmg * 1.15, poisonDps: s.poisonDps * 2.2, maxStack: s.maxStack + 4, spread: true, range: s.range }) },
+      a: { name: '瘟疫之源', icon: '🦠', desc: '毒伤 x2.2、毒层上限 +4；传染 90 范围内最近 3 个目标（半毒伤）', cost: { gold: 620, soul: 18 }, mod: s => ({ dmg: s.dmg * 1.15, poisonDps: s.poisonDps * 2.2, maxStack: s.maxStack + 4, spread: true, range: s.range }) },
       b: { name: '腐蚀炮', icon: '☠️', desc: '伤害 x2.6，毒液附带破甲（降低全抗性）', cost: { gold: 620, soul: 18 }, mod: s => ({ dmg: s.dmg * 2.6, poisonDps: s.poisonDps * 0.7, maxStack: s.maxStack, shred: 0.9, range: s.range * 1.1 }) },
     },
   },
