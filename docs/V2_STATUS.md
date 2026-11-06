@@ -15,6 +15,7 @@
 - 战场：新 scene-art.js 已接入雨窗、石砖、积水、木地板、门体与破损/修复、床头灯与寝具；原生及 844×390 图像见 ART_DIRECTION.md。真实 Chromium Canvas 通过缓存/动画/降低动态及不改战斗状态检查。建筑、怪物和 UI 仍是下一阶段重制范围。
 - 场景提交 `629c8b0` 的 Linux [42134003770](https://github.com/yaohanbo1-hue/tangping-game/actions/runs/42134003770) build/browser 均通过，包含真实 Canvas 新场景回归。
 - 建筑机制增加 451 项回归（Node 合计 1925 项）。复现后修复毒塔基础属性丢失/传染、独立维修盾、范围眩晕、导弹溅射中心及高等级减速倒退；详细范围和限制见 BUILDING_AUDIT.md。六场真实运营重跑全部通关，最新记录见 CAMPAIGN_VALIDATION.md；新提交仍需 CI 验证。
+- 分支修复后 54 场固定预算新旧 HP 对照重跑正常，最新原始记录已更新 balance-simulation.json；旧模型只更换 HP 曲线。上述 672968c 的历史 CI 结果不能代替新提交验证，c2acaa2 CI 待核验。
 
 ## 已接入但仍需增强验证
 
