@@ -1,0 +1,38 @@
+const assert=require('node:assert/strict');
+const {createGame}=require('./runtime');
+let checks=0;
+const ok=(value,label)=>{assert.ok(value,label);checks++;};
+const g=createGame(84), run=code=>g.run(code);
+run('newGame()');
+for(let lv=1;lv<=8;lv++) ok(run(`EconomyBalance.production(${lv})`)===2**(lv-1),'early production unchanged');
+let previous=0;
+for(let lv=8;lv<50;lv++) {
+  const payback=run(`upgradeCost(BUILD_DEFS.miner,${lv}).gold/(3*(EconomyBalance.production(${lv+1})-EconomyBalance.production(${lv})))`);
+  ok(Number.isFinite(payback) && payback>previous,'late payback grows at level '+lv);previous=payback;
+}
+ok(run('EconomyBalance.interest(1e12,1e12,100)')===1800,'bank cannot compound independently of production');
+ok(run('EconomyBalance.interest(1000,100,100)')===15,'interest respects savings cap');
+ok(run('EconomyBalance.interest(0,100,100)')===0,'no bank creates no interest');
+run('G.souls=100; for(let i=0;i<10;i++)buyTech("firepower");');
+ok(run('G.tech.firepower===3 && G.souls===85'),'wave cap blocks spend and keeps actual purchase cost');
+run('G.tech.firepower=10; G.souls=10000; buyTech("annihilation");');
+ok(run('G.tech.annihilation===0'),'tier four locked before its wave');
+run('G.wave=30; buyTech("annihilation"); buyTech("annihilation");');
+ok(run('G.tech.annihilation===1'),'new tier opens one level');
+run('G.wave=60; for(let i=0;i<10;i++)buyTech("annihilation");');
+ok(run('G.tech.annihilation===TECH_DEFS.annihilation.max'),'all levels available by final wave');
+run('newGame(); G.admin=true; G.souls=10000; for(let i=0;i<12;i++)buyTech("firepower");');
+ok(run('G.tech.firepower===10'),'administrator keeps early full technology');
+run('newGame(); G.wave=1; G.tech.firepower=10; globalThis.oldTechSave=SaveSystem.capture(); newGame(oldTechSave);');
+ok(run('G.tech.firepower===10'),'legacy technology above new cap is retained');
+run('buildTechPanel()');
+const rows=g.elements.get('techList').children.filter(el=>el.className==='tech');
+ok(rows.length===run('TECH_KEYS.length'),'all technology rows are mounted');
+ok(rows.some(el=>el.dataset.k==='annihilation'),'tier four is reachable in the real panel');
+run(`newGame(); G.gold=1000; G.fate.hpMul=2; tryBuild('turret',0,0);
+  G.tech.runelord=4;
+  G.buildings[0].runes=Array.from({length:6},(_,i)=>({id:'stack'+i,lv:0,affixes:[{k:'dmg',v:20}]}));statFrame++;`);
+ok(run('Math.abs(bstat(G.buildings[0]).dmg/BUILD_DEFS.turret.stat(1).dmg-2.2)<1e-9'),'same rune affixes add advertised bonuses');
+ok(run('G.buildings[0].hp===buildingMaxHp(BUILD_DEFS.turret,1)'),'new structures inherit earned story vitality');
+ok(g.errors.length===0,g.errors.join('\n'));
+console.log('Economy regression: '+checks+' checks passed');

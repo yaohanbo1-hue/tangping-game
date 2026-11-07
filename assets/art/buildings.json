@@ -1,0 +1,1605 @@
+{
+  "schema_version": 1,
+  "art_direction_brief": "docs/BUILDING_ART.md",
+  "source": {
+    "kind": "original-procedural-canvas",
+    "url_or_tool": "building-art.js",
+    "creator": "Codex for yaohanbo1-hue/tangping-game",
+    "license": "MIT (repository LICENSE)",
+    "attribution": "No external raster art used."
+  },
+  "assets": [
+    {
+      "id": "miner-base",
+      "type": "miner",
+      "branch": null,
+      "name": "金币矿机",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "miner-a",
+      "type": "miner",
+      "branch": "a",
+      "name": "深井矿机",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "miner-b",
+      "type": "miner",
+      "branch": "b",
+      "name": "精炼厂",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "generator-base",
+      "type": "generator",
+      "branch": null,
+      "name": "梦境发电机",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "generator-a",
+      "type": "generator",
+      "branch": "a",
+      "name": "核能核心",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "generator-b",
+      "type": "generator",
+      "branch": "b",
+      "name": "特斯拉线圈",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "turret-base",
+      "type": "turret",
+      "branch": null,
+      "name": "机枪炮塔",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "turret-a",
+      "type": "turret",
+      "branch": "a",
+      "name": "加特林",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "turret-b",
+      "type": "turret",
+      "branch": "b",
+      "name": "狙击塔",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "frost-base",
+      "type": "frost",
+      "branch": null,
+      "name": "冰霜塔",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "frost-a",
+      "type": "frost",
+      "branch": "a",
+      "name": "绝对零度",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "frost-b",
+      "type": "frost",
+      "branch": "b",
+      "name": "破冰者",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "laser-base",
+      "type": "laser",
+      "branch": null,
+      "name": "激光塔",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "laser-a",
+      "type": "laser",
+      "branch": "a",
+      "name": "聚变激光",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "laser-b",
+      "type": "laser",
+      "branch": "b",
+      "name": "散射棱镜",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "tesla-base",
+      "type": "tesla",
+      "branch": null,
+      "name": "电磁塔",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "tesla-a",
+      "type": "tesla",
+      "branch": "a",
+      "name": "雷暴之眼",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "tesla-b",
+      "type": "tesla",
+      "branch": "b",
+      "name": "电磁脉冲",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "flame-base",
+      "type": "flame",
+      "branch": null,
+      "name": "火焰喷射器",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "flame-a",
+      "type": "flame",
+      "branch": "a",
+      "name": "炼狱风暴",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "flame-b",
+      "type": "flame",
+      "branch": "b",
+      "name": "熔岩印记",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "repair-base",
+      "type": "repair",
+      "branch": null,
+      "name": "维修台",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "repair-a",
+      "type": "repair",
+      "branch": "a",
+      "name": "纳米工厂",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "repair-b",
+      "type": "repair",
+      "branch": "b",
+      "name": "护盾发生器",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "shield-base",
+      "type": "shield",
+      "branch": null,
+      "name": "护盾核心",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "shield-a",
+      "type": "shield",
+      "branch": "a",
+      "name": "群体力场",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "shield-b",
+      "type": "shield",
+      "branch": "b",
+      "name": "反射力场",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "amp-base",
+      "type": "amp",
+      "branch": null,
+      "name": "聚能塔",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "amp-a",
+      "type": "amp",
+      "branch": "a",
+      "name": "超频矩阵",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "amp-b",
+      "type": "amp",
+      "branch": "b",
+      "name": "全域增幅",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "poison-base",
+      "type": "poison",
+      "branch": null,
+      "name": "毒液喷射塔",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "poison-a",
+      "type": "poison",
+      "branch": "a",
+      "name": "瘟疫之源",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "poison-b",
+      "type": "poison",
+      "branch": "b",
+      "name": "腐蚀炮",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "sonic-base",
+      "type": "sonic",
+      "branch": null,
+      "name": "声波共振塔",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "sonic-a",
+      "type": "sonic",
+      "branch": "a",
+      "name": "次声炮",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "sonic-b",
+      "type": "sonic",
+      "branch": "b",
+      "name": "共振尖啸",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "missile-base",
+      "type": "missile",
+      "branch": null,
+      "name": "导弹发射塔",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "missile-a",
+      "type": "missile",
+      "branch": "a",
+      "name": "集束导弹",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "missile-b",
+      "type": "missile",
+      "branch": "b",
+      "name": "战术核弹",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "gravity-base",
+      "type": "gravity",
+      "branch": null,
+      "name": "引力奇点塔",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "gravity-a",
+      "type": "gravity",
+      "branch": "a",
+      "name": "黑洞",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "gravity-b",
+      "type": "gravity",
+      "branch": "b",
+      "name": "奇点坍缩",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "prism-base",
+      "type": "prism",
+      "branch": null,
+      "name": "棱镜分裂塔",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "prism-a",
+      "type": "prism",
+      "branch": "a",
+      "name": "万花筒",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "prism-b",
+      "type": "prism",
+      "branch": "b",
+      "name": "聚焦棱镜",
+      "path": "building-art.js#chassis+head",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis + 96x96 rotatable head",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "actual fire and impact events",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "bank-base",
+      "type": "bank",
+      "branch": null,
+      "name": "梦境银行",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "bank-a",
+      "type": "bank",
+      "branch": "a",
+      "name": "投资银行",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    },
+    {
+      "id": "bank-b",
+      "type": "bank",
+      "branch": "b",
+      "name": "灵魂交易所",
+      "path": "building-art.js#chassis",
+      "status": "integrated",
+      "technical": {
+        "dimensions": "80x80 chassis",
+        "anchor": "entity centre",
+        "alpha": true,
+        "frames": "procedural",
+        "filtering": "native Canvas"
+      },
+      "states": [
+        "idle",
+        "working",
+        "hit",
+        "damaged",
+        "repair",
+        "upgrade",
+        "selected",
+        "range via render.js",
+        "build preview"
+      ],
+      "attack": "support production / healing / shielding",
+      "variants": [
+        "Lv1-11",
+        "Lv12-29 reinforced feet",
+        "Lv30-50 side armour"
+      ],
+      "collision": "unchanged existing grid and entity geometry"
+    }
+  ],
+  "verification": {
+    "native_scale_reviewed": true,
+    "in_engine_reviewed": true,
+    "technical_checks_passed": true,
+    "approved_by": "Codex under delegated art direction; building family only",
+    "command": "node tests/building-art.test.js",
+    "evidence": "artifacts/buildings/validation.json; docs/BUILDING_ART.md"
+  }
+}

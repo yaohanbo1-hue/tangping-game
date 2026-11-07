@@ -1,0 +1,16 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs'), path = require('node:path'), os = require('node:os');
+const { execFileSync } = require('node:child_process');
+const { Script } = require('node:vm');
+const root = path.resolve(__dirname, '..');
+execFileSync(process.execPath, [path.join(root, 'build.js')], { cwd: os.tmpdir(), stdio: 'pipe' });
+const first = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+assert.equal(first, fs.readFileSync(path.join(root, 'shoudengren.html'), 'utf8'));
+assert.ok(!first.includes('\r'), 'output uses canonical LF newlines');
+assert.ok(!first.includes('<!--SCRIPT-->') && !first.includes('<!--VERSION-->'));
+const script = first.match(/<script>([\s\S]*?)<\/script>/);
+assert.ok(script, 'single-file build contains the game');
+new Script(script[1], { filename: 'index.html' });
+execFileSync(process.execPath, [path.join(root, 'build.js')], { cwd: root, stdio: 'pipe' });
+assert.equal(first, fs.readFileSync(path.join(root, 'index.html'), 'utf8'), 'build is byte-identical across working directories');
+console.log('Portable, deterministic single-file build passed');

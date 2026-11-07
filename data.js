@@ -27,7 +27,7 @@ const BUILD_DEFS = {
     name: '金币矿机', icon: '⛏️', key: '1', color: '#f5c542',
     cost: { gold: 60, power: 10 }, upkeep: 1.0, hp: 180, maxLv: 50,
     desc: '持续挖掘金币，是整条防线的经济支柱。',
-    stat: lv => ({ gold: 3 * Math.pow(2, lv - 1) }),
+    stat: lv => ({ gold: 3 * EconomyBalance.production(lv) }),
     statText: s => `产出 ${fmt(s.gold)} 金币/秒`,
     branch: {
       a: { name: '深井矿机', icon: '🕳️', desc: '产量大幅提升', cost: { gold: 400, soul: 12 }, mod: s => ({ gold: s.gold * 2.3 }) },
@@ -87,18 +87,18 @@ const BUILD_DEFS = {
     statText: s => `电磁 ${s.dmg}  连锁 ${s.chain}  射程 ${s.range | 0}`,
     branch: {
       a: { name: '雷暴之眼', icon: '⛈️', desc: '连锁目标翻倍', cost: { gold: 620, soul: 16 }, mod: s => ({ dmg: s.dmg * 1.15, rate: s.rate * 1.2, range: s.range * 1.25, chain: s.chain * 2 }) },
-      b: { name: '电磁脉冲', icon: '📴', desc: '命中范围眩晕，连锁减少', cost: { gold: 620, soul: 16 }, mod: s => ({ dmg: s.dmg * 2.2, rate: s.rate * 0.8, range: s.range, chain: s.chain, stun: 0.7, splash: 70 }) },
+      b: { name: '电磁脉冲', icon: '📴', desc: '命中周围 70 范围眩晕 0.7 秒，连锁数减半', cost: { gold: 620, soul: 16 }, mod: s => ({ dmg: s.dmg * 2.2, rate: s.rate * 0.8, range: s.range, chain: Math.max(1,Math.floor(s.chain*.5)), stun: 0.7, splash: 70 }) },
     },
   },
   flame: {
     name: '火焰喷射器', icon: '🔥', key: '7', color: '#ff8c42',
     cost: { gold: 130, power: 35 }, upkeep: 2.4, hp: 240, maxLv: 50, tower: true, dmgType: 'fire',
     desc: '近距离范围灼烧，堵门利器；脱离火舌后仍会残留 1.4 秒燃烧。',
-    stat: lv => ({ dmg: 10 + 5 * (lv - 1), range: 300 + 14 * (lv - 1), radius: 110 + 8 * (lv - 1) }),
+    stat: lv => ({ dmg: 10 + 5 * (lv - 1), rate: 1, range: 300 + 14 * (lv - 1), radius: 110 + 8 * (lv - 1) }),
     statText: s => `火焰 ${s.dmg}/秒（+50% 灼烧残留）  范围 ${s.radius | 0}`,
     branch: {
       a: { name: '炼狱风暴', icon: '🌋', desc: '范围与灼烧大幅提升', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.8, range: s.range * 1.35, radius: s.radius * 1.6 }) },
-      b: { name: '熔岩印记', icon: '🩸', desc: '灼烧可无限叠加，伤害递增', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.3, range: s.range, radius: s.radius * 1.2, stack: true }) },
+      b: { name: '熔岩印记', icon: '🩸', desc: '持续接触叠加灼烧，最多 5 层；离开后衰减', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.3, range: s.range, radius: s.radius * 1.2, stack: true }) },
     },
   },
   repair: {
@@ -109,7 +109,7 @@ const BUILD_DEFS = {
     statText: s => `修复 ${s.heal}/秒  范围 ${s.range | 0}`,
     branch: {
       a: { name: '纳米工厂', icon: '🔬', desc: '修复速度 x2.6，范围扩大', cost: { gold: 480, soul: 13 }, mod: s => ({ heal: s.heal * 2.6, range: s.range * 1.4 }) },
-      b: { name: '护盾发生器', icon: '🛡️', desc: '改为持续附加护盾', cost: { gold: 480, soul: 13 }, mod: s => ({ heal: s.heal * 0.5, range: s.range * 1.3, shieldHeal: 18 }) },
+      b: { name: '护盾发生器', icon: '🛡️', desc: '修复减半，提供基础护盾；附近建筑每秒额外回盾 18', cost: { gold: 480, soul: 13 }, mod: s => ({ heal: s.heal * 0.5, range: s.range * 1.3, shield: 70+s.heal*2, shieldHeal: 18 }) },
     },
   },
   shield: {
@@ -141,7 +141,7 @@ const BUILD_DEFS = {
     stat: lv => ({ dmg: 9 * 1.075 + 3.6 * 1.075 * (lv - 1), rate: 1.15 + 0.09 * (lv - 1), range: 400 + 16 * (lv - 1), poison: 1, poisonDps: 7 * 1.075 + 2.4 * 1.075 * (lv - 1), maxStack: 8 }),
     statText: s => `剧毒 ${s.dmg}  毒伤 ${s.poisonDps}/秒/层  上限 ${s.maxStack} 层  射程 ${s.range | 0}`,
     branch: {
-      a: { name: '瘟疫之源', icon: '🦠', desc: '毒伤 x2.2，毒层上限 +4，可传染邻近敌人', cost: { gold: 620, soul: 18 }, mod: s => ({ dmg: s.dmg * 1.15, poisonDps: s.poisonDps * 2.2, maxStack: s.maxStack + 4, spread: true, range: s.range }) },
+      a: { name: '瘟疫之源', icon: '🦠', desc: '毒伤 x2.2、毒层上限 +4；传染 90 范围内最近 3 个目标（半毒伤）', cost: { gold: 620, soul: 18 }, mod: s => ({ dmg: s.dmg * 1.15, poisonDps: s.poisonDps * 2.2, maxStack: s.maxStack + 4, spread: true, range: s.range }) },
       b: { name: '腐蚀炮', icon: '☠️', desc: '伤害 x2.6，毒液附带破甲（降低全抗性）', cost: { gold: 620, soul: 18 }, mod: s => ({ dmg: s.dmg * 2.6, poisonDps: s.poisonDps * 0.7, maxStack: s.maxStack, shred: 0.9, range: s.range * 1.1 }) },
     },
   },
@@ -175,7 +175,7 @@ const BUILD_DEFS = {
     statText: s => `拉扯力 ${s.pull | 0}  减速 ${Math.round(s.gravSlow * 100)}%  微伤 ${s.dmg}  射程 ${s.range | 0}`,
     branch: {
       a: { name: '黑洞', icon: '🌑', desc: '拉扯力 x2.2、减速 +25%，范围 +20%', cost: { gold: 680, soul: 20 }, mod: s => ({ dmg: s.dmg, rate: 1, range: s.range * 1.2, pull: s.pull * 2.2, gravSlow: Math.min(0.85, s.gravSlow + 0.25), gravity: true }) },
-      b: { name: '奇点坍缩', icon: '💫', desc: '伤害 x6、拉扯力 +30%（放弃减速控场）', cost: { gold: 680, soul: 20 }, mod: s => ({ dmg: s.dmg * 6, rate: 1, range: s.range, pull: s.pull * 1.3, gravSlow: s.gravSlow, gravity: true, collapse: 0.5 }) },
+      b: { name: '奇点坍缩', icon: '💫', desc: '伤害 x6、拉扯力 +30%（放弃减速控场）', cost: { gold: 680, soul: 20 }, mod: s => ({ dmg: s.dmg * 6, rate: 1, range: s.range, pull: s.pull * 1.3, gravSlow: 0, gravity: true }) },
     },
   },
   prism: {
@@ -415,7 +415,7 @@ Object.assign(ENEMY_DEFS, {
     tip: '反弹 28% 远程伤害给开火的炮塔' },
   thief: { name: '窃金梦魇', icon: '🦠', hp: 140, speed: 62, dmg: 9, gold: 20, soul: 3, cost: 36, r: 17, color: '#facc15',
     steal: 0.06, weak: { toxic: 0.5 }, res: { frost: 0.3 },
-    tip: '每次攻击窃取你当前金币的 6%' },
+    tip: '每次攻击窃取当前金币的 6%（四舍五入）再加 2 金币' },
   chronos: { name: '时空梦魇', icon: '⏳', hp: 230, speed: 30, dmg: 10, gold: 30, soul: 5, cost: 48, r: 22, color: '#a78bfa',
     haste: { range: 260, mul: 1.5 }, weak: { shock: 0.5 }, res: { frost: 0.45 },
     tip: '光环内友军移速 +50%' },
@@ -441,7 +441,8 @@ Object.assign(ENEMY_DEFS, {
   wraith: { name: '怨灵', icon: '👤', hp: 100, speed: 48, dmg: 11, gold: 17, soul: 3, cost: 28, r: 18, color: '#94a3b8', curse: { dur: 6, dps: 26, r: 95 }, weak: { fire: 0.5 }, res: { kinetic: 0.35 } },
   juggernaut: { name: '战争机器', icon: '🤖', hp: 900, speed: 18, dmg: 45, gold: 55, soul: 8, cost: 90, r: 30, color: '#78716c', buildingBonus: 2.2, res: { kinetic: 0.5, fire: 0.4 }, weak: { energy: 0.5 } },
   swarm: { name: '梦魇虫群', icon: '🐛', hp: 26, speed: 92, dmg: 4, gold: 4, soul: 1, cost: 8, r: 11, color: '#bef264', swarm: true, weak: { fire: 0.6 } },
-  leech: { name: '寄生体', icon: '🪱', hp: 90, speed: 54, dmg: 6, gold: 16, soul: 3, cost: 26, r: 16, color: '#84cc16', parasite: { dps: 22, dur: 8 }, weak: { fire: 0.5 }, res: { frost: 0.4 } },
+  leech: { name: '寄生体', icon: '🪱', hp: 90, speed: 54, dmg: 6, gold: 16, soul: 3, cost: 26, r: 16, color: '#84cc16', parasite: { dps: 22, dur: 8 }, weak: { fire: 0.5 }, res: { frost: 0.4 },
+    tip: '260 范围内锁定炮塔，0.6 秒前摇后持续吸取 8 秒；眩晕、冻结或击退可打断，重新蓄力需 3 秒' },
   warden: { name: '守望者', icon: '👁️', hp: 220, speed: 30, dmg: 12, gold: 28, soul: 4, cost: 42, r: 22, color: '#38bdf8', ward: { shield: 0.3, r: 150 }, res: { energy: 0.45 }, weak: { shock: 0.5 } },
   reaper: { name: '收割者', icon: '⚔️', hp: 260, speed: 44, dmg: 30, gold: 34, soul: 5, cost: 50, r: 23, color: '#dc2626', buildingBonus: 3.0, weak: { frost: 0.45 } },
   frostbane: { name: '霜噬兽', icon: '🐺', hp: 190, speed: 50, dmg: 18, gold: 25, soul: 4, cost: 40, r: 21, color: '#a5f3fc', freezeTower: { r: 170, dur: 4, cd: 11 }, res: { frost: 0.75 }, weak: { fire: 0.6 } },

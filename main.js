@@ -22,7 +22,7 @@ function toCanvas(e) {
 /* ------------------------------------------------------------------
  * 指针输入（桌面鼠标 + 手机触摸共用一套逻辑）
  *   桌面：移动预览 + 左键操作 + 右键取消
- *   手机：轻触等同左键（浏览器会为轻触合成 click，所以点按逻辑只写一份）；
+ *   手机：在 pointerup 结算轻触，抑制随后兼容 click，避免拖动后漏点或重复建造；
  *         触摸拖动时同步悬停预览（否则看不到放置预览）；
  *         长按 520ms 取消当前选择，替代桌面端的右键。
  *   统一用 Pointer Events：iOS Safari 13+ / Android Chromium / 华为浏览器 / 微信 X5 都支持。
@@ -48,7 +48,7 @@ function handleCanvasTap(x, y) {
   if (occ && occ !== 'bed') { selected = occ; selectedBuildKey = null; syncCards(); return; }
   if (selectedBuildKey) {
     if (Cmd.build(selectedBuildKey, cell.c, cell.r)) {   // 经命令层派发（联机时客机只发意图）
-      if (!canAfford(BUILD_DEFS[selectedBuildKey].cost)) { selectedBuildKey = null; syncCards(); }
+      if (!G.admin && G.gold < BUILD_DEFS[selectedBuildKey].cost.gold) { selectedBuildKey = null; syncCards(); }
     }
     return;
   }
@@ -58,7 +58,10 @@ function clearHold() { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = 
 cv.addEventListener('mousemove', e => { const p = toCanvas(e); applyCanvasPointer(p.x, p.y); });
 cv.addEventListener('mouseleave', () => { hoverCell = null; mouse.x = -999; });
 cv.addEventListener('pointerdown', e => {
-  if (e.pointerType !== 'touch') return;      // 鼠标/触控板继续走下面的 click
+  if (e.pointerType !== 'touch') {
+    _lastTouchAt = 0; _holdFired = false; clearHold(); _holdStart = null;
+    return;      // 鼠标/触控板继续走下面的 click
+  }
   _lastTouchAt = Date.now();
   SFX.init();
   const p = toCanvas(e);
@@ -80,11 +83,28 @@ cv.addEventListener('pointermove', e => {
     _holdStart.moved = true; clearHold();
   }
 });
-cv.addEventListener('pointerup', e => { if (e.pointerType !== 'touch') return; clearHold(); _holdStart = null; });
-cv.addEventListener('pointercancel', e => { if (e.pointerType !== 'touch') return; clearHold(); _holdStart = null; hoverCell = null; });
+cv.addEventListener('pointerup', e => {
+  if (e.pointerType !== 'touch') return;
+  _lastTouchAt = Date.now();
+  const tapped = _holdStart && !_holdStart.moved && !_holdFired;
+  _holdFired = true;
+  clearHold(); _holdStart = null;
+  if (tapped) {
+    const p = toCanvas(e);
+    applyCanvasPointer(p.x, p.y);
+    handleCanvasTap(p.x, p.y);
+  }
+});
+cv.addEventListener('pointercancel', e => {
+  if (e.pointerType !== 'touch') return;
+  _lastTouchAt = Date.now();
+  _holdFired = true;
+  clearHold(); _holdStart = null; hoverCell = null;
+});
 cv.addEventListener('click', e => {
   SFX.init();
-  if (_holdFired) { _holdFired = false; return; }   // 长按已经取消过了，别把抬手当成点按
+  const touchClick = e.pointerType === 'touch' || e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents;
+  if (touchClick || _holdFired || Date.now() - _lastTouchAt < 800) { _holdFired = false; return; }
   const p = toCanvas(e);
   handleCanvasTap(p.x, p.y);
 });
@@ -108,7 +128,7 @@ window.addEventListener('keydown', e => {
   if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
   // 焦点停在按钮/链接上时，空格回车等让给按钮自身触发；但 ESC 必须始终生效，
   // 否则鼠标点完任意按钮（焦点留在按钮上）再按 ESC 就无法关面板/取消选择
-  if (target && e.key !== 'Escape' &&
+  if (target && (e.key === ' ' || e.key === 'Enter') &&
     (/^(BUTTON|A)$/.test(target.tagName) || (target.closest && target.closest('[role="button"]')))) return;
   // 保留浏览器的 Ctrl/Alt/Meta 系统快捷键（例如 Ctrl+S 保存网页、Ctrl+P 打印）。
   if (e.ctrlKey || e.altKey || e.metaKey) return;
@@ -135,7 +155,7 @@ window.addEventListener('keydown', e => {
   if (k === 'p' || k === 'P') { paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸'; return; }
   const sk = SKILL_MAP[k.toLowerCase()];
   if (sk) { Cmd.skill(sk); return; }
-  const bk = BUILD_KEYS.find(key => BUILD_DEFS[key].key === k);
+  const bk = BUILD_KEYS.find(key => BUILD_DEFS[key].key.toLowerCase() === k.toLowerCase());
   if (bk) { selectBuild(bk); return; }
   if (k === 'u' || k === 'U') { Cmd.upgradeSelection(selected); return; }
   if (k === 'x' || k === 'X') { Cmd.sellSelection(selected); return; }
@@ -179,6 +199,7 @@ function bindUI() {
     if (storyDialog && storyDialog.dataset.inputLocked === 'true') return;
     paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸';
   };
+  $('btnStoryPlayback').onclick = () => StoryFlow.setPlayback(!StoryFlow.playback);
   $('btnSound').onclick = () => Music.setSfx(!SFX.on);
   $('btnSpeed').onclick = () => { timeScale = timeScale === 1 ? 2 : timeScale === 2 ? 3 : 1; $('btnSpeed').textContent = timeScale + '×'; };
   $('btnSave').onclick = () => toggleSavePanel();
@@ -296,7 +317,7 @@ function buildHelp() {
       if (d.flying) sp.push('飞行·无视门'); if (d.stealth) sp.push('隐身'); if (d.heal) sp.push('治疗光环');
       if (d.burrow) sp.push('钻地·无视门'); if (d.emp) sp.push('EMP瘫痪'); if (d.mimic) sp.push('拟态');
       if (d.curse) sp.push('亡语诅咒'); if (d.parasite) sp.push('寄生'); if (d.ward) sp.push('守望护盾');
-      if (d.revive) sp.push('亡魂复活'); if (d.freezeTower) sp.push('冻结炮塔'); if (d.swarm) sp.push('群体');
+      if (d.revive) sp.push('残骸复苏·可打断'); if (d.freezeTower) sp.push('冻缓炮塔'); if (d.swarm) sp.push('群体');
       if (d.buildingBonus) sp.push('建筑克星x' + d.buildingBonus); if (d.devour) sp.push('吞噬');
       if (d.summon) sp.push('召唤'); if (d.split) sp.push('分裂'); if (d.explode) sp.push('自爆');
       if (d.shieldself) sp.push('自带护盾'); if (d.vamp) sp.push('吸血'); if (d.frenzy) sp.push('残血狂暴');
@@ -305,11 +326,12 @@ function buildHelp() {
     '</div>' +
     '<h4>经济规则</h4><div class="hnote">' +
     '<b>所有建筑</b>：每升 1 级，花费 = 上一级的 <b>2 倍</b><br>' +
-    '<b>床 / 矿机</b>：金币产出同样是每级 <b>2 倍</b> —— 成本与产出同步翻倍，' +
-    '因此<b>回本周期恒定</b>（床约 35 秒、矿机约 20 秒），什么时候升都不亏，但等级越高占用资金越大<br>' +
+    '<b>床 / 矿机</b>：Lv1—8 产出每级 <b>2 倍</b>，此后每级 <b>1.8 倍</b>。' +
+    '后期投资的回本时间逐渐增加，需要在扩产与防御间取舍<br>' +
     '<b>炮塔 / 门 / 其他</b>：属性按<b>原线性设计</b>成长，但成本同样翻倍 —— ' +
     '所以它们的升级性价比会随等级下降，高级升级是<b>奢侈品</b>，通常优先铺数量<br>' +
-    '<b>结论</b>：金币靠升床/矿机滚雪球，火力靠多建塔而非硬升一座' +
+    '<b>银行</b>：每波利息最多为存款15%，且不超过当前18秒产出（最低上限60金币）<br>' +
+    '<b>科技</b>：第5/15/30波开启第二/三/四层，等级上限随波次推进' +
     '</div>' +
     '<h4>电力规则</h4><div class="hnote">' +
     '<b>开局 0 金币、0 电量</b> —— 一切都得从零攒起<br>' +
@@ -547,10 +569,21 @@ refitAll();
 let last = performance.now();
 const FIXED_DT = 1 / 60;   // 固定模拟步长（联机/复现的前提：模拟结果与帧率无关）
 let simAcc = 0;
+function resetFrameClock() {
+  last = performance.now();
+  simAcc = 0;
+  clearHold(); _holdStart = null; _holdFired = false;
+  hoverCell = null; mouse.x = -999;
+}
+// Visibility is separate from the player/story pause, so returning cannot dismiss a choice
+// or undo a manual pause. Discard elapsed wall time instead of catching up the battle.
+document.addEventListener('visibilitychange', resetFrameClock);
+window.addEventListener('pageshow', resetFrameClock);
 function loop(now) {
   // 先把下一帧排上：任何一帧里抛出的异常都不会再让主循环「静默死掉」——
   // 之前 render() 里一个 NaN 半径（过载爆轰的 boom 缺 max 字段）就能把整个游戏永久冻结。
   requestAnimationFrame(loop);
+  if (document.hidden) { last = now; simAcc = 0; return; }
   let dt = (now - last) / 1000; last = now;
   if (!isFinite(dt) || dt < 0) dt = 0;
   dt = Math.min(dt, 0.25);          // 切后台回来不要一次追几百帧

@@ -1,10 +1,12 @@
 const fs = require('fs');
 const path = require('path');
-const files = ['story.js', 'data.js', 'names.js', 'core.js', 'save.js', 'net.js', 'dream.js', 'quest.js', 'render.js', 'ui.js', 'main.js'];
-const js = files.map(f => '/* ==== ' + f + ' ==== */\n' + fs.readFileSync(f, 'utf8')).join('\n');
-const version = fs.readFileSync('VERSION', 'utf8').trim();
+// One canonical output on Windows/Linux, including when invoked outside the repo.
+const read = file => fs.readFileSync(path.join(__dirname, file), 'utf8').replace(/\r\n?/g, '\n');
+const files = ['story.js', 'data.js', 'names.js', 'balance.js', 'combat.js', 'enemy-actions.js', 'core.js', 'campaign.js', 'save.js', 'net.js', 'dream.js', 'quest.js', 'scene-art.js', 'building-art.js', 'render.js', 'ui.js', 'main.js'];
+const js = files.map(f => '/* ==== ' + f + ' ==== */\n' + read(f)).join('\n');
+const version = read('VERSION').trim();
 if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('VERSION must use MAJOR.MINOR.PATCH format');
-const shell = fs.readFileSync('shell.html', 'utf8');
+const shell = read('shell.html');
 if (!shell.includes('<!--VERSION-->') || !shell.includes('<!--SCRIPT-->')) throw new Error('shell.html is missing a build placeholder');
 const out = shell.replace('<!--VERSION-->', version).replace('<!--SCRIPT-->', '<script>\n' + js + '\n</script>');
 const outPath = path.join(__dirname, 'shoudengren.html');

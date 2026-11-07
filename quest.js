@@ -385,6 +385,8 @@ const QuestSystem = {
 
   /** 凑齐 → 结算奖励 → 完结演出 → 推进下一章 */
   _complete(def, prog) {
+    if (prog.done) return;
+    const runStamp = G.runStamp;
     prog.done = true;
     this._s.chapters[def.id] = prog;
     // 奖励统一走 core.js 的文案解释器，避免"说了给却没给"
@@ -405,9 +407,11 @@ const QuestSystem = {
 
     // 完结演出：幕卡 → 结局对话
     setTimeout(() => {
+      if (!G || G.runStamp !== runStamp) return;
       if (typeof showActCard === 'function') showActCard(def.act, def.title, '委托完成 · 真相又近了一步');
     }, 700);
     setTimeout(() => {
+      if (!G || G.runStamp !== runStamp) return;
       if (typeof showStoryDialog === 'function') showStoryDialog(def.done);
     }, 2400);
 
@@ -415,6 +419,7 @@ const QuestSystem = {
     if (this._s.idx >= QUEST_CHAPTERS.length - 1) {
       this._s.finished = true;
       setTimeout(() => {
+      if (!G || G.runStamp !== runStamp) return;
         if (typeof showStoryDialog === 'function') {
           showStoryDialog({
             speaker: '旁白',

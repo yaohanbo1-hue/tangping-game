@@ -1,0 +1,17 @@
+{
+  "name": "shoudengren-nightmare-defense",
+  "version": "1.9.2",
+  "private": true,
+  "scripts": {
+    "test": "node tests/smoke.test.js && node tests/campaign.test.js && node tests/balance.test.js && node tests/economy.test.js && node tests/combat.test.js && node tests/buildings.test.js && node tests/visual-events.test.js && node tests/enemies.test.js && node tests/enemy-abilities.test.js && node tests/refinements.test.js && node tests/build.test.js",
+    "test:campaign": "node tests/campaign-matrix.js",
+    "test:browser": "node tests/display.browser.test.js && node tests/enemy-actions.browser.test.js && node tests/browser.test.js",
+    "test:art": "node tests/scene-art.test.js && node tests/building-art.test.js",
+    "simulate": "node tests/simulate.js",
+    "profile": "node tests/profile-render.js",
+    "build": "node build.js"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}

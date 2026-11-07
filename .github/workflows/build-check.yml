@@ -14,8 +14,73 @@ jobs:
         with:
           node-version: 20
 
+      - name: 存档基线回归
+        run: node tests/smoke.test.js
+
+      - name: 纯战斗与剧情状态回归
+        run: node tests/campaign.test.js
+
+      - name: 敌人生命与无限边界回归
+        run: node tests/balance.test.js
+
+      - name: 经济、科技与真实伤害回归
+        run: |
+          node tests/economy.test.js
+          node tests/combat.test.js
+          node tests/buildings.test.js
+          node tests/visual-events.test.js
+          node tests/enemies.test.js
+          node tests/enemy-abilities.test.js
+          node tests/refinements.test.js
+          node tests/build.test.js
+
+      - name: 从零资源的完整战役与策略矩阵
+        run: node tests/campaign-matrix.js
+
+
+      - name: 可重复战斗对照模拟
+        run: node tests/simulate.js
+
+      - name: 保存模拟原始结果
+        uses: actions/upload-artifact@v4
+        with:
+          name: balance-simulation
+          path: |
+            artifacts/balance-simulation.json
+            artifacts/campaign-matrix.json
+
       - name: 构建单文件产物
         run: node build.js
 
       - name: 校验构建产物与仓库一致
         run: git diff --exit-code -- shoudengren.html index.html
+
+  browser:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: 安装固定版本浏览器测试工具
+        run: npm install --ignore-scripts --package-lock=false
+      - name: 安装浏览器
+        run: npx playwright install --with-deps chromium webkit
+      - name: 浏览器交互、触控与帧时间
+        run: |
+          node tests/scene-art.test.js
+          node tests/building-art.test.js
+          node tests/enemy-actions.browser.test.js
+          node tests/display.browser.test.js
+          node tests/browser.test.js
+      - name: 保存实际画面与帧时间
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-evidence
+          path: |
+            artifacts/browser/
+            artifacts/scene/
+            artifacts/buildings/
+            artifacts/enemies/
+            artifacts/display/

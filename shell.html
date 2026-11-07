@@ -55,14 +55,8 @@ html,body{height:100%;background:var(--bg-0);overflow:hidden;font-family:"PingFa
 body{position:fixed;inset:0;width:100%;height:100%;-webkit-user-select:none;user-select:none}
 #wrap{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform-origin:center center;background:var(--bg-1);border-radius:10px;box-shadow:0 0 60px rgba(120,80,255,.25);overflow:hidden}
 canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-/* 梦境氛围层：仅覆盖走廊区域（56–556），不遮挡 HUD 与底部操作栏 */
-#fx{position:absolute;left:0;top:56px;width:1280px;height:500px;pointer-events:none;z-index:4;
-  background:
-    radial-gradient(130% 82% at 50% 46%,transparent 42%,rgba(6,3,18,.5) 100%),
-    repeating-linear-gradient(180deg,rgba(180,160,255,.026) 0 1px,transparent 1px 3px);
-  box-shadow:inset 0 0 90px rgba(90,60,200,.1)}
-#fx::after{content:'';position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(150,120,255,.045),transparent 20%,transparent 80%,rgba(60,30,120,.06))}
+/* Scene atmosphere is drawn below entities in the cached Canvas environment. */
+#fx{display:none;pointer-events:none}
 #hud{position:absolute;left:0;top:0;width:1280px;height:56px;display:flex;align-items:center;gap:5px;padding:0 10px;
   background:linear-gradient(180deg,rgba(15,20,40,.96),rgba(12,16,32,.98));
   backdrop-filter:blur(16px) saturate(1.8);-webkit-backdrop-filter:blur(16px) saturate(1.8);
@@ -731,7 +725,7 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
   background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.075);color:#d7d0e8;font-size:8.5px;white-space:nowrap}
 .forecast-enemy i{font-style:normal}
 .forecast-boss{color:#ffd5df;border-color:rgba(248,113,133,.24);background:rgba(248,113,133,.09)}
-#forecastHint{display:none;margin-top:5px;color:#8e879f;font-size:7.5px}
+#forecastHint{display:block;margin-top:5px;color:#c1b9d3;font-size:9px;line-height:1.4}
 .bb-top{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
 .bb-name{font-size:13px;font-weight:800;color:#ffd166;letter-spacing:1px;text-shadow:0 0 12px rgba(255,209,102,.4)}
 .bb-phase{font-size:10.5px;color:#fca5a5;background:rgba(255,77,109,.18);border:1px solid rgba(255,77,109,.35);
@@ -1560,6 +1554,25 @@ body.rotated #rotBar{display:flex}
   .home-panel .diff{min-height:76px;padding-top:7px;padding-bottom:7px}.home-panel .mode{min-height:42px;padding-top:6px;padding-bottom:6px}
   .home-start-actions button{min-height:47px}.home-bottom{margin-top:8px}
 }
+/* The scaled stage must never become a programmatically scrolled viewport when a
+   focused control or scrollIntoView() reveals something inside a panel. */
+#wrap{overflow:clip}
+.card,.skill{font:inherit;color:inherit;appearance:none}
+.card:focus-visible,.skill:focus-visible{outline:2px solid #ffe0a3;outline-offset:2px}
+.access-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* Keep battle cues and readable colors; remove the measured DOM compositor cost.
+   These rules only affect CSS, leaving Canvas art and combat state identical. */
+body.simple-ui #wrap,body.simple-ui #wrap *,body.simple-ui #wrap *::before,body.simple-ui #wrap *::after{
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  box-shadow:none!important;text-shadow:none!important;filter:none!important;
+  animation:none!important;transition:none!important}
+body.simple-ui #hud,body.simple-ui #bottom{background:#141322}
+body.simple-ui .slide,body.simple-ui #detail{background:#181626}
+body.simple-ui #wavePreview,body.simple-ui #bossBar{background:rgba(20,17,31,.94)}
+/* Honor the OS motion preference even when the player chooses full lighting. */
+@media(prefers-reduced-motion:reduce){
+  #wrap *,#wrap *::before,#wrap *::after{animation:none!important;transition:none!important}
+}
 </style>
 </head>
 <body>
@@ -1631,6 +1644,7 @@ body.rotated #rotBar{display:flex}
         <button class="btn" id="btnUpTower" title="所有炮塔各升 1 级">🔫塔升</button>
         <button class="btn upmax" id="btnMaxSel" title="把选中的建筑/床/门一次性升到满级（M）">⏫满级</button>
         <button class="btn upmax" id="btnMaxAll" title="所有建筑、床、门全部升到能升的最高（Shift+M）">⏫全满</button>
+        <button class="btn" id="btnStoryPlayback" title="剧情播放开关">剧情 开</button>
         <button class="btn" id="btnSound" title="音效开关">🔊音</button>
         <button class="btn" id="btnSave" title="存档管理（K）：自动存档 / 3 个手动槽 / 导出导入">🗂存档</button>
       </div>
@@ -1838,6 +1852,11 @@ body.rotated #rotBar{display:flex}
           <div class="diffs" id="diffCards"></div>
           <div class="home-label">梦境规则</div>
           <div class="modes" id="modeCards"></div>
+          <div class="home-label">玩法体验 <small>可独立组合有限／无限、难度与试炼</small></div>
+          <div class="modes" id="experienceCards">
+            <button class="mode on" data-experience="story" type="button" aria-pressed="true"><div class="mn">剧情模式</div><div class="md">对话、抉择、镜头与四种结局</div></button>
+            <button class="mode" data-experience="combat" type="button" aria-pressed="false"><div class="mn">纯战斗模式</div><div class="md">直接布防、挑战 Boss、领奖推进</div></button>
+          </div>
           <div class="setup-summary" id="setupSummary"></div>
           <div class="loadout-head"><span>开局道具</span><span id="equipCount">0 / 3 已装备</span></div>
           <div class="equipped" id="equipRow"></div>
@@ -1895,9 +1914,11 @@ body.rotated #rotBar{display:flex}
             <label><span>战斗音效音量</span><input id="sfxVolume" type="range" min="0" max="1" step="0.01" value="0.72"><output id="sfxVolumeValue">72%</output></label>
             <button id="btnSoundHome" type="button">🔊 战斗音效：开启</button>
             <div class="access-controls" aria-label="无障碍显示设置">
+              <label>剧情播放<select id="storyPlayback"><option value="on">开</option><option value="off">关</option></select></label>
               <label>界面文字<select id="a11yText"><option value="normal">标准</option><option value="large">大字</option></select></label>
               <label>闪屏效果<select id="a11yFlash"><option value="normal">正常</option><option value="reduced">减弱</option><option value="off">关闭</option></select></label>
               <label>画面震动<select id="a11yShake"><option value="normal">正常</option><option value="reduced">减弱</option><option value="off">关闭</option></select></label>
+              <label>界面特效<select id="uiEffects"><option value="simple">流畅（推荐）</option><option value="full">完整光影</option></select></label>
             </div>
           </div>
         </details>
