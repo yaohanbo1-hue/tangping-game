@@ -1,0 +1,732 @@
+{
+  "schema_version": 1,
+  "art_direction_brief": "docs/VISUAL_POLISH.md",
+  "source": {
+    "kind": "original-procedural-canvas",
+    "url_or_tool": "enemy-art.js",
+    "creator": "Codex for yaohanbo1-hue/tangping-game",
+    "license": "MIT (repository LICENSE)",
+    "attribution": "No external raster art or enemy fonts."
+  },
+  "technical": {
+    "regular_texture": "112x112 body + hit mask",
+    "boss_texture": "160x160 body + hit mask",
+    "anchor": "existing enemy x,y",
+    "scale": "existing collision radius / 32; visual overhang only",
+    "filtering": "Canvas linear",
+    "cache": "LRU: at most 64 textures and 8,000,000 RGBA bytes",
+    "death_afterimages": "at most 40, 0.4 seconds; presentation observer resets with game object"
+  },
+  "assets": [
+    {
+      "id": "grunt",
+      "name": "梦魇",
+      "boss": false,
+      "role": "cracked hood mask",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "sprinter",
+      "name": "疾行梦魇",
+      "boss": false,
+      "role": "running hound",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "brute",
+      "name": "重甲梦魇",
+      "boss": false,
+      "role": "plated guard",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "phantom",
+      "name": "幽灵",
+      "boss": false,
+      "role": "torn veil",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "bomber",
+      "name": "自爆梦魇",
+      "boss": false,
+      "role": "lantern cage",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "healer",
+      "name": "治疗梦魇",
+      "boss": false,
+      "role": "petal eye",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "splitter",
+      "name": "分裂梦魇",
+      "boss": false,
+      "role": "dual-faced crawler",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "bulwark",
+      "name": "盾卫梦魇",
+      "boss": false,
+      "role": "broad shield",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "flier",
+      "name": "飞行梦魇",
+      "boss": false,
+      "role": "bat wings",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "summoner",
+      "name": "召唤梦魇",
+      "boss": false,
+      "role": "staff and summoning crown",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "berserker",
+      "name": "狂暴梦魇",
+      "boss": false,
+      "role": "clawed hands",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "vampire",
+      "name": "吸血梦魇",
+      "boss": false,
+      "role": "pointed cape",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "reflector",
+      "name": "镜面梦魇",
+      "boss": false,
+      "role": "faceted mirror",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "thief",
+      "name": "窃金梦魇",
+      "boss": false,
+      "role": "coin sack",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "chronos",
+      "name": "时空梦魇",
+      "boss": false,
+      "role": "hourglass",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "nullifier",
+      "name": "虚无梦魇",
+      "boss": false,
+      "role": "broken hollow ring",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "colossus",
+      "name": "梦魇巨像",
+      "boss": false,
+      "role": "stone plates",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "saboteur",
+      "name": "破坏梦魇",
+      "boss": false,
+      "role": "pliers",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "adaptive",
+      "name": "适应梦魇",
+      "boss": false,
+      "role": "layered facets",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "brood",
+      "name": "孵化母虫",
+      "boss": false,
+      "role": "egg cluster",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "digger",
+      "name": "钻地梦魇",
+      "boss": false,
+      "role": "drill spikes",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "emp",
+      "name": "干扰梦魇",
+      "boss": false,
+      "role": "antenna array",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "mimic",
+      "name": "拟态梦魇",
+      "boss": false,
+      "role": "paired masks",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "wraith",
+      "name": "怨灵",
+      "boss": false,
+      "role": "ribbon robe",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "juggernaut",
+      "name": "战争机器",
+      "boss": false,
+      "role": "armoured treads",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "swarm",
+      "name": "梦魇虫群",
+      "boss": false,
+      "role": "three larvae",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "leech",
+      "name": "寄生体",
+      "boss": false,
+      "role": "segmented worm",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "warden",
+      "name": "守望者",
+      "boss": false,
+      "role": "eye shield",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "reaper",
+      "name": "收割者",
+      "boss": false,
+      "role": "scythe",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "frostbane",
+      "name": "霜噬兽",
+      "boss": false,
+      "role": "ice wolf",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "necromancer",
+      "name": "死灵法师",
+      "boss": false,
+      "role": "ribs and staff",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "rustbug",
+      "name": "锈蚀梦魇",
+      "boss": false,
+      "role": "gear crab",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "owl",
+      "name": "夜枭梦魇",
+      "boss": false,
+      "role": "owl wings",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "echo",
+      "name": "回响梦魇",
+      "boss": false,
+      "role": "sound ribs",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "weaver",
+      "name": "织梦者",
+      "boss": false,
+      "role": "loom spider",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "lord",
+      "name": "梦魇领主",
+      "boss": true,
+      "phases": 3,
+      "role": "crowned overlord",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death",
+        "actual phase variants"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "abyss",
+      "name": "深渊巨口",
+      "boss": true,
+      "phases": 3,
+      "role": "tentacles and teeth",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death",
+        "actual phase variants"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "machine",
+      "name": "机械核心",
+      "boss": true,
+      "phases": 3,
+      "role": "three mechanical pylons",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death",
+        "actual phase variants"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "void",
+      "name": "虚空之影",
+      "boss": true,
+      "phases": 3,
+      "role": "split crescents",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death",
+        "actual phase variants"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    },
+    {
+      "id": "final",
+      "name": "终焉梦魇",
+      "boss": true,
+      "phases": 4,
+      "role": "great eye and clock rays",
+      "path": "enemy-art.js#body",
+      "status": "integrated",
+      "states": [
+        "idle",
+        "move",
+        "actual hit flash",
+        "actual control/freeze",
+        "reduced motion",
+        "observed death",
+        "actual phase variants"
+      ],
+      "collision": "unchanged; no simulation state writes"
+    }
+  ],
+  "elite_marks": [
+    "tough",
+    "swift",
+    "shielded",
+    "resist",
+    "vamp",
+    "frenzy",
+    "splitter",
+    "deadly",
+    "regen",
+    "armored"
+  ],
+  "verification": {
+    "commands": [
+      "node tests/enemy-art.test.js",
+      "node tests/polish.browser.test.js"
+    ],
+    "evidence": "docs/VISUAL_POLISH.md; browser-evidence Actions artifact",
+    "approved_by": "Codex under delegated user art direction; visual scope only"
+  }
+}

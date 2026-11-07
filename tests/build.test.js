@@ -7,7 +7,7 @@ execFileSync(process.execPath, [path.join(root, 'build.js')], { cwd: os.tmpdir()
 const first = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 assert.equal(first, fs.readFileSync(path.join(root, 'shoudengren.html'), 'utf8'));
 assert.ok(!first.includes('\r'), 'output uses canonical LF newlines');
-assert.ok(!first.includes('<!--SCRIPT-->') && !first.includes('<!--VERSION-->'));
+assert.ok(['<!--SCRIPT-->','<!--VERSION-->','<!--THEME-->'].every(marker => !first.includes(marker)));
 const script = first.match(/<script>([\s\S]*?)<\/script>/);
 assert.ok(script, 'single-file build contains the game');
 new Script(script[1], { filename: 'index.html' });

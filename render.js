@@ -137,19 +137,9 @@ function drawDreamSystems() {
     for (const c of creatures) {
       ctx.save();
       // 浮动动画
-      const bobY = Math.sin(c.bobPhase) * 4;
-      const pulse = 0.9 + Math.sin(T * 3 + c.bobPhase) * 0.1;
-      // 光晕
-      const glowR = c.def.firefly ? 28 : 22;
-      const grad = ctx.createRadialGradient(c.x, c.y + bobY, 0, c.x, c.y + bobY, glowR);
-      grad.addColorStop(0, c.def.color + '40');
-      grad.addColorStop(1, 'transparent');
-      ctx.fillStyle = grad;
-      ctx.beginPath(); ctx.arc(c.x, c.y + bobY, glowR, 0, 6.2832); ctx.fill();
-      // 图标
-      ctx.font = (18 * pulse) + 'px serif';
+      const bobY = sceneMotion() ? Math.sin(c.bobPhase) * 3 : 0;
+      UiArt.companion(ctx,c.type,c.x,c.y+bobY,T,sceneMotion());
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(c.def.icon, c.x, c.y + bobY);
       // 名字
       ctx.font = '9px "Courier New"';
       ctx.fillStyle = c.def.color;
@@ -205,9 +195,10 @@ function drawDreamSystems() {
       const laneIdx = parseInt((npc.roomId || '').replace('lane_', ''), 10);
       if (isNaN(laneIdx)) continue;
       ctx.save();
-      ctx.font = '14px serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(npc.def.icon, ROOM_X0 + 4, ARENA_TOP + laneIdx * ((ARENA_BOT - ARENA_TOP) / 3) + 14);
+      const x=ROOM_X0+13,y=ARENA_TOP+laneIdx*((ARENA_BOT-ARENA_TOP)/3)+12;
+      ctx.fillStyle='#1b3038';ctx.fillRect(x-9,y-9,18,18);ctx.strokeStyle='#8a987b';ctx.strokeRect(x-9,y-9,18,18);
+      const key={heal:'regen',atkBoost:'frenzy',slowEnemy:'swift',goldGen:'armored',shield:'shielded',reveal:'eye'}[npc.def.ability]||'eye';
+      EnemyArt.mark(ctx,key,x,y,5,npc.def.color||'#d1c295');
       ctx.restore();
     }
   }
@@ -444,244 +435,89 @@ function drawBed() {
   ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.85)';
   ctx.strokeText(bn, x + 6, R.y + R.h * 2 - 16);
   ctx.fillStyle = '#ffd166'; ctx.fillText(bn, x + 6, R.y + R.h * 2 - 16);
-  ctx.font = 'bold 9.5px sans-serif'; ctx.fillStyle = '#9ef01a';
+  ctx.font = 'bold 9.5px sans-serif'; ctx.fillStyle = '#cfca9d';
   ctx.fillText('Lv' + G.bed.lv + '/50  ' + fmt(bedGold()) + '/秒', x + 6, R.y + R.h * 2 - 4);
 }
-/** 把十六进制色按比例混向目标色（敌人血条/描边用） */
-function mixHex(a, b, t) {
-  const ca = hexRgb(a), cb = hexRgb(b);
-  const f = i => Math.round(ca[i] + (cb[i] - ca[i]) * t);
-  return "rgb(" + f(0) + "," + f(1) + "," + f(2) + ")";
-}
-/** 飞行生物的翅膀（上下拍动） */
-function drawWing(ang, len, beat) {
-  ctx.save();
-  ctx.rotate(ang);
-  ctx.fillStyle = "rgba(220,225,255,.30)";
-  ctx.beginPath();
-  ctx.ellipse(len * 0.5, 0, len * 0.5, len * 0.22 + beat, 0, 0, 6.2832);
-  ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.restore();
-}
-/** 梦魇本体：投影 → 移动拖尾 → 威胁光环 → 暗描边机体 → 类型特征 → 图标 → 状态 */
+/** Cached silhouettes, state marks and threat information. */
 function drawEnemies() {
+  const motion = sceneMotion();
+  const flashMul = Accessibility.flashMul();
+  EnemyArt.observe(ctx, G.enemies, T, _frameDt, { game: G, motion });
   for (const e of G.enemies) {
     if (e.dead) continue;
-    const d = e.def;
-    const col = d.color || "#b28dff";
-    const sp = enemySpeed(e);
-    const bob = Math.sin(T * 8 + e.wob) * (sp > 0 ? 3 : 0.5) + (d.flying ? Math.sin(T * 4 + e.wob) * 6 : 0);
-    const face = isFinite(e.dir) ? e.dir : 0;
-    const moving = sp > 1;
-    ctx.save();
-    ctx.globalAlpha = e.alpha;
-
-    // ① 地面投影
-    ctx.fillStyle = "rgba(0,0,0,.38)";
-    ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * 0.92, e.r * 0.85, e.r * 0.3, 0, 0, 6.2832); ctx.fill();
-
-    // ② 移动拖尾：三截渐隐残影，让"速度"读得出来
-    if (moving) {
-      const back = Math.atan2(Math.sin(face), Math.cos(face));
-      const dx = -Math.cos(back), dy = -Math.sin(back);
-      for (let i = 1; i <= 3; i++) {
-        const t = i / 3;
-        ctx.globalAlpha = e.alpha * 0.16 * (1 - t);
-        ctx.fillStyle = col;
-        ctx.beginPath();
-        ctx.ellipse(e.x + dx * e.r * 1.5 * i, e.y + dy * e.r * 1.5 * i + bob,
-          e.r * (0.62 - t * 0.34), e.r * (0.5 - t * 0.28), 0, 0, 6.2832);
-        ctx.fill();
-      }
-      ctx.globalAlpha = e.alpha;
-    }
-
-    // ③ 威胁光环（本体底光）
-    const RK = Math.round(e.r);   // 半径必须进 key：同色不同体积的敌人不能共用一份渐变
-    const gl = gradR("eg" + col + RK, e.r * 2.1, [[0, col + (e.boss ? "66" : (e.elite ? "55" : "3a"))], [1, "rgba(0,0,0,0)"]]);
-    ctx.fillStyle = gl;
-    ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r * 2.1, 0, 6.2832); ctx.fill();
-
-    // ④ 机体：暗描边 + 内层材质，先从地面里"抠"出来
-    ctx.fillStyle = "rgba(8,6,18,.72)";
-    ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r + 2.4, 0, 6.2832); ctx.fill();
-    ctx.fillStyle = gradR("eb" + col + RK, e.r, [[0, mixHex(col, "#ffffff", 0.34)], [0.55, mixHex(col, "#000000", 0.28)], [1, mixHex(col, "#000000", 0.62)]]);
-    ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r, 0, 6.2832); ctx.fill();
-    ctx.strokeStyle = d.boss || e.elite ? "#ffe066" : mixHex(col, "#ffffff", 0.45);
-    ctx.lineWidth = d.boss ? 2.6 : (e.elite ? 2.2 : 1.4); ctx.stroke();
-
-    // ⑤ 类型特征
-    if (d.flying) {
-      const beat = Math.sin(T * 14 + e.wob) * e.r * 0.16;
-      ctx.save(); ctx.translate(e.x, e.y + bob);
-      drawWing(face + Math.PI / 2 + 0.5, e.r * 1.5, beat);
-      drawWing(face - Math.PI / 2 - 0.5, e.r * 1.5, beat);
-      ctx.restore();
-    }
-    if (d.burrow) {
-      ctx.save();
-      ctx.globalAlpha = e.alpha * 0.75;
-      ctx.fillStyle = "#78350f";
-      ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * 1.1, e.r * 1.25, e.r * 0.42, 0, 0, 6.2832); ctx.fill();
-      ctx.fillStyle = "#a16207";
-      for (let i = 0; i < 4; i++) {
-        const a = e.anim * 1.4 + i * 1.57;
-        ctx.beginPath();
-        ctx.arc(e.x + Math.cos(a) * e.r * 1.15, e.y + e.r * 0.9 + Math.sin(a) * e.r * 0.3, 2, 0, 6.2832);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-    if (d.stealth && !e.untargetable) {
-      ctx.save();
-      ctx.globalAlpha = e.alpha * 0.7;
-      ctx.strokeStyle = "#d7e8ff"; ctx.lineWidth = 1.2;
-      ctx.setLineDash([3, 4]); ctx.lineDashOffset = -T * 10;
-      ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r + 5, 0, 6.2832); ctx.stroke();
-      ctx.setLineDash([]); ctx.lineDashOffset = 0;
-      ctx.restore();
-    }
-
-    // ⑥ 图标（敌人的"身份"，放在最上层）
-    emoji(d.icon, e.x, e.y + bob - 2, e.r * 1.9);
-
-    // ⑦ 受击闪白
-    if (e.hitFlash > 0) {
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, e.hitFlash * 5);
-      ctx.fillStyle = "#fff";
-      ctx.beginPath(); ctx.arc(e.x, e.y + bob - 2, e.r * 1.15, 0, 6.2832); ctx.fill();
-      ctx.restore();
-    }
-    ctx.restore();
-
-    // ⑧ 控制状态：减速 / 眩晕 / 冰冻
+    EnemyArt.draw(ctx, e, T, _frameDt, { motion, flash: flashMul, frozen: G.buff.freeze > 0 });
     if (G.buff.freeze > 0 || e.stun > 0) {
-      ctx.strokeStyle = "rgba(127,223,255,.9)"; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 5, 0, 6.2832); ctx.stroke();
-    }
-    if (e.slowT > 0) {
-      ctx.fillStyle = "rgba(127,223,255,.22)";
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 3, 0, 6.2832); ctx.fill();
-    }
-
-    // ⑨ 精英 / BOSS 表现
-    if (e.elite) {
-      const af = AFFIX[e.affixes[0]] || { color: "#fb923c", icon: "✦" };
-      ctx.save();
-      ctx.globalAlpha = 0.22 + Math.sin(T * 3) * 0.08;
-      ctx.fillStyle = gradR("ea" + af.color, e.r * 2.6, [[0, af.color + "55"], [1, "rgba(0,0,0,0)"]]);
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r * 2.6, 0, 6.2832); ctx.fill();
-      ctx.restore();
-      ctx.strokeStyle = af.color; ctx.lineWidth = 2;
-      ctx.setLineDash([4, 4]); ctx.lineDashOffset = -T * 12;
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 8, 0, 6.2832); ctx.stroke();
-      ctx.setLineDash([]); ctx.lineDashOffset = 0;
-      ctx.font = "11px sans-serif"; ctx.textAlign = "center";
-      let ox = -((e.affixes.length - 1) * 13) / 2;
-      e.affixes.forEach(k => { ctx.fillText((AFFIX[k] || {}).icon || "✦", e.x + ox, e.y - e.r - 16); ox += 13; });
-    }
-    if (e.boss) {
-      ctx.save();
-      const bp = 0.28 + Math.sin(T * 2) * 0.12;
-      ctx.globalAlpha = bp;
-      ctx.fillStyle = gradR("bg", e.r * 3.2, [[0, "rgba(255,77,109,.45)"], [0.55, "rgba(255,77,109,.1)"], [1, "rgba(0,0,0,0)"]]);
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r * 3.2, 0, 6.2832); ctx.fill();
-      ctx.restore();
-      // 双层旋转环 + 尖刺
-      ctx.save();
-      ctx.translate(e.x, e.y);
-      ctx.rotate(T * 0.5);
-      ctx.strokeStyle = "rgba(255,77,109,.75)"; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(0, 0, e.r + 12, 0, 6.2832); ctx.stroke();
-      ctx.strokeStyle = "rgba(255,209,102,.6)"; ctx.lineWidth = 1.4;
-      ctx.setLineDash([6, 10]);
-      ctx.beginPath(); ctx.arc(0, 0, e.r + 20, 0, 6.2832); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(255,77,109,.9)";
-      for (let i = 0; i < 8; i++) {
-        const a = i * Math.PI / 4;
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(a) * (e.r + 11), Math.sin(a) * (e.r + 11));
-        ctx.lineTo(Math.cos(a + 0.13) * (e.r + 19), Math.sin(a + 0.13) * (e.r + 19));
-        ctx.lineTo(Math.cos(a + 0.26) * (e.r + 11), Math.sin(a + 0.26) * (e.r + 11));
-        ctx.closePath(); ctx.fill();
+      ctx.save(); ctx.strokeStyle = '#b6e0e1'; ctx.lineWidth = 1.7;
+      const radius = e.r + 5;
+      for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 3;
+        ctx.beginPath(); ctx.moveTo(e.x + Math.cos(a) * radius, e.y + Math.sin(a) * radius);
+        ctx.lineTo(e.x + Math.cos(a + Math.PI / 3) * radius, e.y + Math.sin(a + Math.PI / 3) * radius); ctx.stroke();
       }
       ctx.restore();
+    } else if (e.slowT > 0) {
+      ctx.strokeStyle = 'rgba(157,200,218,.7)'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * .72, e.r, e.r * .28, 0, 0, Math.PI * 2); ctx.stroke();
     }
-    // 巨像 / 多段护盾：把进度画成实体护盾片
+    if (e.def.stealth && !e.untargetable) {
+      ctx.save(); ctx.strokeStyle = '#b3c6cd'; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
+      ctx.beginPath(); ctx.ellipse(e.x, e.y, e.r + 5, e.r * 1.25, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    }
     if (e.phaseShield) {
       const total = e.phaseShield, left = total - e.segIdx;
       for (let i = 0; i < total; i++) {
-        const a0 = -Math.PI / 2 + i * (6.2832 / total) + 0.08;
-        ctx.strokeStyle = i < left ? "#5de6ff" : "rgba(120,113,108,.45)";
-        ctx.lineWidth = 3.4;
-        ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 7, a0, a0 + (6.2832 / total) - 0.16); ctx.stroke();
+        const a = -Math.PI / 2 + i * Math.PI * 2 / total + .09;
+        ctx.strokeStyle = i < left ? '#8bc7cf' : '#53606a'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 8, a, a + Math.PI * 2 / total - .18); ctx.stroke();
       }
     }
-
-    // ⑩ 血条 / 护盾条（圆角描边款，随血量变色）
-    const w = e.boss ? 78 : e.r * 2.3;
+    const w = e.boss ? 82 : e.r * 2.2;
+    const barY = Math.max(ARENA_TOP + 20, e.y - e.r * 1.25 - (e.boss ? 15 : 7));
     if (e.hp < e.maxHp || e.boss || e.elite) {
-      const pr = clamp(e.hp / e.maxHp, 0, 1);
-      const hc = e.boss ? "#ff4d6d" : (e.elite ? "#fb923c" : (pr < 0.3 ? "#f87171" : (pr < 0.6 ? "#fbbf24" : "#e0556f")));
-      const by = e.y - e.r - (e.boss ? 13 : 10);
-      gbar(e.x - w / 2, by, w, e.boss ? 7 : 4.5, pr, hc);
-      if (e.shieldMax && e.shield > 0) gbar(e.x - w / 2, by - 6, w, 3.2, e.shield / e.shieldMax, "#5de6ff");
-    }
-
-    // ⑪ 状态徽记：持续伤害 / 易伤
-    {
-      const marks = [];
-      if (e.burnT > 0) marks.push("🔥" + (e.burnStack >= 1 ? Math.round(e.burnStack) : ""));
-      if (e.poison > 0) marks.push("☠️" + Math.round(e.poison));
-      if (e.vulnT > 0) marks.push("⚡");
-      if (e.def.reflect) marks.push("🪞");
-      if (e.def.nullify) marks.push("🚫");
-      if (marks.length) {
-        const ty = e.y + e.r + 13;
-        ctx.font = "bold 10px sans-serif"; ctx.textAlign = "center";
-        ctx.lineWidth = 2.6; ctx.strokeStyle = "rgba(0,0,0,.85)";
-        const txt = marks.join(" ");
-        ctx.strokeText(txt, e.x, ty);
-        ctx.fillStyle = "#fff"; ctx.fillText(txt, e.x, ty);
+      const pct = clamp(e.hp / e.maxHp, 0, 1);
+      ctx.fillStyle = '#0a131c'; ctx.fillRect(e.x - w/2 - 2, barY - 2, w + 4, e.boss ? 9 : 7);
+      ctx.fillStyle = e.boss ? '#cf7d82' : pct < .3 ? '#d88c7d' : e.elite ? '#c8af7a' : '#b7a0b2';
+      ctx.fillRect(e.x - w/2, barY, w * pct, e.boss ? 5 : 3);
+      if (e.shieldMax && e.shield > 0) {
+        ctx.fillStyle = '#8ebdcc'; ctx.fillRect(e.x - w/2, barY - 4, w * clamp(e.shield/e.shieldMax,0,1), 2);
       }
     }
-
-    // 目标受击前短暂显示攻击环，不改伤害节奏，让玩家看清即将承受压力的防线。
-    const attackReadyIn = e.atkCd || 0;
-    if (!e.parasiteTarget && e.stun<=0 && G.buff.freeze<=0 &&
-      (e.state === "door" || (e.state === "room" && e.target && dist(e,e.target)<=26)) && attackReadyIn > 0 && attackReadyIn <= 0.34) {
-      const pulse = 0.72 + Math.sin(T * 18) * 0.18;
-      const targetLabel = e.state === "door" ? "第" + (e.lane + 1) + "路铁门" :
-        (e.target && e.target.isBed ? "床铺" : "房间建筑");
-      ctx.save();
-      ctx.globalAlpha = pulse;
-      ctx.strokeStyle = "#ff7189"; ctx.lineWidth = 2.4;
-      ctx.shadowColor = "rgba(255,77,109,.75)"; ctx.shadowBlur = 10;
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 12, -Math.PI / 2,
-        -Math.PI / 2 + (1 - attackReadyIn / 0.34) * 6.2832); ctx.stroke();
-      ctx.shadowBlur = 0; ctx.font = "bold 9px sans-serif"; ctx.textAlign = "center";
-      ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(0,0,0,.9)"; ctx.fillStyle = "#ffd3da";
-      ctx.strokeText("⚠ 即将攻击 " + targetLabel, e.x, e.y + e.r + 28);
-      ctx.fillText("⚠ 即将攻击 " + targetLabel, e.x, e.y + e.r + 28);
+    if (e.elite) {
+      const affixes = e.affixes || [];
+      ctx.save(); ctx.strokeStyle = '#c8af7a'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r*.8, e.r+7, e.r*.32, 0, 0, Math.PI*2); ctx.stroke();
+      affixes.slice(0,3).forEach((key,i) => EnemyArt.mark(ctx,key,e.x+(i-(Math.min(3,affixes.length)-1)/2)*15,barY-13,5.5,(AFFIX[key]||{}).color||'#c8af7a'));
       ctx.restore();
     }
-
-    // ⑫ BOSS 名称与阶段
-    if (e.boss) {
-      const bdef = BOSS_DEFS[e.bossKey] || { name: d.name, phases: BOSS_PHASES };
-      const phN = (bdef.phases[e.phase] || { name: "" }).name;
-      ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center";
-      ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.85)";
-      const label = "👑 " + bdef.name + " · " + phN;
-      ctx.strokeText(label, e.x, e.y - e.r - 26);
-      ctx.fillStyle = "#ffd166"; ctx.fillText(label, e.x, e.y - e.r - 26);
+    const statuses = [];
+    if (e.burnT > 0) statuses.push(['burn','#deaa76', e.burnStack >= 1 ? Math.round(e.burnStack) : '']);
+    if (e.poison > 0) statuses.push(['poison','#b3c98a', Math.round(e.poison)]);
+    if (e.vulnT > 0) statuses.push(['vuln','#a3c9d3','']);
+    statuses.forEach(([key,color,count],i) => {
+      const x=e.x+(i-(statuses.length-1)/2)*22,y=e.y+e.r*1.25+10;
+      EnemyArt.mark(ctx,key,x,y,5,color);
+      if(count){ctx.font='bold 8px monospace';ctx.textAlign='left';ctx.fillStyle=color;ctx.fillText(count,x+6,y+3);}
+    });
+    const attackReadyIn = e.atkCd || 0;
+    if (!e.parasiteTarget && e.stun <= 0 && G.buff.freeze <= 0 &&
+      (e.state === 'door' || e.state === 'room' && e.target && dist(e,e.target) <= 26) && attackReadyIn > 0 && attackReadyIn <= .34) {
+      ctx.save(); ctx.strokeStyle = '#de9b87'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(e.x,e.y,e.r+12,-Math.PI/2,-Math.PI/2+(1-attackReadyIn/.34)*Math.PI*2);ctx.stroke();
+      ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.fillStyle='#e8c0a7';
+      ctx.strokeStyle='#0a131c';ctx.lineWidth=3;
+      const label=e.state==='door'?'即将攻击 第'+(e.lane+1)+'路铁门':'即将攻击 '+(e.target&&e.target.isBed?'床铺':'房间建筑');
+      ctx.strokeText(label,e.x,e.y+e.r+29);ctx.fillText(label,e.x,e.y+e.r+29);ctx.restore();
+    }
+    if(e.boss){
+      const bdef=BOSS_DEFS[e.bossKey]||{name:e.def.name,phases:BOSS_PHASES};
+      const phase=(bdef.phases[e.phase]||{name:''}).name;
+      ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#08131d';ctx.fillStyle='#ddc89b';
+      const label=bdef.name+'  /  '+phase,y=Math.max(ARENA_TOP+10,barY-10);
+      ctx.strokeText(label,e.x,y);ctx.fillText(label,e.x,y);
     }
   }
 }
+
 function drawBullets() {
   for (const b of G.bullets) {
     const dx = b.tx - b.x, dy = b.ty - b.y;
@@ -904,18 +740,10 @@ function drawTipBar() {
   const tipY = ARENA_BOT - 48;
   ctx.save();
   ctx.globalAlpha = clamp(G.tipTimer, 0, 1);
-  // 渐变背景
-  const tipGrad = ctx.createLinearGradient(260, tipY, 1020, tipY);
-  tipGrad.addColorStop(0, 'rgba(12,10,26,.85)');
-  tipGrad.addColorStop(0.5, 'rgba(20,16,40,.92)');
-  tipGrad.addColorStop(1, 'rgba(12,10,26,.85)');
-  ctx.fillStyle = tipGrad; rr(260, tipY, 760, 30, 8); ctx.fill();
-  // 上下边框光效
-  ctx.strokeStyle = 'rgba(255,224,102,.4)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(268, tipY); ctx.lineTo(1012, tipY); ctx.stroke();
-  ctx.strokeStyle = 'rgba(168,85,247,.25)';
-  ctx.beginPath(); ctx.moveTo(268, tipY + 30); ctx.lineTo(1012, tipY + 30); ctx.stroke();
-  ctx.fillStyle = '#ffe066'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#172b33f5'; rr(260, tipY, 760, 30, 3); ctx.fill();
+  ctx.strokeStyle = '#697c67'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = '#c7ad70'; ctx.fillRect(260, tipY + 7, 3, 16);
+  ctx.fillStyle = '#e0d3ae'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(G.tipText, 640, tipY + 15, 736);
   ctx.restore();
 }
@@ -930,11 +758,11 @@ function drawCursor() {
     // 范围预览圈（脉动）
     const rg = def.stat(1).range || 0;
     if (rg) {
-      const pulse = 0.6 + Math.sin(T * 4) * 0.25;
+      const pulse = sceneMotion() ? 0.6 + Math.sin(T * 4) * 0.25 : .8;
       ctx.beginPath(); ctx.arc(R.x + R.w / 2, R.y + R.h / 2, rg, 0, 6.2832);
-      ctx.fillStyle = 'rgba(158,240,26,' + (0.04 * pulse) + ')'; ctx.fill();
-      ctx.strokeStyle = 'rgba(158,240,26,' + (0.35 * pulse) + ')';
-      ctx.setLineDash([5, 7]); ctx.lineDashOffset = -T * 15;
+      ctx.fillStyle = 'rgba(185,207,159,' + (0.04 * pulse) + ')'; ctx.fill();
+      ctx.strokeStyle = 'rgba(185,207,159,' + (0.55 * pulse) + ')';
+      ctx.setLineDash([5, 7]); ctx.lineDashOffset = sceneMotion() ? -T * 15 : 0;
       ctx.lineWidth = 1.5; ctx.stroke();
       ctx.setLineDash([]); ctx.lineDashOffset = 0;
     }
@@ -948,45 +776,17 @@ function drawWaveTransition() {
   const alpha = wt.t > DUR - 0.5 ? (DUR - wt.t) * 2 : (wt.t < 0.5 ? wt.t * 2 : 1);
   if (alpha <= 0.01) return;
   ctx.save();
-  // 全屏渐变遮罩（原先 0.4 太黑，开战时整个战场糊掉看不清炮塔）
-  ctx.fillStyle = 'rgba(0,0,0,' + (alpha * 0.2) + ')';
-  ctx.fillRect(0, 0, W, H);
-  // 水平光线扫描效果
-  const scanX = W * (1 - wt.t / DUR);
-  const scanGrad = ctx.createLinearGradient(scanX - 200, 0, scanX + 200, 0);
-  scanGrad.addColorStop(0, 'transparent');
-  scanGrad.addColorStop(0.5, 'rgba(255,209,102,' + (alpha * 0.15) + ')');
-  scanGrad.addColorStop(1, 'transparent');
-  ctx.fillStyle = scanGrad;
-  ctx.fillRect(scanX - 200, 0, 400, H);
-  // 波次文字（带缩放动画）
-  ctx.translate(W / 2, H / 2);
-  const scale = 1 + (DUR - wt.t) * 0.3;
-  ctx.scale(scale, scale);
+  ctx.translate(W / 2, H / 2 + (sceneMotion() ? (1-alpha)*8 : 0));
   ctx.globalAlpha = alpha;
-  // 文字阴影光晕
-  ctx.font = 'bold 46px "Noto Sans SC", sans-serif';
+  // A compact brass warning plate keeps the active lanes visible.
+  ctx.fillStyle = '#172b33f5'; rr(-180,-46,360,92,4); ctx.fill();
+  ctx.strokeStyle = '#8a8e6c'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = '#c3a668';ctx.fillRect(-180,-32,3,64);ctx.fillRect(177,-32,3,64);
+  ctx.font = 'bold 27px "Noto Sans SC", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.shadowColor = '#ffd166';
-  ctx.shadowBlur = 30 * alpha;
-  ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(0,0,0,.85)';
-  ctx.strokeText('第 ' + wt.wave + ' 波', 0, 0);
-  // 渐变文字
-  const gradient = ctx.createLinearGradient(-120, -25, 120, 25);
-  gradient.addColorStop(0, '#ffd166');
-  gradient.addColorStop(0.5, '#ff6b6b');
-  gradient.addColorStop(1, '#ffd166');
-  ctx.fillStyle = gradient;
-  ctx.fillText('第 ' + wt.wave + ' 波', 0, 0);
-  ctx.shadowBlur = 0;
-  // 副标题
-  ctx.font = 'bold 18px "Noto Sans SC", sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,.85)';
-  ctx.fillText('梦魇来袭！', 0, 40);
-  // 装饰性水平线
-  ctx.strokeStyle = 'rgba(255,209,102,' + (alpha * 0.4) + ')';
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(-140, 60); ctx.lineTo(140, 60); ctx.stroke();
+  ctx.fillStyle = '#e7d4a5';ctx.fillText('第 ' + wt.wave + ' 波', 0, -13);
+  ctx.font = '12px "Noto Sans SC", sans-serif';ctx.fillStyle = '#c3cbb8';
+  ctx.fillText('梦魇来袭 · 守住灯火', 0, 22);
   ctx.restore();
 }

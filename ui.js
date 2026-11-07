@@ -1,4 +1,7 @@
 const $ = id => document.getElementById(id);
+const uiIcon = (key, fallback = '◇') => typeof UiArt !== 'undefined' ? UiArt.icon(key) : fallback;
+const uiBuilding = (key, branch, fallback) => typeof UiArt !== 'undefined' ? UiArt.building(key, branch) : fallback;
+const uiEnemy = (key, fallback) => typeof UiArt !== 'undefined' ? UiArt.enemy(key) : fallback;
 let hudT = 0;
 function buildBuildBar() {
   const el = $('buildBar'); el.innerHTML = '';
@@ -10,7 +13,7 @@ function buildBuildBar() {
     c.style.setProperty('--dc', (d.dmgType && DMG[d.dmgType].color) || d.color || '#8b8bd6');
     const dps1 = d.tower ? towerPanelDps(d.stat(1), { type: k }) : 0;
     // 紧凑卡片：图标 + 名称 + 价格一屏排下 2×8 全部建筑，属性/伤害类型移入悬停提示
-    c.innerHTML = '<div class="ico">' + d.icon + '</div><div class="nm">' + d.name + '</div>' +
+    c.innerHTML = '<div class="ico">' + uiBuilding(k, null, d.icon) + '</div><div class="nm">' + d.name + '</div>' +
       '<div class="pr"><span class="g">' + fmt(d.cost.gold) + '💰</span></div>' +
       '<div class="kb">' + d.key + '</div><div class="cnt"></div>';
     // 悬停提示里补上面板 DPS —— 建造栏太窄，塞不下更多数字
@@ -35,7 +38,7 @@ function buildSkillBar() {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'skill'; b.dataset.k = k;
-    b.innerHTML = '<div class="sico">' + s.icon + '</div><div class="scd"></div><div class="skey">' + s.key + '</div>';
+    b.innerHTML = '<div class="sico">' + uiIcon(k, s.icon) + '</div><div class="scd"></div><div class="skey">' + s.key + '</div>';
     b.title = s.name + '：' + s.desc + '（冷却 ' + s.cd + 's）';
     b.setAttribute('aria-label', b.title);
     b.onclick = () => Cmd.skill(k);
@@ -53,7 +56,7 @@ function buildTechPanel() {
       const r = document.createElement('div');
       r.className = 'tech'; r.dataset.k = k;
       const reqTxt = d.req ? Object.keys(d.req).map(rk => TECH_DEFS[rk].name + ' Lv' + d.req[rk]).join('、') : '';
-      r.innerHTML = '<div class="tico">' + d.icon + '</div><div class="tinfo"><div class="tn"><span>' + d.name + '</span><b class="tlv">0/' + d.max + '</b></div>' +
+      r.innerHTML = '<div class="tico">' + uiIcon(k, d.icon) + '</div><div class="tinfo"><div class="tn"><span>' + d.name + '</span><b class="tlv">0/' + d.max + '</b></div>' +
         '<div class="td">' + d.desc + (reqTxt ? '<br><i class="req">需要 ' + reqTxt + '</i>' : '') + '</div><div class="tbar"><i></i></div></div><button class="tbtn">0🔮</button>';
       r.querySelector('.tbtn').onclick = () => buyTech(k);
       el.appendChild(r);
@@ -65,7 +68,7 @@ function buildAchPanel() {
   ACHIEVEMENTS.forEach(a => {
     const d = document.createElement('div');
     d.className = 'ach'; d.dataset.k = a.id;
-    d.innerHTML = '<div class="aico">' + (G.ach[a.id] ? '🏆' : '🔒') + '</div>' +
+    d.innerHTML = '<div class="aico">' + uiIcon(G.ach[a.id] ? 'trophy' : 'lock', G.ach[a.id] ? '🏆' : '🔒') + '</div>' +
       '<div class="ainfo"><div class="an">' + a.name + '</div><div class="ad">' + a.desc + '</div></div>' +
       '<div class="arw">' + (a.reward.soul ? a.reward.soul + '🔮' : '') + (a.reward.gold ? a.reward.gold + '💰' : '') + '</div>';
     el.appendChild(d);
@@ -255,7 +258,10 @@ function updateHUD(dt) {
     $('achList').querySelectorAll('.ach').forEach(d => {
       const got = !!G.ach[d.dataset.k];
       d.classList.toggle('got', got);
-      d.querySelector('.aico').textContent = got ? '🏆' : '🔒';
+      if (d.dataset.earnedState !== String(got)) {
+        d.querySelector('.aico').innerHTML = uiIcon(got ? 'trophy' : 'lock', got ? '🏆' : '🔒');
+        d.dataset.earnedState = String(got);
+      }
     });
   }
   const got = ACHIEVEMENTS.filter(a => G.ach[a.id]).length;
@@ -295,14 +301,14 @@ function updateWavePreview() {
   const featured = Array.from(new Set(common.concat(latest))).slice(0, 4);
   const enemyMarkup = featured.map(id => {
     const e = ENEMY_DEFS[id];
-    return e ? '<span class="forecast-enemy" title="' + e.name + ' · ' + enemyCounterHint(id) + '"><i>' + e.icon + '</i>' + e.name + '</span>' : '';
+    return e ? '<span class="forecast-enemy" title="' + e.name + ' · ' + enemyCounterHint(id) + '"><i>' + uiEnemy(id, e.icon) + '</i>' + e.name + '</span>' : '';
   }).join('');
   const bossCount = wave % 5 === 0 ? 1 + Math.floor(wave / 22) : 0;
   let bossMarkup = '';
   if (bossCount) {
     const bossId = wave >= finalWave() ? 'final' : bossKeyForWave(wave);
     const boss = BOSS_DEFS[bossId] || BOSS_DEFS.final;
-    bossMarkup = '<span class="forecast-boss">' + (boss.icon || '👁️') + ' BOSS · ' + boss.name + (bossCount > 1 ? ' ×' + bossCount : '') + '</span>';
+    bossMarkup = '<span class="forecast-boss">' + uiEnemy(bossId,boss.icon || '👁️') + ' BOSS · ' + boss.name + (bossCount > 1 ? ' ×' + bossCount : '') + '</span>';
   }
   $('forecastTitle').textContent = '下一波 · 第 ' + wave + ' 波';
   $('forecastEnemies').innerHTML = enemyMarkup + bossMarkup;
@@ -357,7 +363,7 @@ function updateDetail(force) {
   } else if (s.isDoor) {
     const d = s.door;
     const c = doorUpgradeCost(d.lv);
-    html = '<div class="dhead"><span class="dico">🚪</span><b>' + doorName(d) + '</b><span class="dlv">Lv.' + d.lv + '/50</span></div>' +
+    html = '<div class="dhead"><span class="dico">' + uiIcon('door','🚪') + '</span><b>' + doorName(d) + '</b><span class="dlv">Lv.' + d.lv + '/50</span></div>' +
       '<div class="dst" id="dHpLine">' + hpLine() + '</div>' +
       (d.lv < 50 ? '<div class="dup">下一级 → ' + NAME_POOL.door[d.lv] + '　生命 ' + Math.ceil(doorMaxHp(d.lv + 1)) + '</div>' : '') +
       '<div class="dnote">门被攻破后，该路敌人会冲进房间拆建筑。</div>';
@@ -366,7 +372,7 @@ function updateDetail(force) {
   } else if (s.def) {
     const st = bstat(s);
     const dtn = s.def.dmgType ? '<span class="dtn" style="color:' + DMG[s.def.dmgType].color + '">' + DMG[s.def.dmgType].icon + DMG[s.def.dmgType].name + '</span>' : '';
-    html = '<div class="dhead"><span class="dico">' + (s.branch ? s.def.branch[s.branch].icon : s.def.icon) + '</span><b>' +
+    html = '<div class="dhead"><span class="dico">' + uiBuilding(s.type,s.branch,s.def.icon) + '</span><b>' +
       buildName(s) + '</b><span class="dlv">Lv.' + s.level + '/50</span>' + dtn + '</div>' +
       (s.def.noPowerUp ? '<div class="dnote">⚡ <b>持续发电来源</b>，升级永不耗电，发电速率每级 <b>x2</b></div>'
         : (s.level < FREE_POWER_LV ? '<div class="dnote">⚡ Lv' + (FREE_POWER_LV + 1) + ' 之前升级<b>不消耗电量</b></div>' : '')) +
@@ -415,8 +421,8 @@ function updateDetail(force) {
     if (!s.branch && s.def.branch && s.level >= BRANCH_AT) {
       const A = s.def.branch.a, B = s.def.branch.b;
       html += '<div class="brwrap"><div class="brt">可转职（二选一，转职后满血且属性提升）</div>' +
-        '<div class="bropt" id="brA"><b>' + A.icon + ' ' + A.name + '</b><span>' + A.desc + '</span><em>' + A.cost.gold + '💰 ' + A.cost.soul + '🔮</em></div>' +
-        '<div class="bropt" id="brB"><b>' + B.icon + ' ' + B.name + '</b><span>' + B.desc + '</span><em>' + B.cost.gold + '💰 ' + B.cost.soul + '🔮</em></div></div>';
+        '<button type="button" class="bropt" id="brA"><b>' + uiBuilding(s.type,'a',A.icon) + ' ' + A.name + '</b><span>' + A.desc + '</span><em>' + A.cost.gold + '💰 ' + A.cost.soul + '🔮</em></button>' +
+        '<button type="button" class="bropt" id="brB"><b>' + uiBuilding(s.type,'b',B.icon) + ' ' + B.name + '</b><span>' + B.desc + '</span><em>' + B.cost.gold + '💰 ' + B.cost.soul + '🔮</em></button></div>';
     }
   }
   el.innerHTML = html + '<div class="dact">' + act + '</div>';
@@ -640,6 +646,9 @@ function togglePanel(id) {
   _closeOtherPanels(id);
   const el = $(id);
   el.classList.toggle('open');
+  if (el.classList.contains('open') && ['techPanel','achPanel','lotPanel'].includes(id)) {
+    hudT = 0; updateHUD(0); // first paint must show current prices, resources and unlocked art
+  }
   // 修复线上现存 bug：runePanel 是内联 display 结构（非 .slide 滑出面板），
   // 仅切 class 永远无法显示；同步 display 并在打开时刷新内容（此前 🔮符文 按钮与 G 键失效）
   if (id === 'savePanel') {
@@ -816,7 +825,7 @@ function updateMenu() {
     dc.innerHTML = DIFF_KEYS.map(k => {
       const d = DIFFS[k], ok = META.gold >= d.cost;
       return '<div class="diff' + (d.admin ? ' adm' : '') + (menuDiff === k ? ' on' : '') + '" data-d="' + k + '" title="' + d.desc + '" role="button" tabindex="0" aria-pressed="' + (menuDiff === k) + '">' +
-        '<div class="di">' + d.icon + '</div><div class="dn">' + d.name + '</div>' +
+        '<div class="di">' + uiIcon(k==='normal'?'lantern':k==='hard'?'blade':k==='hell'?'fire':k==='nightmare'?'enemy':'key',d.icon) + '</div><div class="dn">' + d.name + '</div>' +
         '<div class="dd">' + d.desc + '</div>' +
         (d.cost ? '<div class="dc"' + (ok ? '' : ' style="color:#f87171"') + '>💰 ' + d.cost + '</div>' : '<div class="dc">免费</div>') +
         '<div class="dr">' + (d.admin ? '资源无限' : '结算 x' + d.reward) +
@@ -842,7 +851,7 @@ function updateMenu() {
     mc.innerHTML = MODE_KEYS.map(k => {
       const m = MODES[k];
       return '<div class="mode' + (menuMode === k ? ' on' : '') + '" data-m="' + k + '" role="button" tabindex="0" aria-pressed="' + (menuMode === k) + '">' +
-        '<span class="mi">' + m.icon + '</span><div><div class="mn">' + m.name + '</div>' +
+        '<span class="mi">' + uiIcon(k==='unlimited'?'infinity':'clock',m.icon) + '</span><div><div class="mn">' + m.name + '</div>' +
         '<div class="md">' + m.desc + '　·　' + m.tip + '</div></div></div>';
     }).join('');
     mc.querySelectorAll('.mode').forEach(el => {
@@ -870,6 +879,7 @@ function updateMenu() {
   }
   if (typeof syncAudioUI === 'function') syncAudioUI();
   if (typeof syncAccessibilityUI === 'function') syncAccessibilityUI();
+  if (typeof UiArt !== 'undefined') UiArt.decorate();
 }
 const FIRST_RUN_STEPS = [
   { title: '三条走廊，三扇铁门', text: '梦魇会从不同路线靠近。每条走廊都要留意；门一旦被攻破，敌人就会进入房间攻击建筑和床铺。', tip: '先看三路的门和敌人数量，再决定把炮塔放在哪里。' },
@@ -1540,7 +1550,8 @@ function _processStoryQueue() {
   const avatar = $('storyAvatar');
   const storyMeta = $('storyMeta');
   if (avatar) {
-    avatar.textContent = sp.icon || '◌';
+    if (typeof UiArt !== 'undefined') avatar.innerHTML = UiArt.character(data.speaker);
+    else avatar.textContent = sp.icon || '◌';
     avatar.style.setProperty('--sp-c', sp.color || '#a78bfa');
     avatar.style.setProperty('--sp-glow', sp.glow || 'rgba(167,139,250,.35)');
     avatar.setAttribute('aria-label', (data.speaker || '未知声音') + '的头像');
@@ -1586,7 +1597,7 @@ function _processStoryQueue() {
     }
   }, 32);
 
-  nextEl.onclick = () => {
+  const finishTyping = () => {
     if (storyTyping) {
       clearInterval(_storyTimer); _storyTimer = null;
       storyTyping = false;
@@ -1595,10 +1606,13 @@ function _processStoryQueue() {
       textEl.scrollTop = textEl.scrollHeight;
       if (hasChoices) _renderStoryChoices(data);
       else nextEl.style.display = '';
-    } else {
-      _processStoryQueue();
+      return true;
     }
+    return false;
   };
+  textEl.title = '点击显示完整对话';
+  textEl.onclick = finishTyping;
+  nextEl.onclick = () => { if (!finishTyping()) _processStoryQueue(); };
 }
 
 /** 渲染剧情选项，并在点击时用统一解释器兑现选项承诺 */
@@ -1779,7 +1793,7 @@ function showNPCPanel() {
         const persona = (dialog && dialog.name) || '';
         const role = (dialog && dialog.role) || '';
         return '<div class="npc-card' + (inst ? ' stationed' : '') + '">' +
-          '<div class="npc-avatar">' + (npc.icon || '👤') + '</div>' +
+          '<div class="npc-avatar">' + uiIcon(npc.ability,npc.icon || '👤') + '</div>' +
           '<div class="npc-name">' + npc.name + (persona ? '<span class="npc-persona">' + persona + '</span>' : '') + '</div>' +
           '<div class="npc-role">' + (role ? role + ' · ' : '') + (abilityNames[npc.ability] || npc.ability || '') + '</div>' +
           '<div class="npc-ability">' + (npc.desc || '') +
@@ -1826,7 +1840,7 @@ function showFragmentGallery() {
         const rarity = unlocked ? DreamFragments.rarityOf(f) : 'locked';
         const rc = FRAG_RARITY_COLORS[rarity] || '#cbd5e1';
         return '<div class="fragment-card ' + rarity + '" data-id="' + f.id + '">' +
-          '<div class="fico">' + (unlocked ? (f.icon || '💎') : '❓') + '</div>' +
+          '<div class="fico">' + uiIcon(unlocked?'gem':'lock',unlocked ? (f.icon || '💎') : '❓') + '</div>' +
           '<div class="fname">' + (unlocked ? (f.name || '') : '???') + '</div>' +
           '<div class="fdesc"></div>' +
           (unlocked
@@ -2347,7 +2361,7 @@ function updateBossBar() {
   _bossBarSig = sig;
   el.style.display = 'block';
   requestAnimationFrame(() => el.classList.add('show'));
-  $('bbName').textContent = '😈 ' + (bdef ? bdef.name : boss.def.name);
+  $('bbName').textContent = (bdef ? bdef.name : boss.def.name);
   $('bbPhase').textContent = phN+(transitioning?' · 转换护甲':'');
   $('bbPhase').style.display = phN ? '' : 'none';
   $('bbHp').textContent = Math.ceil(boss.hp) + ' / ' + Math.ceil(boss.maxHp) + '　(' + Math.round(hp * 100) + '%)';

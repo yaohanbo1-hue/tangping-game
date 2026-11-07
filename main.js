@@ -321,7 +321,7 @@ function buildHelp() {
       if (d.buildingBonus) sp.push('建筑克星x' + d.buildingBonus); if (d.devour) sp.push('吞噬');
       if (d.summon) sp.push('召唤'); if (d.split) sp.push('分裂'); if (d.explode) sp.push('自爆');
       if (d.shieldself) sp.push('自带护盾'); if (d.vamp) sp.push('吸血'); if (d.frenzy) sp.push('残血狂暴');
-      return '<span class="aff">' + d.icon + ' <b>' + d.name + '</b> ' + rw.join(' ') + (sp.length ? ' <em>' + sp.join('·') + '</em>' : '') + '</span>';
+      return '<span class="aff enemy-entry">' + uiEnemy(k,d.icon) + '<span><b>' + d.name + '</b> ' + rw.join(' ') + (sp.length ? ' <em>' + sp.join('·') + '</em>' : '') + '</span></span>';
     }).join('') +
     '</div>' +
     '<h4>经济规则</h4><div class="hnote">' +
