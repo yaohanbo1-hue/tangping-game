@@ -1,0 +1,125 @@
+{
+  "baseline": "f27f95e",
+  "browser": "153.0.8010.12",
+  "platform": "win32",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "samplesPerRun": 150,
+  "note": "Paused fixed actors; two runs in before/after/after/before order for each density. Headless Chromium software raster, not physical phone FPS. Includes Canvas, DOM and frame scheduling; no combat simulation.",
+  "results": [
+    {
+      "version": "before",
+      "regularEnemies": 24,
+      "buildings": 32,
+      "enemies": 29,
+      "render": {
+        "meanMs": 1.6773333326975504,
+        "p95Ms": 2.5
+      },
+      "frame": {
+        "meanMs": 17.29866666674614,
+        "p95Ms": 20.600000023841858
+      }
+    },
+    {
+      "version": "after",
+      "regularEnemies": 24,
+      "buildings": 32,
+      "enemies": 29,
+      "render": {
+        "meanMs": 1.4866666654745737,
+        "p95Ms": 1.9000000357627869
+      },
+      "frame": {
+        "meanMs": 16.66600000023842,
+        "p95Ms": 17.900000035762787
+      }
+    },
+    {
+      "version": "after",
+      "regularEnemies": 24,
+      "buildings": 32,
+      "enemies": 29,
+      "render": {
+        "meanMs": 1.4766666678587597,
+        "p95Ms": 1.9000000357627869
+      },
+      "frame": {
+        "meanMs": 16.66866666674614,
+        "p95Ms": 18
+      }
+    },
+    {
+      "version": "before",
+      "regularEnemies": 24,
+      "buildings": 32,
+      "enemies": 29,
+      "render": {
+        "meanMs": 1.6346666685740152,
+        "p95Ms": 2.199999988079071
+      },
+      "frame": {
+        "meanMs": 16.781333333253862,
+        "p95Ms": 18.899999976158142
+      }
+    },
+    {
+      "version": "before",
+      "regularEnemies": 90,
+      "buildings": 32,
+      "enemies": 95,
+      "render": {
+        "meanMs": 2.343999998966853,
+        "p95Ms": 3.5
+      },
+      "frame": {
+        "meanMs": 23.39,
+        "p95Ms": 31.599999964237213
+      }
+    },
+    {
+      "version": "after",
+      "regularEnemies": 90,
+      "buildings": 32,
+      "enemies": 95,
+      "render": {
+        "meanMs": 1.6166666694482168,
+        "p95Ms": 2.100000023841858
+      },
+      "frame": {
+        "meanMs": 16.666666666666668,
+        "p95Ms": 18
+      }
+    },
+    {
+      "version": "after",
+      "regularEnemies": 90,
+      "buildings": 32,
+      "enemies": 95,
+      "render": {
+        "meanMs": 1.801333334048589,
+        "p95Ms": 2.399999976158142
+      },
+      "frame": {
+        "meanMs": 16.675333333412805,
+        "p95Ms": 17.80000001192093
+      }
+    },
+    {
+      "version": "before",
+      "regularEnemies": 90,
+      "buildings": 32,
+      "enemies": 95,
+      "render": {
+        "meanMs": 2.2346666665871937,
+        "p95Ms": 3.100000023841858
+      },
+      "frame": {
+        "meanMs": 22.217999999920526,
+        "p95Ms": 28.19999998807907
+      }
+    }
+  ]
+}

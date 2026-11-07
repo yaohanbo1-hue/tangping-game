@@ -1573,6 +1573,211 @@ body.simple-ui #wavePreview,body.simple-ui #bossBar{background:rgba(20,17,31,.94
 @media(prefers-reduced-motion:reduce){
   #wrap *,#wrap *::before,#wrap *::after{animation:none!important;transition:none!important}
 }
+/* Rain-night brass, slate and archival paper. Deliberately static in the default
+   compositor-friendly mode; visual hierarchy comes from material and spacing. */
+:root{
+  --bg-0:#071019;--bg-1:#101e28;--text:#e7e3d4;--text-mid:#c3c9c2;
+  --text-dim:#a1ada9;--text-faint:#9eaca9;--text-note:#adb8b2;
+  --pri:#cdb782;--pri-2:#e2d0a2;--pri-3:#bca8be;--acc:#9fc4cb;
+  --pri-rgb:205,183,130;--legend-rgb:210,178,109;--lime-rgb:171,193,159;
+  --gold:#d9c18c;--gold-2:#d2b578;--gold-3:#eddbac;--gold-soft:#eee2c3;
+  --ok:#a7c3a0;--ok-2:#bfd4b5;--danger:#d88c89;--danger-2:#e4afaa;
+  --line:rgba(185,174,137,.24);--glass-1:rgba(220,218,190,.045);--glass-2:rgba(220,218,190,.02);
+  --paper-line:rgba(211,200,161,.13);--paper-dim:#839594;--metal-edge:#42575c;
+}
+body{background:radial-gradient(ellipse at 50% 0,#1c2c36 0,#09131c 63%,#050c13 100%)}
+button,input,select{font:inherit}button{touch-action:manipulation}
+.ui-glyph{display:inline-block;width:20px;height:22px;flex:none;vertical-align:middle;stroke-linecap:round;stroke-linejoin:round}
+.building-portrait{width:66px;height:44px;display:block;object-fit:contain;pointer-events:none}
+.enemy-portrait{width:28px;height:28px;display:inline-block;object-fit:contain;vertical-align:middle;pointer-events:none}
+.character-art{display:block;width:100%;height:100%;border-radius:inherit}
+#wrap{border:1px solid #3c4b50;border-radius:12px;box-shadow:0 18px 90px #02070a}
+button:focus-visible,[role="button"]:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{
+  outline:2px solid #e1c88c;outline-offset:3px}
+*{scrollbar-width:thin;scrollbar-color:#667472 #12202a}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#667472;border-radius:5px}
+
+/* The main screen reads as a watchkeeper's desk, with filed sections and a lamp seal. */
+#overlay{background:radial-gradient(ellipse at 12% 12%,rgba(108,130,131,.18),transparent 58%),
+  radial-gradient(ellipse at 90% 90%,rgba(183,150,87,.12),transparent 50%),linear-gradient(120deg,#0a141d,#14252e 55%,#0a151e)}
+#overlay::before{background:repeating-linear-gradient(125deg,transparent 0 90px,rgba(190,203,190,.02) 91px 92px);animation:none}
+#overlay::after{opacity:.25;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(198,208,190,.018) 4px)}
+.home-panel.panel{width:min(1032px,calc(100% - 36px));padding:23px 26px 17px;border:1px solid #69736a;border-radius:12px;
+  background:linear-gradient(140deg,rgba(61,77,79,.18),transparent 38%),#14232b;
+  box-shadow:0 25px 80px rgba(0,0,0,.45);backdrop-filter:none;-webkit-backdrop-filter:none;animation:none}
+.home-panel.panel::before,.home-panel.panel::after{content:none}
+.home-header{padding:0 1px 18px;border-bottom:1px solid #53605c;gap:22px}
+.home-header::after{width:100px;background:#d1b67e;height:2px;bottom:-1px}
+.home-kicker{font-size:9px;letter-spacing:2px;color:#b9b398;gap:8px}
+.home-kicker i{width:5px;height:5px;background:#d6bd87;box-shadow:none;animation:none}
+.home-kicker span{font:9px ui-monospace,Consolas,monospace;color:#91a4a2;border-color:#42524f;letter-spacing:1px}
+.home-header h1{display:flex;align-items:center;gap:13px;margin:9px 0 4px!important;
+  color:#ece1bf!important;background:none!important;-webkit-text-fill-color:currentColor;font:500 47px/1.1 "STSong","SimSun",serif!important;
+  letter-spacing:7px!important;filter:none!important;animation:none!important;text-shadow:none}
+.title-lantern{width:39px;height:49px;color:#d7bc80;margin-right:1px}
+.home-title-sub{padding-left:55px;margin-top:2px;color:#b6c0b8;font-size:10px;letter-spacing:3px}
+.home-title-sub span{color:#d5bd8b}
+.home-clock{border-color:#53605c;padding-right:19px}
+.home-clock>span{font:400 32px/1.1 Georgia,serif;color:#e1cc9c;letter-spacing:3px;animation:none;text-shadow:none}
+.home-clock small{color:#97a9a6;font-size:9px;margin-top:7px}
+.home-music{background:#1b3037;border:1px solid #4a6365;border-radius:7px;min-width:168px;padding:9px 11px}
+.home-music:hover{background:#233a40;border-color:#8a9e93;transform:none}
+.hm-icon{background:#2a4245;color:#c7c3a1;border-radius:5px}.hm-copy b{color:#d7dfd1;font-size:11px}.hm-copy small{color:#a1b8b2}
+.home-music>i{color:#b9c8a4}.home-layout{grid-template-columns:minmax(0,1.5fr) minmax(270px,.9fr);gap:16px;padding-top:17px}
+.setup-panel,.record-card,.home-shortcuts{background:linear-gradient(160deg,#1d3038,#192a32);border:1px solid var(--paper-line);border-radius:8px;box-shadow:none}
+.setup-panel{padding:15px}.record-card,.home-shortcuts{padding:14px}
+.home-section-title{margin-bottom:12px}.home-section-title>span{color:#ddd9c1;font-size:12px;letter-spacing:1px}
+.home-section-title>span i{display:inline-grid;place-items:center;border:1px solid #6d7766;border-radius:3px;width:20px;height:20px;font-size:9px;color:#d1b886;margin-right:7px}
+.home-section-title>small{color:#98aaa4;font-size:9px}
+.home-currency{border:0;border-bottom:1px solid var(--paper-line);border-radius:0;background:none;padding:2px 0 11px;margin-bottom:12px}
+.home-currency .mg{color:#dbc28b;font-variant-numeric:tabular-nums;font-size:16px}.home-currency .ms{font-size:10px;color:#c2c5ae}.home-currency .ms em{color:#92a49d}
+.home-label{color:#b4c1b8;font-size:10px;letter-spacing:1px;margin:12px 0 7px}.home-label small{color:#93a49e;font-size:8px}
+.home-panel .diffs{gap:7px}.home-panel .diff{min-height:86px;padding:9px 5px;border:1px solid #3e5559;border-radius:5px;background:#172830;transform:none;box-shadow:none}
+.home-panel .diff:hover{background:#223841;transform:none;border-color:#a49c7d;box-shadow:none}
+.home-panel .diff.on{background:linear-gradient(145deg,#3c4239,#273932);border-color:#cfb67f;box-shadow:inset 0 0 0 1px rgba(207,182,127,.2)}
+.home-panel .diff.adm.on{background:#3d382e;border-color:#c4a774}
+.diff .di .ui-glyph{width:24px;height:26px;color:#bbbfaa}.diff.on .di .ui-glyph{color:#ead6a8}
+.home-panel .diff .dn{color:#e2ddc8;font-size:11px}.home-panel .diff .dd{color:#aebcb1;font-size:8px;line-height:1.5}
+.home-panel .diff .dr{color:#b8b79b}.home-panel .modes{gap:7px}.home-panel .mode{border:1px solid #3e5559;border-radius:5px;background:#172830;min-height:46px;padding:8px}
+.home-panel .diff{display:grid;grid-template-columns:23px minmax(0,1fr);grid-template-areas:"icon name" "desc desc" "cost cost" "reward reward";align-content:start;gap:3px;padding:8px;min-height:82px;text-align:left}
+.home-panel .diff .di{grid-area:icon}.home-panel .diff .dn{grid-area:name;align-self:center;line-height:1.2}.home-panel .diff .dd{grid-area:desc;min-height:0;line-height:1.4;margin:0}.home-panel .diff .dc{grid-area:cost;line-height:1.2;margin:0}.home-panel .diff .dr{grid-area:reward;line-height:1.4;margin:0}
+.home-panel .diff .di .ui-glyph{width:20px;height:21px}
+.home-panel .setup-panel{padding:12px}.home-panel .home-label{margin:8px 0 5px}.home-panel .home-currency{margin-bottom:8px;padding-bottom:8px}.home-panel .home-section-title{margin-bottom:9px}
+.home-panel .equipped{min-height:20px;margin:4px 0 6px}.home-panel .loadout-head{margin-top:8px}.home-panel .home-start-actions{margin-top:6px}.home-panel .home-start-actions button{min-height:43px}
+.home-panel .home-header{padding-bottom:13px}.home-panel .home-layout{padding-top:12px}.home-panel .home-bottom{margin-top:8px}.home-panel .mode{padding-top:7px;padding-bottom:7px}.home-panel .home-guide summary,.home-panel .home-audio summary{padding-top:8px;padding-bottom:8px}
+.home-panel .mode:hover{background:#21373e;transform:none}.home-panel .mode.on{border-color:#a5bba8;background:#2a3f3c;box-shadow:none}
+.mode .mi .ui-glyph{width:22px;height:24px;color:#b3c5bd}.home-panel .mode .mn{color:#dedfce;font-size:10px}.home-panel .mode .md{color:#a1b5b0}
+.setup-summary{color:#b9c5b9;background:#111f28;border:1px solid #32474c;border-left:2px solid #c2aa78;border-radius:4px;line-height:1.6;font-size:9px}
+.loadout-head{color:#bec7b6}.loadout-head span+span{color:#a1b19e}.eq.none{color:#a4b4a7!important}.eq{border:1px solid #53605c;background:#30413f!important;color:#d8d5b8!important}
+.home-start-actions{gap:9px;margin-top:8px}.home-start-actions .big,.btns button.big,.panel>button.big,.tutorial-primary{
+  border:1px solid #d0b77f;background:linear-gradient(180deg,#e1cd9a,#bca46c)!important;color:#18242a!important;border-radius:5px;
+  box-shadow:inset 0 1px rgba(255,255,255,.3);font-weight:800;animation:none;transition:background .15s}
+.home-start-actions .big:hover,.btns button.big:hover{background:#e3d1a6!important;transform:none;filter:none}
+.panel>button.big{display:block;min-width:116px;min-height:36px;padding:9px 20px;margin:14px auto 0;font-size:12px}
+.svfoot>button,.svfoot .svbtn,#saveClose{min-height:30px;padding:7px 13px;border:1px solid #819476;border-radius:4px;background:#314b42;color:#d6dfc4;font-size:11px}
+.home-start-actions .big small{color:#4d543f}.home-continue{background:#203934;border:1px solid #678477;border-radius:5px;color:#d9e0ca}
+.home-continue small{color:#a4bbaa}.home-continue:hover{background:#2a4540;transform:none}
+.record-score b{color:#e7d3a0;font:400 43px Georgia,serif;text-shadow:none}.record-score span{color:#b4c0b3}.record-score i{color:#879e97;font-size:9px}
+.record-divider{background:#40534f}.home-save-info{color:#a8b9b0;font-size:10px;line-height:1.6}
+.home-record-link{background:#17272f;border:1px solid #3b5355;border-radius:5px;padding:8px;color:#c6d0bb}
+.home-record-link>.ui-glyph{width:16px;height:17px}.home-record-link:hover{background:#233a40;transform:none}
+.home-action-grid{gap:7px}.home-action{border-radius:5px;background:#142730;border:1px solid #3d5456;min-height:62px;padding:8px;box-shadow:none}
+.home-action>span{color:#c5b88e;background:none;border:0;height:25px}.home-action>span .ui-glyph{width:23px;height:25px}
+.home-action b{color:#d7ddcd;font-size:10px}.home-action small{color:#9cafaa;font-size:8px}.home-action:hover{background:#253b3e;border-color:#a3aa8c;transform:none;box-shadow:none}
+.home-bottom{gap:12px;margin-top:14px}.home-guide,.home-audio{background:#14252d;border:1px solid #3d5254;border-radius:6px}
+.home-guide summary,.home-audio summary{color:#c6cbb5;font-size:10px;padding:10px 12px}.home-guide summary small,.home-audio summary small{color:#97aaa3}
+.home-guide .rule{background:#1a2d34;border:1px solid #364c4f;border-radius:4px;color:#afc0b5;font-size:10px;line-height:1.7}.home-guide .rule b{color:#dbc89e}
+.audio-controls label{color:#bdcbbb}.audio-controls button{background:#253a3e;border:1px solid #52685f;border-radius:4px;color:#d2dac7}
+input[type="range"]{accent-color:#c5b17c}.access-controls{border-color:#41544e}.access-controls select{background:#0f202a;color:#d6dfca;border-color:#52645d;border-radius:4px}
+
+/* The battle console uses the same metal and brass without obscuring the map. */
+body #wrap #hud{background:linear-gradient(180deg,#233640,#15252f);border-bottom:1px solid #9b946e;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+#hud .logo{display:flex;align-items:center;gap:5px;letter-spacing:1px;font-size:13px;color:#dfc88f;text-shadow:none;margin-right:5px}
+#hud .logo>.ui-glyph{width:19px;height:25px}
+#hud .stat{border:1px solid #42565b;border-radius:4px;background:#12232c;gap:4px;padding:4px 6px;box-shadow:none;font-size:11px}
+#hud .stat>i{display:flex;color:#a8bab3}#hud .stat>i .ui-glyph{width:13px;height:15px}#hud .stat b{color:#e0dfc8}
+#hud .stat:has(#hudGold)>i,#hud .stat:has(#hudSouls)>i{color:#c9b17f}
+#hudTimer{border-radius:4px;background:#334739;border:1px solid #697c61;color:#d9dec0;font-size:12px}
+#hudTimer.fight{color:#e3bbb0;background:#493437;border-color:#8c6561}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;border:1px solid #59695f;border-radius:5px;background:linear-gradient(180deg,#34454a,#26383e);color:#d2dac6;box-shadow:none;font-size:11px}
+.btn>.ui-glyph{width:13px;height:15px}.btn:hover{border-color:#d2bc88;background:#3a4e50;box-shadow:none;transform:none}
+.btn.hot{border-color:#b09b6c;color:#e7d3a3;background:#3a4038}.btn.hot:hover{border-color:#ddc98d;background:#4b5041}
+body #wrap #bottom{background:linear-gradient(180deg,#1e323c,#111f29);border-top:1px solid #7f836c;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+#right{border-color:#4b5f5d;background:none}.card{border-radius:5px;border-color:#49605e;background:linear-gradient(150deg,#2b3e43,#1c2e35);transition:border-color .12s,background .12s}
+.card::before{height:2px;border-radius:0;background:var(--dc);opacity:.65}.card::after{background:none}
+.card .ico{height:34px;margin:0;background:none;filter:none}.card .ico .building-portrait{width:65px;height:44px;transform:none}
+.card .nm{color:#d3dfcd;font-size:10px;letter-spacing:0;text-shadow:none}.card .pr .g{color:#d6c593;font-size:9px;font-weight:600}
+.card .kb{background:#10232b;border-color:#5b6d62;border-radius:3px;color:#aebdaf;font:8px ui-monospace,Consolas,monospace;top:4px;right:4px;padding:1px 3px;backdrop-filter:none}
+.card.no{opacity:.43;filter:none;background:#192a32}.card.ok,.card.okTower{background:linear-gradient(155deg,#344640,#233638);border-color:#6e7c65;box-shadow:none;animation:none}
+.card.okTower{border-color:#8d866b}.card.ok .nm,.card.okTower .nm{color:#dfe4ce}.card.okTower .ico{filter:none}
+.card:hover{transform:none;background:#3a4d4a;border-color:#c7b57f;box-shadow:none}.card.sel{background:linear-gradient(145deg,#5a5942,#30423b);border-color:#ead49d;box-shadow:none}
+.card.sel .ico{transform:none;filter:none}.card.sel::before{height:3px;opacity:1;background:#e3d0a0}.card .cnt{background:#d0bb85;border-color:#e5d2a0;color:#18232a;border-radius:3px;font:800 8px monospace}
+.skill{background:#192f38;border-color:#526d6a;border-radius:5px;box-shadow:none}.skill .sico{display:flex;filter:none;color:#d9c797}.skill .sico .ui-glyph{width:21px;height:23px}
+.skill:hover{background:#354a47;border-color:#d4c08a;transform:none;box-shadow:none}.skill .skey{color:#9ab3ab;font:8px monospace;top:3px;left:4px}.skill .scd{background:#10202bea;color:#cfcebc}
+#ctrls .btn{border-radius:4px;font-size:9px;gap:2px}#ctrls .btn .ui-glyph{width:10px;height:12px}
+#hint{background:#10242d;color:#a6bdb2;border-color:#3b5556;border-radius:4px;line-height:1.5;box-shadow:none}#hint b{background:#2d443f;border-color:#607565;border-radius:3px;color:#d8d8b6}
+body #wrap #wavePreview{background:#162a32f2;border-color:#6d8075;border-radius:5px;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding:7px 10px}
+.forecast-head{color:#d8cb9d;font-size:10px;letter-spacing:1px}.forecast-head small{color:#9eafa5}
+.forecast-enemies{gap:5px}.forecast-enemy,.forecast-boss{border:1px solid #49605b;border-radius:3px;background:#243a3b;color:#d3daca;padding:1px 6px 1px 1px;font-size:9px}
+.forecast-enemy>i{display:flex}.forecast-enemy .enemy-portrait,.forecast-boss .enemy-portrait{height:23px;width:26px}.forecast-boss{background:#3c3034;border-color:#8c6569;color:#e0b9aa}
+#forecastHint{font-size:9px;color:#afc0af;line-height:1.5;margin-top:5px}
+body #wrap #bossBar{border-color:#8e6c69;background:#2d252ef5;border-radius:5px;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.bb-name{color:#e0c69a;font-size:12px;letter-spacing:1px;text-shadow:none}.bb-phase{background:#584044;border-color:#9a7772;color:#e7c0b4;border-radius:3px;font-size:9px}
+.bb-hp{color:#d2c4b3;font:10px ui-monospace,Consolas,monospace}.bb-track{height:9px;background:#101b23;border:1px solid #665154;border-radius:2px;box-shadow:none}
+.bb-track i{background:linear-gradient(90deg,#955d65,#d69a8a);border-radius:0;box-shadow:none}.bb-track u{background:#719da6;border-radius:0}
+
+/* Every archive, drawer, inventory and reward screen shares a single material set. */
+.panel{color:#dce1cf;border:1px solid #6b7b6d;border-radius:9px;background:linear-gradient(140deg,#263a40,#13252f 70%);box-shadow:0 18px 55px #02090f88;
+  backdrop-filter:none;-webkit-backdrop-filter:none}
+.panel h1,.panel h2,.panel h3{color:#e4d2a4;text-shadow:none;background:none;-webkit-text-fill-color:currentColor;font-family:"STSong","SimSun",serif;letter-spacing:2px}
+.panel h2{font-size:24px;font-weight:600;margin-bottom:10px}.panel .sub,.rsub{color:#aabbaf;line-height:1.75}.panel .sub b,.rsub b{color:#ded6af}
+.panel .btns button.alt,.panel>button.alt{border-color:#718174;border-radius:5px;background:#293f43;color:#d1dcca;box-shadow:none}
+.panel .btns button.alt:hover{background:#3d514d;border-color:#c8bc8b;transform:none}
+.slide,body.simple-ui #wrap .slide{background:#152832;border-color:#6b7c70;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding:12px}
+.slide h3{font-size:15px;color:#e0cfa3;letter-spacing:1px;border-bottom:1px solid #607367;padding-bottom:10px;margin-bottom:10px}
+.slide h3 .btn{font:10px "Microsoft YaHei",sans-serif;padding:4px 8px}.slide .slist{gap:7px;padding-right:4px}
+.tech,.ach{background:#20353d;border:1px solid #3c5658;border-radius:5px;padding:10px 8px;box-shadow:none}
+.tech:hover,.ach:hover{background:#294149;transform:none}.tech .tico,.ach .aico{display:grid;place-items:center;width:34px;height:36px;border:1px solid #617166;border-radius:4px;background:#162a32;color:#cbbb8c;font-size:20px;flex-shrink:0}
+.tech .tico .ui-glyph,.ach .aico .ui-glyph{width:23px;height:25px}.tech .tn{color:#d8dcc7;font-size:11px}.tech .td{color:#a2b9af;font-size:10px;line-height:1.6}
+.tech .tlv{color:#cab582;font:9px monospace}.tech .tbar{height:3px;background:#101f28;border-radius:0}.tech .tbar i{background:#9cbb9a;border-radius:0}
+.tbtn{background:#344d43;border:1px solid #7a926f;border-radius:4px;color:#d9dec1;box-shadow:none}.tbtn:disabled{background:#203139;color:#83978f;border-color:#405754}
+.tierh{color:#cfbe8c;background:#0e212a;border:1px solid #465e59;border-left:3px solid #b8a875;border-radius:3px;padding:7px 9px;letter-spacing:1px;font-size:10px}
+.ach .an{color:#dadbc4;font-size:11px}.ach .ad{color:#a8bcb0;font-size:10px}.ach .arw{color:#d6bd87}.ach.got{border-color:#8aa181;background:#2b443e}
+body #wrap #detail{background:#142831f7;border:1px solid #7e8974;border-radius:6px;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+body #wrap #detail{max-height:470px}.dact{position:sticky;bottom:0;background:#172e35;padding-top:8px;border-top:1px solid #526b5d;z-index:2}.bropt{width:100%;text-align:left}
+.dhead{border-color:#52695e;color:#ddcea5}.dhead>b{color:#e1d5b1}.dlv{color:#bfc5ad;background:#31453f;border:1px solid #63705e;border-radius:3px}
+.dico .building-portrait{width:46px;height:37px}.dico .ui-glyph{width:26px;height:28px}.bropt>b{display:flex;align-items:center;gap:4px}.bropt .building-portrait{width:32px;height:30px}
+.dst{color:#bed0bc;line-height:1.7}.dst .hl{color:#e1ca95}.dup,.dup2,.dnote{color:#9eb2a8}.dnote{background:#20363b;border-color:#405d58;border-radius:4px}
+.dact button,.bropt,.rb,.svbtn,.npc-recruit-btn{border-radius:4px;background:#304b43;border:1px solid #718c70;color:#d7dfc5;box-shadow:none}
+.dact button:hover,.bropt:hover,.rb:hover,.svbtn:hover,.npc-recruit-btn:hover{background:#435e50;border-color:#c7bc8a;transform:none}
+.dact .sell,.rb.sal,.svbtn.red{background:#422f32;border-color:#88645e;color:#ddbbb0}.brt{color:#d6c38f}.brwrap{border-color:#5f705d}.bropt{background:#333f37;padding:8px}.bropt b{color:#e0cea2}.bropt span{color:#b5c4af}.bropt em{color:#d2c28f}
+.dres{background:#20383d;border:1px solid #54716a;border-radius:4px;color:#b7cdbf}.dres b{color:#dfd2aa}
+.runelist{gap:8px}.rune{position:relative;background:linear-gradient(140deg,#304340,#1c3136);border-width:1px;border-radius:5px;padding:12px}
+.rune::before{content:'◇';position:absolute;right:12px;bottom:3px;font:55px Georgia,serif;color:rgba(201,196,147,.075);pointer-events:none}
+.rhead{margin-bottom:7px}.raff{color:#c0cbb4;font-size:10px;line-height:1.8}.rq{border-radius:3px;font:8px monospace;letter-spacing:1px}.rt{color:#d6c59a;border-color:#526a5c}.rsec{border-color:#516a60;border-radius:5px;background:#122630}
+.slot{border-radius:4px;background:#1b3038;border-color:#657764}.slot.filled{background:#2b423c}.empty{color:#9cb2a8;background:#11242d;border:1px dashed #506a5f;border-radius:4px;padding:16px;font-size:11px;line-height:1.8}.rfoot{color:#a4b8aa;line-height:1.7}
+.svrow{border-color:#4d665d;border-radius:5px;background:#20363c;padding:12px;margin-bottom:9px}.svrow.auto{border-color:#9ba98a;background:#2b403b}.svrow:hover{background:#2b4649;border-color:#b5ac82}.svrow.empty{opacity:.7}
+.svtag{background:#354e45;color:#d6d6b3;border:1px solid #7b8768;border-radius:3px;font-size:9px}.svrow.auto .svtag{background:#355347;color:#d4e2bf}.svname{color:#dce0c7;font-size:13px}.svmeta{color:#abc0b1;font-size:10px}.svmeta b{color:#dbc795}.svchip{border-radius:3px;background:#324b43;color:#bfcfb8}.svnote{color:#acbcb0;border-color:#4e675e;line-height:1.7}
+.qitems,.qitem,.qcard,.quest-card,.diary-entry,.npc-card,.fragment-card,.ending-card,.trial-card,.bitem{border-color:#4a655e;border-radius:5px;background:#20363d;color:#c2d2be;box-shadow:none}
+.qitem:hover,.npc-card:hover,.fragment-card:hover,.bitem:hover{background:#2b4548;border-color:#acaa7d;transform:none;box-shadow:none}
+.diary-entry{border-left:2px solid #bba77b;padding:15px 17px;margin-bottom:10px}.diary-head{border-bottom:1px solid #425b54;padding-bottom:9px;margin-bottom:9px}.diary-date{color:#aebdaf;font:10px monospace}.diary-text{color:#d2d9c7;font-size:12px;line-height:1.9}.diary-badge{border-radius:3px}
+#npcPanel,#diaryPanel,#fragmentGallery,#fragmentDetail{border:1px solid #819078;border-radius:8px;background:linear-gradient(135deg,#293d3f,#142a34);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.dream-panel-title{font-family:"SimSun",serif;color:#e0cfa1;font-size:24px;letter-spacing:3px;text-shadow:none}.dream-panel-sub{color:#adbfaf;line-height:1.7}.dream-panel-divider{background:#647b68;height:1px}.dream-panel-close{border:1px solid #a5a57c;border-radius:4px;background:#334c43;color:#dce1c5;box-shadow:none}.dream-panel-close:hover{background:#47604f;transform:none}.diary-progress{background:#10252e;border:1px solid #496656}.diary-bar{background:#a0b58c;box-shadow:none}
+.fd-name{color:#dfcfa0;font-family:"SimSun",serif}.fd-text{color:#c8d6c1;line-height:1.9}.fd-close{background:#3d5144;color:#d6dfc5;border:1px solid #889878;border-radius:4px}
+.npc-card{padding:14px}.npc-avatar{border-radius:6px;background:#314942;border:1px solid #75816b;color:#d5c496}.npc-name{color:#dfd7b9}.npc-persona{color:#b6c5b1}.npc-role,.npc-ability{color:#b0c4b4;line-height:1.7}.npc-stationed{color:#b4cba7}.npc-card.stationed{border-color:#94a17c}
+.npc-avatar .ui-glyph{width:34px;height:38px}.fragment-card .fico .ui-glyph{width:31px;height:35px}.lotmachine .ui-glyph{width:45px;height:48px}
+.fragment-card{position:relative;padding:15px 12px;background:linear-gradient(145deg,#30443e,#1d333a)}
+.fragment-card::after{content:'';position:absolute;inset:5px;border:1px solid rgba(201,189,143,.075);border-radius:3px;pointer-events:none}
+.fragment-card.locked{background:#162b34;color:#8ba398;border-style:dashed}.fragment-card .fico{color:#c8bb91}.fragment-card .fname{color:#ded6b8;font-size:12px}.fragment-card .fdesc{color:#aec4b5;font-size:10px;line-height:1.8}.fragment-card.locked .fname{color:#8ca398}.frag-rarity{border-radius:2px;letter-spacing:1px}.fmore{color:#c7ba91}
+.ending-card{padding:16px;border-style:dashed}.ending-card.revealed{border-style:solid;border-color:#b9a374;background:linear-gradient(135deg,#3e473a,#21373a)}.ending-card-head b{color:#dfcd9d}.ending-card p{color:#b6c7b5;line-height:1.8}
+.trial-card{border-radius:5px}.trial-card.on{background:#3b483b;border-color:#c7b783}.trial-note{border-color:#5c715f;color:#b5c4ae;background:#253b3d;border-radius:4px}
+.htab{border-color:#50675e}.htab th{color:#d6c493;background:#31483f}.htab td{color:#bed0bc;border-color:#405d55}.afflist{gap:7px}.aff{border:1px solid #476358;background:#1c333b;border-radius:4px;color:#bdd0bd;line-height:1.7}.aff b{color:#d8d1ae}.enemy-entry{display:flex;align-items:center;gap:8px}.enemy-entry>.enemy-portrait{width:40px;height:42px;flex:none}.enemy-entry>span{min-width:0}.hnote{background:#20383c;color:#b5c8b4;border-color:#4f6a5e;border-radius:5px;line-height:1.8}
+.lotbox{border-color:#8b855f;background:linear-gradient(145deg,#414a3a,#22383b);border-radius:6px}.lotmachine{font-size:36px;color:#d4bd80;filter:none;animation:none}.lotbtns .btn{border-radius:5px}.lotpity{color:#bfcbb0}.pbar{background:#142630;border:1px solid #5c715e;border-radius:2px}.pbar u{border-radius:0}.dcard,.gacharesult .gcard{border-radius:5px;background:#293e3e;box-shadow:none}
+.grid>div,.review-grid>div,.review-card,.review-section{border-radius:5px;border-color:#5e7364;background:#223940!important;box-shadow:none}.grid b{color:#dec99a;text-shadow:none}.grid span{color:#afc0af}.tipend,.tipstart{color:#aebfae;line-height:1.8}.run-review{border-color:#51685e;color:#bdcdb9}
+.panel.over,.panel.win{padding:20px 24px}.panel.over h1,.panel.win h1{font-size:33px!important;letter-spacing:2px;color:#dcc7a2!important;-webkit-text-fill-color:currentColor!important;margin-bottom:8px}
+.panel.over .sub,.panel.win .sub{font-size:12px!important;color:#c4bcaa!important;margin-bottom:12px}
+.panel.over .grid,.panel.win .grid{gap:7px;margin:10px 0}.panel.over .grid>div,.panel.win .grid>div{padding:8px;min-height:53px}
+.panel.over .grid b,.panel.win .grid b{font:500 26px/1.1 Georgia,serif!important;color:#e1cca0!important;text-shadow:none!important}.panel.over .grid span,.panel.win .grid span{font-size:9px;margin-top:5px}
+.run-review{background:#1a3039;border:1px solid #536f61;border-radius:5px;padding:10px;margin-top:12px}.run-review h3{font-size:12px;color:#e2c999;letter-spacing:1px;margin-bottom:8px}.run-review h3 small{font-size:8px;color:#acbfae}
+.review-lane{background:#152832;border-color:#445e55;border-radius:4px;padding:6px}.review-lane>span{color:#d3d8bd}.review-lane>small{color:#a9c0ad}.review-lane>i{background:#334a46;border-radius:2px}.review-lane>i>b{background:#b59c71;box-shadow:none}.review-towers{margin-top:7px}.review-towers>b{color:#b9c8ae}.review-towers>span{background:#233d3e;color:#bed0b8;border-radius:3px}.review-record,.run-review>p{color:#b2c5ae;border-color:#4b6658;font-size:9px;padding-top:6px;margin-top:6px}
+.panel.over .btns,.panel.win .btns{position:sticky;bottom:-20px;background:#192f37;z-index:2;padding:8px 0;border-top:1px solid #63745f;margin:10px 0 0}
+
+/* Story scenes use a quiet letterpress frame; speaker colors remain semantic. */
+#storyDialog{border:1px solid #99a184;border-radius:8px;background:linear-gradient(145deg,#2d3d3b,#142832 65%);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.story-avatar{width:59px;height:64px;border:1px solid #9b9a79;border-radius:5px;background:#22363d;box-shadow:none;overflow:hidden;font-size:29px}
+.story-top{border-color:#4d675c}.story-speaker,#storySpeaker{font-family:"STSong","SimSun",serif;font-size:17px;letter-spacing:1.5px}.story-meta,#storyMeta{color:#afc0ae;font:9px ui-monospace,Consolas,monospace;letter-spacing:.6px}
+#storyText{color:#e0e2ce;font-size:15px;line-height:1.95;letter-spacing:.6px}.story-choices button{border:1px solid #6f8067;border-radius:4px;background:#2a413e;color:#d5ddc6;padding:10px 13px;line-height:1.7}
+.story-choices button:hover{background:#455542;border-color:#e1c98c;transform:none}.story-choice-eff{color:#abbf9f}.story-next{color:#dfc997;background:#37453b;border-color:#9c9b76;border-radius:4px}.story-result{color:#d3dcb9;background:#293f37;border:1px solid #718368;border-radius:4px;line-height:1.8}
+.story-media{border:1px solid #6c7865;border-radius:5px;overflow:hidden;background:#0b1b25}.story-media-fallback{background:#20383a;color:#d3d8bd;border-color:#74836a;border-radius:3px}
+.dream-toast{background:#1d343c;border:1px solid #657c69;border-left:3px solid #bea46f;border-radius:5px;box-shadow:none}.dream-toast .tt{color:#dfc58e}.dream-toast .tb{color:#bfd1bd;line-height:1.7}
+.tutorial-overlay{background:#06131ae8;backdrop-filter:none;-webkit-backdrop-filter:none}.tutorial-card{border:1px solid #a7a17b;border-radius:8px;background:#1d333b;box-shadow:none}.tutorial-card h2{color:#e6d5a8;font-family:"SimSun",serif;letter-spacing:2px}.tutorial-card p{color:#c3d3bd;line-height:1.9}.tutorial-tip{background:#2a433d;border-color:#6d8065;color:#c5d1af;border-radius:4px}.tutorial-kicker{color:#c5b284}.tutorial-actions button{border-radius:4px;border-color:#6f826d}
+.deep-dream-text{color:#b7a9cb;text-shadow:none}.deep-dream-sub{color:#b2c3b6}.act-card{border-color:#998d70;background:#182e36;box-shadow:none}.ac-title{color:#e3ce9b;text-shadow:none}
+body.large-text #storyText{font-size:18px}.rune,.svrow,.tech,.ach,.diary-entry,.npc-card,.fragment-card{overflow-wrap:anywhere}
+#rotateHint{background:radial-gradient(ellipse at top,#2d4244,#0a1b26);color:#d8ddc6}.rh-ico{color:#d8c28d}#rotateHint h3{color:#e8d3a4;font-family:"SimSun",serif}#rotateHint p{color:#b7cabb}.rh-btn,#rotBar button{border-color:#849576;background:#29423e;color:#d7dfc1}.rh-btn.primary{background:#c3b181;color:#152832;border-color:#e4cea0}
+@media(max-width:860px){.home-layout{grid-template-columns:1fr;gap:10px}.home-side{display:grid;grid-template-columns:.85fr 1.15fr;gap:10px}.home-panel.panel{padding:18px}.home-bottom{grid-template-columns:1fr}}
+@media(max-width:620px){.home-header h1{font-size:36px!important;letter-spacing:5px!important}.title-lantern{width:31px;height:39px}.home-title-sub{padding-left:46px;letter-spacing:1.5px}.home-header{gap:12px;padding-bottom:14px}.home-panel.panel{padding:14px;max-height:calc(100% - 12px)}.home-side{grid-template-columns:1fr}.home-clock>span{font-size:25px}.home-music{min-width:148px}.home-layout{padding-top:12px}.home-panel .diff{min-height:77px}.home-guide .rule{font-size:10px}}
+body.touch .card .nm{font-size:11px}body.touch .card .ico{height:35px}body.touch .card .ico .building-portrait{height:45px;width:66px}body.touch .skill .sico .ui-glyph{width:25px;height:28px}
+
 </style>
 </head>
 <body>
@@ -10471,6 +10676,358 @@ const BuildingArt=(()=>{
     state:b=>{const h=history.get(b);return h?{hit:h.hit,repair:h.repair,upgrade:h.upgrade}:null;}};
 })();
 
+/* ==== enemy-art.js ==== */
+// Original rain-night bestiary. Cached vector bodies; presentation never writes to enemies.
+const EnemyArt = (() => {
+  const TAU = Math.PI * 2, cache = new Map(), active = new Map(), deaths = [];
+  const LIMIT = 64, INK = '#09131f', BONE = '#d7d1bc', METAL = '#52616e';
+  let builds = 0, bytes = 0, gameRef = null;
+  const clamp01 = n => Math.max(0, Math.min(1, n));
+  function mix(a, b, t) {
+    const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    const x = rgb(a), y = rgb(b);
+    return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
+  }
+  function path(c, points, fill, stroke = INK, width = 1.6) {
+    c.beginPath(); points.forEach((p, i) => i ? c.lineTo(...p) : c.moveTo(...p)); c.closePath();
+    if (fill) { c.fillStyle = fill; c.fill(); }
+    if (stroke) { c.strokeStyle = stroke; c.lineWidth = width; c.stroke(); }
+  }
+  function oval(c, x, y, rx, ry, fill, stroke) {
+    c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, TAU);
+    if (fill) { c.fillStyle = fill; c.fill(); }
+    if (stroke) { c.strokeStyle = stroke; c.lineWidth = 1.4; c.stroke(); }
+  }
+  function line(c, x, y, ex, ey, color = BONE, width = 1.5) {
+    c.beginPath(); c.moveTo(x, y); c.lineTo(ex, ey); c.strokeStyle = color; c.lineWidth = width; c.stroke();
+  }
+  function arc(c, x, y, r, a, b, color, width = 1.5) {
+    c.beginPath(); c.arc(x, y, r, a, b); c.strokeStyle = color; c.lineWidth = width; c.stroke();
+  }
+  function plate(c, x, y, w, h, fill = METAL) {
+    path(c, [[x+4,y],[x+w-4,y],[x+w,y+4],[x+w,y+h-4],[x+w-4,y+h],[x+4,y+h],[x,y+h-4],[x,y+4]], fill);
+    line(c, x+4, y+1, x+w-4, y+1, '#9aa3a5', 1);
+  }
+  function eye(c, x, y, r, color) {
+    path(c, [[x-r,y],[x-r*.35,y-r*.6],[x+r*.45,y-r*.5],[x+r,y],[x+r*.3,y+r*.55],[x-r*.45,y+r*.45]], BONE);
+    oval(c, x, y, r*.35, r*.58, color, INK); line(c,x,y-r*.32,x,y+r*.32,INK,1.5);
+  }
+  function mask(c, x, y, r, color, long = false) {
+    path(c, [[x-r,y-r*.65],[x-r*.45,y-r],[x+r*.6,y-r],[x+r,y-r*.4],[x+r*.65,y+r*.65],[x,y+r*(long?1.5:1)],[x-r*.75,y+r*.5]], BONE);
+    line(c,x-r*.6,y-r*.12,x-r*.12,y+r*.03,INK,2.7);
+    line(c,x+r*.12,y+r*.03,x+r*.6,y-r*.12,INK,2.7);
+    oval(c,x-r*.33,y-r*.03,1.2,1.2,color); oval(c,x+r*.33,y-r*.03,1.2,1.2,color);
+    line(c,x+1,y-r*.8,x-r*.1,y-r*.15,'#857d7a',1);
+    line(c,x-r*.1,y-r*.15,x+r*.3,y+r*.58,'#857d7a',1);
+  }
+  function cloak(c, color, width = 22, length = 29) {
+    path(c, [[-width,24],[-width*.7,-12],[-8,-29],[9,-30],[width*.8,-12],[width,length],[11,length-5],[3,length],[0,length-7],[-10,length-1]], color);
+    path(c, [[-7,-22],[-13,21],[-3,17],[3,25],[9,-20]], mix(color,INK,.35), null);
+    line(c,-width*.7,-8,-width+3,19,mix(color,BONE,.35),1);
+  }
+  function legs(c, n, color, spread = 33) {
+    for (let i=0;i<n;i++) for (const s of [-1,1]) {
+      const y=-13+i*11;
+      line(c,s*11,y,s*spread,y-9,color,3); line(c,s*spread,y-9,s*(spread+5),y+8,INK,4);
+      line(c,s*spread,y-9,s*(spread+5),y+8,color,1.7);
+    }
+  }
+  function wings(c, color, owl = false) {
+    for (const s of [-1,1]) path(c, [[s*7,-12],[s*25,-29],[s*44,-17],[s*34,-4],[s*39,10],[s*24,5],[s*21,18],[s*11,11]], color);
+    for (const s of [-1,1]) for(let i=0;i<3;i++) line(c,s*12,-10,s*(25+i*5),-14+i*7,owl?BONE:mix(color,BONE,.4),1);
+  }
+  function horns(c, color, height = 36) {
+    for(const s of [-1,1]) path(c, [[s*8,-20],[s*16,-height],[s*24,-height-2],[s*17,-height+11],[s*20,-17]],color);
+  }
+  function body(c, id, color, phase) {
+    const skin = mix(color,'#34404c',.58), light = mix(color,BONE,.42), deep = mix(color,INK,.62);
+    c.lineJoin='round'; c.lineCap='round';
+    switch(id) {
+      case 'grunt': cloak(c,skin,20,26);mask(c,0,-8,12,color,true);line(c,-12,18,-20,26,light,2);break;
+      case 'sprinter':
+        path(c,[[-33,6],[-22,-13],[4,-20],[27,-10],[36,0],[19,6],[11,22],[-2,14],[-23,20]],skin);
+        for(const x of [-18,0,15])path(c,[[x,5],[x+11,9],[x-1,30],[x-7,28]],deep);
+        path(c,[[12,-14],[18,-31],[24,-17],[35,-10],[35,0],[19,5]],light);eye(c,24,-8,6,color);break;
+      case 'brute':
+        for(const s of [-1,1]){plate(c,s<0?-35:18,-16,18,39,deep);plate(c,s<0?-25:8,17,17,16,skin);}
+        plate(c,-23,-20,46,45,skin);plate(c,-14,-29,28,23,light);line(c,-10,-17,10,-17,color,4);line(c,-5,-4,-5,18,BONE);line(c,5,-4,5,18,BONE);break;
+      case 'phantom': case 'wraith':
+        path(c,[[-28,29],[-19,0],[-23,-12],[-10,-32],[11,-34],[23,-15],[19,6],[29,31],[11,22],[7,37],[-4,24],[-15,32]],deep);
+        path(c,[[-12,-23],[-15,16],[-4,9],[4,27],[11,10],[12,-20]],skin,null);mask(c,0,-13,id==='wraith'?8:13,light,true);
+        if(id==='wraith')for(const x of [-23,19])line(c,x,-2,x*1.45,26,light,2);break;
+      case 'bomber':
+        line(c,-8,-26,-8,-35,light,3);arc(c,0,-28,10,Math.PI,TAU,light,2);plate(c,-22,-21,44,48,deep);
+        oval(c,0,2,15,19,color,light);for(const x of [-16,-7,7,16])line(c,x,-18,x,24,METAL,3);
+        path(c,[[-6,4],[0,-12],[8,5],[0,15]],BONE,null);break;
+      case 'healer':
+        for(let i=0;i<6;i++){c.save();c.rotate(i*TAU/6);path(c,[[9,-6],[29,-11],[34,0],[25,10],[9,6]],skin);c.restore();}
+        oval(c,0,0,17,21,deep,light);eye(c,0,-2,12,color);line(c,-4,14,4,14,light,2);break;
+      case 'splitter': case 'weaver':
+        legs(c,id==='weaver'?4:3,light,33);oval(c,0,11,id==='weaver'?18:22,20,skin,light);
+        if(id==='weaver'){path(c,[[0,-30],[17,-8],[0,13],[-17,-8]],BONE);for(const x of [-8,0,8])line(c,x,-12,x,9,deep);}
+        else {mask(c,-8,-13,10,color);mask(c,9,-10,10,color);line(c,0,-8,0,26,INK,2);}break;
+      case 'bulwark':
+        cloak(c,deep,24,28);mask(c,9,-20,9,color);path(c,[[-32,-18],[-7,-28],[17,-17],[14,18],[-8,33],[-30,18]],skin);
+        path(c,[[-24,-13],[-9,-19],[8,-12],[6,13],[-8,23],[-23,13]],deep,light);line(c,-20,-3,2,-3,color,3);break;
+      case 'flier': case 'owl':
+        wings(c,skin,id==='owl');oval(c,0,2,id==='owl'?15:10,25,deep,light);
+        if(id==='owl'){path(c,[[-17,-26],[-9,-17],[9,-17],[17,-26],[14,3],[0,13],[-14,3]],light);eye(c,-7,-7,6,color);eye(c,7,-7,6,color);path(c,[[-3,0],[3,0],[0,7]],'#b5a078');}
+        else {horns(c,light,27);mask(c,0,-11,9,color);path(c,[[-6,22],[0,35],[6,22]],skin);}break;
+      case 'summoner': case 'necromancer':
+        cloak(c,deep,id==='necromancer'?24:20,32);mask(c,-3,-13,10,color,true);
+        line(c,26,-35,22,34,BONE,3);arc(c,27,-28,10,-2.8,2.8,light,2);oval(c,27,-28,4,5,color);
+        if(id==='necromancer'){for(let i=0;i<4;i++)line(c,-11,-1+i*6,7,1+i*6,BONE,1.8);horns(c,BONE,34);}
+        else for(const [x,y]of [[-28,-20],[-29,8],[13,-34]])path(c,[[x,y-5],[x+4,y],[x,y+5],[x-4,y]],color,light);break;
+      case 'berserker':
+        path(c,[[-34,24],[-31,-6],[-19,-21],[18,-22],[32,-3],[35,28],[20,17],[10,27],[-12,26],[-22,15]],skin);
+        for(const s of [-1,1])for(let i=0;i<3;i++)line(c,s*(27+i*3),9,s*(29+i*3),30,light,2);
+        horns(c,BONE);mask(c,0,-11,13,color);path(c,[[-7,5],[0,17],[7,5]],color);break;
+      case 'vampire':
+        path(c,[[-35,-27],[-22,-4],[-31,29],[0,19],[32,29],[21,-3],[35,-27],[9,-13],[-9,-13]],deep,light);
+        mask(c,0,-12,11,color,true);for(const x of [-5,5])path(c,[[x-2,0],[x+2,0],[x,10]],BONE);oval(c,0,12,4,6,color);break;
+      case 'reflector':
+        path(c,[[0,-35],[26,-23],[31,14],[0,34],[-30,16],[-25,-21]],'#697986',light);
+        path(c,[[0,-27],[18,-17],[22,11],[0,25],[-21,12],[-18,-15]],'#b2c3ca',BONE);
+        path(c,[[0,-27],[-18,-15],[-10,15],[0,25],[2,-5]],'#5c7183',null);line(c,-16,-15,17,10,'#eef0de',2);eye(c,2,-1,8,'#9a7fa6');break;
+      case 'thief':
+        oval(c,-8,9,23,23,deep,light);path(c,[[-18,-18],[4,-30],[25,-14],[20,16],[5,22],[-7,10]],skin);
+        mask(c,12,-7,10,color,true);line(c,-21,10,-35,23,BONE,3);oval(c,-26,-8,8,10,'#bba477',INK);line(c,-26,-13,-26,-3,deep,2);break;
+      case 'chronos':
+        plate(c,-23,-31,46,8,skin);plate(c,-23,24,46,8,skin);
+        path(c,[[-17,-23],[17,-23],[6,-2],[17,23],[-17,23],[-6,-2]],'#677584',light);
+        path(c,[[-13,-18],[13,-18],[0,0]],color,null);path(c,[[-12,20],[0,8],[12,20]],BONE,null);
+        for(const s of [-1,1])line(c,s*22,-22,s*22,23,light,3);eye(c,0,0,7,color);break;
+      case 'nullifier':
+        for(let i=0;i<7;i++){c.save();c.rotate(i*TAU/7);path(c,[[18,-9],[31,-12],[36,0],[28,12],[17,8]],skin,light);c.restore();}
+        oval(c,0,0,19,23,INK,light);line(c,-15,19,16,-20,color,4);break;
+      case 'colossus':
+        for(const s of [-1,1]){plate(c,s<0?-37:20,-12,17,42,skin);plate(c,s<0?-23:6,19,17,20,deep);}
+        plate(c,-25,-27,50,50,'#6f7574');plate(c,-16,-36,32,25,light);line(c,-9,-23,9,-23,color,4);
+        for(let i=0;i<3;i++)plate(c,-15,-4+i*9,30,6,deep);line(c,-17,-12,-6,15,'#c4c0a9');break;
+      case 'saboteur':
+        legs(c,2,light,28);plate(c,-21,-17,42,38,skin);mask(c,0,-14,10,color);
+        for(const s of [-1,1]){line(c,s*17,-4,s*33,-27,BONE,4);line(c,s*33,-27,s*39,-24,light,2);line(c,s*33,-27,s*29,-36,light,2);}break;
+      case 'adaptive':
+        for(let i=0;i<7;i++){const a=i*TAU/7;path(c,[[0,0],[Math.cos(a)*31,Math.sin(a)*31],[Math.cos(a+.7)*22,Math.sin(a+.7)*22]],i%2?deep:skin,light);}
+        eye(c,0,-2,14,color);path(c,[[-12,16],[0,32],[11,17]],light);break;
+      case 'brood':
+        legs(c,3,light,32);oval(c,0,10,26,26,skin,light);oval(c,0,-17,13,13,deep,light);
+        for(const [x,y]of [[-13,4],[8,-1],[0,15],[14,19],[-13,22]])oval(c,x,y,7,9,mix(color,BONE,.55),INK);eye(c,0,-18,9,color);break;
+      case 'digger':
+        oval(c,0,10,27,18,deep);for(let i=0;i<5;i++)path(c,[[-25+i*11,5],[-18+i*10,-25],[-8+i*10,6]],skin,light);
+        path(c,[[14,-8],[36,2],[16,15]],BONE);line(c,22,-2,20,10,deep);eye(c,8,-3,6,color);break;
+      case 'emp':
+        plate(c,-18,-10,36,36,skin);oval(c,0,-15,14,17,deep,light);eye(c,0,-15,10,color);
+        for(const s of [-1,1]){line(c,s*12,-24,s*27,-35,light,2);oval(c,s*27,-35,4,4,color);arc(c,s*24,5,11,-2,1.8,light,2);}break;
+      case 'mimic':
+        cloak(c,deep,28,28);mask(c,-11,-7,16,color);c.save();c.rotate(.3);mask(c,13,0,15,mix(color,BONE,.6),true);c.restore();
+        path(c,[[-10,13],[0,30],[12,12]],skin);break;
+      case 'juggernaut':
+        for(const s of [-1,1]){plate(c,s<0?-36:19,-18,17,49,deep);for(let i=0;i<6;i++)line(c,s*21,-12+i*7,s*33,-12+i*7,light,2);}
+        plate(c,-24,-22,48,45,skin);plate(c,-16,-31,32,20,METAL);line(c,-10,-21,10,-21,color,5);
+        for(let i=0;i<3;i++)line(c,-13,1+i*5,13,1+i*5,INK,2);break;
+      case 'swarm':
+        for(const [x,y,r]of [[-16,-9,11],[15,-3,12],[0,15,13]]){oval(c,x,y,r,r*1.2,skin,light);eye(c,x,y-3,r*.65,color);line(c,x-r,y+4,x-r-5,y+9,light);line(c,x+r,y+4,x+r+5,y+9,light);}break;
+      case 'leech':
+        for(let i=5;i>=0;i--)oval(c,Math.sin(i*.8)*13,i*9-23,13-i,11-i*.5,i%2?skin:deep,light);
+        oval(c,0,-24,13,11,INK,light);for(let i=0;i<5;i++){const a=i*TAU/5;path(c,[[Math.cos(a)*12,Math.sin(a)*10-24],[Math.cos(a+.2)*5,Math.sin(a+.2)*4-24],[Math.cos(a+.5)*12,Math.sin(a+.5)*10-24]],BONE);}break;
+      case 'warden':
+        path(c,[[0,-36],[27,-14],[25,21],[0,36],[-25,21],[-27,-14]],deep,light);eye(c,0,-4,23,color);
+        for(const s of [-1,1])path(c,[[s*24,-13],[s*38,0],[s*25,26],[s*16,18]],skin,light);break;
+      case 'reaper':
+        cloak(c,deep,22,34);mask(c,-3,-14,9,color,true);line(c,20,-30,26,35,BONE,3);
+        path(c,[[20,-31],[4,-37],[-20,-31],[-35,-14],[-20,-20],[3,-21],[22,-23]],light);line(c,-8,12,13,7,color,2);break;
+      case 'frostbane':
+        path(c,[[-34,10],[-25,-6],[-5,-12],[14,-26],[27,-15],[38,-4],[26,7],[15,12],[8,30],[0,17],[-17,26],[-24,15]],skin,light);
+        for(const x of [-20,-9,1])path(c,[[x,-7],[x+5,-28],[x+11,-9]],BONE);eye(c,21,-8,7,color);path(c,[[24,4],[29,4],[26,14]],BONE);break;
+      case 'rustbug':
+        legs(c,3,'#b59e6a',31);for(let i=0;i<8;i++){c.save();c.rotate(i*TAU/8);plate(c,19,-5,12,10,skin);c.restore();}
+        oval(c,0,0,25,27,deep,light);plate(c,-16,-18,32,38,skin);eye(c,0,-7,11,color);line(c,-9,9,9,9,BONE,2);break;
+      case 'echo':
+        path(c,[[-23,-21],[0,-32],[25,-18],[32,12],[9,31],[-22,25]],skin,light);
+        for(let i=0;i<4;i++)oval(c,0,-6+i*7,19-i*2,7,deep,light);eye(c,0,-17,9,color);break;
+      case 'lord': case 'boss':
+        cloak(c,deep,35,42);horns(c,light,48);mask(c,0,-8,20,color,true);
+        path(c,[[-18,-26],[-20,-44],[-8,-34],[0,-47],[9,-34],[23,-44],[18,-24]],'#b39a70');
+        for(const s of [-1,1])path(c,[[s*25,-9],[s*48,9],[s*43,33],[s*32,19],[s*21,27]],skin,light);eye(c,0,17,10,color);break;
+      case 'abyss':
+        for(let i=0;i<8;i++){const a=i*TAU/8;c.save();c.rotate(a);path(c,[[16,-9],[35,-16],[51,-7],[42,3],[53,13],[37,9],[24,13]],skin,light);c.restore();}
+        oval(c,0,0,29,33,deep,light);oval(c,0,0,20,27,INK);
+        for(let i=0;i<10;i++){const a=i*TAU/10;path(c,[[Math.cos(a)*23,Math.sin(a)*27],[Math.cos(a+.2)*11,Math.sin(a+.2)*16],[Math.cos(a+.4)*23,Math.sin(a+.4)*27]],BONE);}eye(c,0,-23,7,color);break;
+      case 'machine':
+        for(let i=0;i<3;i++){c.save();c.rotate(i*TAU/3);plate(c,19,-13,32,26,skin);plate(c,40,-18,13,36,deep);line(c,43,-10,43,10,color,3);c.restore();}
+        oval(c,0,0,30,30,METAL,light);oval(c,0,0,22,22,INK,light);eye(c,0,0,19,color);break;
+      case 'void':
+        for(const s of [-1,1])path(c,[[s*6,-43],[s*35,-31],[s*46,-3],[s*34,28],[s*11,44],[s*24,14],[s*19,-10]],skin,light);
+        cloak(c,INK,19,28);mask(c,0,-4,12,'#b39ccd',true);for(const [x,y]of [[-40,33],[38,-37],[-16,-46]])path(c,[[x,y-8],[x+5,y],[x,y+9],[x-5,y]],light);break;
+      case 'final':
+        for(let i=0;i<12;i++){c.save();c.rotate(i*TAU/12);path(c,[[31,-3],[48,-5],[55,0],[48,5],[31,3]],i%3?'#7e5961':'#c2a16e',light,1);c.restore();}
+        cloak(c,deep,31,43);horns(c,BONE,48);oval(c,0,-1,34,28,skin,light);eye(c,0,-1,28,color);
+        for(const s of [-1,1]){line(c,s*22,25,s*37,39,BONE,3);line(c,s*37,39,s*43,26,BONE,2);}break;
+      default: cloak(c,skin);mask(c,0,-8,12,color);
+    }
+    if(phase>0){
+      for(let i=0;i<phase+1;i++){const a=-Math.PI/2+i*TAU/(phase+1);path(c,[[Math.cos(a)*30,Math.sin(a)*30],[Math.cos(a)*40-3,Math.sin(a)*40],[Math.cos(a)*40+3,Math.sin(a)*40]],'#e4cda0',INK,1);}
+      line(c,-7,9,0,3,color,2);line(c,0,3,5,19,BONE,1.5);
+    }
+  }
+  function sprite(id, color, phase = 0) {
+    const key=id+'|'+color+'|'+phase;
+    if(cache.has(key)){const value=cache.get(key);cache.delete(key);cache.set(key,value);return value;}
+    const boss=['lord','boss','abyss','machine','void','final'].includes(id), size=boss?160:112;
+    const image=document.createElement('canvas');image.width=image.height=size;
+    const c=image.getContext('2d');c.translate(size/2,size/2);body(c,id,color,phase);
+    const hit=document.createElement('canvas');hit.width=hit.height=size;
+    const h=hit.getContext('2d');h.drawImage(image,0,0);h.globalCompositeOperation='source-in';h.fillStyle='#e8e5d4';h.fillRect(0,0,size,size);
+    const item={image,hit,size,bytes:size*size*8};
+    while(cache.size && (cache.size>=LIMIT || bytes+item.bytes>8e6)){const first=cache.keys().next().value;bytes-=cache.get(first).bytes;cache.delete(first);}
+    cache.set(key,item);bytes+=item.bytes;builds++;return item;
+  }
+  function mark(c, key, x, y, size = 7, color = '#d0b87c') {
+    c.save();c.translate(x,y);c.scale(size/8,size/8);c.lineJoin='round';c.lineCap='round';
+    switch(key){
+      case 'tough':path(c,[[-6,-6],[6,-6],[6,5],[0,9],[-6,5]],null,color,2);line(c,-3,0,3,0,color,2);break;
+      case 'swift':path(c,[[-2,-8],[6,-8],[0,0],[5,0],[-5,9],[-1,2],[-6,2]],color,null);break;
+      case 'shielded':path(c,[[0,-8],[7,-5],[5,4],[0,9],[-5,4],[-7,-5]],null,color,2);break;
+      case 'resist':for(let i=0;i<3;i++)arc(c,0,0,3+i*3,-2.3,1,color,1.4);break;
+      case 'vamp':path(c,[[0,-9],[6,1],[4,7],[-4,7],[-6,1]],color);break;
+      case 'frenzy':path(c,[[-7,6],[-4,-7],[0,-1],[5,-9],[8,6]],null,color,2);break;
+      case 'splitter':line(c,-5,-7,-5,7,color,2);line(c,5,-7,5,7,color,2);line(c,-8,0,8,0,color);break;
+      case 'deadly':oval(c,0,1,6,6,color);line(c,0,-5,4,-9,color,2);break;
+      case 'regen':line(c,-7,0,7,0,color,3);line(c,0,-7,0,7,color,3);break;
+      case 'armored':plate(c,-7,-7,14,14,color);line(c,-3,-3,3,3,INK,2);break;
+      case 'burn':path(c,[[-6,5],[-4,-3],[0,0],[2,-9],[7,2],[4,8],[-3,8]],color);break;
+      case 'poison':oval(c,-3,0,4,6,color);oval(c,3,0,4,6,color);line(c,-3,7,3,7,color,2);break;
+      case 'vuln':path(c,[[0,-8],[7,0],[0,8],[-7,0]],null,color,2);line(c,-3,0,3,0,color);break;
+      default:eye(c,0,0,7,color);
+    }c.restore();
+  }
+  function draw(c,e,time,dt,options={}) {
+    const id=e.boss?e.bossKey||'lord':e.type, col=e.def.color||'#b28dff', texture=sprite(id,col,e.boss?e.phase||0:0);
+    const motion=options.motion!==false, moving=motion && !options.frozen && !(e.stun>0) && (e.state==='walk'||e.state==='room');
+    const pulse=moving?Math.sin(time*(e.def.flying?7:8)+(e.wob||0)):0;
+    const bob=pulse*(e.def.flying?3.5:1.3), scale=e.r/32;
+    c.save();c.globalAlpha=Number.isFinite(e.alpha)?e.alpha:1;
+    oval(c,e.x,e.y+e.r*.8,e.r*.8,e.r*.22,'rgba(3,10,16,.46)');
+    c.translate(e.x,e.y+bob);c.scale(scale,scale);c.rotate(moving?pulse*.025:0);
+    if(e.def.flying && moving){c.save();c.scale(1+Math.sin(time*10)*.035,1);c.drawImage(texture.image,-texture.size/2,-texture.size/2);c.restore();}
+    else c.drawImage(texture.image,-texture.size/2,-texture.size/2);
+    if(e.hitFlash>0 && options.flash!==0){c.globalAlpha*=Math.min(.65,e.hitFlash*4)*(options.flash==null?1:options.flash);c.drawImage(texture.hit,-texture.size/2,-texture.size/2);}
+    c.restore();
+  }
+  function observe(c,enemies,time,dt,options={}) {
+    if(gameRef!==options.game){active.clear();deaths.length=0;gameRef=options.game;}
+    for(const state of active.values())state.seen=false;
+    for(const e of enemies){if(e.dead)continue;const state=active.get(e)||{};Object.assign(state,{seen:true,x:e.x,y:e.y,r:e.r,type:e.type,boss:e.boss,bossKey:e.bossKey,phase:e.phase,def:e.def,alpha:e.alpha});active.set(e,state);}
+    for(const [entity,state]of active)if(!state.seen){if(entity.dead && deaths.length<40)deaths.push({...state,life:.4});active.delete(entity);}
+    for(let i=deaths.length-1;i>=0;i--){const d=deaths[i];d.life-=dt;if(d.life<=0){deaths.splice(i,1);continue;}
+      const p=d.life/.4;c.save();c.translate(d.x,d.y);if(options.motion!==false)c.scale(1+(1-p)*.15,p*.5+.5);draw(c,{...d,x:0,y:0,alpha:p*.45,hitFlash:0},time,dt,{motion:false});c.restore();}
+  }
+  function preview(c,id,x,y,r=27,phase=0){const def=BOSS_DEFS[id]||ENEMY_DEFS[id]||ENEMY_DEFS.grunt;draw(c,{type:id,boss:!!BOSS_DEFS[id],bossKey:id,def,x,y,r,phase,alpha:1,hitFlash:0,state:'idle'},0,0,{motion:false});}
+  return {draw,observe,mark,preview,stats:()=>({entries:cache.size,bytes,builds,limit:LIMIT,deaths:deaths.length,observed:active.size})};
+})();
+
+/* ==== ui-art.js ==== */
+// Code-native brass/ink symbols and portraits. No fonts, network assets or RNG.
+const UiArt = (() => {
+  const thumbnails = new Map();
+  const paths = {
+    lantern:'<path d="M9 5h14l3 23-10 5L6 28 9 5Z"/><path d="M12 5V3h8v2M7 12h18M8 27h16M13 13l-2 13m10-13 2 13"/><path d="M16 13c6 7 5 11 0 13-5-2-6-6 0-13Z" fill="currentColor" stroke="none"/>',
+    coin:'<ellipse cx="16" cy="16" rx="11" ry="12"/><ellipse cx="16" cy="16" rx="7" ry="9"/><path d="M16 9v14m-3-11h6m-6 8h6"/>',
+    power:'<path d="m18 3-12 16h10l-2 12 13-18H17l1-10Z"/>',
+    soul:'<path d="M16 3c-9 7-11 11-9 17 1 5 6 6 5 11l5-4 4 2c0-4 6-7 5-13-1-5-5-9-10-13Z"/><path d="m12 15 2 2m5-3 2 2"/>',
+    door:'<path d="M8 30V3h17v27M5 30h23M11 7h11v19H11Z"/><circle cx="19" cy="17" r="1"/>',
+    bed:'<path d="M5 10h22v19H5zM8 10V4h16v6M5 16h22M8 7h6m4 0h3M8 29v3m16-3v3"/><path d="m14 20 2-3 3 5h-6l1-2Z"/>',
+    wave:'<path d="M4 10c5-7 8 7 13 0s8-2 11 0M4 17c5-7 8 7 13 0s8-2 11 0M4 24c5-7 8 7 13 0s8-2 11 0"/>',
+    leaf:'<path d="M16 30V12M16 23C2 23 3 9 3 9c11 0 13 7 13 14Zm0-6C29 17 29 4 29 4 19 4 16 10 16 17Z"/>',
+    enemy:'<path d="m9 5 7-3 8 5 4 22-8-4-4 6-5-6-7 4L9 5Z"/><path d="m10 13 4 2m4 0 4-2m-9 8h6"/>',
+    research:'<path d="M12 4h8m-6 0v10L6 26c-1 2 1 4 3 4h14c3 0 4-2 3-4l-8-12V4M10 22h13"/><circle cx="16" cy="24" r="1"/>',
+    trophy:'<path d="M9 4h14v9c0 10-14 10-14 0V4Zm0 3H4v7l7 4m12-11h5v7l-7 4M16 22v6m-6 2h12"/>',
+    chest:'<path d="M4 12c1-12 23-12 24 0v17H4V12Zm0 3h24M10 5v10m12-10v10"/><path d="M13 13h6v8h-6z"/>',
+    book:'<path d="M4 5c6-2 10 1 12 3 4-3 8-4 12-3v23c-5-1-9 0-12 2-3-2-7-3-12-2V5Zm12 3v22M8 11h4m8 0h4M8 16h4m8 0h4"/>',
+    bag:'<path d="M8 9c0-10 16-10 16 0l3 21H5L8 9Zm3 0h10M8 19h16m-13-6h10v13H11z"/>',
+    people:'<circle cx="11" cy="10" r="5"/><path d="M2 29v-6c0-9 18-9 18 0v6M22 5c8 0 8 11 0 11m2 4c5 1 6 5 6 9"/>',
+    gem:'<path d="m8 5 16 0 6 9-14 17L2 14l6-9Zm-6 9h28M8 5l8 26L24 5M8 5l8 9 8-9"/>',
+    archive:'<path d="M6 3h20v28H6zM3 8h7M3 15h7M3 23h7M14 9h8m-8 6h8m-8 6h5"/>',
+    save:'<path d="M5 3h19l4 5v23H4V3h1Zm4 0v9h13V3M9 30V19h14v11M18 6v4"/>',
+    shield:'<path d="m16 2 12 5-2 14-10 10L6 21 4 7l12-5Z"/><path d="m10 16 4 5 9-11"/>',
+    cross:'<path d="M12 3h8v9h9v8h-9v9h-8v-9H3v-8h9V3Z"/>',
+    fire:'<path d="M17 2c0 9-10 10-5 17-7-2-3-7-5-9C-4 25 12 35 22 28c11-8-3-20-5-26Z"/><path d="M16 18c-6 5-4 10 0 11 6-1 6-6 0-11Z"/>',
+    frost:'<path d="M16 2v28M4 9l24 14M4 23 28 9M11 5l5 4 5-4M11 27l5-4 5 4M4 14l6-1-1-6M28 18l-6 1 1 6M3 19l7 1-1 6M29 13l-7-1 1-6"/>',
+    meteor:'<path d="m5 13 10 5 4 10c-13 8-23-3-14-15ZM11 12 21 2M18 14 28 4M21 21l10-11M6 21h1"/>',
+    pulse:'<path d="M2 17h6l4-12 6 23 5-17 3 6h4"/>',
+    storm:'<circle cx="16" cy="16" r="5"/><path d="M16 2v5m0 18v5M2 16h5m18 0h5M6 6l4 4m12 12 4 4M6 26l4-4M22 10l4-4"/>',
+    target:'<circle cx="16" cy="16" r="10"/><circle cx="16" cy="16" r="4"/><path d="M16 1v7m0 17v7M1 16h7m17 0h7"/>',
+    blade:'<path d="m21 2 9 0-1 9-15 15-8-8L21 2ZM6 18l-3 4 7 7 4-3M3 30l5-5M20 8l4 4"/>',
+    clock:'<circle cx="16" cy="17" r="12"/><path d="M16 9v9l7 4M12 1h8M7 5 3 9m22-4 4 4"/>',
+    key:'<circle cx="11" cy="11" r="7"/><path d="m16 16 13 13m-6-6 4-4m-8 0 4-4"/>',
+    infinity:'<path d="M16 16C6-1-5 20 6 24c8 3 14-19 21-16 11 4 0 25-11 8Z"/>',
+    arrow:'<path d="M3 16h25M18 6l10 10-10 10"/>',
+    lock:'<path d="M7 13h18v18H7zM11 13V7c0-8 10-8 10 0v6M16 21v4"/>',
+    volume:'<path d="M3 12h6l8-8v24l-8-8H3v-8Zm18-2c6 3 6 9 0 12m3-16c10 6 10 14 0 20"/>',
+  };
+  const aliases={gold:'coin',souls:'soul',tech:'research',help:'book',rune:'gem',quest:'archive',skills:'storm',upgrade:'arrow',
+    economy:'coin',firepower:'target',vitality:'cross',rapid:'pulse',electric:'power',structure:'shield',ironwall:'door',greed:'coin',mining:'coin',sleep:'bed',focus:'target',
+    crit:'blade',harvest:'soul',overload:'power',swift:'clock',runemaster:'gem',fortify:'shield',plunder:'chest',berserk:'fire',thorns:'blade',compound:'coin',critmaster:'target',soulstorm:'storm',overcore:'pulse',annihilation:'meteor',runelord:'gem',fortress:'shield',eternity:'infinity',
+    freeze:'frost',overclock:'pulse',mend:'cross',repel:'storm',siphon:'soul',heal:'cross',atkBoost:'blade',slowEnemy:'frost',goldGen:'coin',reveal:'target'};
+  function icon(id,extra='') {const key=aliases[id]||id;return '<svg class="ui-glyph '+extra+'" viewBox="0 0 32 34" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" focusable="false">'+(paths[key]||paths.research)+'</svg>';}
+  function building(type,branch=null){
+    const key='building:'+type+':'+(branch||'');if(thumbnails.has(key))return thumbnails.get(key);
+    const def=BUILD_DEFS[type];if(!def||typeof BuildingArt==='undefined')return '';
+    const image=document.createElement('canvas');image.width=112;image.height=96;const c=image.getContext('2d');c.translate(56,48);c.scale(.9,.9);
+    const fake={type,def,level:branch?6:1,branch,x:0,y:0,hp:100,maxHp:100,angle:-Math.PI/2,col:0,row:0};
+    const stats=branch?Object.assign({},def.stat(6),def.branch[branch].mod(def.stat(6),fake)):def.stat(1);
+    BuildingArt.draw(c,fake,stats,0,0,{motion:false});
+    const html='<img class="building-portrait" src="'+image.toDataURL()+'" alt="" draggable="false">';thumbnails.set(key,html);return html;
+  }
+  function enemy(id){
+    const key='enemy:'+id;if(thumbnails.has(key))return thumbnails.get(key);
+    const image=document.createElement('canvas');image.width=image.height=100;EnemyArt.preview(image.getContext('2d'),id,50,50,26);
+    const html='<img class="enemy-portrait" src="'+image.toDataURL()+'" alt="" draggable="false">';thumbnails.set(key,html);return html;
+  }
+  function character(name){
+    const cast={'林小夏':{hair:'#51423d',coat:'#ac925f',style:1},'周默':{hair:'#293b42',coat:'#6a8b98',glasses:true,style:2},'赵磊':{hair:'#4a3630',coat:'#729182',style:3},'你':{hair:'#2a3035',coat:'#607c8e',style:0}};
+    const p=cast[name];
+    if(!p)return '<svg class="character-art" viewBox="0 0 80 80" aria-hidden="true"><path fill="#182632" d="M0 0h80v80H0z"/><path fill="#354454" d="m9 80 9-43 8-24 14-8 15 9 9 22 9 44Z"/><path fill="#101a26" d="m22 43 5-20 13-8 15 9 6 20-21 21Z"/><path fill="#c5b88e" d="m25 36 10 4-2 3-8-3m20 0 10-4v4l-8 3"/></svg>';
+    return '<svg class="character-art" viewBox="0 0 80 80" aria-hidden="true"><path fill="#1c2c35" d="M0 0h80v80H0z"/><path fill="'+p.coat+'" d="M7 80c0-30 66-30 66 0Z"/><path fill="#bba68c" d="M34 48h13v19H34z"/><path fill="'+p.hair+'" d="M19 30c0-31 44-31 44 0l'+(p.style===1?'4 30-15 5-34-5':'-1 20-41 1')+'Z"/><path fill="#d1bba0" d="M24 30c0-20 34-20 34 0v10c-1 22-32 22-34 0Z"/><path fill="'+p.hair+'" d="M21 31c-4-27 43-28 42-1L49 18 32 29Z"/><path fill="none" stroke="#3b3834" stroke-width="2" d="M29 36h6m10 0h6m-14 13h7"/>'+(p.glasses?'<path fill="none" stroke="#4f656c" stroke-width="2" d="M27 31h12v11H27Zm16 0h12v11H43Zm-4 4h4"/>':'')+'<path fill="#e1d2b2" d="m25 63 9-5 6 9 7-9 9 5-10 14H35Z"/><path fill="#586a70" d="M38 68h5v12h-5z"/></svg>';
+  }
+  function companion(c,type,x,y,time,motion=true){
+    const key='companion:'+type;let image=thumbnails.get(key);
+    if(!image){image=document.createElement('canvas');image.width=image.height=48;const p=image.getContext('2d');p.translate(24,24);p.lineWidth=1.2;p.strokeStyle='#aeb8a3';
+      if(type==='shadowCat'){
+        p.fillStyle='#293b48';p.beginPath();p.ellipse(-1,7,12,9,0,0,Math.PI*2);p.fill();p.stroke();
+        p.beginPath();p.moveTo(-12,-2);p.lineTo(-12,-15);p.lineTo(-4,-9);p.lineTo(4,-10);p.lineTo(12,-16);p.lineTo(11,0);p.closePath();p.fill();p.stroke();
+        p.strokeStyle='#d8c78f';p.beginPath();p.moveTo(-8,-4);p.lineTo(-4,-3);p.moveTo(4,-3);p.lineTo(8,-4);p.stroke();
+        p.strokeStyle='#788b91';p.lineWidth=3;p.beginPath();p.moveTo(8,11);p.quadraticCurveTo(22,11,18,-4);p.stroke();
+      }else if(type==='firefly'){
+        p.fillStyle='#9aaf9b';for(const s of [-1,1]){p.beginPath();p.ellipse(s*8,-2,8,4,s*.6,0,Math.PI*2);p.fill();}
+        p.fillStyle='#e8d797';p.beginPath();p.ellipse(0,5,5,8,0,0,Math.PI*2);p.fill();p.stroke();p.fillStyle='#435346';p.beginPath();p.arc(0,-6,4,0,Math.PI*2);p.fill();
+      }else{
+        p.fillStyle='#aaa4be';for(const s of [-1,1]){p.beginPath();p.ellipse(s*9,-1,9,5,s*.6,0,Math.PI*2);p.fill();}
+        p.fillStyle='#e0d4bd';p.beginPath();p.arc(0,-9,5,0,Math.PI*2);p.fill();p.fillStyle='#6d8c87';p.beginPath();p.moveTo(0,-3);p.lineTo(9,15);p.lineTo(0,12);p.lineTo(-9,15);p.closePath();p.fill();p.stroke();
+      }thumbnails.set(key,image);
+    }
+    c.save();c.translate(x,y);if(motion)c.rotate(Math.sin(time*2)*.06);c.drawImage(image,-19,-19,38,38);c.restore();
+  }
+  function decorate(){
+    const buttons={btnSkip:'arrow',btnSkip2:'arrow',btnTech:'research',btnTech2:'research',btnAch:'trophy',btnLot:'chest',btnLot2:'chest',btnHelp:'book',btnHelp2:'book',btnRune:'gem',btnQuest:'archive',btnSave:'save',btnSaveMgr:'save',btnUpAll:'arrow',btnUpTower:'target',btnMaxSel:'arrow',btnMaxAll:'arrow'};
+    for(const [id,key]of Object.entries(buttons)){
+      const el=document.getElementById(id);if(!el||el.dataset.inkIcon)continue;
+      for(const node of el.childNodes)if(node.nodeType===3)node.textContent=node.textContent.replace(/^[^\p{L}\p{N}]+/u,'');
+      el.insertAdjacentHTML('afterbegin',icon(key));el.dataset.inkIcon='true';
+    }
+    for(const [id,key]of Object.entries({btnGacha:'chest',btnBag:'bag',btnDiary:'book',btnNPC:'people',btnFragments:'gem',btnTrials:'infinity',btnEndings:'archive'})){
+      const el=document.querySelector('#'+id+' > span');if(el)el.innerHTML=icon(key);
+    }
+    const resource=['wave','coin','power','soul','door','bed','leaf','enemy'];
+    document.querySelectorAll('#hud > .stat > i').forEach((el,i)=>{if(resource[i]&&!el.dataset.inkIcon){el.innerHTML=icon(resource[i]);el.dataset.inkIcon='true';}});
+    const logo=document.querySelector('#hud .logo');if(logo&&!logo.dataset.inkIcon){logo.innerHTML=icon('lantern')+'<span>守灯人</span>';logo.dataset.inkIcon='true';}
+    const title=document.querySelector('.home-brand h1');if(title&&!title.querySelector('svg'))title.insertAdjacentHTML('afterbegin',icon('lantern','title-lantern'));
+    const lottery=document.querySelector('.lotmachine');if(lottery&&!lottery.querySelector('svg'))lottery.innerHTML=icon('chest');
+  }
+  return {icon,building,enemy,character,companion,decorate,stats:()=>({thumbnails:thumbnails.size})};
+})();
+
 /* ==== render.js ==== */
 const cv = document.getElementById('game');
 const ctx = cv.getContext('2d');
@@ -10611,19 +11168,9 @@ function drawDreamSystems() {
     for (const c of creatures) {
       ctx.save();
       // 浮动动画
-      const bobY = Math.sin(c.bobPhase) * 4;
-      const pulse = 0.9 + Math.sin(T * 3 + c.bobPhase) * 0.1;
-      // 光晕
-      const glowR = c.def.firefly ? 28 : 22;
-      const grad = ctx.createRadialGradient(c.x, c.y + bobY, 0, c.x, c.y + bobY, glowR);
-      grad.addColorStop(0, c.def.color + '40');
-      grad.addColorStop(1, 'transparent');
-      ctx.fillStyle = grad;
-      ctx.beginPath(); ctx.arc(c.x, c.y + bobY, glowR, 0, 6.2832); ctx.fill();
-      // 图标
-      ctx.font = (18 * pulse) + 'px serif';
+      const bobY = sceneMotion() ? Math.sin(c.bobPhase) * 3 : 0;
+      UiArt.companion(ctx,c.type,c.x,c.y+bobY,T,sceneMotion());
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(c.def.icon, c.x, c.y + bobY);
       // 名字
       ctx.font = '9px "Courier New"';
       ctx.fillStyle = c.def.color;
@@ -10679,9 +11226,10 @@ function drawDreamSystems() {
       const laneIdx = parseInt((npc.roomId || '').replace('lane_', ''), 10);
       if (isNaN(laneIdx)) continue;
       ctx.save();
-      ctx.font = '14px serif';
-      ctx.textAlign = 'left';
-      ctx.fillText(npc.def.icon, ROOM_X0 + 4, ARENA_TOP + laneIdx * ((ARENA_BOT - ARENA_TOP) / 3) + 14);
+      const x=ROOM_X0+13,y=ARENA_TOP+laneIdx*((ARENA_BOT-ARENA_TOP)/3)+12;
+      ctx.fillStyle='#1b3038';ctx.fillRect(x-9,y-9,18,18);ctx.strokeStyle='#8a987b';ctx.strokeRect(x-9,y-9,18,18);
+      const key={heal:'regen',atkBoost:'frenzy',slowEnemy:'swift',goldGen:'armored',shield:'shielded',reveal:'eye'}[npc.def.ability]||'eye';
+      EnemyArt.mark(ctx,key,x,y,5,npc.def.color||'#d1c295');
       ctx.restore();
     }
   }
@@ -10918,244 +11466,89 @@ function drawBed() {
   ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.85)';
   ctx.strokeText(bn, x + 6, R.y + R.h * 2 - 16);
   ctx.fillStyle = '#ffd166'; ctx.fillText(bn, x + 6, R.y + R.h * 2 - 16);
-  ctx.font = 'bold 9.5px sans-serif'; ctx.fillStyle = '#9ef01a';
+  ctx.font = 'bold 9.5px sans-serif'; ctx.fillStyle = '#cfca9d';
   ctx.fillText('Lv' + G.bed.lv + '/50  ' + fmt(bedGold()) + '/秒', x + 6, R.y + R.h * 2 - 4);
 }
-/** 把十六进制色按比例混向目标色（敌人血条/描边用） */
-function mixHex(a, b, t) {
-  const ca = hexRgb(a), cb = hexRgb(b);
-  const f = i => Math.round(ca[i] + (cb[i] - ca[i]) * t);
-  return "rgb(" + f(0) + "," + f(1) + "," + f(2) + ")";
-}
-/** 飞行生物的翅膀（上下拍动） */
-function drawWing(ang, len, beat) {
-  ctx.save();
-  ctx.rotate(ang);
-  ctx.fillStyle = "rgba(220,225,255,.30)";
-  ctx.beginPath();
-  ctx.ellipse(len * 0.5, 0, len * 0.5, len * 0.22 + beat, 0, 0, 6.2832);
-  ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.restore();
-}
-/** 梦魇本体：投影 → 移动拖尾 → 威胁光环 → 暗描边机体 → 类型特征 → 图标 → 状态 */
+/** Cached silhouettes, state marks and threat information. */
 function drawEnemies() {
+  const motion = sceneMotion();
+  const flashMul = Accessibility.flashMul();
+  EnemyArt.observe(ctx, G.enemies, T, _frameDt, { game: G, motion });
   for (const e of G.enemies) {
     if (e.dead) continue;
-    const d = e.def;
-    const col = d.color || "#b28dff";
-    const sp = enemySpeed(e);
-    const bob = Math.sin(T * 8 + e.wob) * (sp > 0 ? 3 : 0.5) + (d.flying ? Math.sin(T * 4 + e.wob) * 6 : 0);
-    const face = isFinite(e.dir) ? e.dir : 0;
-    const moving = sp > 1;
-    ctx.save();
-    ctx.globalAlpha = e.alpha;
-
-    // ① 地面投影
-    ctx.fillStyle = "rgba(0,0,0,.38)";
-    ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * 0.92, e.r * 0.85, e.r * 0.3, 0, 0, 6.2832); ctx.fill();
-
-    // ② 移动拖尾：三截渐隐残影，让"速度"读得出来
-    if (moving) {
-      const back = Math.atan2(Math.sin(face), Math.cos(face));
-      const dx = -Math.cos(back), dy = -Math.sin(back);
-      for (let i = 1; i <= 3; i++) {
-        const t = i / 3;
-        ctx.globalAlpha = e.alpha * 0.16 * (1 - t);
-        ctx.fillStyle = col;
-        ctx.beginPath();
-        ctx.ellipse(e.x + dx * e.r * 1.5 * i, e.y + dy * e.r * 1.5 * i + bob,
-          e.r * (0.62 - t * 0.34), e.r * (0.5 - t * 0.28), 0, 0, 6.2832);
-        ctx.fill();
-      }
-      ctx.globalAlpha = e.alpha;
-    }
-
-    // ③ 威胁光环（本体底光）
-    const RK = Math.round(e.r);   // 半径必须进 key：同色不同体积的敌人不能共用一份渐变
-    const gl = gradR("eg" + col + RK, e.r * 2.1, [[0, col + (e.boss ? "66" : (e.elite ? "55" : "3a"))], [1, "rgba(0,0,0,0)"]]);
-    ctx.fillStyle = gl;
-    ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r * 2.1, 0, 6.2832); ctx.fill();
-
-    // ④ 机体：暗描边 + 内层材质，先从地面里"抠"出来
-    ctx.fillStyle = "rgba(8,6,18,.72)";
-    ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r + 2.4, 0, 6.2832); ctx.fill();
-    ctx.fillStyle = gradR("eb" + col + RK, e.r, [[0, mixHex(col, "#ffffff", 0.34)], [0.55, mixHex(col, "#000000", 0.28)], [1, mixHex(col, "#000000", 0.62)]]);
-    ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r, 0, 6.2832); ctx.fill();
-    ctx.strokeStyle = d.boss || e.elite ? "#ffe066" : mixHex(col, "#ffffff", 0.45);
-    ctx.lineWidth = d.boss ? 2.6 : (e.elite ? 2.2 : 1.4); ctx.stroke();
-
-    // ⑤ 类型特征
-    if (d.flying) {
-      const beat = Math.sin(T * 14 + e.wob) * e.r * 0.16;
-      ctx.save(); ctx.translate(e.x, e.y + bob);
-      drawWing(face + Math.PI / 2 + 0.5, e.r * 1.5, beat);
-      drawWing(face - Math.PI / 2 - 0.5, e.r * 1.5, beat);
-      ctx.restore();
-    }
-    if (d.burrow) {
-      ctx.save();
-      ctx.globalAlpha = e.alpha * 0.75;
-      ctx.fillStyle = "#78350f";
-      ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * 1.1, e.r * 1.25, e.r * 0.42, 0, 0, 6.2832); ctx.fill();
-      ctx.fillStyle = "#a16207";
-      for (let i = 0; i < 4; i++) {
-        const a = e.anim * 1.4 + i * 1.57;
-        ctx.beginPath();
-        ctx.arc(e.x + Math.cos(a) * e.r * 1.15, e.y + e.r * 0.9 + Math.sin(a) * e.r * 0.3, 2, 0, 6.2832);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-    if (d.stealth && !e.untargetable) {
-      ctx.save();
-      ctx.globalAlpha = e.alpha * 0.7;
-      ctx.strokeStyle = "#d7e8ff"; ctx.lineWidth = 1.2;
-      ctx.setLineDash([3, 4]); ctx.lineDashOffset = -T * 10;
-      ctx.beginPath(); ctx.arc(e.x, e.y + bob, e.r + 5, 0, 6.2832); ctx.stroke();
-      ctx.setLineDash([]); ctx.lineDashOffset = 0;
-      ctx.restore();
-    }
-
-    // ⑥ 图标（敌人的"身份"，放在最上层）
-    emoji(d.icon, e.x, e.y + bob - 2, e.r * 1.9);
-
-    // ⑦ 受击闪白
-    if (e.hitFlash > 0) {
-      ctx.save();
-      ctx.globalAlpha = Math.min(1, e.hitFlash * 5);
-      ctx.fillStyle = "#fff";
-      ctx.beginPath(); ctx.arc(e.x, e.y + bob - 2, e.r * 1.15, 0, 6.2832); ctx.fill();
-      ctx.restore();
-    }
-    ctx.restore();
-
-    // ⑧ 控制状态：减速 / 眩晕 / 冰冻
+    EnemyArt.draw(ctx, e, T, _frameDt, { motion, flash: flashMul, frozen: G.buff.freeze > 0 });
     if (G.buff.freeze > 0 || e.stun > 0) {
-      ctx.strokeStyle = "rgba(127,223,255,.9)"; ctx.lineWidth = 2.5;
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 5, 0, 6.2832); ctx.stroke();
-    }
-    if (e.slowT > 0) {
-      ctx.fillStyle = "rgba(127,223,255,.22)";
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 3, 0, 6.2832); ctx.fill();
-    }
-
-    // ⑨ 精英 / BOSS 表现
-    if (e.elite) {
-      const af = AFFIX[e.affixes[0]] || { color: "#fb923c", icon: "✦" };
-      ctx.save();
-      ctx.globalAlpha = 0.22 + Math.sin(T * 3) * 0.08;
-      ctx.fillStyle = gradR("ea" + af.color, e.r * 2.6, [[0, af.color + "55"], [1, "rgba(0,0,0,0)"]]);
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r * 2.6, 0, 6.2832); ctx.fill();
-      ctx.restore();
-      ctx.strokeStyle = af.color; ctx.lineWidth = 2;
-      ctx.setLineDash([4, 4]); ctx.lineDashOffset = -T * 12;
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 8, 0, 6.2832); ctx.stroke();
-      ctx.setLineDash([]); ctx.lineDashOffset = 0;
-      ctx.font = "11px sans-serif"; ctx.textAlign = "center";
-      let ox = -((e.affixes.length - 1) * 13) / 2;
-      e.affixes.forEach(k => { ctx.fillText((AFFIX[k] || {}).icon || "✦", e.x + ox, e.y - e.r - 16); ox += 13; });
-    }
-    if (e.boss) {
-      ctx.save();
-      const bp = 0.28 + Math.sin(T * 2) * 0.12;
-      ctx.globalAlpha = bp;
-      ctx.fillStyle = gradR("bg", e.r * 3.2, [[0, "rgba(255,77,109,.45)"], [0.55, "rgba(255,77,109,.1)"], [1, "rgba(0,0,0,0)"]]);
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r * 3.2, 0, 6.2832); ctx.fill();
-      ctx.restore();
-      // 双层旋转环 + 尖刺
-      ctx.save();
-      ctx.translate(e.x, e.y);
-      ctx.rotate(T * 0.5);
-      ctx.strokeStyle = "rgba(255,77,109,.75)"; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(0, 0, e.r + 12, 0, 6.2832); ctx.stroke();
-      ctx.strokeStyle = "rgba(255,209,102,.6)"; ctx.lineWidth = 1.4;
-      ctx.setLineDash([6, 10]);
-      ctx.beginPath(); ctx.arc(0, 0, e.r + 20, 0, 6.2832); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = "rgba(255,77,109,.9)";
-      for (let i = 0; i < 8; i++) {
-        const a = i * Math.PI / 4;
-        ctx.beginPath();
-        ctx.moveTo(Math.cos(a) * (e.r + 11), Math.sin(a) * (e.r + 11));
-        ctx.lineTo(Math.cos(a + 0.13) * (e.r + 19), Math.sin(a + 0.13) * (e.r + 19));
-        ctx.lineTo(Math.cos(a + 0.26) * (e.r + 11), Math.sin(a + 0.26) * (e.r + 11));
-        ctx.closePath(); ctx.fill();
+      ctx.save(); ctx.strokeStyle = '#b6e0e1'; ctx.lineWidth = 1.7;
+      const radius = e.r + 5;
+      for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 3;
+        ctx.beginPath(); ctx.moveTo(e.x + Math.cos(a) * radius, e.y + Math.sin(a) * radius);
+        ctx.lineTo(e.x + Math.cos(a + Math.PI / 3) * radius, e.y + Math.sin(a + Math.PI / 3) * radius); ctx.stroke();
       }
       ctx.restore();
+    } else if (e.slowT > 0) {
+      ctx.strokeStyle = 'rgba(157,200,218,.7)'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * .72, e.r, e.r * .28, 0, 0, Math.PI * 2); ctx.stroke();
     }
-    // 巨像 / 多段护盾：把进度画成实体护盾片
+    if (e.def.stealth && !e.untargetable) {
+      ctx.save(); ctx.strokeStyle = '#b3c6cd'; ctx.lineWidth = 1; ctx.setLineDash([2, 4]);
+      ctx.beginPath(); ctx.ellipse(e.x, e.y, e.r + 5, e.r * 1.25, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    }
     if (e.phaseShield) {
       const total = e.phaseShield, left = total - e.segIdx;
       for (let i = 0; i < total; i++) {
-        const a0 = -Math.PI / 2 + i * (6.2832 / total) + 0.08;
-        ctx.strokeStyle = i < left ? "#5de6ff" : "rgba(120,113,108,.45)";
-        ctx.lineWidth = 3.4;
-        ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 7, a0, a0 + (6.2832 / total) - 0.16); ctx.stroke();
+        const a = -Math.PI / 2 + i * Math.PI * 2 / total + .09;
+        ctx.strokeStyle = i < left ? '#8bc7cf' : '#53606a'; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 8, a, a + Math.PI * 2 / total - .18); ctx.stroke();
       }
     }
-
-    // ⑩ 血条 / 护盾条（圆角描边款，随血量变色）
-    const w = e.boss ? 78 : e.r * 2.3;
+    const w = e.boss ? 82 : e.r * 2.2;
+    const barY = Math.max(ARENA_TOP + 20, e.y - e.r * 1.25 - (e.boss ? 15 : 7));
     if (e.hp < e.maxHp || e.boss || e.elite) {
-      const pr = clamp(e.hp / e.maxHp, 0, 1);
-      const hc = e.boss ? "#ff4d6d" : (e.elite ? "#fb923c" : (pr < 0.3 ? "#f87171" : (pr < 0.6 ? "#fbbf24" : "#e0556f")));
-      const by = e.y - e.r - (e.boss ? 13 : 10);
-      gbar(e.x - w / 2, by, w, e.boss ? 7 : 4.5, pr, hc);
-      if (e.shieldMax && e.shield > 0) gbar(e.x - w / 2, by - 6, w, 3.2, e.shield / e.shieldMax, "#5de6ff");
-    }
-
-    // ⑪ 状态徽记：持续伤害 / 易伤
-    {
-      const marks = [];
-      if (e.burnT > 0) marks.push("🔥" + (e.burnStack >= 1 ? Math.round(e.burnStack) : ""));
-      if (e.poison > 0) marks.push("☠️" + Math.round(e.poison));
-      if (e.vulnT > 0) marks.push("⚡");
-      if (e.def.reflect) marks.push("🪞");
-      if (e.def.nullify) marks.push("🚫");
-      if (marks.length) {
-        const ty = e.y + e.r + 13;
-        ctx.font = "bold 10px sans-serif"; ctx.textAlign = "center";
-        ctx.lineWidth = 2.6; ctx.strokeStyle = "rgba(0,0,0,.85)";
-        const txt = marks.join(" ");
-        ctx.strokeText(txt, e.x, ty);
-        ctx.fillStyle = "#fff"; ctx.fillText(txt, e.x, ty);
+      const pct = clamp(e.hp / e.maxHp, 0, 1);
+      ctx.fillStyle = '#0a131c'; ctx.fillRect(e.x - w/2 - 2, barY - 2, w + 4, e.boss ? 9 : 7);
+      ctx.fillStyle = e.boss ? '#cf7d82' : pct < .3 ? '#d88c7d' : e.elite ? '#c8af7a' : '#b7a0b2';
+      ctx.fillRect(e.x - w/2, barY, w * pct, e.boss ? 5 : 3);
+      if (e.shieldMax && e.shield > 0) {
+        ctx.fillStyle = '#8ebdcc'; ctx.fillRect(e.x - w/2, barY - 4, w * clamp(e.shield/e.shieldMax,0,1), 2);
       }
     }
-
-    // 目标受击前短暂显示攻击环，不改伤害节奏，让玩家看清即将承受压力的防线。
-    const attackReadyIn = e.atkCd || 0;
-    if (!e.parasiteTarget && e.stun<=0 && G.buff.freeze<=0 &&
-      (e.state === "door" || (e.state === "room" && e.target && dist(e,e.target)<=26)) && attackReadyIn > 0 && attackReadyIn <= 0.34) {
-      const pulse = 0.72 + Math.sin(T * 18) * 0.18;
-      const targetLabel = e.state === "door" ? "第" + (e.lane + 1) + "路铁门" :
-        (e.target && e.target.isBed ? "床铺" : "房间建筑");
-      ctx.save();
-      ctx.globalAlpha = pulse;
-      ctx.strokeStyle = "#ff7189"; ctx.lineWidth = 2.4;
-      ctx.shadowColor = "rgba(255,77,109,.75)"; ctx.shadowBlur = 10;
-      ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 12, -Math.PI / 2,
-        -Math.PI / 2 + (1 - attackReadyIn / 0.34) * 6.2832); ctx.stroke();
-      ctx.shadowBlur = 0; ctx.font = "bold 9px sans-serif"; ctx.textAlign = "center";
-      ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(0,0,0,.9)"; ctx.fillStyle = "#ffd3da";
-      ctx.strokeText("⚠ 即将攻击 " + targetLabel, e.x, e.y + e.r + 28);
-      ctx.fillText("⚠ 即将攻击 " + targetLabel, e.x, e.y + e.r + 28);
+    if (e.elite) {
+      const affixes = e.affixes || [];
+      ctx.save(); ctx.strokeStyle = '#c8af7a'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r*.8, e.r+7, e.r*.32, 0, 0, Math.PI*2); ctx.stroke();
+      affixes.slice(0,3).forEach((key,i) => EnemyArt.mark(ctx,key,e.x+(i-(Math.min(3,affixes.length)-1)/2)*15,barY-13,5.5,(AFFIX[key]||{}).color||'#c8af7a'));
       ctx.restore();
     }
-
-    // ⑫ BOSS 名称与阶段
-    if (e.boss) {
-      const bdef = BOSS_DEFS[e.bossKey] || { name: d.name, phases: BOSS_PHASES };
-      const phN = (bdef.phases[e.phase] || { name: "" }).name;
-      ctx.font = "bold 11px sans-serif"; ctx.textAlign = "center";
-      ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,.85)";
-      const label = "👑 " + bdef.name + " · " + phN;
-      ctx.strokeText(label, e.x, e.y - e.r - 26);
-      ctx.fillStyle = "#ffd166"; ctx.fillText(label, e.x, e.y - e.r - 26);
+    const statuses = [];
+    if (e.burnT > 0) statuses.push(['burn','#deaa76', e.burnStack >= 1 ? Math.round(e.burnStack) : '']);
+    if (e.poison > 0) statuses.push(['poison','#b3c98a', Math.round(e.poison)]);
+    if (e.vulnT > 0) statuses.push(['vuln','#a3c9d3','']);
+    statuses.forEach(([key,color,count],i) => {
+      const x=e.x+(i-(statuses.length-1)/2)*22,y=e.y+e.r*1.25+10;
+      EnemyArt.mark(ctx,key,x,y,5,color);
+      if(count){ctx.font='bold 8px monospace';ctx.textAlign='left';ctx.fillStyle=color;ctx.fillText(count,x+6,y+3);}
+    });
+    const attackReadyIn = e.atkCd || 0;
+    if (!e.parasiteTarget && e.stun <= 0 && G.buff.freeze <= 0 &&
+      (e.state === 'door' || e.state === 'room' && e.target && dist(e,e.target) <= 26) && attackReadyIn > 0 && attackReadyIn <= .34) {
+      ctx.save(); ctx.strokeStyle = '#de9b87'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(e.x,e.y,e.r+12,-Math.PI/2,-Math.PI/2+(1-attackReadyIn/.34)*Math.PI*2);ctx.stroke();
+      ctx.font='bold 9px sans-serif';ctx.textAlign='center';ctx.fillStyle='#e8c0a7';
+      ctx.strokeStyle='#0a131c';ctx.lineWidth=3;
+      const label=e.state==='door'?'即将攻击 第'+(e.lane+1)+'路铁门':'即将攻击 '+(e.target&&e.target.isBed?'床铺':'房间建筑');
+      ctx.strokeText(label,e.x,e.y+e.r+29);ctx.fillText(label,e.x,e.y+e.r+29);ctx.restore();
+    }
+    if(e.boss){
+      const bdef=BOSS_DEFS[e.bossKey]||{name:e.def.name,phases:BOSS_PHASES};
+      const phase=(bdef.phases[e.phase]||{name:''}).name;
+      ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#08131d';ctx.fillStyle='#ddc89b';
+      const label=bdef.name+'  /  '+phase,y=Math.max(ARENA_TOP+10,barY-10);
+      ctx.strokeText(label,e.x,y);ctx.fillText(label,e.x,y);
     }
   }
 }
+
 function drawBullets() {
   for (const b of G.bullets) {
     const dx = b.tx - b.x, dy = b.ty - b.y;
@@ -11378,18 +11771,10 @@ function drawTipBar() {
   const tipY = ARENA_BOT - 48;
   ctx.save();
   ctx.globalAlpha = clamp(G.tipTimer, 0, 1);
-  // 渐变背景
-  const tipGrad = ctx.createLinearGradient(260, tipY, 1020, tipY);
-  tipGrad.addColorStop(0, 'rgba(12,10,26,.85)');
-  tipGrad.addColorStop(0.5, 'rgba(20,16,40,.92)');
-  tipGrad.addColorStop(1, 'rgba(12,10,26,.85)');
-  ctx.fillStyle = tipGrad; rr(260, tipY, 760, 30, 8); ctx.fill();
-  // 上下边框光效
-  ctx.strokeStyle = 'rgba(255,224,102,.4)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(268, tipY); ctx.lineTo(1012, tipY); ctx.stroke();
-  ctx.strokeStyle = 'rgba(168,85,247,.25)';
-  ctx.beginPath(); ctx.moveTo(268, tipY + 30); ctx.lineTo(1012, tipY + 30); ctx.stroke();
-  ctx.fillStyle = '#ffe066'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#172b33f5'; rr(260, tipY, 760, 30, 3); ctx.fill();
+  ctx.strokeStyle = '#697c67'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = '#c7ad70'; ctx.fillRect(260, tipY + 7, 3, 16);
+  ctx.fillStyle = '#e0d3ae'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(G.tipText, 640, tipY + 15, 736);
   ctx.restore();
 }
@@ -11404,11 +11789,11 @@ function drawCursor() {
     // 范围预览圈（脉动）
     const rg = def.stat(1).range || 0;
     if (rg) {
-      const pulse = 0.6 + Math.sin(T * 4) * 0.25;
+      const pulse = sceneMotion() ? 0.6 + Math.sin(T * 4) * 0.25 : .8;
       ctx.beginPath(); ctx.arc(R.x + R.w / 2, R.y + R.h / 2, rg, 0, 6.2832);
-      ctx.fillStyle = 'rgba(158,240,26,' + (0.04 * pulse) + ')'; ctx.fill();
-      ctx.strokeStyle = 'rgba(158,240,26,' + (0.35 * pulse) + ')';
-      ctx.setLineDash([5, 7]); ctx.lineDashOffset = -T * 15;
+      ctx.fillStyle = 'rgba(185,207,159,' + (0.04 * pulse) + ')'; ctx.fill();
+      ctx.strokeStyle = 'rgba(185,207,159,' + (0.55 * pulse) + ')';
+      ctx.setLineDash([5, 7]); ctx.lineDashOffset = sceneMotion() ? -T * 15 : 0;
       ctx.lineWidth = 1.5; ctx.stroke();
       ctx.setLineDash([]); ctx.lineDashOffset = 0;
     }
@@ -11422,51 +11807,26 @@ function drawWaveTransition() {
   const alpha = wt.t > DUR - 0.5 ? (DUR - wt.t) * 2 : (wt.t < 0.5 ? wt.t * 2 : 1);
   if (alpha <= 0.01) return;
   ctx.save();
-  // 全屏渐变遮罩（原先 0.4 太黑，开战时整个战场糊掉看不清炮塔）
-  ctx.fillStyle = 'rgba(0,0,0,' + (alpha * 0.2) + ')';
-  ctx.fillRect(0, 0, W, H);
-  // 水平光线扫描效果
-  const scanX = W * (1 - wt.t / DUR);
-  const scanGrad = ctx.createLinearGradient(scanX - 200, 0, scanX + 200, 0);
-  scanGrad.addColorStop(0, 'transparent');
-  scanGrad.addColorStop(0.5, 'rgba(255,209,102,' + (alpha * 0.15) + ')');
-  scanGrad.addColorStop(1, 'transparent');
-  ctx.fillStyle = scanGrad;
-  ctx.fillRect(scanX - 200, 0, 400, H);
-  // 波次文字（带缩放动画）
-  ctx.translate(W / 2, H / 2);
-  const scale = 1 + (DUR - wt.t) * 0.3;
-  ctx.scale(scale, scale);
+  ctx.translate(W / 2, H / 2 + (sceneMotion() ? (1-alpha)*8 : 0));
   ctx.globalAlpha = alpha;
-  // 文字阴影光晕
-  ctx.font = 'bold 46px "Noto Sans SC", sans-serif';
+  // A compact brass warning plate keeps the active lanes visible.
+  ctx.fillStyle = '#172b33f5'; rr(-180,-46,360,92,4); ctx.fill();
+  ctx.strokeStyle = '#8a8e6c'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = '#c3a668';ctx.fillRect(-180,-32,3,64);ctx.fillRect(177,-32,3,64);
+  ctx.font = 'bold 27px "Noto Sans SC", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.shadowColor = '#ffd166';
-  ctx.shadowBlur = 30 * alpha;
-  ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(0,0,0,.85)';
-  ctx.strokeText('第 ' + wt.wave + ' 波', 0, 0);
-  // 渐变文字
-  const gradient = ctx.createLinearGradient(-120, -25, 120, 25);
-  gradient.addColorStop(0, '#ffd166');
-  gradient.addColorStop(0.5, '#ff6b6b');
-  gradient.addColorStop(1, '#ffd166');
-  ctx.fillStyle = gradient;
-  ctx.fillText('第 ' + wt.wave + ' 波', 0, 0);
-  ctx.shadowBlur = 0;
-  // 副标题
-  ctx.font = 'bold 18px "Noto Sans SC", sans-serif';
-  ctx.fillStyle = 'rgba(255,255,255,.85)';
-  ctx.fillText('梦魇来袭！', 0, 40);
-  // 装饰性水平线
-  ctx.strokeStyle = 'rgba(255,209,102,' + (alpha * 0.4) + ')';
-  ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(-140, 60); ctx.lineTo(140, 60); ctx.stroke();
+  ctx.fillStyle = '#e7d4a5';ctx.fillText('第 ' + wt.wave + ' 波', 0, -13);
+  ctx.font = '12px "Noto Sans SC", sans-serif';ctx.fillStyle = '#c3cbb8';
+  ctx.fillText('梦魇来袭 · 守住灯火', 0, 22);
   ctx.restore();
 }
 
 /* ==== ui.js ==== */
 const $ = id => document.getElementById(id);
+const uiIcon = (key, fallback = '◇') => typeof UiArt !== 'undefined' ? UiArt.icon(key) : fallback;
+const uiBuilding = (key, branch, fallback) => typeof UiArt !== 'undefined' ? UiArt.building(key, branch) : fallback;
+const uiEnemy = (key, fallback) => typeof UiArt !== 'undefined' ? UiArt.enemy(key) : fallback;
 let hudT = 0;
 function buildBuildBar() {
   const el = $('buildBar'); el.innerHTML = '';
@@ -11478,7 +11838,7 @@ function buildBuildBar() {
     c.style.setProperty('--dc', (d.dmgType && DMG[d.dmgType].color) || d.color || '#8b8bd6');
     const dps1 = d.tower ? towerPanelDps(d.stat(1), { type: k }) : 0;
     // 紧凑卡片：图标 + 名称 + 价格一屏排下 2×8 全部建筑，属性/伤害类型移入悬停提示
-    c.innerHTML = '<div class="ico">' + d.icon + '</div><div class="nm">' + d.name + '</div>' +
+    c.innerHTML = '<div class="ico">' + uiBuilding(k, null, d.icon) + '</div><div class="nm">' + d.name + '</div>' +
       '<div class="pr"><span class="g">' + fmt(d.cost.gold) + '💰</span></div>' +
       '<div class="kb">' + d.key + '</div><div class="cnt"></div>';
     // 悬停提示里补上面板 DPS —— 建造栏太窄，塞不下更多数字
@@ -11503,7 +11863,7 @@ function buildSkillBar() {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'skill'; b.dataset.k = k;
-    b.innerHTML = '<div class="sico">' + s.icon + '</div><div class="scd"></div><div class="skey">' + s.key + '</div>';
+    b.innerHTML = '<div class="sico">' + uiIcon(k, s.icon) + '</div><div class="scd"></div><div class="skey">' + s.key + '</div>';
     b.title = s.name + '：' + s.desc + '（冷却 ' + s.cd + 's）';
     b.setAttribute('aria-label', b.title);
     b.onclick = () => Cmd.skill(k);
@@ -11521,7 +11881,7 @@ function buildTechPanel() {
       const r = document.createElement('div');
       r.className = 'tech'; r.dataset.k = k;
       const reqTxt = d.req ? Object.keys(d.req).map(rk => TECH_DEFS[rk].name + ' Lv' + d.req[rk]).join('、') : '';
-      r.innerHTML = '<div class="tico">' + d.icon + '</div><div class="tinfo"><div class="tn"><span>' + d.name + '</span><b class="tlv">0/' + d.max + '</b></div>' +
+      r.innerHTML = '<div class="tico">' + uiIcon(k, d.icon) + '</div><div class="tinfo"><div class="tn"><span>' + d.name + '</span><b class="tlv">0/' + d.max + '</b></div>' +
         '<div class="td">' + d.desc + (reqTxt ? '<br><i class="req">需要 ' + reqTxt + '</i>' : '') + '</div><div class="tbar"><i></i></div></div><button class="tbtn">0🔮</button>';
       r.querySelector('.tbtn').onclick = () => buyTech(k);
       el.appendChild(r);
@@ -11533,7 +11893,7 @@ function buildAchPanel() {
   ACHIEVEMENTS.forEach(a => {
     const d = document.createElement('div');
     d.className = 'ach'; d.dataset.k = a.id;
-    d.innerHTML = '<div class="aico">' + (G.ach[a.id] ? '🏆' : '🔒') + '</div>' +
+    d.innerHTML = '<div class="aico">' + uiIcon(G.ach[a.id] ? 'trophy' : 'lock', G.ach[a.id] ? '🏆' : '🔒') + '</div>' +
       '<div class="ainfo"><div class="an">' + a.name + '</div><div class="ad">' + a.desc + '</div></div>' +
       '<div class="arw">' + (a.reward.soul ? a.reward.soul + '🔮' : '') + (a.reward.gold ? a.reward.gold + '💰' : '') + '</div>';
     el.appendChild(d);
@@ -11723,7 +12083,10 @@ function updateHUD(dt) {
     $('achList').querySelectorAll('.ach').forEach(d => {
       const got = !!G.ach[d.dataset.k];
       d.classList.toggle('got', got);
-      d.querySelector('.aico').textContent = got ? '🏆' : '🔒';
+      if (d.dataset.earnedState !== String(got)) {
+        d.querySelector('.aico').innerHTML = uiIcon(got ? 'trophy' : 'lock', got ? '🏆' : '🔒');
+        d.dataset.earnedState = String(got);
+      }
     });
   }
   const got = ACHIEVEMENTS.filter(a => G.ach[a.id]).length;
@@ -11763,14 +12126,14 @@ function updateWavePreview() {
   const featured = Array.from(new Set(common.concat(latest))).slice(0, 4);
   const enemyMarkup = featured.map(id => {
     const e = ENEMY_DEFS[id];
-    return e ? '<span class="forecast-enemy" title="' + e.name + ' · ' + enemyCounterHint(id) + '"><i>' + e.icon + '</i>' + e.name + '</span>' : '';
+    return e ? '<span class="forecast-enemy" title="' + e.name + ' · ' + enemyCounterHint(id) + '"><i>' + uiEnemy(id, e.icon) + '</i>' + e.name + '</span>' : '';
   }).join('');
   const bossCount = wave % 5 === 0 ? 1 + Math.floor(wave / 22) : 0;
   let bossMarkup = '';
   if (bossCount) {
     const bossId = wave >= finalWave() ? 'final' : bossKeyForWave(wave);
     const boss = BOSS_DEFS[bossId] || BOSS_DEFS.final;
-    bossMarkup = '<span class="forecast-boss">' + (boss.icon || '👁️') + ' BOSS · ' + boss.name + (bossCount > 1 ? ' ×' + bossCount : '') + '</span>';
+    bossMarkup = '<span class="forecast-boss">' + uiEnemy(bossId,boss.icon || '👁️') + ' BOSS · ' + boss.name + (bossCount > 1 ? ' ×' + bossCount : '') + '</span>';
   }
   $('forecastTitle').textContent = '下一波 · 第 ' + wave + ' 波';
   $('forecastEnemies').innerHTML = enemyMarkup + bossMarkup;
@@ -11825,7 +12188,7 @@ function updateDetail(force) {
   } else if (s.isDoor) {
     const d = s.door;
     const c = doorUpgradeCost(d.lv);
-    html = '<div class="dhead"><span class="dico">🚪</span><b>' + doorName(d) + '</b><span class="dlv">Lv.' + d.lv + '/50</span></div>' +
+    html = '<div class="dhead"><span class="dico">' + uiIcon('door','🚪') + '</span><b>' + doorName(d) + '</b><span class="dlv">Lv.' + d.lv + '/50</span></div>' +
       '<div class="dst" id="dHpLine">' + hpLine() + '</div>' +
       (d.lv < 50 ? '<div class="dup">下一级 → ' + NAME_POOL.door[d.lv] + '　生命 ' + Math.ceil(doorMaxHp(d.lv + 1)) + '</div>' : '') +
       '<div class="dnote">门被攻破后，该路敌人会冲进房间拆建筑。</div>';
@@ -11834,7 +12197,7 @@ function updateDetail(force) {
   } else if (s.def) {
     const st = bstat(s);
     const dtn = s.def.dmgType ? '<span class="dtn" style="color:' + DMG[s.def.dmgType].color + '">' + DMG[s.def.dmgType].icon + DMG[s.def.dmgType].name + '</span>' : '';
-    html = '<div class="dhead"><span class="dico">' + (s.branch ? s.def.branch[s.branch].icon : s.def.icon) + '</span><b>' +
+    html = '<div class="dhead"><span class="dico">' + uiBuilding(s.type,s.branch,s.def.icon) + '</span><b>' +
       buildName(s) + '</b><span class="dlv">Lv.' + s.level + '/50</span>' + dtn + '</div>' +
       (s.def.noPowerUp ? '<div class="dnote">⚡ <b>持续发电来源</b>，升级永不耗电，发电速率每级 <b>x2</b></div>'
         : (s.level < FREE_POWER_LV ? '<div class="dnote">⚡ Lv' + (FREE_POWER_LV + 1) + ' 之前升级<b>不消耗电量</b></div>' : '')) +
@@ -11883,8 +12246,8 @@ function updateDetail(force) {
     if (!s.branch && s.def.branch && s.level >= BRANCH_AT) {
       const A = s.def.branch.a, B = s.def.branch.b;
       html += '<div class="brwrap"><div class="brt">可转职（二选一，转职后满血且属性提升）</div>' +
-        '<div class="bropt" id="brA"><b>' + A.icon + ' ' + A.name + '</b><span>' + A.desc + '</span><em>' + A.cost.gold + '💰 ' + A.cost.soul + '🔮</em></div>' +
-        '<div class="bropt" id="brB"><b>' + B.icon + ' ' + B.name + '</b><span>' + B.desc + '</span><em>' + B.cost.gold + '💰 ' + B.cost.soul + '🔮</em></div></div>';
+        '<button type="button" class="bropt" id="brA"><b>' + uiBuilding(s.type,'a',A.icon) + ' ' + A.name + '</b><span>' + A.desc + '</span><em>' + A.cost.gold + '💰 ' + A.cost.soul + '🔮</em></button>' +
+        '<button type="button" class="bropt" id="brB"><b>' + uiBuilding(s.type,'b',B.icon) + ' ' + B.name + '</b><span>' + B.desc + '</span><em>' + B.cost.gold + '💰 ' + B.cost.soul + '🔮</em></button></div>';
     }
   }
   el.innerHTML = html + '<div class="dact">' + act + '</div>';
@@ -12108,6 +12471,9 @@ function togglePanel(id) {
   _closeOtherPanels(id);
   const el = $(id);
   el.classList.toggle('open');
+  if (el.classList.contains('open') && ['techPanel','achPanel','lotPanel'].includes(id)) {
+    hudT = 0; updateHUD(0); // first paint must show current prices, resources and unlocked art
+  }
   // 修复线上现存 bug：runePanel 是内联 display 结构（非 .slide 滑出面板），
   // 仅切 class 永远无法显示；同步 display 并在打开时刷新内容（此前 🔮符文 按钮与 G 键失效）
   if (id === 'savePanel') {
@@ -12284,7 +12650,7 @@ function updateMenu() {
     dc.innerHTML = DIFF_KEYS.map(k => {
       const d = DIFFS[k], ok = META.gold >= d.cost;
       return '<div class="diff' + (d.admin ? ' adm' : '') + (menuDiff === k ? ' on' : '') + '" data-d="' + k + '" title="' + d.desc + '" role="button" tabindex="0" aria-pressed="' + (menuDiff === k) + '">' +
-        '<div class="di">' + d.icon + '</div><div class="dn">' + d.name + '</div>' +
+        '<div class="di">' + uiIcon(k==='normal'?'lantern':k==='hard'?'blade':k==='hell'?'fire':k==='nightmare'?'enemy':'key',d.icon) + '</div><div class="dn">' + d.name + '</div>' +
         '<div class="dd">' + d.desc + '</div>' +
         (d.cost ? '<div class="dc"' + (ok ? '' : ' style="color:#f87171"') + '>💰 ' + d.cost + '</div>' : '<div class="dc">免费</div>') +
         '<div class="dr">' + (d.admin ? '资源无限' : '结算 x' + d.reward) +
@@ -12310,7 +12676,7 @@ function updateMenu() {
     mc.innerHTML = MODE_KEYS.map(k => {
       const m = MODES[k];
       return '<div class="mode' + (menuMode === k ? ' on' : '') + '" data-m="' + k + '" role="button" tabindex="0" aria-pressed="' + (menuMode === k) + '">' +
-        '<span class="mi">' + m.icon + '</span><div><div class="mn">' + m.name + '</div>' +
+        '<span class="mi">' + uiIcon(k==='unlimited'?'infinity':'clock',m.icon) + '</span><div><div class="mn">' + m.name + '</div>' +
         '<div class="md">' + m.desc + '　·　' + m.tip + '</div></div></div>';
     }).join('');
     mc.querySelectorAll('.mode').forEach(el => {
@@ -12338,6 +12704,7 @@ function updateMenu() {
   }
   if (typeof syncAudioUI === 'function') syncAudioUI();
   if (typeof syncAccessibilityUI === 'function') syncAccessibilityUI();
+  if (typeof UiArt !== 'undefined') UiArt.decorate();
 }
 const FIRST_RUN_STEPS = [
   { title: '三条走廊，三扇铁门', text: '梦魇会从不同路线靠近。每条走廊都要留意；门一旦被攻破，敌人就会进入房间攻击建筑和床铺。', tip: '先看三路的门和敌人数量，再决定把炮塔放在哪里。' },
@@ -13008,7 +13375,8 @@ function _processStoryQueue() {
   const avatar = $('storyAvatar');
   const storyMeta = $('storyMeta');
   if (avatar) {
-    avatar.textContent = sp.icon || '◌';
+    if (typeof UiArt !== 'undefined') avatar.innerHTML = UiArt.character(data.speaker);
+    else avatar.textContent = sp.icon || '◌';
     avatar.style.setProperty('--sp-c', sp.color || '#a78bfa');
     avatar.style.setProperty('--sp-glow', sp.glow || 'rgba(167,139,250,.35)');
     avatar.setAttribute('aria-label', (data.speaker || '未知声音') + '的头像');
@@ -13054,7 +13422,7 @@ function _processStoryQueue() {
     }
   }, 32);
 
-  nextEl.onclick = () => {
+  const finishTyping = () => {
     if (storyTyping) {
       clearInterval(_storyTimer); _storyTimer = null;
       storyTyping = false;
@@ -13063,10 +13431,13 @@ function _processStoryQueue() {
       textEl.scrollTop = textEl.scrollHeight;
       if (hasChoices) _renderStoryChoices(data);
       else nextEl.style.display = '';
-    } else {
-      _processStoryQueue();
+      return true;
     }
+    return false;
   };
+  textEl.title = '点击显示完整对话';
+  textEl.onclick = finishTyping;
+  nextEl.onclick = () => { if (!finishTyping()) _processStoryQueue(); };
 }
 
 /** 渲染剧情选项，并在点击时用统一解释器兑现选项承诺 */
@@ -13247,7 +13618,7 @@ function showNPCPanel() {
         const persona = (dialog && dialog.name) || '';
         const role = (dialog && dialog.role) || '';
         return '<div class="npc-card' + (inst ? ' stationed' : '') + '">' +
-          '<div class="npc-avatar">' + (npc.icon || '👤') + '</div>' +
+          '<div class="npc-avatar">' + uiIcon(npc.ability,npc.icon || '👤') + '</div>' +
           '<div class="npc-name">' + npc.name + (persona ? '<span class="npc-persona">' + persona + '</span>' : '') + '</div>' +
           '<div class="npc-role">' + (role ? role + ' · ' : '') + (abilityNames[npc.ability] || npc.ability || '') + '</div>' +
           '<div class="npc-ability">' + (npc.desc || '') +
@@ -13294,7 +13665,7 @@ function showFragmentGallery() {
         const rarity = unlocked ? DreamFragments.rarityOf(f) : 'locked';
         const rc = FRAG_RARITY_COLORS[rarity] || '#cbd5e1';
         return '<div class="fragment-card ' + rarity + '" data-id="' + f.id + '">' +
-          '<div class="fico">' + (unlocked ? (f.icon || '💎') : '❓') + '</div>' +
+          '<div class="fico">' + uiIcon(unlocked?'gem':'lock',unlocked ? (f.icon || '💎') : '❓') + '</div>' +
           '<div class="fname">' + (unlocked ? (f.name || '') : '???') + '</div>' +
           '<div class="fdesc"></div>' +
           (unlocked
@@ -13815,7 +14186,7 @@ function updateBossBar() {
   _bossBarSig = sig;
   el.style.display = 'block';
   requestAnimationFrame(() => el.classList.add('show'));
-  $('bbName').textContent = '😈 ' + (bdef ? bdef.name : boss.def.name);
+  $('bbName').textContent = (bdef ? bdef.name : boss.def.name);
   $('bbPhase').textContent = phN+(transitioning?' · 转换护甲':'');
   $('bbPhase').style.display = phN ? '' : 'none';
   $('bbHp').textContent = Math.ceil(boss.hp) + ' / ' + Math.ceil(boss.maxHp) + '　(' + Math.round(hp * 100) + '%)';
@@ -14358,7 +14729,7 @@ function buildHelp() {
       if (d.buildingBonus) sp.push('建筑克星x' + d.buildingBonus); if (d.devour) sp.push('吞噬');
       if (d.summon) sp.push('召唤'); if (d.split) sp.push('分裂'); if (d.explode) sp.push('自爆');
       if (d.shieldself) sp.push('自带护盾'); if (d.vamp) sp.push('吸血'); if (d.frenzy) sp.push('残血狂暴');
-      return '<span class="aff">' + d.icon + ' <b>' + d.name + '</b> ' + rw.join(' ') + (sp.length ? ' <em>' + sp.join('·') + '</em>' : '') + '</span>';
+      return '<span class="aff enemy-entry">' + uiEnemy(k,d.icon) + '<span><b>' + d.name + '</b> ' + rw.join(' ') + (sp.length ? ' <em>' + sp.join('·') + '</em>' : '') + '</span></span>';
     }).join('') +
     '</div>' +
     '<h4>经济规则</h4><div class="hnote">' +

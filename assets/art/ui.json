@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "art_direction_brief": "docs/VISUAL_POLISH.md",
+  "source": {
+    "kind": "original-inline-svg-and-procedural-canvas",
+    "url_or_tool": "ui-art.js; theme.css",
+    "creator": "Codex for yaohanbo1-hue/tangping-game",
+    "license": "MIT (repository LICENSE)",
+    "attribution": "No external raster art, icon fonts or network image requests."
+  },
+  "assets": [
+    {
+      "id": "navigation-glyphs",
+      "path": "ui-art.js#icon",
+      "role": "HUD, menu, settings, technology and skill symbols",
+      "technical": {
+        "viewBox": "0 0 32 34",
+        "color": "currentColor",
+        "alpha": true
+      },
+      "status": "integrated"
+    },
+    {
+      "id": "building-thumbnails",
+      "path": "ui-art.js#building",
+      "role": "16 build cards and 32 branch previews generated from the actual BuildingArt renderer",
+      "technical": {
+        "dimensions": "112x96",
+        "format": "cached data PNG",
+        "alpha": true
+      },
+      "status": "integrated"
+    },
+    {
+      "id": "enemy-thumbnails",
+      "path": "ui-art.js#enemy",
+      "role": "bestiary and forecast use actual EnemyArt",
+      "technical": {
+        "dimensions": "100x100",
+        "format": "cached data PNG",
+        "alpha": true
+      },
+      "status": "integrated"
+    },
+    {
+      "id": "story-portraits",
+      "path": "ui-art.js#character",
+      "role": "Lin Xiaoxia, Zhou Mo, Zhao Lei, player and unknown hooded speaker",
+      "technical": {
+        "viewBox": "0 0 80 80",
+        "format": "original inline SVG",
+        "alpha": false
+      },
+      "status": "integrated"
+    },
+    {
+      "id": "neutral-creatures",
+      "path": "ui-art.js#companion",
+      "role": "firefly, dream spirit and shadow cat",
+      "technical": {
+        "dimensions": "48x48",
+        "format": "cached Canvas",
+        "alpha": true
+      },
+      "states": [
+        "idle",
+        "subtle motion",
+        "reduced motion"
+      ],
+      "status": "integrated"
+    },
+    {
+      "id": "brass-slate-interface",
+      "path": "theme.css",
+      "role": "home, HUD, build controls, drawers, archives, dialogue, tutorial and summary",
+      "status": "integrated"
+    }
+  ],
+  "verification": {
+    "commands": [
+      "node tests/polish.browser.test.js",
+      "npm run test:browser"
+    ],
+    "coverage": "native keyboard branch selection, first-paint data, story reveal, selected small-text contrast, initial primary action, visible summary action, desktop and mobile captures",
+    "approved_by": "Codex under delegated user art direction; no physical device certification"
+  }
+}

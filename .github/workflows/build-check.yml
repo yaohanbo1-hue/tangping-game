@@ -70,6 +70,8 @@ jobs:
         run: |
           node tests/scene-art.test.js
           node tests/building-art.test.js
+          node tests/enemy-art.test.js
+          node tests/polish.browser.test.js
           node tests/enemy-actions.browser.test.js
           node tests/display.browser.test.js
           node tests/browser.test.js
@@ -83,4 +85,6 @@ jobs:
             artifacts/scene/
             artifacts/buildings/
             artifacts/enemies/
+            artifacts/bestiary/
+            artifacts/polish/
             artifacts/display/

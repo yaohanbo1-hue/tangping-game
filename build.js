@@ -2,13 +2,13 @@ const fs = require('fs');
 const path = require('path');
 // One canonical output on Windows/Linux, including when invoked outside the repo.
 const read = file => fs.readFileSync(path.join(__dirname, file), 'utf8').replace(/\r\n?/g, '\n');
-const files = ['story.js', 'data.js', 'names.js', 'balance.js', 'combat.js', 'enemy-actions.js', 'core.js', 'campaign.js', 'save.js', 'net.js', 'dream.js', 'quest.js', 'scene-art.js', 'building-art.js', 'render.js', 'ui.js', 'main.js'];
+const files = ['story.js', 'data.js', 'names.js', 'balance.js', 'combat.js', 'enemy-actions.js', 'core.js', 'campaign.js', 'save.js', 'net.js', 'dream.js', 'quest.js', 'scene-art.js', 'building-art.js', 'enemy-art.js', 'ui-art.js', 'render.js', 'ui.js', 'main.js'];
 const js = files.map(f => '/* ==== ' + f + ' ==== */\n' + read(f)).join('\n');
 const version = read('VERSION').trim();
 if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('VERSION must use MAJOR.MINOR.PATCH format');
 const shell = read('shell.html');
-if (!shell.includes('<!--VERSION-->') || !shell.includes('<!--SCRIPT-->')) throw new Error('shell.html is missing a build placeholder');
-const out = shell.replace('<!--VERSION-->', version).replace('<!--SCRIPT-->', '<script>\n' + js + '\n</script>');
+if (['<!--THEME-->','<!--VERSION-->','<!--SCRIPT-->'].some(marker => !shell.includes(marker))) throw new Error('shell.html is missing a build placeholder');
+const out = shell.replace('<!--THEME-->', read('theme.css')).replace('<!--VERSION-->', version).replace('<!--SCRIPT-->', '<script>\n' + js + '\n</script>');
 const outPath = path.join(__dirname, 'shoudengren.html');
 fs.writeFileSync(outPath, out);
 

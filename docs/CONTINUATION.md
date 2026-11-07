@@ -1,3 +1,11 @@
+# 最新视觉整合（2026-11-07）
+
+当前副本 D:/Codex/tangping-game-v2，分支 codex/visual-polish；此前PR #1已由外部合并，本轮从主线61ec244另建分支。新 enemy-art.js、ui-art.js、theme.css 已集成35普通怪/五Boss、10精英标记、三类中立生物、真实建筑/怪物缩略图、原创人物头像和主要全套UI；当前事实以 VISUAL_POLISH.md、V2_STATUS.md 为准。下面保留历史交接记录，其中“外观/敌人机制未完成”的描述仅适用于对应阶段。
+
+本轮本机2295项逻辑+独立构建、场景/48建筑/40怪物、全套界面截图和三浏览器交互均过。固定实体新旧性能对照已记录 PERFORMANCE.md 和 presentation-profile.json。新CI已包含怪物美术与界面验收及证据工件。仍保持1.9.2开发态，五Boss新机制、高难/分支/词缀平衡和真实手机性能另行验收；不自动合并或发布2.0。
+
+---
+
 # 当前执行检查点
 
 当前在 `D:\Codex\tangping-game-v2` 独立 worktree、分支 `codex/v2-reconstruction` 工作。迁移后失效的.git指针已修复到 `D:\Codex\_tangping-game-sync-20261008\.git\worktrees\tangping-game-v2`，原指针备份在artifacts/repository-recovery。先快进同步了远端9eb1cd8的敌人能力修复，再继续本轮改进。main不合并，完整2.0目标未完成，VERSION保持1.9.2。草稿PR https://github.com/yaohanbo1-hue/tangping-game/pull/1 。以下保留历史阶段记录，当前状态以文末及V2_STATUS.md为准。
