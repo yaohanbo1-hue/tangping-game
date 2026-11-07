@@ -1181,7 +1181,7 @@ function updateEnemies(dt) {
       const activeDt = Math.min(dt, e.poisonT);
       e.poisonT = Math.max(0, e.poisonT - dt);
       // Poison bypasses shields, but resistance, vulnerability and armor still apply.
-      dotDamage(e, e.poisonDps * e.poison, 'poison', e.poisonSrc, activeDt, true);
+      dotDamage(e, e.poisonDps * e.poison, 'toxic', e.poisonSrc, activeDt, true);
       if (Math.random() < dt * 5) spawnParts(e.x, e.y, 1, '#a3e635', 1.1, 0.4);
       if (e.dead) continue;
       if (e.poisonT <= 0) { e.poison = 0; e.poisonDps = 0; e.poisonSrc = null; }

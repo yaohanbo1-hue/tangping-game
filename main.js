@@ -22,7 +22,7 @@ function toCanvas(e) {
 /* ------------------------------------------------------------------
  * 指针输入（桌面鼠标 + 手机触摸共用一套逻辑）
  *   桌面：移动预览 + 左键操作 + 右键取消
- *   手机：轻触等同左键（浏览器会为轻触合成 click，所以点按逻辑只写一份）；
+ *   手机：在 pointerup 结算轻触，抑制随后兼容 click，避免拖动后漏点或重复建造；
  *         触摸拖动时同步悬停预览（否则看不到放置预览）；
  *         长按 520ms 取消当前选择，替代桌面端的右键。
  *   统一用 Pointer Events：iOS Safari 13+ / Android Chromium / 华为浏览器 / 微信 X5 都支持。
@@ -48,7 +48,7 @@ function handleCanvasTap(x, y) {
   if (occ && occ !== 'bed') { selected = occ; selectedBuildKey = null; syncCards(); return; }
   if (selectedBuildKey) {
     if (Cmd.build(selectedBuildKey, cell.c, cell.r)) {   // 经命令层派发（联机时客机只发意图）
-      if (!canAfford(BUILD_DEFS[selectedBuildKey].cost)) { selectedBuildKey = null; syncCards(); }
+      if (!G.admin && G.gold < BUILD_DEFS[selectedBuildKey].cost.gold) { selectedBuildKey = null; syncCards(); }
     }
     return;
   }
@@ -59,7 +59,7 @@ cv.addEventListener('mousemove', e => { const p = toCanvas(e); applyCanvasPointe
 cv.addEventListener('mouseleave', () => { hoverCell = null; mouse.x = -999; });
 cv.addEventListener('pointerdown', e => {
   if (e.pointerType !== 'touch') {
-    _holdFired = false; clearHold(); _holdStart = null;
+    _lastTouchAt = 0; _holdFired = false; clearHold(); _holdStart = null;
     return;      // 鼠标/触控板继续走下面的 click
   }
   _lastTouchAt = Date.now();
@@ -85,17 +85,26 @@ cv.addEventListener('pointermove', e => {
 });
 cv.addEventListener('pointerup', e => {
   if (e.pointerType !== 'touch') return;
-  if (_holdStart && _holdStart.moved) _holdFired = true;
+  _lastTouchAt = Date.now();
+  const tapped = _holdStart && !_holdStart.moved && !_holdFired;
+  _holdFired = true;
   clearHold(); _holdStart = null;
+  if (tapped) {
+    const p = toCanvas(e);
+    applyCanvasPointer(p.x, p.y);
+    handleCanvasTap(p.x, p.y);
+  }
 });
 cv.addEventListener('pointercancel', e => {
   if (e.pointerType !== 'touch') return;
+  _lastTouchAt = Date.now();
   _holdFired = true;
   clearHold(); _holdStart = null; hoverCell = null;
 });
 cv.addEventListener('click', e => {
   SFX.init();
-  if (_holdFired) { _holdFired = false; return; }   // 长按已经取消过了，别把抬手当成点按
+  const touchClick = e.pointerType === 'touch' || e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents;
+  if (touchClick || _holdFired || Date.now() - _lastTouchAt < 800) { _holdFired = false; return; }
   const p = toCanvas(e);
   handleCanvasTap(p.x, p.y);
 });

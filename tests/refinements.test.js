@@ -35,8 +35,8 @@ ok(run('enemy.slow>0'), 'black hole keeps its control identity');
 
 // Actual enemy updates verify poison modifiers, not a second damage implementation.
 for (const [modifiers, expected, label] of [
-  ['', 10, 'neutral'], ['enemy.res.poison=.5', 5, 'resistance'],
-  ['enemy.weak.poison=.25', 12.5, 'weakness'], ['enemy.affixRes=.4', 6, 'resistant elite'],
+  ['', 10, 'neutral'], ['enemy.res.toxic=.5', 5, 'resistance'],
+  ['enemy.weak.toxic=.25', 12.5, 'weakness'], ['enemy.affixRes=.4', 6, 'resistant elite'],
   ['enemy.flat=10', 9, 'armor per second'], ['enemy.vuln=1.5;enemy.vulnT=2', 15, 'vulnerability'],
 ]) {
   fixture('poison'); run(`enemy.shield=100;enemy.poison=1;enemy.poisonDps=100;enemy.poisonT=1;enemy.poisonSrc=tower;${modifiers};updateEnemies(.1);`);
@@ -51,8 +51,8 @@ run('inflictPoison(enemy,{poisonDps:10,poisonStack:1,poisonMax:8,src:tower});');
 ok(run('enemy.poison===1 && enemy.poisonDps===10'), 'old potent poison cannot contaminate a new application');
 fixture('poison'); run('G.fate.dmg=.5;fire_(tower,enemy,bstat(tower));updateBullets(1);');
 close(run('enemy.poisonDps'), run('bstat(tower).poisonDps') * 1.5, 'poison payload benefits from damage rewards');
-fixture('poison', 'b'); run('enemy.res.poison=.7;dotDamage(enemy,100,"poison",tower,.1,true);');
-close(run('enemy.res.poison'), .7, 'poison ticks do not reapply corrosion armor shred every frame');
+fixture('poison', 'b'); run('enemy.res.toxic=.7;dotDamage(enemy,100,"toxic",tower,.1,true);');
+close(run('enemy.res.toxic'), .7, 'poison ticks do not reapply corrosion armor shred every frame');
 fixture('poison'); run('enemy.hp=1;enemy.shield=100;enemy.poison=1;enemy.poisonDps=100;enemy.poisonT=1;enemy.poisonSrc=tower;updateEnemies(.1);updateEnemies(.1);');
 ok(run('enemy.dead && tower.kills===1 && G.stats.kills===1 && G.stats.dmg===1'), 'poison death counts actual output and one kill');
 

@@ -35,7 +35,16 @@ async function exercise(engine, name, mobile) {
     await page.locator('#uiEffects').selectOption('simple');
     await page.locator('[data-experience="combat"]').click();
     await page.locator('#btnStart').click();
-    await page.evaluate(() => { G.gold = 10000; paused = true; });
+    await page.evaluate(() => {
+      G.gold = 10000; paused = true;
+      globalThis.touchTrace = [];
+      for (const type of ['pointerdown','pointerup','pointercancel','click']) cv.addEventListener(type, e => {
+        const event = { type, pointer: e.pointerType, trusted: e.isTrusted, x: e.clientX, y: e.clientY,
+          before: selectedBuildKey, hold: _holdFired };
+        touchTrace.push(event);
+        queueMicrotask(() => { event.after = selectedBuildKey; event.buildings = G.buildings.map(b => [b.col,b.row]); });
+      }, true);
+    });
     await page.mouse.move(0, 0);
     const layout = await page.evaluate(() => {
       const wrap = document.getElementById('wrap'), stage = wrap.getBoundingClientRect();
@@ -81,7 +90,22 @@ async function exercise(engine, name, mobile) {
       assert.equal(await page.evaluate(() => G.buildings.length), 0, 'cancel cannot build');
       await page.touchscreen.tap(point.x, point.y);
     } else await page.mouse.click(point.x, point.y);
+    // Mobile engines may deliver the synthesized click after touchend has returned.
+    await page.waitForFunction(() => G.buildings.length === 1);
     assert.equal(await page.evaluate(() => G.buildings.length), 1, 'fresh input still places one building');
+    assert.equal(await page.evaluate(() => selectedBuildKey), 'miner', 'zero power does not cancel an affordable gold-only build selection');
+    if (mobile) {
+      const directTouch = await page.evaluate(() => {
+        const rect = cv.getBoundingClientRect(), p = cellCenter(1, 0);
+        const input = { pointerType: 'touch', clientX: rect.left + p.x * rect.width / W, clientY: rect.top + p.y * rect.height / H };
+        cv.dispatchEvent(new PointerEvent('pointerdown', input));
+        cv.dispatchEvent(new PointerEvent('pointerup', input));
+        const withoutClick = G.buildings.length;
+        cv.dispatchEvent(new MouseEvent('click', input));
+        return { withoutClick, afterClick: G.buildings.length, selection: selectedBuildKey };
+      });
+      assert.deepEqual(directTouch, { withoutClick: 2, afterClick: 2, selection: 'miner' }, 'touch works without a synthesized click, and a compatible click cannot repeat it');
+    }
 
     const clock = await page.evaluate(() => {
       const originalRAF = window.requestAnimationFrame;
@@ -149,6 +173,7 @@ async function exercise(engine, name, mobile) {
   } catch (error) {
     console.error(name, JSON.stringify(await page.evaluate(() => ({ paused, state: G.state, wave: G.wave,
       current: currentStory && currentStory.sceneId, queue: storyQueue.length, errors: G.loopErrors || 0,
+      selection: selectedBuildKey, holdFired: _holdFired, holdStart: _holdStart, trace: globalThis.touchTrace,
       media: document.getElementById('storyMedia').innerHTML, dialog: document.getElementById('storyDialog').style.display }))));
     await page.screenshot({ path: path.join(output, name + '-failure.png') });
     throw error;
