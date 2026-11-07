@@ -24,7 +24,7 @@ async function exercise(engine,name,mobile) {
   const page=await context.newPage(), errors=[], videos=[];
   page.setDefaultTimeout(20000);
   page.on('pageerror',e=>errors.push(e.message));
-  page.on('console',msg=>{if(msg.type()==='error' && /^\\[(loop|init)\\]/.test(msg.text())) errors.push(msg.text());});
+  page.on('console',msg=>{if(msg.type()==='error' && /^\[(loop|init)\]/.test(msg.text())) errors.push(msg.text());});
   page.on('request',r=>{if(r.url().includes('/assets/story/'))videos.push(r.url());});
   try {
     await page.goto('http://127.0.0.1:'+server.address().port+'/');

@@ -725,7 +725,7 @@ canvas{display:block;width:1280px;height:720px;touch-action:none;-webkit-user-se
   background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.075);color:#d7d0e8;font-size:8.5px;white-space:nowrap}
 .forecast-enemy i{font-style:normal}
 .forecast-boss{color:#ffd5df;border-color:rgba(248,113,133,.24);background:rgba(248,113,133,.09)}
-#forecastHint{display:none;margin-top:5px;color:#8e879f;font-size:7.5px}
+#forecastHint{display:block;margin-top:5px;color:#c1b9d3;font-size:9px;line-height:1.4}
 .bb-top{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
 .bb-name{font-size:13px;font-weight:800;color:#ffd166;letter-spacing:1px;text-shadow:0 0 12px rgba(255,209,102,.4)}
 .bb-phase{font-size:10.5px;color:#fca5a5;background:rgba(255,77,109,.18);border:1px solid rgba(255,77,109,.35);
@@ -1554,6 +1554,25 @@ body.rotated #rotBar{display:flex}
   .home-panel .diff{min-height:76px;padding-top:7px;padding-bottom:7px}.home-panel .mode{min-height:42px;padding-top:6px;padding-bottom:6px}
   .home-start-actions button{min-height:47px}.home-bottom{margin-top:8px}
 }
+/* The scaled stage must never become a programmatically scrolled viewport when a
+   focused control or scrollIntoView() reveals something inside a panel. */
+#wrap{overflow:clip}
+.card,.skill{font:inherit;color:inherit;appearance:none}
+.card:focus-visible,.skill:focus-visible{outline:2px solid #ffe0a3;outline-offset:2px}
+.access-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* Keep battle cues and readable colors; remove the measured DOM compositor cost.
+   These rules only affect CSS, leaving Canvas art and combat state identical. */
+body.simple-ui #wrap,body.simple-ui #wrap *,body.simple-ui #wrap *::before,body.simple-ui #wrap *::after{
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  box-shadow:none!important;text-shadow:none!important;filter:none!important;
+  animation:none!important;transition:none!important}
+body.simple-ui #hud,body.simple-ui #bottom{background:#141322}
+body.simple-ui .slide,body.simple-ui #detail{background:#181626}
+body.simple-ui #wavePreview,body.simple-ui #bossBar{background:rgba(20,17,31,.94)}
+/* Honor the OS motion preference even when the player chooses full lighting. */
+@media(prefers-reduced-motion:reduce){
+  #wrap *,#wrap *::before,#wrap *::after{animation:none!important;transition:none!important}
+}
 </style>
 </head>
 <body>
@@ -1899,6 +1918,7 @@ body.rotated #rotBar{display:flex}
               <label>界面文字<select id="a11yText"><option value="normal">标准</option><option value="large">大字</option></select></label>
               <label>闪屏效果<select id="a11yFlash"><option value="normal">正常</option><option value="reduced">减弱</option><option value="off">关闭</option></select></label>
               <label>画面震动<select id="a11yShake"><option value="normal">正常</option><option value="reduced">减弱</option><option value="off">关闭</option></select></label>
+              <label>界面特效<select id="uiEffects"><option value="simple">流畅（推荐）</option><option value="full">完整光影</option></select></label>
             </div>
           </div>
         </details>

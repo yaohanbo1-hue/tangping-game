@@ -58,7 +58,10 @@ function clearHold() { if (_holdTimer) { clearTimeout(_holdTimer); _holdTimer = 
 cv.addEventListener('mousemove', e => { const p = toCanvas(e); applyCanvasPointer(p.x, p.y); });
 cv.addEventListener('mouseleave', () => { hoverCell = null; mouse.x = -999; });
 cv.addEventListener('pointerdown', e => {
-  if (e.pointerType !== 'touch') return;      // 鼠标/触控板继续走下面的 click
+  if (e.pointerType !== 'touch') {
+    _holdFired = false; clearHold(); _holdStart = null;
+    return;      // 鼠标/触控板继续走下面的 click
+  }
   _lastTouchAt = Date.now();
   SFX.init();
   const p = toCanvas(e);
@@ -80,8 +83,16 @@ cv.addEventListener('pointermove', e => {
     _holdStart.moved = true; clearHold();
   }
 });
-cv.addEventListener('pointerup', e => { if (e.pointerType !== 'touch') return; clearHold(); _holdStart = null; });
-cv.addEventListener('pointercancel', e => { if (e.pointerType !== 'touch') return; clearHold(); _holdStart = null; hoverCell = null; });
+cv.addEventListener('pointerup', e => {
+  if (e.pointerType !== 'touch') return;
+  if (_holdStart && _holdStart.moved) _holdFired = true;
+  clearHold(); _holdStart = null;
+});
+cv.addEventListener('pointercancel', e => {
+  if (e.pointerType !== 'touch') return;
+  _holdFired = true;
+  clearHold(); _holdStart = null; hoverCell = null;
+});
 cv.addEventListener('click', e => {
   SFX.init();
   if (_holdFired) { _holdFired = false; return; }   // 长按已经取消过了，别把抬手当成点按
@@ -108,7 +119,7 @@ window.addEventListener('keydown', e => {
   if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
   // 焦点停在按钮/链接上时，空格回车等让给按钮自身触发；但 ESC 必须始终生效，
   // 否则鼠标点完任意按钮（焦点留在按钮上）再按 ESC 就无法关面板/取消选择
-  if (target && e.key !== 'Escape' &&
+  if (target && (e.key === ' ' || e.key === 'Enter') &&
     (/^(BUTTON|A)$/.test(target.tagName) || (target.closest && target.closest('[role="button"]')))) return;
   // 保留浏览器的 Ctrl/Alt/Meta 系统快捷键（例如 Ctrl+S 保存网页、Ctrl+P 打印）。
   if (e.ctrlKey || e.altKey || e.metaKey) return;
@@ -135,7 +146,7 @@ window.addEventListener('keydown', e => {
   if (k === 'p' || k === 'P') { paused = !paused; $('btnPause').textContent = paused ? '▶' : '⏸'; return; }
   const sk = SKILL_MAP[k.toLowerCase()];
   if (sk) { Cmd.skill(sk); return; }
-  const bk = BUILD_KEYS.find(key => BUILD_DEFS[key].key === k);
+  const bk = BUILD_KEYS.find(key => BUILD_DEFS[key].key.toLowerCase() === k.toLowerCase());
   if (bk) { selectBuild(bk); return; }
   if (k === 'u' || k === 'U') { Cmd.upgradeSelection(selected); return; }
   if (k === 'x' || k === 'X') { Cmd.sellSelection(selected); return; }
@@ -549,10 +560,21 @@ refitAll();
 let last = performance.now();
 const FIXED_DT = 1 / 60;   // 固定模拟步长（联机/复现的前提：模拟结果与帧率无关）
 let simAcc = 0;
+function resetFrameClock() {
+  last = performance.now();
+  simAcc = 0;
+  clearHold(); _holdStart = null; _holdFired = false;
+  hoverCell = null; mouse.x = -999;
+}
+// Visibility is separate from the player/story pause, so returning cannot dismiss a choice
+// or undo a manual pause. Discard elapsed wall time instead of catching up the battle.
+document.addEventListener('visibilitychange', resetFrameClock);
+window.addEventListener('pageshow', resetFrameClock);
 function loop(now) {
   // 先把下一帧排上：任何一帧里抛出的异常都不会再让主循环「静默死掉」——
   // 之前 render() 里一个 NaN 半径（过载爆轰的 boom 缺 max 字段）就能把整个游戏永久冻结。
   requestAnimationFrame(loop);
+  if (document.hidden) { last = now; simAcc = 0; return; }
   let dt = (now - last) / 1000; last = now;
   if (!isFinite(dt) || dt < 0) dt = 0;
   dt = Math.min(dt, 0.25);          // 切后台回来不要一次追几百帧

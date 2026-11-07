@@ -4,7 +4,8 @@ function buildBuildBar() {
   const el = $('buildBar'); el.innerHTML = '';
   BUILD_KEYS.forEach(k => {
     const d = BUILD_DEFS[k];
-    const c = document.createElement('div');
+    const c = document.createElement('button');
+    c.type = 'button';
     c.className = 'card'; c.dataset.k = k;
     c.style.setProperty('--dc', (d.dmgType && DMG[d.dmgType].color) || d.color || '#8b8bd6');
     const dps1 = d.tower ? towerPanelDps(d.stat(1), { type: k }) : 0;
@@ -18,6 +19,8 @@ function buildBuildBar() {
       if (dps1) tip += '\nLv1 面板 DPS ≈ ' + fmt1(dps1) + '/秒';
     }
     c.title = tip;
+    c.setAttribute('aria-label', tip);
+    c.setAttribute('aria-pressed', 'false');
     c.onclick = () => selectBuild(k);
     el.appendChild(c);
   });
@@ -29,10 +32,12 @@ function buildSkillBar() {
   const el = $('skillBar'); el.innerHTML = '';
   SKILL_KEYS.forEach(k => {
     const s = SKILL_DEFS[k];
-    const b = document.createElement('div');
+    const b = document.createElement('button');
+    b.type = 'button';
     b.className = 'skill'; b.dataset.k = k;
     b.innerHTML = '<div class="sico">' + s.icon + '</div><div class="scd"></div><div class="skey">' + s.key + '</div>';
     b.title = s.name + '：' + s.desc + '（冷却 ' + s.cd + 's）';
+    b.setAttribute('aria-label', b.title);
     b.onclick = () => Cmd.skill(k);
     el.appendChild(b);
   });
@@ -84,7 +89,11 @@ function selectBuild(k) {
   }
 }
 function syncCards() {
-  $('buildBar').querySelectorAll('.card').forEach(c => c.classList.toggle('sel', c.dataset.k === selectedBuildKey));
+  $('buildBar').querySelectorAll('.card').forEach(c => {
+    const active = c.dataset.k === selectedBuildKey;
+    c.classList.toggle('sel', active);
+    c.setAttribute('aria-pressed', String(active));
+  });
 }
 function techLocked(k) {
   const d = TECH_DEFS[k];
@@ -203,6 +212,7 @@ function updateHUD(dt) {
     c.classList.toggle('ok', ok && c.dataset.k !== selectedBuildKey);
     c.classList.toggle('okTower', ok && !!d.tower && c.dataset.k !== selectedBuildKey);
     c.classList.toggle('sel', c.dataset.k === selectedBuildKey);
+    c.setAttribute('aria-pressed', String(c.dataset.k === selectedBuildKey));
   });
   // HUD 底边备战倒计时进度条（越接近开战越红）
   const pg = $('hudProg');
@@ -254,6 +264,19 @@ function updateHUD(dt) {
 }
 let _challengeHudSig = '';   // 挑战横幅的渲染签名（数值不变不重建 DOM）
 let _wavePreviewKey = '';
+function enemyCounterHint(id) {
+  const enemy = ENEMY_DEFS[id];
+  if (!enemy) return '';
+  if (enemy.revive) return '死灵：冻结或眩晕可打断复苏';
+  if (enemy.parasite) return '寄生体：在汲取前摇中及时控制';
+  if (enemy.emp) return '干扰梦魇：控制它可阻止炮塔停机';
+  if (enemy.freezeTower) return '霜噬兽：控制它可阻止炮塔冻缓';
+  if (enemy.reflect) return '镜面梦魇：持续伤害可避免直接反伤';
+  if (enemy.stealth) return '隐身梦魇：招募侦察兵揭示目标';
+  if (enemy.flying || enemy.burrow) return '越门敌人：在床铺前保留火力覆盖';
+  const weakness = Object.keys(enemy.weak || {}).sort((a, b) => enemy.weak[b] - enemy.weak[a])[0];
+  return weakness && DMG[weakness] ? enemy.name + '：优先使用' + DMG[weakness].name + '伤害' : '';
+}
 function updateWavePreview() {
   const box = $('wavePreview');
   if (!box || !G) return;
@@ -272,7 +295,7 @@ function updateWavePreview() {
   const featured = Array.from(new Set(common.concat(latest))).slice(0, 4);
   const enemyMarkup = featured.map(id => {
     const e = ENEMY_DEFS[id];
-    return e ? '<span class="forecast-enemy" title="' + e.name + '"><i>' + e.icon + '</i>' + e.name + '</span>' : '';
+    return e ? '<span class="forecast-enemy" title="' + e.name + ' · ' + enemyCounterHint(id) + '"><i>' + e.icon + '</i>' + e.name + '</span>' : '';
   }).join('');
   const bossCount = wave % 5 === 0 ? 1 + Math.floor(wave / 22) : 0;
   let bossMarkup = '';
@@ -283,7 +306,8 @@ function updateWavePreview() {
   }
   $('forecastTitle').textContent = '下一波 · 第 ' + wave + ' 波';
   $('forecastEnemies').innerHTML = enemyMarkup + bossMarkup;
-  $('forecastHint').textContent = '展示可能出现的敌人；精英词缀与随机事件将在开战时揭晓。';
+  const hints = Array.from(new Set(featured.map(enemyCounterHint).filter(Boolean))).slice(0, 2);
+  $('forecastHint').textContent = hints.length ? hints.join('；') : '精英词缀与随机事件将在开战时揭晓。';
 }
 let detailSig = '';
 function updateDetail(force) {
@@ -747,6 +771,8 @@ function syncAccessibilityUI() {
   if (text) text.value = Accessibility.textSize;
   if (flashSelect) flashSelect.value = Accessibility.flash;
   if (shakeSelect) shakeSelect.value = Accessibility.shake;
+  const effects = $('uiEffects');
+  if (effects) effects.value = Accessibility.uiEffects;
 }
 function showMenu() {
   ensureMenuDOM();
@@ -923,7 +949,7 @@ function wireMenu() {
   }
   if ($('btnSoundHome')) $('btnSoundHome').onclick = () => Music.setSfx(!SFX.on);
   if ($('storyPlayback')) $('storyPlayback').onchange = ev => StoryFlow.setPlayback(ev.target.value === 'on');
-  [['a11yText', 'textSize'], ['a11yFlash', 'flash'], ['a11yShake', 'shake']].forEach(pair => {
+  [['a11yText', 'textSize'], ['a11yFlash', 'flash'], ['a11yShake', 'shake'], ['uiEffects', 'uiEffects']].forEach(pair => {
     const select = $(pair[0]);
     if (select) select.onchange = () => Accessibility.set(pair[1], select.value);
   });
@@ -1431,14 +1457,24 @@ function _mountStoryVideo(box, slot) {
   video.src = source;
   video.onerror = () => {
     if (!box.contains(video)) return;
+    clearTimeout(video._fallbackTimer);
     video.hidden = true;
     _showStoryVideoFallback(box, video, slot, false);
   };
+  video.onplaying = () => {
+    clearTimeout(video._fallbackTimer);
+    const fallback = box.querySelector('.story-media-fallback');
+    if (fallback) fallback.remove();
+  };
   box.appendChild(video);
+  // A stalled connection may never reject play(); keep the text route visible.
+  video._fallbackTimer = setTimeout(() => {
+    if (box.contains(video) && video.readyState < 2) _showStoryVideoFallback(box, video, slot, true);
+  }, 6000);
   try {
     const playback = video.play();
-    if (playback && playback.catch) playback.catch(() => _showStoryVideoFallback(box, video, slot, true));
-  } catch (e) { _showStoryVideoFallback(box, video, slot, true); }
+    if (playback && playback.catch) playback.catch(() => _showStoryVideoFallback(box, video, slot, !video.hidden));
+  } catch (e) { _showStoryVideoFallback(box, video, slot, !video.hidden); }
   return video;
 }
 
@@ -1461,7 +1497,9 @@ function _clearStoryMedia() {
   if (!box) return;
   const video = box.querySelector('video');
   if (video) {
+    clearTimeout(video._fallbackTimer);
     video.onerror = null;
+    video.onplaying = null;
     video.pause();
     video.removeAttribute('src');
     video.load();
@@ -1826,7 +1864,7 @@ function openFragmentDetail(id) {
   if (!box || typeof DreamFragments === 'undefined') return;
   const f = (DreamFragments.FRAGMENT_DEFS || []).find(x => x.id === id);
   if (!f) return;
-  if (f.revealWave && (!G || G.wave < f.revealWave)) return;
+  if (!DreamFragments.isRevealed(f) || !DreamFragments._collected || !DreamFragments._collected.has(id)) return;
   const rarity = DreamFragments.rarityOf(f);
   const rc = FRAG_RARITY_COLORS[rarity] || '#cbd5e1';
   box.innerHTML =
@@ -2051,6 +2089,7 @@ function hideDeepDreamTransition() {
 function showFragmentPopup(data) {
   if (!StoryFlow.allowed()) return;
   if (!data) return;
+  if (typeof DreamFragments !== 'undefined') data = DreamFragments.visibleFragment(data);
   if (typeof addText === 'function' && data.x != null && data.y != null) {
     addText(data.x, data.y - 40, (data.icon || '💎') + ' ' + (data.name || data.title || '记忆碎片') + '！', '#fbbf24', true);
   }

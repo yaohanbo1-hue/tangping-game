@@ -1,0 +1,53 @@
+{
+  "browser": "26.6",
+  "platform": "win32",
+  "viewport": {
+    "width": 844,
+    "height": 390
+  },
+  "note": "Paused empty battlefield, headless software raster; not physical phone FPS.",
+  "results": [
+    {
+      "name": "full-effects",
+      "elapsedMs": 3016,
+      "frames": 56,
+      "fps": 18.56763925729443
+    },
+    {
+      "name": "simple-effects",
+      "elapsedMs": 3015,
+      "frames": 129,
+      "fps": 42.78606965174129
+    },
+    {
+      "name": "full-effects-repeat",
+      "elapsedMs": 3008,
+      "frames": 53,
+      "fps": 17.61968085106383
+    },
+    {
+      "name": "simple-effects-repeat",
+      "elapsedMs": 3003,
+      "frames": 114,
+      "fps": 37.96203796203796
+    },
+    {
+      "name": "no-css-effects",
+      "elapsedMs": 3017,
+      "frames": 113,
+      "fps": 37.45442492542261
+    },
+    {
+      "name": "no-canvas",
+      "elapsedMs": 3020,
+      "frames": 161,
+      "fps": 53.311258278145694
+    },
+    {
+      "name": "no-css-or-canvas",
+      "elapsedMs": 3009,
+      "frames": 162,
+      "fps": 53.83848454636092
+    }
+  ]
+}

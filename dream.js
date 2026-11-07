@@ -1861,10 +1861,7 @@ const DreamFragments = {
         }
       }
     } catch (e) { }
-    const spoilerLocked = !!(frag.revealWave && (!G || G.wave < frag.revealWave));
-    const announcement = spoilerLocked
-      ? Object.assign({}, frag, { name: '模糊的记忆', desc: '内容尚未显影', story: '这段记忆仍被雨声遮住。' })
-      : frag;
+    const announcement = this.visibleFragment(frag);
     EventBus.emit('fragment:collect', announcement);
     return announcement;
   },
@@ -1901,7 +1898,17 @@ const DreamFragments = {
    * @returns {object[]}
    */
   getCollectedFragments() {
-    return this.FRAGMENT_DEFS.filter(f => this._collected && this._collected.has(f.id));
+    return this.FRAGMENT_DEFS.filter(f => this._collected && this._collected.has(f.id)).map(f => this.visibleFragment(f));
+  },
+
+  isRevealed(fragment) {
+    return !!fragment && (!fragment.revealWave || !!G && G.wave >= fragment.revealWave);
+  },
+
+  visibleFragment(fragment) {
+    return this.isRevealed(fragment) ? fragment : Object.assign({}, fragment, {
+      name: '模糊的记忆', icon: '❓', desc: '内容尚未显影', story: '这段记忆仍被雨声遮住。',
+    });
   },
 
   /**
@@ -1923,7 +1930,7 @@ const DreamFragments = {
         story: f.revealWave && (!G || G.wave < f.revealWave)
           ? '???'
           : this._collected && this._collected.has(f.id) ? f.story : '???',
-        unlocked: this._collected ? this._collected.has(f.id) : false,
+        unlocked: this.isRevealed(f) && !!(this._collected && this._collected.has(f.id)),
       })),
     };
   },

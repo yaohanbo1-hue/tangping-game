@@ -1,6 +1,6 @@
 # 当前执行检查点
 
-当前只在 `D:\CodexArtifacts\tangping-game\workspace` 独立副本、分支 `codex/v2-reconstruction` 工作。C盘反复写满，原C盘worktree及父仓库保留；D副本从b4782b6继承同一分支历史，origin指向GitHub。home根仓库不是游戏项目；main未改动（本地81079f6），禁止合并。完整2.0目标未完成，VERSION保持1.9.2。草稿PR https://github.com/yaohanbo1-hue/tangping-game/pull/1 。剩余逐项要求见V2_STATUS.md，不缩小原始范围。
+当前在 `D:\Codex\tangping-game-v2` 独立 worktree、分支 `codex/v2-reconstruction` 工作。迁移后失效的.git指针已修复到 `D:\Codex\_tangping-game-sync-20261008\.git\worktrees\tangping-game-v2`，原指针备份在artifacts/repository-recovery。先快进同步了远端9eb1cd8的敌人能力修复，再继续本轮改进。main不合并，完整2.0目标未完成，VERSION保持1.9.2。草稿PR https://github.com/yaohanbo1-hue/tangping-game/pull/1 。以下保留历史阶段记录，当前状态以文末及V2_STATUS.md为准。
 
 已推送基础阶段：纯战斗/剧情播放与奖励账本分离、旧档v7迁移、HP平滑倍率/三路编队、真实伤害统计和Boss阶段阈值、经济/科技校准、从零60波、雨夜场景、建筑机制修复。d9b6cfb的Linux build/browser CI均绿：[42135913487](https://github.com/yaohanbo1-hue/tangping-game/actions/runs/42135913487)。此前GitHub ref错误已恢复，不要重复创建等价提交。
 
@@ -43,3 +43,15 @@ C盘再次满导致build写入失败，旧index测试曾误跑（已不计入，
 六场真实运营再跑结果与b4782b6完全一致（完整docs/campaign-validation.json更新）；近防线机制另由受控战斗测试触发。当前三浏览器交互均通过，平均帧间隔142.69/166.11/203.95ms，软件栅格且同时跑战役，不是性能改善证据。全部本地会话50093/1040/1735均已正常结束。b4782b6远端build/browser均绿42142215644。
 
 C盘再次0字节，新D副本继续工作。node_modules通过junction复用原安装，artifacts通过junction放D runtime-artifacts。tests/browser-env.js仅修改测试进程临时目录；npm命令需显式`--cache D:\CodexArtifacts\tangping-game\npm-cache`避免npm日志写满C。不要移除用户文件，不要继续尝试被策略阻止的目录迁移。
+
+## 2026-11-07 界面、持续武器与剧情可靠性
+
+当前副本及Git恢复方式见本文开头；没有重新建库或丢弃历史。默认流畅DOM特效并保存偏好，可切回完整光影；只调整CSS，不裁减Canvas战斗。`#wrap`的隐藏滚动造成桌面首卡x=-142.875，现用overflow:clip修复为13.5。16卡片在三浏览器完整可见，原生建筑/技能按钮支持键盘；按钮聚焦不吞掉战斗快捷键，触控拖动/取消不误建。提示条移到战场底部，避开顶部预览与Boss条。见docs/images/interface-controls.png。
+
+火焰增加rate=1并与引力共同接入科技/共鸣/剧情/超频实际攻速，保留40%霜缓；坍缩明确放弃减速。毒伤统一穿盾结算并遵守抗性/弱点/精英抗性/易伤/按秒护甲，清除到期毒层，仅覆盖剩余时长；毒液载荷吃伤害增益，腐蚀破甲只随直接命中生效，不能按毒伤帧重复触发。新增88项专项，Node总计2295项通过；另有跨目录/重复构建逐字节一致与拼接脚本语法检查。build.js规范输出LF，产物大量差异含旧混合换行整理，审阅用--ignore-space-at-eol。
+
+剧情碎片的提前收集和55波揭示分离，收集列表/解锁状态/详情/弹出均受保护。视频错误、播放拒绝/加载超时保留文字与选择，关闭时清理计时器/媒体。三浏览器专项通过：偏好保存/坏设置恢复、16卡位置、原生Enter/快捷键、真实触控拖动及取消、隐藏页不模拟绘制、返回丢弃累计时长、手动/剧情暂停归属和视频失败后的50金币选择。Windows WebKit原生视频请求可能绕过Playwright route，故该引擎的失败检查对真实video分派error，Chromium用真实请求中止；不混淆证据。
+
+最终六场运营全通：普通均衡两种子2501.27/2527.72秒，经济2532.47、输出2505.17，困难2627.40、地狱2774.92；均零错误/破门/视频/结局串档。docs/campaign-validation.json已更新。终焉仍约3.6秒，高难未达最终要求。
+
+原生场景/48建筑及三浏览器原有流程通过。压力帧时间受并行战役竞争，不作新旧加速比；单独空场暂停A/B两轮完整18.57/17.62FPS、流畅42.79/37.96FPS，约2.2倍，只证明DOM合成收益，不是物理设备或满战场达标。原始小表docs/performance-profile.json与PERFORMANCE.md保留。仍未完成35怪新美术、五Boss独立设计、完整UI重制、全面画质和高难平衡；VERSION保持1.9.2，不自动合并或发布2.0。

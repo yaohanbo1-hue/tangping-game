@@ -94,7 +94,7 @@ const BUILD_DEFS = {
     name: '火焰喷射器', icon: '🔥', key: '7', color: '#ff8c42',
     cost: { gold: 130, power: 35 }, upkeep: 2.4, hp: 240, maxLv: 50, tower: true, dmgType: 'fire',
     desc: '近距离范围灼烧，堵门利器；脱离火舌后仍会残留 1.4 秒燃烧。',
-    stat: lv => ({ dmg: 10 + 5 * (lv - 1), range: 300 + 14 * (lv - 1), radius: 110 + 8 * (lv - 1) }),
+    stat: lv => ({ dmg: 10 + 5 * (lv - 1), rate: 1, range: 300 + 14 * (lv - 1), radius: 110 + 8 * (lv - 1) }),
     statText: s => `火焰 ${s.dmg}/秒（+50% 灼烧残留）  范围 ${s.radius | 0}`,
     branch: {
       a: { name: '炼狱风暴', icon: '🌋', desc: '范围与灼烧大幅提升', cost: { gold: 560, soul: 15 }, mod: s => ({ dmg: s.dmg * 1.8, range: s.range * 1.35, radius: s.radius * 1.6 }) },
@@ -175,7 +175,7 @@ const BUILD_DEFS = {
     statText: s => `拉扯力 ${s.pull | 0}  减速 ${Math.round(s.gravSlow * 100)}%  微伤 ${s.dmg}  射程 ${s.range | 0}`,
     branch: {
       a: { name: '黑洞', icon: '🌑', desc: '拉扯力 x2.2、减速 +25%，范围 +20%', cost: { gold: 680, soul: 20 }, mod: s => ({ dmg: s.dmg, rate: 1, range: s.range * 1.2, pull: s.pull * 2.2, gravSlow: Math.min(0.85, s.gravSlow + 0.25), gravity: true }) },
-      b: { name: '奇点坍缩', icon: '💫', desc: '伤害 x6、拉扯力 +30%（放弃减速控场）', cost: { gold: 680, soul: 20 }, mod: s => ({ dmg: s.dmg * 6, rate: 1, range: s.range, pull: s.pull * 1.3, gravSlow: s.gravSlow, gravity: true, collapse: 0.5 }) },
+      b: { name: '奇点坍缩', icon: '💫', desc: '伤害 x6、拉扯力 +30%（放弃减速控场）', cost: { gold: 680, soul: 20 }, mod: s => ({ dmg: s.dmg * 6, rate: 1, range: s.range, pull: s.pull * 1.3, gravSlow: 0, gravity: true }) },
     },
   },
   prism: {

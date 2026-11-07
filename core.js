@@ -81,11 +81,13 @@ const Store = {
   del(k) { try { localStorage.removeItem(k); } catch (e) { } },
 };
 const Accessibility = {
-  textSize: 'normal', flash: 'normal', shake: 'normal',
+  textSize: 'normal', flash: 'normal', shake: 'normal', uiEffects: 'simple',
   init() {
     let p = {};
     try { p = JSON.parse(Store.get('tangping_accessibility', '{}') || '{}'); } catch (e) { }
+    if (!p || typeof p !== 'object' || Array.isArray(p)) p = {};
     this.textSize = p.textSize === 'large' ? 'large' : 'normal';
+    this.uiEffects = p.uiEffects === 'full' ? 'full' : 'simple';
     // 系统开了「减少动态效果」时，默认减弱闪屏/震动（玩家仍可在设置里手动改回）
     const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
     this.flash = ['reduced', 'off'].indexOf(p.flash) >= 0 ? p.flash : (reduceMotion ? 'reduced' : 'normal');
@@ -96,11 +98,15 @@ const Accessibility = {
     if (key === 'textSize') this.textSize = value === 'large' ? 'large' : 'normal';
     else if (key === 'flash') this.flash = ['reduced', 'off'].indexOf(value) >= 0 ? value : 'normal';
     else if (key === 'shake') this.shake = ['reduced', 'off'].indexOf(value) >= 0 ? value : 'normal';
+    else if (key === 'uiEffects') this.uiEffects = value === 'full' ? 'full' : 'simple';
     this.apply();
-    Store.set('tangping_accessibility', JSON.stringify({ textSize: this.textSize, flash: this.flash, shake: this.shake }));
+    Store.set('tangping_accessibility', JSON.stringify({ textSize: this.textSize, flash: this.flash, shake: this.shake, uiEffects: this.uiEffects }));
   },
   apply() {
-    if (document.body) document.body.classList.toggle('large-text', this.textSize === 'large');
+    if (document.body) {
+      document.body.classList.toggle('large-text', this.textSize === 'large');
+      document.body.classList.toggle('simple-ui', this.uiEffects === 'simple');
+    }
     if (typeof syncAccessibilityUI === 'function') syncAccessibilityUI();
   },
   flashMul() { return this.flash === 'off' ? 0 : (this.flash === 'reduced' ? 0.22 : 1); },
@@ -480,8 +486,8 @@ function towerPanelDps(s, b) {
   else if (s.aoe) targets = 2.5;      // 全范围声波：按 2.5 个目标折算
   else if (s.splash) targets = 1.6;   // 溅射导弹：按 1.6 折算
   const dps = s.dmg * targets;
-  if (b && b.type === 'flame') return dps * 1.5;   // 接触伤害 + 50% 灼烧残留
-  if (b && b.type === 'gravity') return dps;       // 引力塔伤害极低，价值在控场
+  if (b && b.type === 'flame') return dps * (s.rate || 1) * 1.5;   // 接触伤害 + 50% 灼烧残留
+  if (b && b.type === 'gravity') return dps * (s.rate || 1);
   return dps * (s.rate || 0) * critMul;
 }
 /** 共鸣增幅快照，供详情面板展示（把「隐形机制」显性化） */
@@ -1172,18 +1178,13 @@ function updateEnemies(dt) {
     }
     if (e.vulnT > 0) { e.vulnT -= dt; if (e.vulnT <= 0) e.vuln = 0; }
     if (e.poisonT > 0) {
-      e.poisonT -= dt;
-      const poisonDmg = e.poisonDps * e.poison * dt;
-      EnemyDamage.commit(e,poisonDmg,e.poisonSrc,true);
+      const activeDt = Math.min(dt, e.poisonT);
+      e.poisonT = Math.max(0, e.poisonT - dt);
+      // Poison bypasses shields, but resistance, vulnerability and armor still apply.
+      dotDamage(e, e.poisonDps * e.poison, 'poison', e.poisonSrc, activeDt, true);
       if (Math.random() < dt * 5) spawnParts(e.x, e.y, 1, '#a3e635', 1.1, 0.4);
-      if (e.hp <= 0) {
-        if (e.poisonSrc && e.poisonSrc.kills !== undefined) {
-          e.poisonSrc.kills++;
-          const towerKills = G.stats.towerKills || (G.stats.towerKills = {});
-          towerKills[e.poisonSrc.type] = (towerKills[e.poisonSrc.type] || 0) + 1;
-        }
-        killEnemy(e); continue;
-      }
+      if (e.dead) continue;
+      if (e.poisonT <= 0) { e.poison = 0; e.poisonDps = 0; e.poisonSrc = null; }
     }
     const sp_ = e.def;
     if(sp_.revive && EnemyRemains.updateCaster(e,dt,incapacitated))continue;
@@ -1502,6 +1503,7 @@ function updateTowers(dt) {
     if (!b.def.tower || !fire) continue;
     if (b.freezeT > 0) b.freezeT -= dt;
     const controlRate=b.freezeT>0 ? .4 : 1;
+    const rate = (s.rate || 1) * towerRateMul() * towerRateMulOn(b);
     if (b.type === 'flame') {
       const targets = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       b.flameOn = targets.length > 0;
@@ -1510,7 +1512,7 @@ function updateTowers(dt) {
         // 灼烧叠层：仅在持续被喷到期间累积，离开火舌后会衰减（以前叠满 5 层就永久不减）
         if (s.stack) e.burnStack = Math.min(5, (e.burnStack || 0) + dt * 1.2);
         e.flameOn = true;
-        let d = s.dmg * towerDmgMul(b) * controlRate * (1 + (e.burnStack || 0) * 0.35);
+        let d = s.dmg * towerDmgMul(b) * rate * (1 + (e.burnStack || 0) * 0.35);
         // 灼烧残留：离开火舌后仍持续 1.4 秒。注意以前 burnDmg 直接等于接触伤害，
         // 而 updateEnemies 的灼烧结算与直接伤害同时生效 → 火焰塔实际打出双倍面板 DPS。
         e.burnT = Math.max(e.burnT, 1.4);
@@ -1525,7 +1527,7 @@ function updateTowers(dt) {
     if (s.gravity) {
       const targets = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       b.gravOn = targets.length > 0;
-      const gm = s.dmg * towerDmgMul(b) * controlRate;
+      const gm = s.dmg * towerDmgMul(b) * rate;
       targets.forEach(e => {
         const dx = b.x - e.x, dy = b.y - e.y, d = Math.hypot(dx, dy) || 1;
         if (d > 26) { const sp = s.pull * dt * controlRate * (e.boss ? 0.28 : 1); e.x += dx / d * sp; e.y += dy / d * sp; }
@@ -1535,7 +1537,6 @@ function updateTowers(dt) {
       if (targets.length && Math.random() < dt * 14) spawnParts(rnd(b.x - 16, b.x + 16), rnd(b.y - 16, b.y + 16), 1, '#818cf8', 1.3, 0.5);
       continue;
     }
-    const rate = (s.rate || 1) * towerRateMul() * towerRateMulOn(b);
     b.cd -= dt * rate;
     if (b.cd > 0) continue;
     const mode = (b.targetMode || (b.type === 'laser' ? 'strongest' : 'front'));
@@ -1642,7 +1643,7 @@ function fire_(b, t, s) {
         x: b.x, y: b.y, tx: t.x, ty: t.y, target: t, spd: bspd,
         dmg: s.dmg * mul, crit: critRoll(b), type: b.type, dtype,
         slow: s.slow || 0, freezeChance: s.freezeChance || 0, shred: s.shred || 0,
-        splash: s.splash || 0, poisonStack: s.poison ? 1 : 0, poisonDps: s.poisonDps || 0, poisonMax: s.maxStack || 0,
+        splash: s.splash || 0, poisonStack: s.poison ? 1 : 0, poisonDps: (s.poisonDps || 0) * mul, poisonMax: s.maxStack || 0,
         poisonSpread: !!s.spread, r: br, color: b.def.color, src: b, life: 0,
       });
     }
@@ -1719,9 +1720,9 @@ function touchElement(e, dtype, baseDmg, src) {
  * 并按 0.5 秒登记一次元素标记，保证与其它元素塔仍能触发反应。
  * ------------------------------------------------------------------ */
 const DOT_MERGE_INTERVAL = 0.5;
-function dotDamage(e, dps, dtype, src, dt) {
+function dotDamage(e, dps, dtype, src, dt, bypassShield = false) {
   if (e.dead || !(dps > 0)) return 0;
-  const d = applyDamage(e, dps * dt, dtype, src, false, true, dt);
+  const d = applyDamage(e, dps * dt, dtype, src, false, true, dt, bypassShield);
   if (d > 0 && !e.dead) {
     e.dotAcc = (e.dotAcc || 0) + d;
     e.dotT = (e.dotT || 0) + dt;
@@ -1737,13 +1738,13 @@ function dotDamage(e, dps, dtype, src, dt) {
 /**
  * @param {boolean} [silent] - true = 持续伤害帧结算：不弹数字/不闪光/不触发反伤与适应
  */
-function applyDamage(e, dmg, dtype, src, chain, silent, damageInterval) {
+function applyDamage(e, dmg, dtype, src, chain, silent, damageInterval, bypassShield = false) {
   if (e.dead || (e.phaseBarrier || 0)>0 || !Number.isFinite(dmg) || dmg<=0) return 0;
   const tm = typeMul(e, dtype);
   let d = dmg * tm;
   if (e.flat) d = silent ? Math.max(0,d-e.flat*(damageInterval || 1)) : Math.max(1,d-e.flat);
   // 破甲词条按命中结算，不限伤害类型（旧实现只认 frost，腐蚀炮的破甲永不生效）
-  if (src && src.def && typeof src.def.stat === 'function') {
+  if (!silent && src && src.def && typeof src.def.stat === 'function') {
     const s = bstat(src);
     if (s.shred) DMG_KEYS.forEach(k => { e.res[k] = Math.max(0, (e.res[k] || 0) - s.shred * 0.1); });
   }
@@ -1772,7 +1773,7 @@ function applyDamage(e, dmg, dtype, src, chain, silent, damageInterval) {
       G.enemies.forEach(o => { if (!o.dead && o !== e && dist(o, e) < rx.splash) applyDamage(o, d * 0.45, dtype, src, true); });
     }
   }
-  d=EnemyDamage.commit(e,d,src);
+  d=EnemyDamage.commit(e,d,src,bypassShield);
   if(!silent && d>0)emitHitFx(e,src);
   // Reflect the damage actually absorbed, not arbitrarily large overkill.
   if (!silent && e.def && e.def.reflect && src && src.def && d>0) {

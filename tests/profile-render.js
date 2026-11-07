@@ -23,17 +23,22 @@ const server = http.createServer((req, res) => {
     await page.evaluate(() => { paused = true; });
     const results = [];
     const cases = [
-      ['baseline', ''],
-      ['no-css-effects', '*{animation:none!important;transition:none!important;box-shadow:none!important;text-shadow:none!important;filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}'],
-      ['no-canvas', '#game{visibility:hidden!important}'],
-      ['no-css-or-canvas', '*{animation:none!important;transition:none!important;box-shadow:none!important;text-shadow:none!important;filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}#game{visibility:hidden!important}'],
+      ['full-effects', 'full', ''],
+      ['simple-effects', 'simple', ''],
+      ['full-effects-repeat', 'full', ''],
+      ['simple-effects-repeat', 'simple', ''],
+      ['no-css-effects', 'full', '*{animation:none!important;transition:none!important;box-shadow:none!important;text-shadow:none!important;filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}'],
+      ['no-canvas', 'simple', '#game{visibility:hidden!important}'],
+      ['no-css-or-canvas', 'simple', '*{animation:none!important;transition:none!important;box-shadow:none!important;text-shadow:none!important;filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}#game{visibility:hidden!important}'],
     ];
-    for (const [name, css] of cases) {
-      await page.evaluate(css => {
+    for (const [name, effects, css] of cases) {
+      await page.evaluate(({ css, effects }) => {
+        Accessibility.set('uiEffects', effects);
         let style = document.getElementById('profileStyle');
         if (!style) { style = document.createElement('style'); style.id = 'profileStyle'; document.head.appendChild(style); }
         style.textContent = css;
-      }, css);
+      }, { css, effects });
+      await page.waitForTimeout(250);
       const before = await page.evaluate(() => ({ time: performance.now(), frames: statFrame }));
       await page.waitForTimeout(3000);
       const after = await page.evaluate(() => ({ time: performance.now(), frames: statFrame }));
@@ -41,6 +46,9 @@ const server = http.createServer((req, res) => {
       results.push(row); console.log(JSON.stringify(row));
     }
     fs.mkdirSync(path.join(root, 'artifacts'), { recursive: true });
-    fs.writeFileSync(path.join(root, 'artifacts', 'webkit-render-profile.json'), JSON.stringify(results, null, 2));
+    fs.writeFileSync(path.join(root, 'artifacts', 'webkit-render-profile.json'), JSON.stringify({
+      browser: browser.version(), platform: process.platform, viewport: page.viewportSize(),
+      note: 'Paused empty battlefield, headless software raster; not physical phone FPS.', results,
+    }, null, 2));
   } finally { await browser.close(); server.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; server.close(); });

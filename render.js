@@ -900,21 +900,23 @@ function drawEventBanner() {
 }
 function drawTipBar() {
   if (G.tipTimer <= 0 || !G.tipText) return;
+  // Keep commands clear of the wave forecast and Boss banner at the top.
+  const tipY = ARENA_BOT - 48;
   ctx.save();
   ctx.globalAlpha = clamp(G.tipTimer, 0, 1);
   // 渐变背景
-  const tipGrad = ctx.createLinearGradient(260, ARENA_TOP + 40, 1020, ARENA_TOP + 40);
+  const tipGrad = ctx.createLinearGradient(260, tipY, 1020, tipY);
   tipGrad.addColorStop(0, 'rgba(12,10,26,.85)');
   tipGrad.addColorStop(0.5, 'rgba(20,16,40,.92)');
   tipGrad.addColorStop(1, 'rgba(12,10,26,.85)');
-  ctx.fillStyle = tipGrad; rr(260, ARENA_TOP + 40, 760, 30, 8); ctx.fill();
+  ctx.fillStyle = tipGrad; rr(260, tipY, 760, 30, 8); ctx.fill();
   // 上下边框光效
   ctx.strokeStyle = 'rgba(255,224,102,.4)'; ctx.lineWidth = 1;
-  ctx.beginPath(); ctx.moveTo(268, ARENA_TOP + 40); ctx.lineTo(1012, ARENA_TOP + 40); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(268, tipY); ctx.lineTo(1012, tipY); ctx.stroke();
   ctx.strokeStyle = 'rgba(168,85,247,.25)';
-  ctx.beginPath(); ctx.moveTo(268, ARENA_TOP + 70); ctx.lineTo(1012, ARENA_TOP + 70); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(268, tipY + 30); ctx.lineTo(1012, tipY + 30); ctx.stroke();
   ctx.fillStyle = '#ffe066'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(G.tipText, 640, ARENA_TOP + 55);
+  ctx.fillText(G.tipText, 640, tipY + 15, 736);
   ctx.restore();
 }
 function drawCursor() {
