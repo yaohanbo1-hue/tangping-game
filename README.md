@@ -22,7 +22,7 @@
 
 ---
 
-## v2.0.0 更新（待发布）
+## v2.0.0 更新（已发布）
 
 当前文件版本已统一为2.0.0，本轮通过独立分支PR提交审阅，合并与发布由维护者执行。汇总本次全部更新的详细文字见 [RELEASE_NOTES_NEXT.md](RELEASE_NOTES_NEXT.md)，当前验收范围见 [V2_STATUS.md](docs/V2_STATUS.md)。
 
