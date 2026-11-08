@@ -1,7 +1,7 @@
 // Original mechanical silhouettes. Static chassis/heads are cached separately so
 // aiming and recoil never rebuild textures. All observations live outside G/save.
 const BuildingArt=(()=>{
-  const TAU=Math.PI*2,cache=new Map(),history=new WeakMap(),LIMIT=144;
+  const TAU=Math.PI*2,cache=new Map(),history=new WeakMap(),palette=new Map(),LIMIT=144;
   const types=['miner','generator','turret','frost','laser','tesla','flame','repair','shield','amp','poison','sonic','missile','gravity','prism','bank'];
   const metal='#405761',rim='#95aaa9',dark='#0b1b25',bronze='#ae9365',cloth='#273e4b';
   let builds=0,bytes=0;
@@ -11,14 +11,40 @@ const BuildingArt=(()=>{
   function line(c,x,y,x2,y2,color,width=1) {c.beginPath();c.moveTo(x,y);c.lineTo(x2,y2);c.strokeStyle=color;c.lineWidth=width;c.stroke();}
   function oval(c,x,y,rx,ry,fill,stroke) {c.beginPath();c.ellipse(x,y,rx,ry,0,0,TAU);if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=1.2;c.stroke();}}
   function arc(c,x,y,r,start,end,color,width=1.2) {c.beginPath();c.arc(x,y,r,start,end);c.strokeStyle=color;c.lineWidth=width;c.stroke();}
-  function plate(c,x,y,w,h,color=metal) {
-    poly(c,[[x+4,y],[x+w-4,y],[x+w,y+4],[x+w,y+h-4],[x+w-4,y+h],[x+4,y+h],[x,y+h-4],[x,y+4]],color);
-    line(c,x+4,y+1,x+w-4,y+1,rim);line(c,x+1,y+4,x+1,y+h-4,'#687f87');
+  function tint(color,light) {
+    const key=color+'|'+light;if(palette.has(key))return palette.get(key);
+    const hex=/^#[0-9a-f]{6}$/i.test(color)?color:'#607b87',target=light?'#d6e0d7':'#091822',amount=light?.3:.45;
+    const value='#'+[1,3,5].map(i=>Math.round(parseInt(hex.slice(i,i+2),16)*(1-amount)+parseInt(target.slice(i,i+2),16)*amount).toString(16).padStart(2,'0')).join('');
+    if(palette.size>=64)palette.delete(palette.keys().next().value);palette.set(key,value);return value;
   }
-  function bolts(c,x,y,w,h) {for(const [px,py]of [[x,y],[x+w,y],[x,y+h],[x+w,y+h]]){oval(c,px,py,1.4,1.4,bronze);line(c,px-1,py,px+1,py,dark);}}
-  function crystal(c,x,y,r,color,wide=1) {poly(c,[[x+r,y],[x,y-r*wide],[x-r,y],[x,y+r*wide]],color);poly(c,[[x,y-r*wide],[x-r,y],[x,y+1]],'#cfeded',null);line(c,x,y-r*wide,x,y+r*wide,'rgba(255,255,255,.35)');}
-  function coil(c,x,y,r,color) {oval(c,x,y,r,r*.62,metal,rim);for(let i=-2;i<=2;i++)arc(c,x,y+i*2,r*.72,Math.PI,TAU,bronze,1.5);oval(c,x,y-5,r*.65,r*.35,color,dark);}
-  function tube(c,x,y,len,width,accent) {rect(c,x,y-width/2,len,width,metal,dark);line(c,x,y-width/2,x+len,y-width/2,rim);rect(c,x+len-5,y-width/2-2,4,width+4,bronze,dark);rect(c,x+len-1,y-width/2+1,2,width-2,accent);}
+  // Only plate/tube/coil in the cached component pass use gradients.
+  function brushed(c,x,y,w,h,color) {
+    const g=c.createLinearGradient(x,y,x+w*.3,y+h);g.addColorStop(0,tint(color,true));g.addColorStop(.38,color);g.addColorStop(.58,tint(color,false));g.addColorStop(1,color);return g;
+  }
+  function plate(c,x,y,w,h,color=metal) {
+    poly(c,[[x+4,y],[x+w-4,y],[x+w,y+4],[x+w,y+h-4],[x+w-4,y+h],[x+4,y+h],[x,y+h-4],[x,y+4]],brushed(c,x,y,w,h,color));
+    line(c,x+4,y+1,x+w-4,y+1,'#a9bdb5');line(c,x+1,y+4,x+1,y+h-4,'#78959a');
+    line(c,x+4,y+h-2,x+w-4,y+h-2,tint(color,false),2);line(c,x+w-2,y+4,x+w-2,y+h-4,dark);
+  }
+  function bolts(c,x,y,w,h) {for(const [px,py]of [[x,y],[x+w,y],[x,y+h],[x+w,y+h]]){oval(c,px,py,1.9,1.9,dark);oval(c,px,py,1.3,1.3,bronze);line(c,px-1,py-.2,px+1,py+.2,'#354750');}}
+  function crystal(c,x,y,r,color,wide=1) {
+    poly(c,[[x+r,y],[x,y-r*wide],[x-r,y],[x,y+r*wide]],color);
+    poly(c,[[x,y-r*wide],[x-r,y],[x-r*.18,y+r*.2]],'#cee6df',null);
+    poly(c,[[x+r,y],[x,y+r*wide],[x-r*.18,y+r*.2]],tint(color,false),null);
+    line(c,x,y-r*wide,x-r*.18,y+r*.2,'#e0f3e7');
+  }
+  function coil(c,x,y,r,color) {
+    rect(c,x-r*.46,y-r*.4,r*.92,r*.9,'#1e303c',rim);
+    oval(c,x,y,r,r*.62,brushed(c,x-r,y-r,r*2,r*2,metal),rim);
+    for(let i=-2;i<=2;i++){arc(c,x,y+i*2,r*.72,Math.PI,TAU,'#c1a16d',1.8);arc(c,x,y+i*2,r*.72,0,Math.PI,'#765e46',1);}
+    oval(c,x,y-5,r*.65,r*.35,color,dark);oval(c,x-2,y-6,r*.3,r*.12,'#c5e3d6');
+  }
+  function tube(c,x,y,len,width,accent) {
+    rect(c,x,y-width/2,len,width,brushed(c,x,y-width/2,len,width,metal),dark);
+    line(c,x+2,y-width/2+1,x+len-4,y-width/2+1,rim);line(c,x+2,y+width/2-1,x+len-3,y+width/2-1,dark);
+    rect(c,x+len-6,y-width/2-2,5,width+4,bronze,dark);
+    rect(c,x+len-2,y-width/2,3,width,dark);line(c,x+len,y-width/2+1,x+len,y+width/2-1,accent,1);
+  }
   function grade(level) {return level>=30?2:level>=12?1:0;}
   function sprite(type,branch,level,color,part) {
     const tier=part==='head'?0:grade(level),key=[type,branch||'base',tier,part,color].join('|');
@@ -31,6 +57,7 @@ const BuildingArt=(()=>{
   }
   function chassis(c,type,b,tier,a) {
     oval(c,2,20,29,10,'rgba(2,11,18,.5)');
+    oval(c,0,20,25,6,'#172b35','#617779');
     switch(type) {
       case 'turret':
         plate(c,-21,-12,42,34);rect(c,-27,-8,8,28,cloth,dark);rect(c,19,-8,8,28,cloth,dark);
@@ -137,6 +164,7 @@ const BuildingArt=(()=>{
         if(b==='b'){crystal(c,0,-24,11,'#bc9bcd');for(const x of [-24,24])rect(c,x-4,-25,8,15,'#6a5974',rim);}
         break;
     }
+    chassisDetails(c,type,b,a);
     if(tier>=1) {plate(c,-29,16,12,12,'#52646a');plate(c,17,16,12,12,'#52646a');}
     if(tier>=2) {for(const x of [-30,25]){plate(c,x,-8,6,24,'#5d6660');for(let i=0;i<3;i++)line(c,x,-3+i*6,x+5,-3+i*6,bronze);}}
     rect(c,-11,21,22,3,dark);for(let i=0;i<=tier;i++)rect(c,-9+i*6,21,4,2,b?bronze:a);
@@ -190,6 +218,124 @@ const BuildingArt=(()=>{
         else if(b==='b'){poly(c,[[-13,-7],[16,-7],[41,0],[16,7],[-13,7]],a,bronze);line(c,-6,-4,31,0,'#d8efdc',2);}
         else {poly(c,[[0,-19],[21,15],[-17,15]],a,rim);poly(c,[[0,-19],[3,7],[-17,15]],'#c4e6e1',null);}
         break;
+    }
+    headDetails(c,type,b,a);
+  }
+  function vents(c,x,y,n,length=9,vertical=false) {
+    for(let i=0;i<n;i++) {
+      const px=x+(vertical?i*3:0),py=y+(vertical?0:i*3);
+      line(c,px,py,px+(vertical?0:length),py+(vertical?length:0),dark,1.8);
+      line(c,px,py+1,px+(vertical?0:length),py+(vertical?length:1),'#879f9d',.6);
+    }
+  }
+  function gauge(c,x,y,color,r=4) {
+    oval(c,x,y,r+1,r+1,dark);oval(c,x,y,r,r,'#c7cbb4',bronze);
+    line(c,x-r*.6,y+r*.25,x+r*.5,y-r*.45,color,1.2);oval(c,x,y,.9,.9,dark);
+  }
+  function conduit(c,x,y,cx,cy,x2,y2,color=bronze) {
+    c.beginPath();c.moveTo(x,y);c.quadraticCurveTo(cx,cy,x2,y2);c.strokeStyle=dark;c.lineWidth=4;c.stroke();c.strokeStyle=color;c.lineWidth=2;c.stroke();
+  }
+  // Family-specific fittings are baked with the main component, never rebuilt in motion.
+  function chassisDetails(c,type,b,a) {
+    switch(type) {
+      case 'miner':
+        for(const x of [-17,17]){line(c,x,-19,x,10,'#d4bd8c',1.2);rect(c,x-3,9,6,7,metal,dark);}
+        rect(c,-12,17,24,4,'#263b45',bronze);vents(c,-8,18,1,16);
+        if(b==='b'){gauge(c,17,-20,'#914b37',3);line(c,-10,-16,9,-16,'#e4c18d');}
+        break;
+      case 'generator':
+        for(const x of [-22,18]){rect(c,x,-2,4,13,dark);line(c,x,0,x+3,0,rim);line(c,x,5,x+3,5,rim);}
+        rect(c,-13,8,26,4,'#293c43',bronze);rect(c,-10,9,9,2,a);
+        if(b!=='b'){arc(c,0,-7,b==='a'?17:13,-2.75,-1.05,'#d1c79d',2);arc(c,0,-7,b==='a'?17:13,.3,1.6,'#2e4c59',2);}
+        break;
+      case 'turret':
+        rect(c,-25,1,7,15,'#71684d',dark);for(let i=0;i<3;i++){rect(c,-24,3+i*4,4,2,'#c6ae72');}
+        rect(c,12,12,7,7,'#2b4049',rim);line(c,14,14,17,17,bronze);
+        arc(c,0,0,13,0,Math.PI,'#a5b5a9',1);break;
+      case 'frost':
+        poly(c,[[-14,19],[1,23],[14,17],[13,13],[-12,14]],'#607e8b',rim);
+        vents(c,4,15,3,7);conduit(c,-14,6,-4,16,10,5,'#8caeb3');break;
+      case 'laser':
+        arc(c,0,0,14,-2.8,-.6,'#b8c8b8',2);arc(c,0,0,14,.3,2.1,bronze,2);
+        for(const x of [-14,12]){rect(c,x,9,3,7,dark);line(c,x,9,x+2,9,a);}
+        break;
+      case 'tesla':
+        conduit(c,-16,3,-18,17,-5,17,'#a67f54');conduit(c,16,3,18,17,5,17,'#a67f54');
+        gauge(c,0,13,'#664565',3.5);rect(c,-7,20,14,3,'#182d37',bronze);break;
+      case 'flame':
+        conduit(c,-20,8,-23,21,-6,16,'#ac8d62');gauge(c,-20,-7,'#9b4a31',3);
+        vents(c,4,3,3,10);line(c,-4,11,-4,17,bronze,2);break;
+      case 'poison':
+        for(const x of b==='b'?[-13,16]:[-17,15]){line(c,x-3,-16,x+3,-16,'#d8e7c1');oval(c,x-2,-11,1.2,1.8,'#bfd6a2');}
+        poly(c,[[-7,9],[7,9],[0,19]],'#c5b572',dark);line(c,0,12,0,15,'#293e3c',2);oval(c,0,17,.8,.8,dark);break;
+      case 'sonic':
+        for(const x of [-21,17]){rect(c,x,-9,4,26,'#213640',bronze);vents(c,x,-6,7,4);}
+        line(c,-11,17,11,17,'#a6bab0',2);bolts(c,-13,9,26,0);break;
+      case 'missile':
+        for(const x of [-22,18]){rect(c,x,6,4,11,bronze,dark);line(c,x+1,9,x+3,9,'#d6d4b9');}
+        rect(c,-12,17,24,4,dark,rim);for(let i=0;i<3;i++)rect(c,-9+i*7,18,4,2,i===0?a:'#677c73');break;
+      case 'gravity':
+        for(let i=0;i<3;i++){const an=i*TAU/3;c.save();c.rotate(an);rect(c,23,-3,5,6,'#c0aa75',dark);c.restore();}
+        arc(c,0,0,20,-2.6,-1,'#9baab5',1.5);break;
+      case 'prism':
+        line(c,-21,15,0,-22,'#afccc4',1.5);line(c,2,-22,22,15,'#526d78',2);
+        rect(c,-13,16,26,3,bronze,dark);for(const x of [-18,18])oval(c,x,13,2,2,a,dark);break;
+      case 'repair':
+        for(const x of [-21,21])oval(c,x,2,3,3,bronze,dark);
+        rect(c,-10,10,20,7,'#1d343b',rim);rect(c,-7,12,4,2,'#a5c0a7');rect(c,-1,12,8,2,'#8c9b79');break;
+      case 'shield':
+        for(const x of [-19,15]){plate(c,x,10,5,10,'#54727a');rect(c,x+1,11,2,4,'#abd1cc');}
+        arc(c,0,0,b==='a'?25:20,0,Math.PI,'#718d93',2);break;
+      case 'amp':
+        rect(c,-15,15,30,4,'#293f46',bronze);for(const x of [-11,-4,3,10])rect(c,x,16,3,2,'#c9b275');
+        for(const x of [-18,18])oval(c,x,12,2,2,dark,rim);break;
+      case 'bank':
+        arc(c,-1,4,8,-2.8,-.5,'#b8bd9c',2);arc(c,-1,4,8,.3,2.8,'#263a40',2);
+        oval(c,-1,4,3,3,bronze,dark);for(let i=0;i<3;i++)rect(c,18,-3+i*5,3,2,'#d2bd81');
+        rect(c,-18,20,29,2,'#21353d');break;
+    }
+  }
+  function headDetails(c,type,b,a) {
+    switch(type) {
+      case 'turret':
+        plate(c,-11,-8,13,16,'#61747a');vents(c,-8,-5,3,6);oval(c,9,0,4,4,dark,bronze);
+        if(b==='a'){rect(c,28,-9,5,18,'#4a626a',rim);for(const y of [-6,0,6])rect(c,32,y-1,2,2,dark);}
+        else {rect(c,14,-2,b==='b'?21:12,1,'#a3b4ad');if(b==='b'){oval(c,16,-8,3,2,'#243c4b',bronze);oval(c,17,-8,1,1,'#c9e1ce');}}
+        break;
+      case 'frost':
+        for(const y of [-7,7]){line(c,-9,y,9,y,'#acd1d1',1.5);rect(c,-9,y-1,4,3,'#2e4759',dark);}
+        if(b==='b')line(c,22,-4,38,0,'#e0f0e3',1.5);break;
+      case 'laser':
+        for(const y of [-9,6]){rect(c,-9,y,11,3,'#253b46',bronze);rect(c,-6,y+1,5,1,a);}
+        if(b==='b'){for(const an of [-.4,.4]){c.save();c.rotate(an);line(c,24,-2,32,-2,'#d7e1c6',1.3);c.restore();}}
+        break;
+      case 'tesla':
+        for(const y of [-9,9]){rect(c,6,y-3,4,6,'#b2b7a3',dark);line(c,7,y-2,7,y+2,'#e0d8b9');}
+        if(b==='b'){line(c,28,-8,28,8,'#d6c595',1.5);line(c,26,-11,21,-11,bronze,2);}
+        break;
+      case 'flame':
+        conduit(c,-9,5,-6,15,11,10,'#c6a477');rect(c,-7,-7,10,5,'#3c4f54',bronze);rect(c,-5,-6,5,2,'#bb8c5f');
+        for(const y of b==='a'?[-7,7]:[0]){line(c,28,y-4,34,y-3,'#c6ab79',1.2);line(c,28,y+4,34,y+3,'#3c3430',1.5);}
+        break;
+      case 'poison':
+        rect(c,-9,-5,14,10,'#2a4541',bronze);rect(c,-7,-3,9,6,tint(a,false));line(c,-6,-3,-6,1,'#c4d9bd');
+        if(b==='b')for(const y of [-5,5])rect(c,28,y-1,4,2,dark);break;
+      case 'sonic': {
+        const x=b==='a'?35:29,h=b==='a'?18:13;
+        poly(c,[[10,-5],[x-2,-h+3],[x-2,-h*.45],[14,-2]],'#9cafad',null);
+        poly(c,[[10,5],[x-2,h-2],[x-2,h*.5],[14,2]],'#354c59',null);
+        oval(c,x,0,3,h-1,'#213744',bronze);oval(c,x+.2,0,1.5,h*.56,a);oval(c,x+.4,-h*.24,.7,h*.18,'#d5ddcb');break;
+      }
+      case 'missile':
+        if(b==='b'){line(c,-4,-6,24,-6,'#e2ddbc',1.6);rect(c,15,-6,3,12,'#8b7456');poly(c,[[28,-5],[39,0],[28,1]],'#e5d5a3',null);}
+        else for(const y of b==='a'?[-12,0,12]:[-7,7]){rect(c,-10,y-3,6,6,'#253a43',bronze);line(c,-2,y-2,16,y-2,'#b3beb0');}
+        break;
+      case 'gravity':
+        arc(c,0,0,b==='a'?17:13,-2.9,-1.1,'#c3b78a',2);arc(c,0,0,b==='a'?17:13,.2,1.8,'#8191aa',1.6);
+        oval(c,-2,-2,b==='b'?5:3,b==='b'?5:3,'#0c1829',null);line(c,-3,-5,1,-5,a,1);break;
+      case 'prism':
+        if(b==='b'){line(c,-7,4,17,4,tint(a,false),2);line(c,-9,-5,11,-5,'#dce9cb',1.3);rect(c,-15,-6,3,12,bronze,dark);}
+        else if(!b)line(c,-10,13,15,13,bronze,1.5);break;
     }
   }
   function observe(b,dt) {

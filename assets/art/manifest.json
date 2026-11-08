@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "art_direction_brief": "docs/ART_DIRECTION.md",
-  "scope": "Original environment, 16 building families / 32 branches, 35 regular enemy and five Boss silhouettes, neutral creatures and unified UI integrated. New Boss mechanics and physical-device acceptance remain separate work.",
+  "scope": "Original environment, 16 building families / 32 branches, 35 regular enemy and five Boss silhouettes, neutral creatures and unified UI integrated. Five Boss mechanics are implemented and tested separately; physical-device acceptance remains pending.",
   "catalogs": [
     "assets/art/buildings.json",
     "assets/art/enemies.json",
@@ -11,7 +11,7 @@
     "kind": "original-procedural-canvas",
     "url_or_tool": "scene-art.js",
     "creator": "Codex for yaohanbo1-hue/tangping-game",
-    "license": "MIT (repository LICENSE)",
+    "license": "Apache-2.0 (repository LICENSE; historical notice in LICENSES/MIT-legacy.txt)",
     "attribution": "No external raster art used in this stage."
   },
   "visual_locks": [

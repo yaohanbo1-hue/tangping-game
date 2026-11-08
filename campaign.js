@@ -1,5 +1,19 @@
 // Gameplay identity belongs to a run; playback belongs to this device.
 // Presentation never owns combat events, wave progression or quest rewards.
+const StoryKnowledge = {
+  canReveal(wave) {
+    if(!wave)return true;
+    if((META.storySeen || []).includes(wave))return true;
+    if(wave>=55 && (META.endingIds || []).some(id=>STORY_ENDINGS.some(ending=>ending.id===id)))return true;
+    const event=G && G.storyState && G.storyState.events && G.storyState.events['wave:'+wave];
+    return !!(G && G.experience!=='combat' && event && event.method==='legacy' && G.wave>=wave);
+  },
+  record(data) {
+    if(!data || !G || !StoryFlow.allowed() || StoryFlow.key(data)!=='wave:'+data.wave || !WAVE_STORY.some(s=>s.wave===data.wave))return;
+    if(!Array.isArray(META.storySeen))META.storySeen=[];
+    if(!META.storySeen.includes(data.wave)){META.storySeen.push(data.wave);saveMeta();}
+  },
+};
 const StoryFlow = {
   playback: true,
   init() { this.playback = Store.get('tangping_story_playback', 'on') !== 'off'; },
@@ -37,6 +51,7 @@ const StoryFlow = {
     if (old && (old.status === 'settled' || old.status === 'legacy')) return { got: [] };
     // Reserve before effects: rewards may synchronously emit more story events.
     events[key] = { wave: G.wave, status: 'settled', method };
+    if(method==='manual')StoryKnowledge.record(data);
     const result = choice.effect ? applyStoryEffect(choice.effect, { speaker: data.speaker }) : { got: [] };
     if (method === 'manual' && G.experience !== 'combat') {
       const marks = [['__story_route__:', choice.storyRoute], ['__story_ending_reply__:', choice.endingReply]];

@@ -1,1628 +1,4978 @@
 {
   "note": "Fixed player policy with legal purchases and real 60Hz combat; not a physical player trial.",
+  "physicalPlayerTrial": false,
   "results": [
     {
       "profile": "balanced",
       "difficulty": "normal",
       "seed": 20261106,
       "won": true,
+      "stop": "win",
       "wave": 60,
-      "seconds": 2501.27,
-      "kills": 4529,
-      "damage": 42074813,
+      "seconds": 2580.95,
       "leaks": 0,
+      "bedHp": 6488.897650349401,
+      "damage": 1202574910,
       "actions": {
         "build": 38,
-        "upgrade": 387,
+        "upgrade": 395,
         "branch": 38,
         "tech": 184,
         "rune": 186,
-        "skills": 38
+        "skills": 43
       },
-      "videos": 0,
-      "endingIds": [],
-      "errors": [],
-      "samples": [
-        {
-          "wave": 10,
-          "seconds": 378.33,
-          "gold": 25343,
-          "income": 734,
-          "buildings": 38,
-          "meanLevel": 5.05,
-          "kills": 162,
-          "leaks": 0,
-          "damage": 31087,
-          "bedHp": 610,
-          "tech": 19,
-          "dps": 5057
-        },
-        {
-          "wave": 20,
-          "seconds": 825.6,
-          "gold": 4813,
-          "income": 1413,
-          "buildings": 38,
-          "meanLevel": 7.61,
-          "kills": 570,
-          "leaks": 0,
-          "damage": 344387,
-          "bedHp": 659,
-          "tech": 44,
-          "dps": 36899
-        },
-        {
-          "wave": 30,
-          "seconds": 1299.25,
-          "gold": 11076,
-          "income": 2255,
-          "buildings": 38,
-          "meanLevel": 8.84,
-          "kills": 1314,
-          "leaks": 0,
-          "damage": 1743490,
-          "bedHp": 986,
-          "tech": 79,
-          "dps": 169757
-        },
-        {
-          "wave": 40,
-          "seconds": 1722.62,
-          "gold": 46690,
-          "income": 4387,
-          "buildings": 38,
-          "meanLevel": 9.82,
-          "kills": 2281,
-          "leaks": 0,
-          "damage": 7047319,
-          "bedHp": 1822,
-          "tech": 129,
-          "dps": 536565
-        },
-        {
-          "wave": 50,
-          "seconds": 2092.65,
-          "gold": 56171,
-          "income": 7122,
-          "buildings": 38,
-          "meanLevel": 10.5,
-          "kills": 3289,
-          "leaks": 0,
-          "damage": 20926570,
-          "bedHp": 2506,
-          "tech": 172,
-          "dps": 2802701
-        },
-        {
-          "wave": 55,
-          "seconds": 2295,
-          "gold": 64942,
-          "income": 8439,
-          "buildings": 38,
-          "meanLevel": 10.82,
-          "kills": 3881,
-          "leaks": 0,
-          "damage": 28955071,
-          "bedHp": 3909,
-          "tech": 184,
-          "dps": 4092875
-        },
-        {
-          "wave": 60,
-          "seconds": 2483.72,
-          "gold": 33710,
-          "income": 8439,
-          "buildings": 38,
-          "meanLevel": 11.18,
-          "kills": 4458,
-          "leaks": 0,
-          "damage": 39101921,
-          "bedHp": 5864,
-          "tech": 184,
-          "dps": 5497948
-        }
-      ],
+      "lotteryRolls": 0,
+      "final": {
+        "wave": 60,
+        "boss": "final",
+        "seconds": 33.83,
+        "phases": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "expectedPhases": 4,
+        "hp": 702618514.5909923,
+        "casts": 1,
+        "interrupts": 5,
+        "pulses": 7
+      },
       "bosses": [
         {
           "wave": 5,
           "boss": "lord",
-          "seconds": 7.38,
+          "seconds": 7.6,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 3420,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 10,
           "boss": "abyss",
-          "seconds": 4.2,
+          "seconds": 5.97,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 14280,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 15,
           "boss": "machine",
-          "seconds": 4.1,
+          "seconds": 4.83,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 55101.12957678496,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 20,
           "boss": "void",
-          "seconds": 4.62,
+          "seconds": 5,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 138540.46603178,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 25,
           "boss": "lord",
-          "seconds": 2.47,
+          "seconds": 4.85,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 282014.8082693305,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 25,
           "boss": "lord",
-          "seconds": 2.62,
+          "seconds": 4.43,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 282014.8082693305,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 30,
           "boss": "abyss",
-          "seconds": 3.2,
+          "seconds": 5.63,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 1359595.0308570038,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 30,
           "boss": "abyss",
-          "seconds": 3.68,
+          "seconds": 5.63,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 1359595.0308570038,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 35,
           "boss": "machine",
-          "seconds": 2.5,
+          "seconds": 4.88,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 2251801.7114640805,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 35,
           "boss": "machine",
-          "seconds": 2.65,
+          "seconds": 5.27,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 2251801.7114640805,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 40,
           "boss": "void",
-          "seconds": 2.48,
+          "seconds": 6.32,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 7407229.707990618,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 40,
           "boss": "void",
-          "seconds": 2.57,
+          "seconds": 6.88,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 7407229.707990618,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 45,
           "boss": "lord",
-          "seconds": 2.12,
+          "seconds": 3.03,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 12271797.873745138,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 45,
           "boss": "lord",
-          "seconds": 2.3,
+          "seconds": 3.67,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 12271797.873745138,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 45,
           "boss": "lord",
-          "seconds": 2.52,
+          "seconds": 3.5,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 12271797.873745138,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 50,
           "boss": "abyss",
-          "seconds": 2.4,
+          "seconds": 5.78,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 50,
           "boss": "abyss",
-          "seconds": 2.58,
+          "seconds": 6.38,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 50,
           "boss": "abyss",
-          "seconds": 2.77,
+          "seconds": 6.22,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 55,
           "boss": "machine",
-          "seconds": 2.4,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 55,
-          "boss": "machine",
-          "seconds": 2.58,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 55,
-          "boss": "machine",
-          "seconds": 2.75,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 60,
-          "boss": "final",
-          "seconds": 3.6,
-          "phases": [
-            0,
-            1,
-            2,
-            3
-          ],
-          "expectedPhases": 4
-        }
-      ]
-    },
-    {
-      "profile": "balanced",
-      "difficulty": "normal",
-      "seed": 8921,
-      "won": true,
-      "wave": 60,
-      "seconds": 2484.92,
-      "kills": 4483,
-      "damage": 43221347,
-      "leaks": 0,
-      "actions": {
-        "build": 38,
-        "upgrade": 386,
-        "branch": 38,
-        "tech": 184,
-        "rune": 186,
-        "skills": 38
-      },
-      "videos": 0,
-      "endingIds": [],
-      "errors": [],
-      "samples": [
-        {
-          "wave": 10,
-          "seconds": 363,
-          "gold": 337,
-          "income": 199,
-          "buildings": 38,
-          "meanLevel": 3.53,
-          "kills": 137,
-          "leaks": 0,
-          "damage": 26278,
-          "bedHp": 610,
-          "tech": 19,
-          "dps": 3076
-        },
-        {
-          "wave": 20,
-          "seconds": 806.45,
-          "gold": 3500,
-          "income": 1413,
-          "buildings": 38,
-          "meanLevel": 7.84,
-          "kills": 565,
-          "leaks": 0,
-          "damage": 358110,
-          "bedHp": 659,
-          "tech": 44,
-          "dps": 38933
-        },
-        {
-          "wave": 30,
-          "seconds": 1276.28,
-          "gold": 13774,
-          "income": 2255,
-          "buildings": 38,
-          "meanLevel": 8.87,
-          "kills": 1272,
-          "leaks": 0,
-          "damage": 1636794,
-          "bedHp": 986,
-          "tech": 79,
-          "dps": 165475
-        },
-        {
-          "wave": 40,
-          "seconds": 1722.23,
-          "gold": 51413,
-          "income": 4387,
-          "buildings": 38,
-          "meanLevel": 9.79,
-          "kills": 2317,
-          "leaks": 0,
-          "damage": 7469141,
-          "bedHp": 1822,
-          "tech": 129,
-          "dps": 562032
-        },
-        {
-          "wave": 50,
-          "seconds": 2087.55,
-          "gold": 52489,
-          "income": 14245,
-          "buildings": 38,
-          "meanLevel": 10.47,
-          "kills": 3332,
-          "leaks": 0,
-          "damage": 22126724,
-          "bedHp": 2506,
-          "tech": 172,
-          "dps": 2553231
-        },
-        {
-          "wave": 55,
-          "seconds": 2270.1,
-          "gold": 106857,
-          "income": 8439,
-          "buildings": 38,
-          "meanLevel": 10.82,
-          "kills": 3831,
-          "leaks": 0,
-          "damage": 29490993,
-          "bedHp": 3909,
-          "tech": 184,
-          "dps": 3742360
-        },
-        {
-          "wave": 60,
-          "seconds": 2458.28,
-          "gold": 119132,
-          "income": 8439,
-          "buildings": 38,
-          "meanLevel": 11.13,
-          "kills": 4382,
-          "leaks": 0,
-          "damage": 39352245,
-          "bedHp": 5864,
-          "tech": 184,
-          "dps": 4986471
-        }
-      ],
-      "bosses": [
-        {
-          "wave": 5,
-          "boss": "lord",
           "seconds": 7,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 10,
-          "boss": "abyss",
-          "seconds": 8.17,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 15,
-          "boss": "machine",
-          "seconds": 3.87,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 20,
-          "boss": "void",
-          "seconds": 4.62,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 25,
-          "boss": "lord",
-          "seconds": 2.7,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 25,
-          "boss": "lord",
-          "seconds": 2.87,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 30,
-          "boss": "abyss",
-          "seconds": 2.88,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 30,
-          "boss": "abyss",
-          "seconds": 3.33,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 35,
-          "boss": "machine",
-          "seconds": 2.47,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 35,
-          "boss": "machine",
-          "seconds": 2.98,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 40,
-          "boss": "void",
-          "seconds": 3.13,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 40,
-          "boss": "void",
-          "seconds": 4.78,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 45,
-          "boss": "lord",
-          "seconds": 2.1,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 45,
-          "boss": "lord",
-          "seconds": 2.28,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 45,
-          "boss": "lord",
-          "seconds": 2.43,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 50,
-          "boss": "abyss",
-          "seconds": 2.4,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 50,
-          "boss": "abyss",
-          "seconds": 2.6,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 50,
-          "boss": "abyss",
-          "seconds": 2.82,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 55,
           "boss": "machine",
-          "seconds": 2.4,
+          "seconds": 8.83,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 55,
           "boss": "machine",
-          "seconds": 2.58,
+          "seconds": 8.4,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 55,
-          "boss": "machine",
-          "seconds": 2.75,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 60,
           "boss": "final",
-          "seconds": 3.62,
+          "seconds": 33.83,
           "phases": [
             0,
             1,
             2,
             3
           ],
-          "expectedPhases": 4
+          "expectedPhases": 4,
+          "hp": 702618514.5909923,
+          "casts": 1,
+          "interrupts": 5,
+          "pulses": 7
         }
-      ]
+      ],
+      "keyWaves": [
+        {
+          "wave": 1,
+          "seconds": 34.02,
+          "gold": 62,
+          "income": 14,
+          "buildings": 4,
+          "meanLevel": 1.25,
+          "kills": 0,
+          "leaks": 0,
+          "damage": 0,
+          "bedHp": 420,
+          "tech": 0,
+          "dps": 58
+        },
+        {
+          "wave": 5,
+          "seconds": 171.13,
+          "gold": 63,
+          "income": 24,
+          "buildings": 12,
+          "meanLevel": 2.33,
+          "kills": 44,
+          "leaks": 0,
+          "damage": 3698,
+          "bedHp": 420,
+          "tech": 9,
+          "dps": 518
+        },
+        {
+          "wave": 10,
+          "seconds": 377.43,
+          "gold": 437,
+          "income": 199,
+          "buildings": 38,
+          "meanLevel": 3.79,
+          "kills": 167,
+          "leaks": 0,
+          "damage": 32793,
+          "bedHp": 610,
+          "tech": 19,
+          "dps": 3769
+        },
+        {
+          "wave": 20,
+          "seconds": 859.53,
+          "gold": 8853,
+          "income": 1481,
+          "buildings": 38,
+          "meanLevel": 7.5,
+          "kills": 647,
+          "leaks": 0,
+          "damage": 435069,
+          "bedHp": 761,
+          "tech": 44,
+          "dps": 55355
+        },
+        {
+          "wave": 30,
+          "seconds": 1318.75,
+          "gold": 20822,
+          "income": 1796,
+          "buildings": 38,
+          "meanLevel": 8.82,
+          "kills": 1312,
+          "leaks": 0,
+          "damage": 2297832,
+          "bedHp": 1140,
+          "tech": 79,
+          "dps": 344410
+        },
+        {
+          "wave": 40,
+          "seconds": 1764.33,
+          "gold": 3977,
+          "income": 14205,
+          "buildings": 38,
+          "meanLevel": 9.92,
+          "kills": 2334,
+          "leaks": 0,
+          "damage": 14529756,
+          "bedHp": 2017,
+          "tech": 129,
+          "dps": 1580597
+        },
+        {
+          "wave": 50,
+          "seconds": 2143.22,
+          "gold": 110606,
+          "income": 7969,
+          "buildings": 38,
+          "meanLevel": 10.71,
+          "kills": 3427,
+          "leaks": 0,
+          "damage": 79175957,
+          "bedHp": 2773,
+          "tech": 172,
+          "dps": 9709795
+        },
+        {
+          "wave": 60,
+          "seconds": 2524.1,
+          "gold": 35901,
+          "income": 9446,
+          "buildings": 38,
+          "meanLevel": 11.34,
+          "kills": 4487,
+          "leaks": 0,
+          "damage": 497107668,
+          "bedHp": 6489,
+          "tech": 184,
+          "dps": 28635597
+        }
+      ],
+      "errors": [],
+      "admin": false,
+      "prizes": {},
+      "videos": 0,
+      "endingIds": []
+    },
+    {
+      "profile": "balanced",
+      "difficulty": "normal",
+      "seed": 8921,
+      "won": true,
+      "stop": "win",
+      "wave": 60,
+      "seconds": 2584.33,
+      "leaks": 0,
+      "bedHp": 5863.806388954802,
+      "damage": 1227386991,
+      "actions": {
+        "build": 38,
+        "upgrade": 401,
+        "branch": 38,
+        "tech": 184,
+        "rune": 186,
+        "skills": 41
+      },
+      "lotteryRolls": 0,
+      "final": {
+        "wave": 60,
+        "boss": "final",
+        "seconds": 26.42,
+        "phases": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "expectedPhases": 4,
+        "hp": 702618514.5909923,
+        "casts": 0,
+        "interrupts": 4,
+        "pulses": 2
+      },
+      "bosses": [
+        {
+          "wave": 5,
+          "boss": "lord",
+          "seconds": 6.75,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 3420,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 10,
+          "boss": "abyss",
+          "seconds": 5.5,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 14280,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 15,
+          "boss": "machine",
+          "seconds": 4.23,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 55101.12957678496,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 20,
+          "boss": "void",
+          "seconds": 4.97,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 138540.46603178,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 3.63,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 201439.14876380746,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 4.12,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 201439.14876380746,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 6.32,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 1903433.043199805,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 7.02,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 1903433.043199805,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 4.88,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 2251801.7114640805,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 4.83,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 2251801.7114640805,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 6.3,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 7407229.707990618,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 6.3,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 7407229.707990618,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 3.53,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 3.72,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 3.62,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 5.47,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 5.95,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 6.17,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 6.22,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 7.02,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 7.13,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 60,
+          "boss": "final",
+          "seconds": 26.42,
+          "phases": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "expectedPhases": 4,
+          "hp": 702618514.5909923,
+          "casts": 0,
+          "interrupts": 4,
+          "pulses": 2
+        }
+      ],
+      "keyWaves": [
+        {
+          "wave": 1,
+          "seconds": 34.02,
+          "gold": 103,
+          "income": 14,
+          "buildings": 4,
+          "meanLevel": 1.25,
+          "kills": 0,
+          "leaks": 0,
+          "damage": 0,
+          "bedHp": 420,
+          "tech": 0,
+          "dps": 58
+        },
+        {
+          "wave": 5,
+          "seconds": 168.42,
+          "gold": 26,
+          "income": 24,
+          "buildings": 12,
+          "meanLevel": 2.5,
+          "kills": 44,
+          "leaks": 0,
+          "damage": 3819,
+          "bedHp": 420,
+          "tech": 9,
+          "dps": 556
+        },
+        {
+          "wave": 10,
+          "seconds": 377.38,
+          "gold": 976,
+          "income": 1469,
+          "buildings": 38,
+          "meanLevel": 3.68,
+          "kills": 163,
+          "leaks": 0,
+          "damage": 31502,
+          "bedHp": 610,
+          "tech": 19,
+          "dps": 3803
+        },
+        {
+          "wave": 20,
+          "seconds": 813.78,
+          "gold": 10473,
+          "income": 1413,
+          "buildings": 38,
+          "meanLevel": 7.76,
+          "kills": 562,
+          "leaks": 0,
+          "damage": 354397,
+          "bedHp": 659,
+          "tech": 44,
+          "dps": 54342
+        },
+        {
+          "wave": 30,
+          "seconds": 1293.65,
+          "gold": 34222,
+          "income": 1712,
+          "buildings": 38,
+          "meanLevel": 9.05,
+          "kills": 1301,
+          "leaks": 0,
+          "damage": 2069313,
+          "bedHp": 986,
+          "tech": 79,
+          "dps": 368025
+        },
+        {
+          "wave": 40,
+          "seconds": 1716.15,
+          "gold": 34791,
+          "income": 4387,
+          "buildings": 38,
+          "meanLevel": 9.87,
+          "kills": 2225,
+          "leaks": 0,
+          "damage": 14813425,
+          "bedHp": 1822,
+          "tech": 129,
+          "dps": 1520240
+        },
+        {
+          "wave": 50,
+          "seconds": 2115.03,
+          "gold": 55941,
+          "income": 21367,
+          "buildings": 38,
+          "meanLevel": 10.74,
+          "kills": 3390,
+          "leaks": 0,
+          "damage": 102047480,
+          "bedHp": 2506,
+          "tech": 172,
+          "dps": 9914977
+        },
+        {
+          "wave": 60,
+          "seconds": 2534.9,
+          "gold": 174759,
+          "income": 16878,
+          "buildings": 38,
+          "meanLevel": 11.45,
+          "kills": 4655,
+          "leaks": 0,
+          "damage": 522419896,
+          "bedHp": 5864,
+          "tech": 184,
+          "dps": 29527132
+        }
+      ],
+      "errors": [],
+      "admin": false,
+      "prizes": {},
+      "videos": 0,
+      "endingIds": []
     },
     {
       "profile": "economy",
       "difficulty": "normal",
       "seed": 20261106,
       "won": true,
+      "stop": "win",
       "wave": 60,
-      "seconds": 2542.4,
-      "kills": 4666,
-      "damage": 50317687,
+      "seconds": 2606.45,
       "leaks": 0,
+      "bedHp": 6488.897650349401,
+      "damage": 1232191453,
       "actions": {
         "build": 38,
-        "upgrade": 414,
+        "upgrade": 411,
         "branch": 37,
         "tech": 184,
         "rune": 180,
-        "skills": 38
+        "skills": 41
       },
-      "videos": 0,
-      "endingIds": [],
-      "errors": [],
-      "samples": [
-        {
-          "wave": 10,
-          "seconds": 378.78,
-          "gold": 1041,
-          "income": 785,
-          "buildings": 38,
-          "meanLevel": 3.89,
-          "kills": 163,
-          "leaks": 0,
-          "damage": 30335,
-          "bedHp": 705,
-          "tech": 19,
-          "dps": 3255
-        },
-        {
-          "wave": 20,
-          "seconds": 828.87,
-          "gold": 6484,
-          "income": 5652,
-          "buildings": 38,
-          "meanLevel": 8.08,
-          "kills": 581,
-          "leaks": 0,
-          "damage": 391503,
-          "bedHp": 761,
-          "tech": 44,
-          "dps": 37550
-        },
-        {
-          "wave": 30,
-          "seconds": 1277.02,
-          "gold": 7273,
-          "income": 3425,
-          "buildings": 38,
-          "meanLevel": 9.39,
-          "kills": 1205,
-          "leaks": 0,
-          "damage": 1590635,
-          "bedHp": 1140,
-          "tech": 79,
-          "dps": 195422
-        },
-        {
-          "wave": 40,
-          "seconds": 1736.73,
-          "gold": 51817,
-          "income": 6754,
-          "buildings": 38,
-          "meanLevel": 10.34,
-          "kills": 2292,
-          "leaks": 0,
-          "damage": 7162695,
-          "bedHp": 2017,
-          "tech": 129,
-          "dps": 670171
-        },
-        {
-          "wave": 50,
-          "seconds": 2120.92,
-          "gold": 20085,
-          "income": 33320,
-          "buildings": 38,
-          "meanLevel": 11.16,
-          "kills": 3403,
-          "leaks": 0,
-          "damage": 25044428,
-          "bedHp": 2773,
-          "tech": 172,
-          "dps": 3283684
-        },
-        {
-          "wave": 55,
-          "seconds": 2318.27,
-          "gold": 110249,
-          "income": 39487,
-          "buildings": 38,
-          "meanLevel": 11.53,
-          "kills": 3961,
-          "leaks": 0,
-          "damage": 34146840,
-          "bedHp": 4326,
-          "tech": 184,
-          "dps": 4784434
-        },
-        {
-          "wave": 60,
-          "seconds": 2515.98,
-          "gold": 161155,
-          "income": 13162,
-          "buildings": 38,
-          "meanLevel": 11.87,
-          "kills": 4557,
-          "leaks": 0,
-          "damage": 46448156,
-          "bedHp": 6489,
-          "tech": 184,
-          "dps": 6340949
-        }
-      ],
+      "lotteryRolls": 0,
+      "final": {
+        "wave": 60,
+        "boss": "final",
+        "seconds": 30.58,
+        "phases": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "expectedPhases": 4,
+        "hp": 702618514.5909923,
+        "casts": 1,
+        "interrupts": 2,
+        "pulses": 6
+      },
       "bosses": [
         {
           "wave": 5,
           "boss": "lord",
-          "seconds": 7.37,
+          "seconds": 7.6,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 3420,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 10,
           "boss": "abyss",
-          "seconds": 6.43,
+          "seconds": 4.83,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 14280,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 15,
           "boss": "machine",
-          "seconds": 3.28,
+          "seconds": 3.82,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 55101.12957678496,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 20,
           "boss": "void",
-          "seconds": 4.62,
+          "seconds": 4.97,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 138540.46603178,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 25,
           "boss": "lord",
-          "seconds": 3.07,
+          "seconds": 3.37,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 201439.14876380746,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 25,
           "boss": "lord",
-          "seconds": 2.83,
+          "seconds": 3.72,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 201439.14876380746,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 30,
           "boss": "abyss",
-          "seconds": 3.22,
+          "seconds": 5.4,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 1359595.0308570038,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 30,
           "boss": "abyss",
-          "seconds": 3.13,
+          "seconds": 6.03,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 1359595.0308570038,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 35,
           "boss": "machine",
-          "seconds": 2.47,
+          "seconds": 4.7,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 2251801.7114640805,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 35,
           "boss": "machine",
-          "seconds": 2.67,
+          "seconds": 5.12,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 2251801.7114640805,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 40,
           "boss": "void",
-          "seconds": 2.97,
+          "seconds": 6.12,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 7407229.707990618,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 40,
           "boss": "void",
-          "seconds": 4.78,
+          "seconds": 6.63,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 7407229.707990618,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 45,
           "boss": "lord",
-          "seconds": 2.1,
+          "seconds": 3.35,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 45,
           "boss": "lord",
-          "seconds": 2.33,
+          "seconds": 3.9,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 45,
           "boss": "lord",
-          "seconds": 2.43,
+          "seconds": 4,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 50,
           "boss": "abyss",
-          "seconds": 2.42,
+          "seconds": 4.72,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 50,
           "boss": "abyss",
-          "seconds": 2.58,
+          "seconds": 5.38,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 50,
           "boss": "abyss",
-          "seconds": 2.73,
+          "seconds": 5.58,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 55,
           "boss": "machine",
-          "seconds": 2.4,
+          "seconds": 7.25,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 55,
           "boss": "machine",
-          "seconds": 2.58,
+          "seconds": 8.12,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 55,
           "boss": "machine",
-          "seconds": 2.77,
+          "seconds": 8.55,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 60,
           "boss": "final",
-          "seconds": 3.6,
+          "seconds": 30.58,
           "phases": [
             0,
             1,
             2,
             3
           ],
-          "expectedPhases": 4
+          "expectedPhases": 4,
+          "hp": 702618514.5909923,
+          "casts": 1,
+          "interrupts": 2,
+          "pulses": 6
         }
-      ]
+      ],
+      "keyWaves": [
+        {
+          "wave": 1,
+          "seconds": 34.02,
+          "gold": 62,
+          "income": 14,
+          "buildings": 4,
+          "meanLevel": 1.25,
+          "kills": 0,
+          "leaks": 0,
+          "damage": 0,
+          "bedHp": 420,
+          "tech": 0,
+          "dps": 58
+        },
+        {
+          "wave": 5,
+          "seconds": 171.13,
+          "gold": 63,
+          "income": 24,
+          "buildings": 12,
+          "meanLevel": 2.33,
+          "kills": 44,
+          "leaks": 0,
+          "damage": 3698,
+          "bedHp": 420,
+          "tech": 9,
+          "dps": 518
+        },
+        {
+          "wave": 10,
+          "seconds": 358.98,
+          "gold": 421,
+          "income": 785,
+          "buildings": 38,
+          "meanLevel": 4.32,
+          "kills": 137,
+          "leaks": 0,
+          "damage": 28283,
+          "bedHp": 705,
+          "tech": 19,
+          "dps": 4519
+        },
+        {
+          "wave": 20,
+          "seconds": 801.43,
+          "gold": 15101,
+          "income": 2826,
+          "buildings": 38,
+          "meanLevel": 8.16,
+          "kills": 531,
+          "leaks": 0,
+          "damage": 343320,
+          "bedHp": 761,
+          "tech": 44,
+          "dps": 56316
+        },
+        {
+          "wave": 30,
+          "seconds": 1260.3,
+          "gold": 52575,
+          "income": 3425,
+          "buildings": 38,
+          "meanLevel": 9.58,
+          "kills": 1198,
+          "leaks": 0,
+          "damage": 2070821,
+          "bedHp": 1140,
+          "tech": 79,
+          "dps": 413326
+        },
+        {
+          "wave": 40,
+          "seconds": 1694.92,
+          "gold": 65640,
+          "income": 6754,
+          "buildings": 38,
+          "meanLevel": 10.34,
+          "kills": 2135,
+          "leaks": 0,
+          "damage": 13986425,
+          "bedHp": 2017,
+          "tech": 129,
+          "dps": 1720145
+        },
+        {
+          "wave": 50,
+          "seconds": 2119.95,
+          "gold": 73459,
+          "income": 22214,
+          "buildings": 38,
+          "meanLevel": 11.08,
+          "kills": 3397,
+          "leaks": 0,
+          "damage": 106635417,
+          "bedHp": 2773,
+          "tech": 172,
+          "dps": 10815874
+        },
+        {
+          "wave": 60,
+          "seconds": 2552.78,
+          "gold": 216070,
+          "income": 13162,
+          "buildings": 38,
+          "meanLevel": 11.74,
+          "kills": 4699,
+          "leaks": 0,
+          "damage": 527599631,
+          "bedHp": 6489,
+          "tech": 184,
+          "dps": 31736882
+        }
+      ],
+      "errors": [],
+      "admin": false,
+      "prizes": {},
+      "videos": 0,
+      "endingIds": []
     },
     {
       "profile": "damage",
       "difficulty": "normal",
       "seed": 20261106,
       "won": true,
+      "stop": "win",
       "wave": 60,
-      "seconds": 2546.92,
-      "kills": 4558,
-      "damage": 47876515,
+      "seconds": 2622.13,
       "leaks": 0,
+      "bedHp": 7739.080173138601,
+      "damage": 1225166214,
       "actions": {
         "build": 38,
-        "upgrade": 376,
+        "upgrade": 392,
         "branch": 38,
         "tech": 184,
         "rune": 198,
-        "skills": 40
+        "skills": 45
       },
-      "videos": 0,
-      "endingIds": [],
-      "errors": [],
-      "samples": [
-        {
-          "wave": 10,
-          "seconds": 374.93,
-          "gold": 199,
-          "income": 50,
-          "buildings": 38,
-          "meanLevel": 2.24,
-          "kills": 149,
-          "leaks": 0,
-          "damage": 31772,
-          "bedHp": 610,
-          "tech": 19,
-          "dps": 2461
-        },
-        {
-          "wave": 20,
-          "seconds": 827.58,
-          "gold": 1431,
-          "income": 272,
-          "buildings": 38,
-          "meanLevel": 4.58,
-          "kills": 533,
-          "leaks": 0,
-          "damage": 333083,
-          "bedHp": 864,
-          "tech": 44,
-          "dps": 9967
-        },
-        {
-          "wave": 30,
-          "seconds": 1287.95,
-          "gold": 2154,
-          "income": 671,
-          "buildings": 38,
-          "meanLevel": 6.18,
-          "kills": 1216,
-          "leaks": 0,
-          "damage": 1571228,
-          "bedHp": 1447,
-          "tech": 79,
-          "dps": 100272
-        },
-        {
-          "wave": 40,
-          "seconds": 1764.42,
-          "gold": 4371,
-          "income": 2787,
-          "buildings": 38,
-          "meanLevel": 8.47,
-          "kills": 2333,
-          "leaks": 0,
-          "damage": 7553123,
-          "bedHp": 2405,
-          "tech": 129,
-          "dps": 453050
-        },
-        {
-          "wave": 50,
-          "seconds": 2129.83,
-          "gold": 11473,
-          "income": 6771,
-          "buildings": 38,
-          "meanLevel": 9.71,
-          "kills": 3316,
-          "leaks": 0,
-          "damage": 22441413,
-          "bedHp": 3307,
-          "tech": 172,
-          "dps": 2303055
-        },
-        {
-          "wave": 55,
-          "seconds": 2332.77,
-          "gold": 30429,
-          "income": 8057,
-          "buildings": 38,
-          "meanLevel": 10.37,
-          "kills": 3922,
-          "leaks": 0,
-          "damage": 32654264,
-          "bedHp": 5159,
-          "tech": 184,
-          "dps": 3630988
-        },
-        {
-          "wave": 60,
-          "seconds": 2520.5,
-          "gold": 94535,
-          "income": 8057,
-          "buildings": 38,
-          "meanLevel": 10.84,
-          "kills": 4459,
-          "leaks": 0,
-          "damage": 44406581,
-          "bedHp": 7739,
-          "tech": 184,
-          "dps": 5031097
-        }
-      ],
+      "lotteryRolls": 0,
+      "final": {
+        "wave": 60,
+        "boss": "final",
+        "seconds": 25.67,
+        "phases": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "expectedPhases": 4,
+        "hp": 702618514.5909923,
+        "casts": 0,
+        "interrupts": 4,
+        "pulses": 1
+      },
       "bosses": [
         {
           "wave": 5,
           "boss": "lord",
-          "seconds": 11.38,
+          "seconds": 10.7,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 3420,
+          "casts": 0,
+          "interrupts": 3,
+          "pulses": 0
         },
         {
           "wave": 10,
           "boss": "abyss",
-          "seconds": 9.48,
+          "seconds": 10.08,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 14280,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 15,
           "boss": "machine",
-          "seconds": 14.02,
+          "seconds": 9.18,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 55101.12957678496,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 20,
           "boss": "void",
-          "seconds": 5.52,
+          "seconds": 7.85,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 138540.46603178,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
         },
         {
           "wave": 25,
           "boss": "lord",
-          "seconds": 3.48,
+          "seconds": 4.07,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 130935.44669647486,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 25,
           "boss": "lord",
-          "seconds": 3.42,
+          "seconds": 4.8,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 130935.44669647486,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 30,
           "boss": "abyss",
-          "seconds": 3.1,
+          "seconds": 6.13,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 1359595.0308570038,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 30,
           "boss": "abyss",
-          "seconds": 3.38,
+          "seconds": 6.2,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 1359595.0308570038,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 35,
           "boss": "machine",
-          "seconds": 2.48,
+          "seconds": 5.02,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 2251801.7114640805,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 35,
           "boss": "machine",
-          "seconds": 2.72,
+          "seconds": 5.12,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 2251801.7114640805,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 40,
           "boss": "void",
-          "seconds": 3.1,
+          "seconds": 7.42,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 7407229.707990618,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 40,
           "boss": "void",
-          "seconds": 4.78,
+          "seconds": 7.83,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 7407229.707990618,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 45,
           "boss": "lord",
-          "seconds": 2.1,
+          "seconds": 3.63,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 45,
           "boss": "lord",
-          "seconds": 2.28,
+          "seconds": 3.73,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 45,
           "boss": "lord",
-          "seconds": 2.47,
+          "seconds": 4.03,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 50,
           "boss": "abyss",
-          "seconds": 2.43,
+          "seconds": 5.35,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 50,
           "boss": "abyss",
-          "seconds": 2.58,
+          "seconds": 5.43,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 50,
           "boss": "abyss",
-          "seconds": 2.75,
+          "seconds": 6.05,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 55,
           "boss": "machine",
-          "seconds": 2.42,
+          "seconds": 5.95,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 55,
           "boss": "machine",
-          "seconds": 2.6,
+          "seconds": 6.02,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 55,
           "boss": "machine",
-          "seconds": 2.83,
+          "seconds": 6.65,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 60,
           "boss": "final",
-          "seconds": 3.6,
+          "seconds": 25.67,
           "phases": [
             0,
             1,
             2,
             3
           ],
-          "expectedPhases": 4
+          "expectedPhases": 4,
+          "hp": 702618514.5909923,
+          "casts": 0,
+          "interrupts": 4,
+          "pulses": 1
         }
-      ]
+      ],
+      "keyWaves": [
+        {
+          "wave": 1,
+          "seconds": 34.02,
+          "gold": 66,
+          "income": 8,
+          "buildings": 3,
+          "meanLevel": 1,
+          "kills": 0,
+          "leaks": 0,
+          "damage": 0,
+          "bedHp": 420,
+          "tech": 0,
+          "dps": 58
+        },
+        {
+          "wave": 5,
+          "seconds": 174.88,
+          "gold": 117,
+          "income": 10,
+          "buildings": 8,
+          "meanLevel": 2.5,
+          "kills": 44,
+          "leaks": 0,
+          "damage": 3757,
+          "bedHp": 420,
+          "tech": 9,
+          "dps": 245
+        },
+        {
+          "wave": 10,
+          "seconds": 384.52,
+          "gold": 125,
+          "income": 50,
+          "buildings": 38,
+          "meanLevel": 2.11,
+          "kills": 157,
+          "leaks": 0,
+          "damage": 30353,
+          "bedHp": 610,
+          "tech": 19,
+          "dps": 2480
+        },
+        {
+          "wave": 20,
+          "seconds": 838.38,
+          "gold": 954,
+          "income": 272,
+          "buildings": 38,
+          "meanLevel": 4.87,
+          "kills": 565,
+          "leaks": 0,
+          "damage": 395085,
+          "bedHp": 864,
+          "tech": 44,
+          "dps": 16065
+        },
+        {
+          "wave": 30,
+          "seconds": 1323.12,
+          "gold": 5193,
+          "income": 671,
+          "buildings": 38,
+          "meanLevel": 6.37,
+          "kills": 1298,
+          "leaks": 0,
+          "damage": 2108985,
+          "bedHp": 1447,
+          "tech": 79,
+          "dps": 257901
+        },
+        {
+          "wave": 40,
+          "seconds": 1778.18,
+          "gold": 3596,
+          "income": 2787,
+          "buildings": 38,
+          "meanLevel": 8.66,
+          "kills": 2346,
+          "leaks": 0,
+          "damage": 14220991,
+          "bedHp": 2405,
+          "tech": 129,
+          "dps": 1441523
+        },
+        {
+          "wave": 50,
+          "seconds": 2169.75,
+          "gold": 19019,
+          "income": 20313,
+          "buildings": 38,
+          "meanLevel": 10.26,
+          "kills": 3482,
+          "leaks": 0,
+          "damage": 102402322,
+          "bedHp": 3307,
+          "tech": 172,
+          "dps": 10276040
+        },
+        {
+          "wave": 60,
+          "seconds": 2562.37,
+          "gold": 1706,
+          "income": 8057,
+          "buildings": 38,
+          "meanLevel": 11.24,
+          "kills": 4585,
+          "leaks": 0,
+          "damage": 519660342,
+          "bedHp": 7739,
+          "tech": 184,
+          "dps": 32102448
+        }
+      ],
+      "errors": [],
+      "admin": false,
+      "prizes": {},
+      "videos": 0,
+      "endingIds": []
     },
     {
       "profile": "balanced",
       "difficulty": "hard",
       "seed": 20261106,
       "won": true,
+      "stop": "win",
       "wave": 60,
-      "seconds": 2635.22,
-      "kills": 5578,
-      "damage": 104835313,
+      "seconds": 2626.92,
       "leaks": 0,
+      "bedHp": 6488.897650349401,
+      "damage": 2162831103,
       "actions": {
-        "build": 39,
-        "upgrade": 397,
-        "branch": 39,
+        "build": 38,
+        "upgrade": 392,
+        "branch": 38,
         "tech": 184,
-        "rune": 191,
-        "skills": 39
+        "rune": 186,
+        "skills": 53
       },
-      "videos": 0,
-      "endingIds": [],
-      "errors": [],
-      "samples": [
-        {
-          "wave": 10,
-          "seconds": 378.85,
-          "gold": 924,
-          "income": 624,
-          "buildings": 38,
-          "meanLevel": 4.11,
-          "kills": 176,
-          "leaks": 0,
-          "damage": 63231,
-          "bedHp": 610,
-          "tech": 19,
-          "dps": 3792
-        },
-        {
-          "wave": 20,
-          "seconds": 819.1,
-          "gold": 11099,
-          "income": 1259,
-          "buildings": 38,
-          "meanLevel": 7.34,
-          "kills": 618,
-          "leaks": 0,
-          "damage": 667875,
-          "bedHp": 761,
-          "tech": 44,
-          "dps": 35291
-        },
-        {
-          "wave": 30,
-          "seconds": 1285.42,
-          "gold": 20313,
-          "income": 1988,
-          "buildings": 38,
-          "meanLevel": 8.66,
-          "kills": 1392,
-          "leaks": 0,
-          "damage": 3335996,
-          "bedHp": 1140,
-          "tech": 79,
-          "dps": 166826
-        },
-        {
-          "wave": 40,
-          "seconds": 1771.13,
-          "gold": 5622,
-          "income": 4025,
-          "buildings": 38,
-          "meanLevel": 9.71,
-          "kills": 2678,
-          "leaks": 0,
-          "damage": 15215651,
-          "bedHp": 2017,
-          "tech": 129,
-          "dps": 566502
-        },
-        {
-          "wave": 50,
-          "seconds": 2169.45,
-          "gold": 84011,
-          "income": 6773,
-          "buildings": 38,
-          "meanLevel": 10.45,
-          "kills": 3985,
-          "leaks": 0,
-          "damage": 49780161,
-          "bedHp": 2773,
-          "tech": 172,
-          "dps": 2631917
-        },
-        {
-          "wave": 55,
-          "seconds": 2373.55,
-          "gold": 50428,
-          "income": 8029,
-          "buildings": 38,
-          "meanLevel": 10.76,
-          "kills": 4639,
-          "leaks": 0,
-          "damage": 68558580,
-          "bedHp": 4326,
-          "tech": 184,
-          "dps": 3884060
-        },
-        {
-          "wave": 60,
-          "seconds": 2605.72,
-          "gold": 131596,
-          "income": 16059,
-          "buildings": 38,
-          "meanLevel": 11.13,
-          "kills": 5450,
-          "leaks": 0,
-          "damage": 97865768,
-          "bedHp": 6489,
-          "tech": 184,
-          "dps": 5207196
-        }
-      ],
+      "lotteryRolls": 0,
+      "final": {
+        "wave": 60,
+        "boss": "final",
+        "seconds": 54.1,
+        "phases": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "expectedPhases": 4,
+        "hp": 1229582400.5342367,
+        "casts": 1,
+        "interrupts": 6,
+        "pulses": 9
+      },
       "bosses": [
         {
           "wave": 5,
           "boss": "lord",
-          "seconds": 18.57,
+          "seconds": 14.97,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 5985,
+          "casts": 1,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 10,
           "boss": "abyss",
-          "seconds": 9.42,
+          "seconds": 9.03,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 16243.5,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 15,
           "boss": "machine",
-          "seconds": 5.03,
+          "seconds": 5.05,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 96426.97675937369,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 20,
+          "boss": "void",
+          "seconds": 5.77,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 242445.81555561497,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 4.58,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 352518.51033666305,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 5.43,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 352518.51033666305,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 8.5,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 2379291.3039997565,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 8.32,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 2379291.3039997565,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 6.95,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 5516914.193086998,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 8.02,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 5516914.193086998,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 8.28,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 12962651.988983583,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 11.57,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 12962651.988983583,
+          "casts": 0,
+          "interrupts": 3,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 5,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 33039455.813929223,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 5.07,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 33039455.813929223,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 5.52,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 33039455.813929223,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 7.4,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 57224053.79930092,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 8.02,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 57224053.79930092,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 8.47,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 57224053.79930092,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 15.85,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 176309859.37241092,
+          "casts": 1,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 19.3,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 176309859.37241092,
+          "casts": 1,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 19.05,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 176309859.37241092,
+          "casts": 1,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 60,
+          "boss": "final",
+          "seconds": 54.1,
+          "phases": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "expectedPhases": 4,
+          "hp": 1229582400.5342367,
+          "casts": 1,
+          "interrupts": 6,
+          "pulses": 9
+        }
+      ],
+      "keyWaves": [
+        {
+          "wave": 1,
+          "seconds": 28.92,
+          "gold": 113,
+          "income": 12,
+          "buildings": 2,
+          "meanLevel": 1.5,
+          "kills": 0,
+          "leaks": 0,
+          "damage": 0,
+          "bedHp": 420,
+          "tech": 0,
+          "dps": 19
+        },
+        {
+          "wave": 5,
+          "seconds": 172.07,
+          "gold": 81,
+          "income": 21,
+          "buildings": 12,
+          "meanLevel": 2.25,
+          "kills": 50,
+          "leaks": 0,
+          "damage": 7429,
+          "bedHp": 420,
+          "tech": 9,
+          "dps": 506
+        },
+        {
+          "wave": 10,
+          "seconds": 366.95,
+          "gold": 363,
+          "income": 148,
+          "buildings": 38,
+          "meanLevel": 2.66,
+          "kills": 159,
+          "leaks": 0,
+          "damage": 51138,
+          "bedHp": 515,
+          "tech": 19,
+          "dps": 2820
+        },
+        {
+          "wave": 20,
+          "seconds": 826.87,
+          "gold": 6691,
+          "income": 1259,
+          "buildings": 38,
+          "meanLevel": 7.21,
+          "kills": 622,
+          "leaks": 0,
+          "damage": 749899,
+          "bedHp": 761,
+          "tech": 44,
+          "dps": 50015
+        },
+        {
+          "wave": 30,
+          "seconds": 1272.75,
+          "gold": 12233,
+          "income": 1988,
+          "buildings": 38,
+          "meanLevel": 8.58,
+          "kills": 1362,
+          "leaks": 0,
+          "damage": 4414667,
+          "bedHp": 1140,
+          "tech": 79,
+          "dps": 351756
+        },
+        {
+          "wave": 40,
+          "seconds": 1725.12,
+          "gold": 38007,
+          "income": 4025,
+          "buildings": 38,
+          "meanLevel": 9.66,
+          "kills": 2480,
+          "leaks": 0,
+          "damage": 31469882,
+          "bedHp": 2017,
+          "tech": 129,
+          "dps": 1463202
+        },
+        {
+          "wave": 50,
+          "seconds": 2135.43,
+          "gold": 70291,
+          "income": 6773,
+          "buildings": 38,
+          "meanLevel": 10.68,
+          "kills": 3779,
+          "leaks": 0,
+          "damage": 189526937,
+          "bedHp": 2773,
+          "tech": 172,
+          "dps": 9254831
+        },
+        {
+          "wave": 60,
+          "seconds": 2546.52,
+          "gold": 90499,
+          "income": 8029,
+          "buildings": 38,
+          "meanLevel": 11.24,
+          "kills": 5025,
+          "leaks": 0,
+          "damage": 927280905,
+          "bedHp": 6489,
+          "tech": 184,
+          "dps": 27221735
+        }
+      ],
+      "errors": [],
+      "admin": false,
+      "prizes": {},
+      "videos": 0,
+      "endingIds": []
+    },
+    {
+      "profile": "balanced",
+      "difficulty": "hell",
+      "seed": 20261106,
+      "won": true,
+      "stop": "win",
+      "wave": 60,
+      "seconds": 2814.02,
+      "leaks": 0,
+      "bedHp": 6488.897650349401,
+      "damage": 3603756111,
+      "actions": {
+        "build": 38,
+        "upgrade": 407,
+        "branch": 38,
+        "tech": 184,
+        "rune": 186,
+        "skills": 58
+      },
+      "lotteryRolls": 0,
+      "final": {
+        "wave": 60,
+        "boss": "final",
+        "seconds": 87.43,
+        "phases": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "expectedPhases": 4,
+        "hp": 2037593692.3138776,
+        "casts": 3,
+        "interrupts": 10,
+        "pulses": 15
+      },
+      "bosses": [
+        {
+          "wave": 5,
+          "boss": "lord",
+          "seconds": 21.67,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 9918,
+          "casts": 2,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 10,
+          "boss": "abyss",
+          "seconds": 24.03,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 41412,
+          "casts": 0,
+          "interrupts": 5,
+          "pulses": 0
+        },
+        {
+          "wave": 15,
+          "boss": "machine",
+          "seconds": 5.75,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 103865.62925223964,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 20,
+          "boss": "void",
+          "seconds": 6.53,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 401767.3514921619,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 5.17,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 584173.5314150417,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 5.87,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 584173.5314150417,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 10.15,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 3942825.5894853105,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 11.53,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 3942825.5894853105,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 7.68,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 6530224.963245833,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 8.57,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 6530224.963245833,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 14.65,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 21480966.15317279,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 17.15,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 21480966.15317279,
+          "casts": 1,
+          "interrupts": 3,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 6.6,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 54751098.20593984,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 7.13,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 54751098.20593984,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 7.6,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 54751098.20593984,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 12.97,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 94828432.01027009,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 13.72,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 94828432.01027009,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 15.48,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 94828432.01027009,
+          "casts": 1,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 28.75,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 292170624.1028524,
+          "casts": 2,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 35.62,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 292170624.1028524,
+          "casts": 2,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 36.1,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 292170624.1028524,
+          "casts": 2,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 60,
+          "boss": "final",
+          "seconds": 87.43,
+          "phases": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "expectedPhases": 4,
+          "hp": 2037593692.3138776,
+          "casts": 3,
+          "interrupts": 10,
+          "pulses": 15
+        }
+      ],
+      "keyWaves": [
+        {
+          "wave": 1,
+          "seconds": 23.82,
+          "gold": 81,
+          "income": 10,
+          "buildings": 1,
+          "meanLevel": 2,
+          "kills": 0,
+          "leaks": 0,
+          "damage": 0,
+          "bedHp": 420,
+          "tech": 0,
+          "dps": 0
+        },
+        {
+          "wave": 5,
+          "seconds": 171.28,
+          "gold": 168,
+          "income": 27,
+          "buildings": 12,
+          "meanLevel": 2.33,
+          "kills": 60,
+          "leaks": 0,
+          "damage": 14444,
+          "bedHp": 420,
+          "tech": 9,
+          "dps": 500
+        },
+        {
+          "wave": 10,
+          "seconds": 384.78,
+          "gold": 270,
+          "income": 139,
+          "buildings": 38,
+          "meanLevel": 3,
+          "kills": 211,
+          "leaks": 0,
+          "damage": 111154,
+          "bedHp": 610,
+          "tech": 19,
+          "dps": 3048
+        },
+        {
+          "wave": 20,
+          "seconds": 865.72,
+          "gold": 10523,
+          "income": 1351,
+          "buildings": 38,
+          "meanLevel": 7.63,
+          "kills": 805,
+          "leaks": 0,
+          "damage": 1332337,
+          "bedHp": 761,
+          "tech": 44,
+          "dps": 53640
+        },
+        {
+          "wave": 30,
+          "seconds": 1355.17,
+          "gold": 10784,
+          "income": 7192,
+          "buildings": 38,
+          "meanLevel": 9.18,
+          "kills": 1712,
+          "leaks": 0,
+          "damage": 7580430,
+          "bedHp": 1140,
+          "tech": 79,
+          "dps": 371300
+        },
+        {
+          "wave": 40,
+          "seconds": 1805.97,
+          "gold": 18031,
+          "income": 4728,
+          "buildings": 38,
+          "meanLevel": 10.16,
+          "kills": 2871,
+          "leaks": 0,
+          "damage": 46441608,
+          "bedHp": 2017,
+          "tech": 129,
+          "dps": 1488050
+        },
+        {
+          "wave": 50,
+          "seconds": 2228.95,
+          "gold": 66293,
+          "income": 7775,
+          "buildings": 38,
+          "meanLevel": 10.97,
+          "kills": 4313,
+          "leaks": 0,
+          "damage": 319440408,
+          "bedHp": 2773,
+          "tech": 172,
+          "dps": 9653617
+        },
+        {
+          "wave": 60,
+          "seconds": 2695.7,
+          "gold": 64127,
+          "income": 9214,
+          "buildings": 38,
+          "meanLevel": 11.58,
+          "kills": 5874,
+          "leaks": 0,
+          "damage": 1554713888,
+          "bedHp": 6489,
+          "tech": 184,
+          "dps": 28212831
+        }
+      ],
+      "errors": [],
+      "admin": false,
+      "prizes": {},
+      "videos": 0,
+      "endingIds": []
+    },
+    {
+      "profile": "relaxed",
+      "difficulty": "normal",
+      "seed": 20261106,
+      "won": true,
+      "stop": "win",
+      "wave": 60,
+      "seconds": 2561.95,
+      "leaks": 0,
+      "bedHp": 5863.806388954802,
+      "damage": 1225543152,
+      "actions": {
+        "build": 38,
+        "upgrade": 384,
+        "branch": 38,
+        "tech": 184,
+        "rune": 186,
+        "skills": 42
+      },
+      "lotteryRolls": 0,
+      "final": {
+        "wave": 60,
+        "boss": "final",
+        "seconds": 33.8,
+        "phases": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "expectedPhases": 4,
+        "hp": 702618514.5909923,
+        "casts": 1,
+        "interrupts": 5,
+        "pulses": 8
+      },
+      "bosses": [
+        {
+          "wave": 5,
+          "boss": "lord",
+          "seconds": 7.25,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 3420,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 10,
+          "boss": "abyss",
+          "seconds": 7.02,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 14280,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 15,
+          "boss": "machine",
+          "seconds": 5.9,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 55101.12957678496,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 20,
+          "boss": "void",
+          "seconds": 5.42,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 138540.46603178,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 4.42,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 201439.14876380746,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 4,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 201439.14876380746,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 5.83,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 1359595.0308570038,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 6.72,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 1359595.0308570038,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 5.62,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 2251801.7114640805,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 5.85,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 2251801.7114640805,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 6.08,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 7407229.707990618,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 6.4,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 7407229.707990618,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 3.95,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 4.57,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 4.2,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 6.52,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 6.72,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 6.5,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 7.32,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 8.5,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 8.4,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 60,
+          "boss": "final",
+          "seconds": 33.8,
+          "phases": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "expectedPhases": 4,
+          "hp": 702618514.5909923,
+          "casts": 1,
+          "interrupts": 5,
+          "pulses": 8
+        }
+      ],
+      "keyWaves": [
+        {
+          "wave": 1,
+          "seconds": 34.02,
+          "gold": 86,
+          "income": 11,
+          "buildings": 4,
+          "meanLevel": 1,
+          "kills": 0,
+          "leaks": 0,
+          "damage": 0,
+          "bedHp": 420,
+          "tech": 0,
+          "dps": 58
+        },
+        {
+          "wave": 5,
+          "seconds": 170.88,
+          "gold": 110,
+          "income": 63,
+          "buildings": 15,
+          "meanLevel": 2,
+          "kills": 48,
+          "leaks": 0,
+          "damage": 3684,
+          "bedHp": 420,
+          "tech": 9,
+          "dps": 467
+        },
+        {
+          "wave": 10,
+          "seconds": 371.73,
+          "gold": 6502,
+          "income": 467,
+          "buildings": 38,
+          "meanLevel": 4.08,
+          "kills": 162,
+          "leaks": 0,
+          "damage": 33109,
+          "bedHp": 610,
+          "tech": 19,
+          "dps": 4430
+        },
+        {
+          "wave": 20,
+          "seconds": 813.77,
+          "gold": 116017,
+          "income": 965,
+          "buildings": 38,
+          "meanLevel": 6.95,
+          "kills": 577,
+          "leaks": 0,
+          "damage": 378306,
+          "bedHp": 659,
+          "tech": 44,
+          "dps": 43693
+        },
+        {
+          "wave": 30,
+          "seconds": 1268.37,
+          "gold": 8297,
+          "income": 5137,
+          "buildings": 38,
+          "meanLevel": 8.47,
+          "kills": 1218,
+          "leaks": 0,
+          "damage": 1924683,
+          "bedHp": 986,
+          "tech": 79,
+          "dps": 352904
+        },
+        {
+          "wave": 40,
+          "seconds": 1710.72,
+          "gold": 12838,
+          "income": 3377,
+          "buildings": 38,
+          "meanLevel": 9.71,
+          "kills": 2216,
+          "leaks": 0,
+          "damage": 14027711,
+          "bedHp": 1822,
+          "tech": 129,
+          "dps": 1624798
+        },
+        {
+          "wave": 50,
+          "seconds": 2097.08,
+          "gold": 73614,
+          "income": 5553,
+          "buildings": 38,
+          "meanLevel": 10.34,
+          "kills": 3341,
+          "leaks": 0,
+          "damage": 102491760,
+          "bedHp": 2506,
+          "tech": 172,
+          "dps": 9074188
+        },
+        {
+          "wave": 60,
+          "seconds": 2505.33,
+          "gold": 44974,
+          "income": 19744,
+          "buildings": 38,
+          "meanLevel": 10.92,
+          "kills": 4532,
+          "leaks": 0,
+          "damage": 520580586,
+          "bedHp": 5864,
+          "tech": 184,
+          "dps": 26529859
+        }
+      ],
+      "errors": [],
+      "admin": false,
+      "prizes": {},
+      "videos": 0,
+      "endingIds": []
+    },
+    {
+      "profile": "relaxed",
+      "difficulty": "hard",
+      "seed": 20261106,
+      "won": true,
+      "stop": "win",
+      "wave": 60,
+      "seconds": 2733.8,
+      "leaks": 0,
+      "bedHp": 5863.806388954802,
+      "damage": 2168297380,
+      "actions": {
+        "build": 38,
+        "upgrade": 378,
+        "branch": 38,
+        "tech": 184,
+        "rune": 186,
+        "skills": 54
+      },
+      "lotteryRolls": 0,
+      "final": {
+        "wave": 60,
+        "boss": "final",
+        "seconds": 58.17,
+        "phases": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "expectedPhases": 4,
+        "hp": 1229582400.5342367,
+        "casts": 1,
+        "interrupts": 8,
+        "pulses": 11
+      },
+      "bosses": [
+        {
+          "wave": 5,
+          "boss": "lord",
+          "seconds": 14.75,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 5985,
+          "casts": 1,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 10,
+          "boss": "abyss",
+          "seconds": 10.48,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 24990,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 15,
+          "boss": "machine",
+          "seconds": 7.67,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 96426.97675937369,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 20,
+          "boss": "void",
+          "seconds": 6.63,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 242445.81555561497,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 5.22,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 352518.51033666305,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 5,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 352518.51033666305,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 8.72,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 2379291.3039997565,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 8.58,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 2379291.3039997565,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 6.48,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 3940652.995062141,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 7,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 3940652.995062141,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 9.82,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 12962651.988983583,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 9.97,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 12962651.988983583,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 6.57,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 33039455.813929223,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 6.83,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 33039455.813929223,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 7.2,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 33039455.813929223,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 9.75,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 57224053.79930092,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 12.03,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 57224053.79930092,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 12.25,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 57224053.79930092,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 19.22,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 176309859.37241092,
+          "casts": 2,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 23.12,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 176309859.37241092,
+          "casts": 2,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 23.08,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 176309859.37241092,
+          "casts": 2,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 60,
+          "boss": "final",
+          "seconds": 58.17,
+          "phases": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "expectedPhases": 4,
+          "hp": 1229582400.5342367,
+          "casts": 1,
+          "interrupts": 8,
+          "pulses": 11
+        }
+      ],
+      "keyWaves": [
+        {
+          "wave": 1,
+          "seconds": 28.92,
+          "gold": 68,
+          "income": 9,
+          "buildings": 3,
+          "meanLevel": 1,
+          "kills": 0,
+          "leaks": 0,
+          "damage": 0,
+          "bedHp": 420,
+          "tech": 0,
+          "dps": 38
+        },
+        {
+          "wave": 5,
+          "seconds": 176.8,
+          "gold": 120,
+          "income": 33,
+          "buildings": 13,
+          "meanLevel": 2.23,
+          "kills": 61,
+          "leaks": 0,
+          "damage": 8893,
+          "bedHp": 420,
+          "tech": 9,
+          "dps": 508
+        },
+        {
+          "wave": 10,
+          "seconds": 381.8,
+          "gold": 31965,
+          "income": 397,
+          "buildings": 38,
+          "meanLevel": 3.87,
+          "kills": 182,
+          "leaks": 0,
+          "damage": 59222,
+          "bedHp": 610,
+          "tech": 19,
+          "dps": 4087
+        },
+        {
+          "wave": 20,
+          "seconds": 874.15,
+          "gold": 120490,
+          "income": 1201,
+          "buildings": 38,
+          "meanLevel": 6.97,
+          "kills": 711,
+          "leaks": 0,
+          "damage": 833743,
+          "bedHp": 659,
+          "tech": 44,
+          "dps": 48761
+        },
+        {
+          "wave": 30,
+          "seconds": 1333,
+          "gold": 9439,
+          "income": 1456,
+          "buildings": 38,
+          "meanLevel": 8.45,
+          "kills": 1447,
+          "leaks": 0,
+          "damage": 4203995,
+          "bedHp": 986,
+          "tech": 79,
+          "dps": 384526
+        },
+        {
+          "wave": 40,
+          "seconds": 1782.8,
+          "gold": 33154,
+          "income": 2870,
+          "buildings": 38,
+          "meanLevel": 9.29,
+          "kills": 2553,
+          "leaks": 0,
+          "damage": 26701645,
+          "bedHp": 1822,
+          "tech": 129,
+          "dps": 1541776
+        },
+        {
+          "wave": 50,
+          "seconds": 2212.05,
+          "gold": 12719,
+          "income": 4720,
+          "buildings": 38,
+          "meanLevel": 10.11,
+          "kills": 3979,
+          "leaks": 0,
+          "damage": 190981123,
+          "bedHp": 2506,
+          "tech": 172,
+          "dps": 8253129
+        },
+        {
+          "wave": 60,
+          "seconds": 2649.6,
+          "gold": 103926,
+          "income": 5594,
+          "buildings": 38,
+          "meanLevel": 10.82,
+          "kills": 5369,
+          "leaks": 0,
+          "damage": 933828190,
+          "bedHp": 5864,
+          "tech": 184,
+          "dps": 24719473
+        }
+      ],
+      "errors": [],
+      "admin": false,
+      "prizes": {},
+      "videos": 0,
+      "endingIds": []
+    },
+    {
+      "profile": "relaxed",
+      "difficulty": "hell",
+      "seed": 20261106,
+      "won": true,
+      "stop": "win",
+      "wave": 60,
+      "seconds": 2911.88,
+      "leaks": 0,
+      "bedHp": 5863.806388954802,
+      "damage": 4413760284,
+      "actions": {
+        "build": 40,
+        "upgrade": 386,
+        "branch": 38,
+        "tech": 184,
+        "rune": 186,
+        "skills": 62
+      },
+      "lotteryRolls": 0,
+      "final": {
+        "wave": 60,
+        "boss": "final",
+        "seconds": 113.17,
+        "phases": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "expectedPhases": 4,
+        "hp": 2852631169.2394285,
+        "casts": 2,
+        "interrupts": 16,
+        "pulses": 16
+      },
+      "bosses": [
+        {
+          "wave": 5,
+          "boss": "lord",
+          "seconds": 18.78,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 9918,
+          "casts": 1,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 10,
+          "boss": "abyss",
+          "seconds": 18.33,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 41412,
+          "casts": 2,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 15,
+          "boss": "machine",
+          "seconds": 8.4,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 159793.2757726764,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 20,
+          "boss": "void",
+          "seconds": 7.08,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 401767.3514921619,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 5.12,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 379712.79541977716,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 5.37,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 379712.79541977716,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 9.62,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 3942825.5894853105,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 11.47,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 3942825.5894853105,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 7.97,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 6530224.963245833,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 9.25,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 6530224.963245833,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 11.3,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 21480966.15317279,
+          "casts": 0,
+          "interrupts": 3,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 16.75,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 21480966.15317279,
+          "casts": 1,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 7.27,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 54751098.20593984,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 10.52,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 54751098.20593984,
+          "casts": 1,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 10.15,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 54751098.20593984,
+          "casts": 1,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 13.68,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 94828432.01027009,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 15.13,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 94828432.01027009,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 15.92,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 94828432.01027009,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 28.2,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 292170624.1028524,
+          "casts": 2,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 31.17,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 292170624.1028524,
+          "casts": 2,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 31.57,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 292170624.1028524,
+          "casts": 2,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 60,
+          "boss": "final",
+          "seconds": 113.17,
+          "phases": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "expectedPhases": 4,
+          "hp": 2852631169.2394285,
+          "casts": 2,
+          "interrupts": 16,
+          "pulses": 16
+        }
+      ],
+      "keyWaves": [
+        {
+          "wave": 1,
+          "seconds": 23.82,
+          "gold": 60,
+          "income": 8,
+          "buildings": 2,
+          "meanLevel": 1,
+          "kills": 0,
+          "leaks": 0,
+          "damage": 0,
+          "bedHp": 420,
+          "tech": 0,
+          "dps": 19
+        },
+        {
+          "wave": 5,
+          "seconds": 177.07,
+          "gold": 151,
+          "income": 44,
+          "buildings": 16,
+          "meanLevel": 2,
+          "kills": 67,
+          "leaks": 0,
+          "damage": 16151,
+          "bedHp": 515,
+          "tech": 9,
+          "dps": 524
+        },
+        {
+          "wave": 10,
+          "seconds": 377.27,
+          "gold": 20219,
+          "income": 514,
+          "buildings": 38,
+          "meanLevel": 3.89,
+          "kills": 196,
+          "leaks": 0,
+          "damage": 101402,
+          "bedHp": 610,
+          "tech": 19,
+          "dps": 4071
+        },
+        {
+          "wave": 20,
+          "seconds": 874.97,
+          "gold": 70894,
+          "income": 989,
+          "buildings": 38,
+          "meanLevel": 6.97,
+          "kills": 769,
+          "leaks": 0,
+          "damage": 1373585,
+          "bedHp": 659,
+          "tech": 44,
+          "dps": 52636
+        },
+        {
+          "wave": 30,
+          "seconds": 1353.22,
+          "gold": 5665,
+          "income": 1579,
+          "buildings": 38,
+          "meanLevel": 8.45,
+          "kills": 1655,
+          "leaks": 0,
+          "damage": 6810037,
+          "bedHp": 986,
+          "tech": 79,
+          "dps": 401054
+        },
+        {
+          "wave": 40,
+          "seconds": 1837.03,
+          "gold": 32188,
+          "income": 3071,
+          "buildings": 38,
+          "meanLevel": 9.5,
+          "kills": 3017,
+          "leaks": 0,
+          "damage": 46019478,
+          "bedHp": 1822,
+          "tech": 129,
+          "dps": 1647479
+        },
+        {
+          "wave": 50,
+          "seconds": 2316.02,
+          "gold": 51457,
+          "income": 4986,
+          "buildings": 38,
+          "meanLevel": 10.26,
+          "kills": 4716,
+          "leaks": 0,
+          "damage": 318328987,
+          "bedHp": 2506,
+          "tech": 172,
+          "dps": 10412785
+        },
+        {
+          "wave": 60,
+          "seconds": 2767.9,
+          "gold": 63993,
+          "income": 5907,
+          "buildings": 38,
+          "meanLevel": 10.84,
+          "kills": 6193,
+          "leaks": 0,
+          "damage": 1549361825,
+          "bedHp": 5864,
+          "tech": 184,
+          "dps": 31116121
+        }
+      ],
+      "errors": [],
+      "admin": false,
+      "prizes": {},
+      "videos": 0,
+      "endingIds": []
+    },
+    {
+      "profile": "no-control",
+      "difficulty": "hell",
+      "seed": 20261106,
+      "won": true,
+      "stop": "win",
+      "wave": 60,
+      "seconds": 2804.82,
+      "leaks": 1,
+      "bedHp": 6488.897650349401,
+      "damage": 3297124578,
+      "actions": {
+        "build": 42,
+        "upgrade": 419,
+        "branch": 39,
+        "tech": 184,
+        "rune": 192,
+        "skills": 54
+      },
+      "lotteryRolls": 0,
+      "final": {
+        "wave": 60,
+        "boss": "final",
+        "seconds": 90.4,
+        "phases": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "expectedPhases": 4,
+        "hp": 2037593692.3138776,
+        "casts": 7,
+        "interrupts": 0,
+        "pulses": 22
+      },
+      "bosses": [
+        {
+          "wave": 5,
+          "boss": "lord",
+          "seconds": 16.38,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 9918,
+          "casts": 2,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 10,
+          "boss": "abyss",
+          "seconds": 22.38,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 41412,
+          "casts": 3,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 15,
+          "boss": "machine",
+          "seconds": 6.93,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 159793.2757726764,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 20,
+          "boss": "void",
+          "seconds": 6.3,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 401767.3514921619,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 6.37,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 584173.5314150417,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 25,
+          "boss": "lord",
+          "seconds": 6.78,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 584173.5314150417,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 8.72,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 3942825.5894853105,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 30,
+          "boss": "abyss",
+          "seconds": 8.83,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 3942825.5894853105,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 7.48,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 6530224.963245833,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 35,
+          "boss": "machine",
+          "seconds": 8,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 6530224.963245833,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 19.95,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 21480966.15317279,
+          "casts": 3,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 40,
+          "boss": "void",
+          "seconds": 19.93,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 21480966.15317279,
+          "casts": 3,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 9.12,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 54751098.20593984,
+          "casts": 1,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 10.05,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 54751098.20593984,
+          "casts": 1,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 45,
+          "boss": "lord",
+          "seconds": 10.23,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 54751098.20593984,
+          "casts": 1,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 9.1,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 94828432.01027009,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 10.9,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 94828432.01027009,
+          "casts": 1,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 50,
+          "boss": "abyss",
+          "seconds": 11.82,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 94828432.01027009,
+          "casts": 1,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 12.4,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 189910905.66685405,
+          "casts": 1,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 17.42,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 189910905.66685405,
+          "casts": 3,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 55,
+          "boss": "machine",
+          "seconds": 17.17,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 189910905.66685405,
+          "casts": 3,
+          "interrupts": 0,
+          "pulses": 0
+        },
+        {
+          "wave": 60,
+          "boss": "final",
+          "seconds": 90.4,
+          "phases": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "expectedPhases": 4,
+          "hp": 2037593692.3138776,
+          "casts": 7,
+          "interrupts": 0,
+          "pulses": 22
+        }
+      ],
+      "keyWaves": [
+        {
+          "wave": 1,
+          "seconds": 23.82,
+          "gold": 81,
+          "income": 10,
+          "buildings": 1,
+          "meanLevel": 2,
+          "kills": 0,
+          "leaks": 0,
+          "damage": 0,
+          "bedHp": 420,
+          "tech": 0,
+          "dps": 0
+        },
+        {
+          "wave": 5,
+          "seconds": 167.23,
+          "gold": 96,
+          "income": 17,
+          "buildings": 12,
+          "meanLevel": 2.08,
+          "kills": 60,
+          "leaks": 0,
+          "damage": 13645,
+          "bedHp": 420,
+          "tech": 9,
+          "dps": 366
+        },
+        {
+          "wave": 10,
+          "seconds": 375.73,
+          "gold": 326,
+          "income": 96,
+          "buildings": 38,
+          "meanLevel": 2.34,
+          "kills": 198,
+          "leaks": 0,
+          "damage": 112019,
+          "bedHp": 515,
+          "tech": 19,
+          "dps": 2190
+        },
+        {
+          "wave": 20,
+          "seconds": 867.78,
+          "gold": 6582,
+          "income": 1351,
+          "buildings": 38,
+          "meanLevel": 7.34,
+          "kills": 795,
+          "leaks": 1,
+          "damage": 1388789,
+          "bedHp": 761,
+          "tech": 44,
+          "dps": 45712
+        },
+        {
+          "wave": 30,
+          "seconds": 1344.4,
+          "gold": 16997,
+          "income": 7192,
+          "buildings": 38,
+          "meanLevel": 9.05,
+          "kills": 1688,
+          "leaks": 1,
+          "damage": 7425746,
+          "bedHp": 1140,
+          "tech": 79,
+          "dps": 346384
+        },
+        {
+          "wave": 40,
+          "seconds": 1777.4,
+          "gold": 16688,
+          "income": 4728,
+          "buildings": 38,
+          "meanLevel": 10.08,
+          "kills": 2825,
+          "leaks": 1,
+          "damage": 45530845,
+          "bedHp": 2017,
+          "tech": 129,
+          "dps": 1435782
+        },
+        {
+          "wave": 50,
+          "seconds": 2224.98,
+          "gold": 31478,
+          "income": 7775,
+          "buildings": 38,
+          "meanLevel": 10.82,
+          "kills": 4348,
+          "leaks": 1,
+          "damage": 324830380,
+          "bedHp": 2773,
+          "tech": 172,
+          "dps": 8676928
+        },
+        {
+          "wave": 60,
+          "seconds": 2683.93,
+          "gold": 141166,
+          "income": 9214,
+          "buildings": 38,
+          "meanLevel": 11.39,
+          "kills": 5964,
+          "leaks": 1,
+          "damage": 1249667145,
+          "bedHp": 6489,
+          "tech": 184,
+          "dps": 25147896
+        }
+      ],
+      "errors": [],
+      "admin": false,
+      "prizes": {},
+      "videos": 0,
+      "endingIds": []
+    },
+    {
+      "profile": "no-runes",
+      "difficulty": "normal",
+      "seed": 20261106,
+      "won": true,
+      "stop": "win",
+      "wave": 60,
+      "seconds": 2640.32,
+      "leaks": 0,
+      "bedHp": 6488.897650349401,
+      "damage": 1222008519,
+      "actions": {
+        "build": 38,
+        "upgrade": 397,
+        "branch": 38,
+        "tech": 184,
+        "rune": 0,
+        "skills": 51
+      },
+      "lotteryRolls": 0,
+      "final": {
+        "wave": 60,
+        "boss": "final",
+        "seconds": 64.7,
+        "phases": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "expectedPhases": 4,
+        "hp": 702618514.5909923,
+        "casts": 1,
+        "interrupts": 7,
+        "pulses": 9
+      },
+      "bosses": [
+        {
+          "wave": 5,
+          "boss": "lord",
+          "seconds": 8.35,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 3420,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
+        },
+        {
+          "wave": 10,
+          "boss": "abyss",
+          "seconds": 6.93,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 14280,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
+        },
+        {
+          "wave": 15,
+          "boss": "machine",
+          "seconds": 4.3,
+          "phases": [
+            0,
+            1,
+            2
+          ],
+          "expectedPhases": 3,
+          "hp": 55101.12957678496,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 20,
@@ -1633,575 +4983,403 @@
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 138540.46603178,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 25,
           "boss": "lord",
-          "seconds": 2.78,
+          "seconds": 3.87,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 201439.14876380746,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 25,
           "boss": "lord",
-          "seconds": 3.57,
+          "seconds": 4.55,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 201439.14876380746,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 30,
           "boss": "abyss",
-          "seconds": 3.3,
+          "seconds": 7.6,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 1359595.0308570038,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 30,
           "boss": "abyss",
-          "seconds": 3.37,
+          "seconds": 7.23,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 1359595.0308570038,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 35,
           "boss": "machine",
-          "seconds": 2.48,
+          "seconds": 6.8,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 2251801.7114640805,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 35,
           "boss": "machine",
-          "seconds": 2.78,
+          "seconds": 6.75,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 2251801.7114640805,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 40,
           "boss": "void",
-          "seconds": 4.63,
+          "seconds": 11.83,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 7407229.707990618,
+          "casts": 0,
+          "interrupts": 3,
+          "pulses": 0
         },
         {
           "wave": 40,
           "boss": "void",
-          "seconds": 4.78,
+          "seconds": 13.55,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 7407229.707990618,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
         },
         {
           "wave": 45,
           "boss": "lord",
-          "seconds": 2.12,
+          "seconds": 6.15,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 45,
           "boss": "lord",
-          "seconds": 2.3,
+          "seconds": 6.23,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 45,
           "boss": "lord",
-          "seconds": 2.48,
+          "seconds": 6.75,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 18879689.036530983,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 50,
           "boss": "abyss",
-          "seconds": 2.4,
+          "seconds": 9.5,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 0,
+          "pulses": 0
         },
         {
           "wave": 50,
           "boss": "abyss",
-          "seconds": 2.6,
+          "seconds": 12.1,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 50,
           "boss": "abyss",
-          "seconds": 2.75,
+          "seconds": 13.07,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 32699459.313886236,
+          "casts": 0,
+          "interrupts": 2,
+          "pulses": 0
         },
         {
           "wave": 55,
           "boss": "machine",
-          "seconds": 2.42,
+          "seconds": 19.15,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 1,
+          "interrupts": 2,
+          "pulses": 0
         },
         {
           "wave": 55,
           "boss": "machine",
-          "seconds": 2.6,
+          "seconds": 23.42,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 2,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 55,
           "boss": "machine",
-          "seconds": 2.82,
+          "seconds": 24.03,
           "phases": [
             0,
             1,
             2
           ],
-          "expectedPhases": 3
+          "expectedPhases": 3,
+          "hp": 100748491.0699491,
+          "casts": 2,
+          "interrupts": 1,
+          "pulses": 0
         },
         {
           "wave": 60,
           "boss": "final",
-          "seconds": 3.6,
+          "seconds": 64.7,
           "phases": [
             0,
             1,
             2,
             3
           ],
-          "expectedPhases": 4
-        }
-      ]
-    },
-    {
-      "profile": "balanced",
-      "difficulty": "hell",
-      "seed": 20261106,
-      "won": true,
-      "wave": 60,
-      "seconds": 2720.85,
-      "kills": 6214,
-      "damage": 182361247,
-      "leaks": 0,
-      "actions": {
-        "build": 39,
-        "upgrade": 405,
-        "branch": 39,
-        "tech": 184,
-        "rune": 191,
-        "skills": 47
-      },
-      "videos": 0,
-      "endingIds": [],
-      "errors": [],
-      "samples": [
-        {
-          "wave": 10,
-          "seconds": 396.77,
-          "gold": 457,
-          "income": 139,
-          "buildings": 38,
-          "meanLevel": 3.16,
-          "kills": 206,
-          "leaks": 0,
-          "damage": 117799,
-          "bedHp": 610,
-          "tech": 19,
-          "dps": 2790
-        },
-        {
-          "wave": 20,
-          "seconds": 888,
-          "gold": 8095,
-          "income": 1351,
-          "buildings": 38,
-          "meanLevel": 7.42,
-          "kills": 772,
-          "leaks": 0,
-          "damage": 1277776,
-          "bedHp": 761,
-          "tech": 44,
-          "dps": 36043
-        },
-        {
-          "wave": 30,
-          "seconds": 1412.47,
-          "gold": 25595,
-          "income": 2397,
-          "buildings": 38,
-          "meanLevel": 8.92,
-          "kills": 1788,
-          "leaks": 0,
-          "damage": 6665987,
-          "bedHp": 1140,
-          "tech": 79,
-          "dps": 169548
-        },
-        {
-          "wave": 40,
-          "seconds": 1849.18,
-          "gold": 29108,
-          "income": 4728,
-          "buildings": 38,
-          "meanLevel": 9.87,
-          "kills": 3026,
-          "leaks": 0,
-          "damage": 25051112,
-          "bedHp": 2017,
-          "tech": 129,
-          "dps": 579993
-        },
-        {
-          "wave": 50,
-          "seconds": 2265.27,
-          "gold": 39593,
-          "income": 7775,
-          "buildings": 38,
-          "meanLevel": 10.61,
-          "kills": 4525,
-          "leaks": 0,
-          "damage": 89682010,
-          "bedHp": 2773,
-          "tech": 172,
-          "dps": 2602638
-        },
-        {
-          "wave": 55,
-          "seconds": 2472.33,
-          "gold": 109228,
-          "income": 9214,
-          "buildings": 38,
-          "meanLevel": 11.08,
-          "kills": 5290,
-          "leaks": 0,
-          "damage": 121350017,
-          "bedHp": 4326,
-          "tech": 184,
-          "dps": 3907909
-        },
-        {
-          "wave": 60,
-          "seconds": 2686.22,
-          "gold": 83411,
-          "income": 9214,
-          "buildings": 38,
-          "meanLevel": 11.37,
-          "kills": 6071,
-          "leaks": 0,
-          "damage": 173913247,
-          "bedHp": 6489,
-          "tech": 184,
-          "dps": 5201071
+          "expectedPhases": 4,
+          "hp": 702618514.5909923,
+          "casts": 1,
+          "interrupts": 7,
+          "pulses": 9
         }
       ],
-      "bosses": [
+      "keyWaves": [
+        {
+          "wave": 1,
+          "seconds": 34.02,
+          "gold": 62,
+          "income": 14,
+          "buildings": 4,
+          "meanLevel": 1.25,
+          "kills": 0,
+          "leaks": 0,
+          "damage": 0,
+          "bedHp": 420,
+          "tech": 0,
+          "dps": 58
+        },
         {
           "wave": 5,
-          "boss": "lord",
-          "seconds": 18.03,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
+          "seconds": 171.7,
+          "gold": 132,
+          "income": 24,
+          "buildings": 12,
+          "meanLevel": 2.25,
+          "kills": 44,
+          "leaks": 0,
+          "damage": 3843,
+          "bedHp": 420,
+          "tech": 9,
+          "dps": 500
         },
         {
           "wave": 10,
-          "boss": "abyss",
-          "seconds": 29.38,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 15,
-          "boss": "machine",
-          "seconds": 9.42,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
+          "seconds": 368.5,
+          "gold": 854,
+          "income": 734,
+          "buildings": 38,
+          "meanLevel": 3.61,
+          "kills": 147,
+          "leaks": 0,
+          "damage": 24529,
+          "bedHp": 610,
+          "tech": 19,
+          "dps": 3684
         },
         {
           "wave": 20,
-          "boss": "void",
-          "seconds": 5.32,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 25,
-          "boss": "lord",
-          "seconds": 3.18,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 25,
-          "boss": "lord",
-          "seconds": 3.2,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
+          "seconds": 845.12,
+          "gold": 9998,
+          "income": 1481,
+          "buildings": 38,
+          "meanLevel": 7.53,
+          "kills": 614,
+          "leaks": 0,
+          "damage": 404618,
+          "bedHp": 761,
+          "tech": 44,
+          "dps": 50622
         },
         {
           "wave": 30,
-          "boss": "abyss",
-          "seconds": 3.5,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 30,
-          "boss": "abyss",
-          "seconds": 3.53,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 35,
-          "boss": "machine",
-          "seconds": 2.6,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 35,
-          "boss": "machine",
-          "seconds": 2.73,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
+          "seconds": 1304.25,
+          "gold": 14560,
+          "income": 1796,
+          "buildings": 38,
+          "meanLevel": 8.68,
+          "kills": 1293,
+          "leaks": 0,
+          "damage": 2090135,
+          "bedHp": 1140,
+          "tech": 79,
+          "dps": 271986
         },
         {
           "wave": 40,
-          "boss": "void",
-          "seconds": 4.73,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 40,
-          "boss": "void",
-          "seconds": 4.78,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 45,
-          "boss": "lord",
-          "seconds": 2.12,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 45,
-          "boss": "lord",
-          "seconds": 2.32,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 45,
-          "boss": "lord",
-          "seconds": 2.45,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
+          "seconds": 1729.12,
+          "gold": 15567,
+          "income": 4735,
+          "buildings": 38,
+          "meanLevel": 9.74,
+          "kills": 2198,
+          "leaks": 0,
+          "damage": 13797406,
+          "bedHp": 2017,
+          "tech": 129,
+          "dps": 757255
         },
         {
           "wave": 50,
-          "boss": "abyss",
-          "seconds": 2.5,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 50,
-          "boss": "abyss",
-          "seconds": 2.6,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 50,
-          "boss": "abyss",
-          "seconds": 2.75,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 55,
-          "boss": "machine",
-          "seconds": 2.53,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 55,
-          "boss": "machine",
-          "seconds": 2.62,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
-        },
-        {
-          "wave": 55,
-          "boss": "machine",
-          "seconds": 2.9,
-          "phases": [
-            0,
-            1,
-            2
-          ],
-          "expectedPhases": 3
+          "seconds": 2143.1,
+          "gold": 27153,
+          "income": 7969,
+          "buildings": 38,
+          "meanLevel": 10.58,
+          "kills": 3407,
+          "leaks": 0,
+          "damage": 100565276,
+          "bedHp": 2773,
+          "tech": 172,
+          "dps": 3697938
         },
         {
           "wave": 60,
-          "boss": "final",
-          "seconds": 3.62,
-          "phases": [
-            0,
-            1,
-            2,
-            3
-          ],
-          "expectedPhases": 4
+          "seconds": 2552.4,
+          "gold": 66563,
+          "income": 9446,
+          "buildings": 38,
+          "meanLevel": 11.34,
+          "kills": 4499,
+          "leaks": 0,
+          "damage": 517072072,
+          "bedHp": 6489,
+          "tech": 184,
+          "dps": 12180706
         }
-      ]
+      ],
+      "errors": [],
+      "admin": false,
+      "prizes": {},
+      "videos": 0,
+      "endingIds": []
     }
   ]
 }

@@ -439,7 +439,7 @@ const QuestSystem = {
     const all = QUEST_CHAPTERS.map((c, i) => {
       const pr = this._s.chapters[c.id] || { kills: 0, items: 0, done: false };
       return {
-        idx: i, def: c, kills: pr.kills, items: pr.items, done: !!pr.done,
+        idx: i, def: pr.done || i===this._s.idx ? c : {id:c.id,title:'未开启的委托',act:'后续篇章',unlockWave:c.unlockWave,item:c.item}, kills: pr.kills, items: pr.items, done: !!pr.done,
         locked: i > this._s.idx && !pr.done,
         current: i === this._s.idx && !pr.done,
       };

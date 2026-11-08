@@ -28,6 +28,7 @@ const EnemyDamage = {
     enemy.hp=Math.max(0,enemy.hp-health);
     enemy.inCombatT=2;
     const actual=shield+health;
+    CombatTelemetry.damage(source,health,shield);
     G.stats.dmg+=actual;
     if(source && source.def && BUILD_DEFS[source.type]) {
       const damage=G.stats.towerDamage || (G.stats.towerDamage={});

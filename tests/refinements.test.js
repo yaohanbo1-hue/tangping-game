@@ -62,7 +62,9 @@ ok(run("DreamFragments._collected.has('frag_3')"), 'early story reward is retain
 ok(!run("JSON.stringify(DreamFragments.getCollectedFragments()).includes('床边的合照')"), 'collected API masks late titles');
 ok(!run("DreamFragments.getUnlockStatus().stories.find(f=>f.id==='frag_3').unlocked"), 'collection does not prematurely reveal story');
 run('G.wave=55;');
-ok(run("DreamFragments.getCollectedFragments().find(f=>f.id==='frag_3').name==='床边的合照'"), 'the same reward reveals at wave 55');
+ok(!run("DreamFragments.isRevealed(DreamFragments.FRAGMENT_DEFS.find(f=>f.id==='frag_3'))"), 'wave 55 alone does not reveal the truth');
+run("G.experience='story';StoryFlow.setPlayback(true);globalThis.truth=WAVE_STORY.find(s=>s.wave===55);StoryFlow.settle(truth,truth.choices[0],'manual');");
+ok(run("DreamFragments.getCollectedFragments().find(f=>f.id==='frag_3').name==='床边的合照'"), 'the same reward reveals after reading the story');
 ok(run("DreamFragments.getUnlockStatus().stories.find(f=>f.id==='frag_3').unlocked"), 'archive unlock follows revelation');
 run("openFragmentDetail('frag_4');");
 ok(game.elements.get('fragmentDetail').innerHTML === '', 'uncollected details cannot be opened directly');

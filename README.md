@@ -4,10 +4,11 @@
 
 ![HTML5](https://img.shields.io/badge/HTML5-Game-E34F26?style=flat-square&logo=html5&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES6-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
-![版本](https://img.shields.io/badge/version-1.9.2-blue?style=flat-square)
+![版本](https://img.shields.io/badge/version-2.0.0-blue?style=flat-square)
 ![单文件](https://img.shields.io/badge/单文件-开箱即玩-4CAF50?style=flat-square)
 ![零依赖](https://img.shields.io/badge/依赖-0-9C27B0?style=flat-square)
 ![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-222222?style=flat-square&logo=github&logoColor=white)
+![License](https://img.shields.io/badge/License-Apache--2.0-blue?style=flat-square)
 
 ## 🎮 在线试玩
 
@@ -15,33 +16,33 @@
 
 手机、平板、电脑的浏览器都能直接打开，不用下载、不用安装。下载下来双击 `shoudengren.html` 也一样能玩。
 
-📱 **手机（华为 / 安卓 / 苹果）已验证适配**：横屏下铺满屏幕，刘海与底部横条不遮挡界面；竖屏会提示横屏，并支持一键全屏、强制横屏或画面转向。
+📱 **本地开发版移动端适配**：原生尺寸主页、资源栏与操作抽屉，竖屏使用大格布防，横屏保留战场全景；考虑刘海与底部安全区，支持全屏、横屏锁定或画面转向（具体能力取决于浏览器）。桌面、Android与WebKit仿真已完成回归；物理手机仍需另行验收。
 
 🎞️ **主线加入 12 段静音剧情镜头**：按波次播放，第 55 波揭晓真相，主线通关后播放结尾镜头。视频按需加载并支持手机行内播放；缺少素材或浏览器无法播放时，文字剧情仍可继续。本地运行时请把 `assets/story/` 文件夹与 HTML 放在一起；只下载 HTML 仍可游玩，但不会带上视频。
 
 ---
 
-## v2.0 开发分支（尚未发布）
+## v2.0.0 更新（待发布）
 
-视觉继续统一为雨夜、蓝灰石材与暖金黄铜：35普通梦魇和五Boss拥有独立原创轮廓、受击/移动/控制及现有阶段表现；Logo、主页、设置、HUD、科技、存档、符文、各类档案、剧情和结算使用同一套材质与排版。建造栏和怪物图鉴直接显示真实游戏形象，剧情加入原创人物头像。截图与范围见 [界面与怪物美术](docs/VISUAL_POLISH.md)。
+当前文件版本已统一为2.0.0，本轮通过独立分支PR提交审阅，合并与发布由维护者执行。汇总本次全部更新的详细文字见 [RELEASE_NOTES_NEXT.md](RELEASE_NOTES_NEXT.md)，当前验收范围见 [V2_STATUS.md](docs/V2_STATUS.md)。
 
-本轮还修复了面板首次打开数据延迟、成就图标被刷新覆盖的问题；转职支持原生键盘操作，点击剧情正文可显示全文，开始与返回动作保持可见。`npm run test:polish` 逐屏验收；`npm run profile:presentation` 对相同固定实体进行版本对照，结果见 [性能记录](docs/PERFORMANCE.md)。
+- **手机可直接点大格布防。** 原生尺寸主页、资源／威胁栏和建造／技能／管理底栏；竖屏增加8列×5行布防板，44×48px以上格子对应真实建筑、等级和床铺，窄屏可横向滚动；横屏保留更大全景。科技、符文、存档、档案、详情与剧情支持原生字号、大字和安全区，详见 [手机适配](docs/MOBILE_ADAPTATION.md)。
+- **雨夜美术继续精修。** 三个美术子任务细化16建筑／32转职的炮管、线圈、晶面、管路与机械材质，35普通怪／五Boss的装甲与独立轮廓、雨窗湿石与寝具物件，以及黄铜UI、图标和人物头像。实际缩略图与受击／修复／升级保持一致，见 [视觉说明](docs/VISUAL_POLISH.md)。
+- **五位Boss有独立行动和反制。** 号令冲锋、深渊汲取、轨道扫射、虚空跃迁、三声终钟具有前摇、目标／路段提示、可中断机制和阶段突破收益；弱点与韧性分开标记，低画质和手机倒计时保留。35敌种与10词缀也有对应反制说明，见 [敌人验收](docs/ENEMY_COUNTERPLAY.md)。
+- **数值既有理论值，也有实测。** 详情提供近5模拟秒实际DPS、本体／护盾累计伤害、矿机／发电机产出、银行结算、维修／护盾贡献及聚能覆盖。缓存更新、下一级预览、持续伤害、毒与反应归属已补回归；共鸣计入自身元素。见 [32分支对照](docs/BRANCH_BENCHMARK.md)。
+- **画质与声音可独立调整。** 三档战场画质、独立表现随机源、字形缓存；主音量及音乐／战斗／界面／环境分组，11武器音色与五Boss预警、声部上限和噪声复用。测量方法、试听材料和浏览器限制见 [运行时记录](docs/RUNTIME_FOLLOWUP.md)。
+- **剧情与奖励更可靠。** 剧情／纯战斗身份独立于有限／无限和难度；碎片、日记、档案等按实际体验揭示，波次不会自行泄露真相。旋律和摇奖一次奖励保留，免费建筑／分支不在读档后重复扣钱；守护加成可保存且有叠加上限。战中读档仍重开当前波。
+- **五幕剧情有自己的灯光与阅读节奏。** 主线显示所属幕、序号进度与五组雨夜底色，后续标题保持隐藏；320px大字剧情保留完整回应按钮，点击显示全文从段首阅读。开场与回忆镜头的钟面统一为03:07。15组实际画面／音乐证据见 [剧情呈现复查](docs/STORY_PRESENTATION_REVIEW.md)；真机页新增16项生产音效试听和手动听感记录。
+- **Apache-2.0许可。** LICENSE、NOTICE及美术清单同步，完整许可内嵌两份单文件；历史MIT声明保留，第三方内容按各自条款使用。
 
-界面默认启用「流畅」特效，可在主页音频/显示设置切回完整光影并自动保存。修复桌面建造栏横向裁切，16 张卡片完整可见；建筑与技能支持键盘聚焦、回车/空格操作，触控拖动只预览，取消不会误建。切到后台时停止模拟与绘制，返回不补算离开期间的战斗，手动暂停及剧情选择继续保留。
+当前有3694项具名逻辑断言，另有构建、许可、音频、Canvas美术、桌面／触控／WebKit及原生手机界面检查。11条合法60波路线覆盖普通／困难／地狱及操作／反制取舍，详见 [战役记录](docs/CAMPAIGN_VALIDATION.md)；它们是程序策略，不替代人工难度评价。
 
-火焰/引力持续武器现在正确获得攻速科技、共鸣和超频收益；毒伤保留穿盾，同时遵守抗性、易伤与按秒护甲，过期毒素正确清除。「奇点坍缩」兑现放弃减速的取舍。备战预览增加特殊敌人的反制提示，操作提示移到战场底部，避免挡住预览与 Boss 血条。碎片的提前收集与剧情揭示分开，视频加载失败仍可正常选择和获得奖励。
+**物理Android／iPhone仍待验收。** 本地真机入口已经准备：先 `npm run build`，再 `npm run device:lab -- --lan`，手机打开终端显示的同Wi-Fi地址。13项记录表及10秒实际战斗采样见 [真机说明](docs/DEVICE_TESTING.md)。Windows WebKit没有Web Audio，声音跳过有明确记录；不保证未经测试设备的帧率。
 
-本轮新增 88 项武器/敌人/剧情检查与独立构建验证，逻辑断言累计 2295 项；显示、键盘/触控、后台恢复和视频失败专项覆盖桌面、Android 与 WebKit 仿真。运行 `npm run profile` 可复测同场景的完整/流畅特效开销，详见 [性能记录](docs/PERFORMANCE.md)。
+常用验证：`npm test`、`npm run test:campaign`、`npm run test:art`、`npm run test:polish`、`npm run test:mobile`、`npm run test:browser`、`npm run test:audio`、`npm run test:narrative`、`npm run test:lab`。`npm run benchmark:branches`输出控制靶场；`npm run profile:battlefield`复测固定实体开销。最后运行 `npm run build` 生成一致的index.html／shoudengren.html。
 
-玩法体验可选「剧情模式 / 纯战斗模式」，独立于有限 / 无限、难度和试炼。剧情播放开关保存在本机设置，玩法身份与逐事件奖励记录随单局存档保存。纯战斗保留战斗、NPC、深层规则及委托奖励，自动选择一条默认分支，不解锁剧情结局。关闭演出后仍可直接结算和重开。
+![竖屏大格布防](docs/images/mobile-room-portrait.png)
 
-运行 `npm test`、`npm run test:campaign`、`npm run test:browser`、`node tests/simulate.js`、`node build.js`。状态流测试使用脚本致命攻击；独立的完整战役矩阵从零资源开始，按真实费用购买、使用技能和实际伤害完成 60 波。六场固定策略全部通关，详情见 [战役实测](docs/CAMPAIGN_VALIDATION.md)。这证明存在合法通关路线，困难与地狱的挑战性仍需校准。数值、美术、Boss、移动端和性能验收仍在进行；版本保持 1.9.2，未达到 2.0 发布条件。
-
-雨夜战场使用新的 Canvas 场景层：石砖走廊、窗外远楼、雨影积水、木地板、门体结构/损坏/修复和暖金应急床头灯。原生样板见 [美术规范与截图](docs/ART_DIRECTION.md)，`npm run test:art` 验证场景、48建筑外观及40怪物的绘制、动画、缓存与战斗状态隔离。
-
-16 建筑与 32 转职已接入独立机械轮廓、工作/开火、实际受击/修复、等级结构和实体建造预览，见 [48 外观联系表](docs/BUILDING_ART.md)。命中反馈按实际伤害生成，连续武器节流；开关新增特效的真实模拟对照保持战斗和随机序列一致。建筑完整平衡、Boss新机制、音频和实机性能仍在进行。
-
-敌人控制已阻止眩晕/冻结期间继续主动攻击；死灵从真实残骸复苏原单位并防重复掉落。吸血按实际损伤回复，寄生有前摇、八秒时限及控制/距离打断，飞行怪绕门后继续扑床，详见 [敌人机制核验](docs/ENEMY_AUDIT.md)。新美术已覆盖35普通怪与五Boss；全部特殊行为/词缀的反制性仍需完整验收。
 
 ## 📖 游戏简介
 
@@ -408,6 +409,20 @@ tangping-game/
 ├── net.js           # 命令层与尚未启用的联机接缝
 ├── names.js         # 建筑 / 铁门 / 床铺的等级名称池
 ├── main.js          # 主入口与游戏循环
+├── presentation.js  # 表现随机源与三档战场画质
+├── audio.js         # 分组音量、合成音效与声部预算
+├── telemetry.js     # 实际伤害、经济与支援贡献
+├── boss-encounters.js # 五Boss行动、预警、中断与阶段收益
+├── lottery-rewards.js # 摇奖结算、上限与一次性奖励
+├── mobile-controls.js # 原生手机操作与大格布防
+├── mobile.css       # 手机安全区、抽屉与短屏布局
+├── text-art.js      # 战场文字排版与有界字形缓存
+├── LICENSE          # Apache License 2.0全文
+├── NOTICE           # 版权、归属与许可变更说明
+├── LICENSES/        # 历史MIT声明
+├── RELEASE_NOTES_NEXT.md # v2.0.0详细更新说明
+├── tools/           # 本地手机验收与报告工具
+├── tests/           # 逻辑、媒体、美术与浏览器验证
 ├── build.js         # 构建脚本（生成 index.html 和 shoudengren.html）
 ├── MULTIPLAYER.md   # 联机设计说明
 ├── CHANGELOG.md     # 版本变更记录
@@ -428,7 +443,7 @@ tangping-game/
 
 ### 修改源码后重新构建
 
-源码是拆分的多个文件，项目版本保存在 `VERSION`。改完源码后运行构建脚本，重新生成 `index.html` 和 `shoudengren.html`：
+源码是拆分的多个文件，项目版本保存在 `VERSION`，并与 `package.json` 保持一致；构建时自动核对两者及Apache-2.0许可标记。改完源码后运行构建脚本，重新生成 `index.html` 和 `shoudengren.html`：
 
 ```bash
 node build.js
@@ -458,7 +473,7 @@ node build.js
 
 本项目开源，代码供学习与参考，欢迎大家一起交流。
 
-本项目基于 MIT 协议开源，见 LICENSE；音频与剧情视频为 AI 生成素材（音乐由 MiniMax Music 3 生成），随仓库一并分发。
+本项目原创代码、文档与程序化 Canvas/SVG 美术基于 **Apache License 2.0** 开源，见 [LICENSE](LICENSE) 和 [NOTICE](NOTICE)。历史 MIT 版权与许可声明保留于 [LICENSES/MIT-legacy.txt](LICENSES/MIT-legacy.txt)。音频与剧情视频保留 AI 生成来源记录（音乐由 MiniMax Music 3 生成）；第三方工具、依赖和素材沿用其各自适用条款。
 
 ---
 

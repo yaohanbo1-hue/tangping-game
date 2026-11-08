@@ -29,49 +29,11 @@ function fmt1(n) {
   return fmt(n);
 }
 function bedGoldEff() {
-  return bedGold() * techVal('sleep', 0.12) * techVal('eternity', 0.60) * diffCfg().goldMul;
+  return bedGoldEffOf(G.bed.lv);
 }
 function bedGoldEffOf(lv) {
-  return bedGoldOf(lv) * techVal('sleep', 0.12) * techVal('eternity', 0.60) * diffCfg().goldMul;
+  return goldProductionRate(bedGoldOf(lv) * techVal('sleep', 0.12) * techVal('eternity', 0.60));
 }
-const SFX = {
-  ctx: null, on: true, volume: 0.72,
-  init() {
-    if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.on = false; } }
-    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
-  },
-  tone(freq, dur, type = 'sine', vol = 0.14, slide = 0) {
-    if (!this.on || !this.ctx || this.volume <= 0) return;
-    const t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
-    o.type = type; o.frequency.setValueAtTime(freq, t);
-    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
-    g.gain.setValueAtTime(vol * this.volume, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(this.ctx.destination); o.start(t); o.stop(t + dur + 0.02);
-  },
-  noise(dur, vol = 0.2, filt = 900) {
-    if (!this.on || !this.ctx || this.volume <= 0) return;
-    const n = (this.ctx.sampleRate * dur) | 0, buf = this.ctx.createBuffer(1, n, this.ctx.sampleRate), d = buf.getChannelData(0);
-    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
-    const s = this.ctx.createBufferSource(); s.buffer = buf;
-    const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = filt;
-    const g = this.ctx.createGain(); g.gain.value = vol * this.volume;
-    s.connect(f); f.connect(g); g.connect(this.ctx.destination); s.start();
-  },
-  shoot() { this.tone(680, 0.06, 'square', 0.04, -420); },
-  laser() { this.tone(1250, 0.13, 'sawtooth', 0.05, -900); },
-  zap() { this.tone(320, 0.11, 'sawtooth', 0.06, 520); },
-  hit() { this.tone(200, 0.05, 'triangle', 0.045, -110); },
-  boom() { this.noise(0.34, 0.26, 700); this.tone(90, 0.3, 'sine', 0.15, -55); },
-  build() { this.tone(430, 0.09, 'triangle', 0.1); setTimeout(() => this.tone(650, 0.1, 'triangle', 0.09), 70); },
-  up() { this.tone(520, 0.08, 'sine', 0.1); setTimeout(() => this.tone(780, 0.12, 'sine', 0.1), 65); },
-  coin() { this.tone(900, 0.05, 'square', 0.04); },
-  err() { this.tone(160, 0.14, 'square', 0.09, -60); },
-  wave() { this.tone(300, 0.16, 'sawtooth', 0.1, 220); setTimeout(() => this.tone(420, 0.22, 'sawtooth', 0.1, 180), 140); },
-  lose() { this.tone(260, 0.5, 'sine', 0.2, -180); setTimeout(() => this.tone(180, 0.7, 'sine', 0.18, -110), 260); },
-  win() { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => this.tone(f, 0.22, 'triangle', 0.12), i * 110)); },
-  skill() { this.tone(700, 0.2, 'sine', 0.12, 700); this.noise(0.25, 0.12, 1600); },
-  achieve() { [660, 880, 1180].forEach((f, i) => setTimeout(() => this.tone(f, 0.18, 'sine', 0.12), i * 90)); },
-};
 const Store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
   set(k, v) {
@@ -124,7 +86,7 @@ const Music = {
     menu: '入梦', game: '防线', boss: '终焉', shadow: 'Lullaby’s Shadow',
     memory: 'Memory Corridor', afterglow: '余温回廊', warm: '余灯留暖', morning: '晨光漫入',
   },
-  on: true, volume: 0.34, duck: 1, current: 'menu', unlocked: false, blocked: Object.create(null),
+  on: true, volume: 0.34, duck: 1, focus: 1, current: 'menu', unlocked: false, blocked: Object.create(null),
   active: null, cache: Object.create(null), missing: Object.create(null), fades: new WeakMap(),
   init() {
     let p = {};
@@ -133,10 +95,15 @@ const Music = {
     this.volume = clamp(Number.isFinite(+p.musicVolume) ? +p.musicVolume : 0.34, 0, 1);
     SFX.on = p.sfxOn !== false;
     SFX.volume = clamp(Number.isFinite(+p.sfxVolume) ? +p.sfxVolume : 0.72, 0, 1);
+    SFX.masterVolume = clamp(Number.isFinite(+p.masterVolume) ? +p.masterVolume : 1, 0, 1);
+    SFX.uiVolume = clamp(Number.isFinite(+p.uiVolume) ? +p.uiVolume : .65, 0, 1);
+    SFX.ambienceVolume = clamp(Number.isFinite(+p.ambienceVolume) ? +p.ambienceVolume : .45, 0, 1);
+    SFX.sync();
   },
   persist() {
     Store.set('tangping_audio', JSON.stringify({
       musicOn: this.on, musicVolume: this.volume, sfxOn: SFX.on, sfxVolume: SFX.volume,
+      masterVolume: SFX.masterVolume, uiVolume: SFX.uiVolume, ambienceVolume: SFX.ambienceVolume,
     }));
   },
   _audio(key) {
@@ -174,7 +141,7 @@ const Music = {
         if (typeof syncAudioUI === 'function') syncAudioUI();
       });
     }
-    this._fade(next, this.volume * this.duck, 900, false);
+    this._fade(next, this.outputVolume(), 900, false);
     if (previous && previous !== next) this._fade(previous, 0, 700, true);
     if (typeof syncAudioUI === 'function') syncAudioUI();
     return true;
@@ -214,15 +181,31 @@ const Music = {
   },
   setVolume(value, persist = true) {
     this.volume = clamp(+value || 0, 0, 1); if (persist) this.persist();
-    if (this.active && this.on) this._fade(this.active, this.volume * this.duck, 120, this.volume === 0);
+    if (this.active && this.on) this._fade(this.active, this.outputVolume(), 120, false);
     if (typeof syncAudioUI === 'function') syncAudioUI();
   },
   setDucking(on) {
     this.duck = on ? 0.42 : 1;
-    if (this.active && this.on) this._fade(this.active, this.volume * this.duck, 260, false);
+    if (this.active && this.on) this._fade(this.active, this.outputVolume(), 260, false);
   },
-  setSfx(on) { SFX.on = !!on; this.persist(); if (typeof syncAudioUI === 'function') syncAudioUI(); },
-  setSfxVolume(value, persist = true) { SFX.volume = clamp(+value || 0, 0, 1); if (persist) this.persist(); if (typeof syncAudioUI === 'function') syncAudioUI(); },
+  outputVolume() { return SFX.gain(this.volume) * SFX.gain(SFX.masterVolume) * this.duck * this.focus; },
+  setSfx(on) {
+    SFX.setEnabled(on);
+    if(on && typeof DreamSound!=='undefined')DreamSound.setAmbient(DreamSound._ambientDepth);
+    this.persist();if(typeof syncAudioUI==='function')syncAudioUI();
+  },
+  setBusVolume(bus,value,persist=true) {
+    SFX.setVolume(bus,value);
+    if(bus==='master' && this.active && this.on)this._fade(this.active,this.outputVolume(),120,false);
+    if(bus==='ambience' && SFX.ambienceVolume>0 && typeof DreamSound!=='undefined')DreamSound.setAmbient(DreamSound._ambientDepth);
+    if(persist)this.persist();if(typeof syncAudioUI==='function')syncAudioUI();
+  },
+  setSfxVolume(value,persist=true) { this.setBusVolume('combat',value,persist); },
+  setBackground(hidden) {
+    SFX.setBackground(hidden);this.focus=hidden?0:1;
+    if(this.active && this.on)this._fade(this.active,this.outputVolume(),hidden?1:180,false);
+    if(!hidden && typeof DreamSound!=='undefined')DreamSound.setAmbient(DreamSound._ambientDepth);
+  },
   status() {
     if (!this.on) return '背景音乐已关闭';
     if (this.volume <= 0) return '背景音乐音量为 0';
@@ -234,7 +217,7 @@ const Music = {
   },
 };
 const META_KEY = 'tangping_meta';
-const META = { gold: 0, pity: 0, inv: {}, equipped: [], runs: 0, best: 0, trialsCleared: [], runHistory: [], endingIds: [], fragments: [] };
+const META = { gold: 0, pity: 0, inv: {}, equipped: [], runs: 0, best: 0, trialsCleared: [], runHistory: [], endingIds: [], fragments: [], storySeen: [] };
 function loadMeta() {
   try { const o = JSON.parse(Store.get(META_KEY, '{}') || '{}'); Object.assign(META, o); } catch (e) { }
   if (!META.inv || typeof META.inv !== 'object') META.inv = {};
@@ -246,6 +229,7 @@ function loadMeta() {
   else META.endingIds = META.endingIds.filter(id => typeof id === 'string');
   if (!Array.isArray(META.fragments)) META.fragments = [];
   else META.fragments = META.fragments.filter(id => typeof id === 'string');
+  META.storySeen = Array.isArray(META.storySeen) ? [...new Set(META.storySeen.filter(w=>Number.isInteger(w) && WAVE_STORY.some(s=>s.wave===w)))] : [];
   META.gold = Math.max(0, Math.floor(META.gold || 0));
 }
 function saveMeta() {
@@ -298,11 +282,11 @@ function buildingMaxHp(def, level, branch) {
 }
 /** 铁门最大生命：等级 */
 function doorMaxHp(lv) {
-  return (420 + 200 * (Math.max(1, lv) - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50) * prizeHpMul() * storyHpMul();
+  return (420 + 200 * (Math.max(1, lv) - 1)) * techVal('ironwall', 0.15) * techVal('fortress', 0.50) * prizeHpMul() * storyHpMul() * LotteryRewards.defenseMul();
 }
 /** 床铺最大生命：等级 */
 function bedMaxHp(lv) {
-  return (420 + 95 * (Math.max(1, lv) - 1)) * techVal('fortress', 0.50) * prizeHpMul() * storyHpMul() + ((G.fate && G.fate.shield) || 0);
+  return (420 + 95 * (Math.max(1, lv) - 1)) * techVal('fortress', 0.50) * prizeHpMul() * storyHpMul() * LotteryRewards.defenseMul() + ((G.fate && G.fate.shield) || 0);
 }
 function setBuildingLevel(b, lv) {
   b.level = Math.max(1, Math.min(b.def.maxLv || 50, lv));
@@ -407,7 +391,7 @@ function newGame(loadFrom) {
     // 剧情/旋律带来的命运加成：fate = 本局永久，fateWave = 仅本波，melodyBuff = 限波次
     fate: { dmg: 0, rate: 0, def: 0, crit: 0, critDmg: 0, notes: [], shield: 0, immune: false, bedRegen: 0, autoRebuild: 0, noSummonWave: false },
     fateWave: { dmg: 0, rate: 0, def: 0, crit: 0, critDmg: 0 },
-    affection: {}, melodyBuff: null,
+    affection: {}, melodyBuff: null, bossStageRewards: {}, bossSpawnSerial: 0,
     lot: { ep: 0, lg: 0, n: 0 }, lastDraw: null,
     tech: {}, skills: {}, ach: {},
     event: EVENTS[0], eventTimer: 0,
@@ -490,6 +474,12 @@ function towerPanelDps(s, b) {
   if (b && b.type === 'gravity') return dps * (s.rate || 1);
   return dps * (s.rate || 0) * critMul;
 }
+// Display-only estimate: include the same live multipliers as the firing path.
+// Target count, resistance, poison stacks and reactions still affect real output.
+function towerDisplayDps(s, b) {
+  if ((b.empT || 0) > 0) return 0;
+  return towerPanelDps(s,b) * towerDmgMul(b) * towerRateMul() * towerRateMulOn(b);
+}
 /** 共鸣增幅快照，供详情面板展示（把「隐形机制」显性化） */
 function resBonusOf(b) {
   return {
@@ -533,23 +523,29 @@ function tryDropRune(wave, x, y) {
 }
 function bedGold() { return bedGoldOf(G.bed.lv); }
 function bedGoldOf(lv) { return 8 * EconomyBalance.production(lv); }
+function goldProductionRate(base) {
+  return base * techVal('economy', 0.07) * techVal('compound', 0.25) * (G.event.eff.goldMul || 1) * (1 + (G.buff.goldBoost || 0) + (G.fate.goldBoost || 0)) * diffCfg().goldMul;
+}
 function totalGoldRate() {
   const bed = bedGold() * techVal('sleep', 0.12) * techVal('eternity', 0.60);
   let r = bed;
   G.buildings.forEach(b => { if (b.type === 'miner') r += (bstat(b).gold || 0) * techVal('mining', 0.10); });
-  return r * techVal('economy', 0.07) * techVal('compound', 0.25) * (G.event.eff.goldMul || 1) * (1 + (G.buff.goldBoost || 0) + (G.fate.goldBoost || 0)) * diffCfg().goldMul;
+  return goldProductionRate(r);
+}
+function powerProductionRate(base) {
+  return base * (1 + G.tech.electric * 0.12) * techVal('overcore', 0.40) * (G.event.eff.powerMul || 1);
 }
 function powerInfo() {
   let regen = 0;
   G.buildings.forEach(b => { const s = bstat(b); if (s.regen) regen += s.regen; });
-  return { regen: regen * (1 + G.tech.electric * 0.12) * techVal('overcore', 0.40) * (G.event.eff.powerMul || 1) };
+  return { regen: powerProductionRate(regen) };
 }
 const powerNet = () => powerInfo().regen;
 const canFire = () => true;
 function computeResonance() {
   const tw = G.buildings.filter(b => b.def && b.def.tower);
   for (const b of tw) {
-    const types = new Set();
+    const types = new Set(b.def.dmgType ? [b.def.dmgType] : []);
     for (const o of tw) {
       if (o === b || !o.def.dmgType) continue;
       if (dist(o, b) <= RESONANCE_R) types.add(o.def.dmgType);
@@ -772,22 +768,30 @@ function upgradeBed() {
   spawnParts(BED_CX, BED_CY, 18, '#ffd166', 3);
 }
 function spawnParts(x, y, n, color, spd = 2, life = 0.6) {
-  // 性能保护：粒子上限 800，超出时减少生成数量
-  if (G.parts.length > 800) n = Math.max(1, Math.floor(n / 3));
-  else if (G.parts.length > 500) n = Math.max(1, Math.floor(n / 2));
+  const profile = Graphics.profile;
+  n = Math.min(Math.ceil(n * profile.density), profile.particles - G.parts.length);
   for (let i = 0; i < n; i++) {
-    const a = rnd(0, Math.PI * 2), s = rnd(0.4, 1) * spd;
-    G.parts.push({ x, y, vx: Math.cos(a) * s * 60, vy: Math.sin(a) * s * 60, life: rnd(life * 0.6, life * 1.3), max: life, color, size: rnd(2, 5) });
+    const a = PresentationRandom.range(0, Math.PI * 2), s = PresentationRandom.range(0.4, 1) * spd;
+    G.parts.push({ x, y, vx: Math.cos(a) * s * 60, vy: Math.sin(a) * s * 60, life: PresentationRandom.range(life * 0.6, life * 1.3), max: life, color, size: PresentationRandom.range(2, 5) });
   }
 }
 function addText(x, y, t, color = '#fff', big = false) {
-  // 性能保护：浮动文字上限 60
-  if (G.texts.length > 60) G.texts.shift();
-  G.texts.push({ x: x + rnd(-8, 8), y, t, color, life: big ? 1.5 : 0.9, max: big ? 1.5 : 0.9, big });
+  if (G.texts.length >= Graphics.profile.texts) {
+    const ordinary = G.texts.findIndex(text => !text.big);
+    if (ordinary < 0 && !big) return;
+    G.texts.splice(Math.max(0, ordinary), 1);
+  }
+  G.texts.push({ x: x + PresentationRandom.range(-8, 8), y, t, color, life: big ? 1.5 : 0.9, max: big ? 1.5 : 0.9, big });
 }
-const addEffect = e => G.effects.push(e);
+function addEffect(e) {
+  // These three effects carry no damage or warning logic. Curse fields and
+  // other gameplay effects must always reach updateEffects, even at low quality.
+  if (['laser','arc','impact'].includes(e.type) &&
+      G.effects.filter(f=>['laser','arc','impact'].includes(f.type)).length >= Graphics.profile.beams) return;
+  G.effects.push(e);
+}
 function emitHitFx(enemy,source) {
-  if(!source || !source.def || !BUILD_DEFS[source.type] || G.effects.length>=96) return;
+  if(!source || !source.def || !BUILD_DEFS[source.type] || G.effects.length>=Graphics.profile.impacts) return;
   addEffect({type:'impact',weapon:source.type,x:enemy.x,y:enemy.y,color:source.def.color,
     target:source.type==='poison'?enemy:null,life:.26,maxLife:.26});
 }
@@ -800,6 +804,7 @@ function updateEconomy(dt) {
   G.growTimer += dt;
   if (G.growTimer >= 8 && G.grow < 25) { G.growTimer -= 8; G.grow++; addText(BED_CX, BED_CY - 74, '发育 +1（灵魂 +2%）', '#7cf39a'); SFX.coin(); checkAchievements(); }
   // 护盾上限每帧按现存护盾来源重算（旧逻辑只增不减，卖掉护盾塔后全队永久白嫖护盾）
+  CombatTelemetry.resetShieldOwners();
   G.bed.shieldMax = 0;
   G.doors.forEach(d => { d.shieldMax = 0; });
   G.buildings.forEach(o => { o.shieldMax = 0; });
@@ -807,18 +812,20 @@ function updateEconomy(dt) {
   // 护盾塔排在后面时本帧读到的 o.shieldMax 还是 0，回盾时灵时不灵
   G.buildings.forEach(b => {
     const s = bstat(b);
+    if(b.type==='miner')CombatTelemetry.add(b,'gold',goldProductionRate((s.gold || 0)*techVal('mining',.10))*dt);
+    if(s.regen)CombatTelemetry.add(b,'power',powerProductionRate(s.regen)*dt);
     if (b.type === 'shield' || s.shield) {
-      G.doors.forEach(d => { if (Math.abs(d.y - b.y) < 150) d.shieldMax = Math.max(d.shieldMax, s.shield); });
-      G.bed.shieldMax = Math.max(G.bed.shieldMax, s.shield * 0.8);
-      G.buildings.forEach(o => { if (dist(b, o) <= s.range) o.shieldMax = Math.max(o.shieldMax, s.shield); });
+      G.doors.forEach(d => { if (Math.abs(d.y - b.y) < 150) setShieldCapacity(d,s.shield,b); });
+      setShieldCapacity(G.bed,s.shield*.8,b);
+      G.buildings.forEach(o => { if (dist(b, o) <= s.range) setShieldCapacity(o,s.shield,b); });
     }
   });
   G.buildings.forEach(b => {
     const s = bstat(b);
     if (b.type === 'repair' || s.heal) {
-      G.doors.forEach(d => { if (Math.abs(d.y - b.y) < 130 && dist({ x: WALL_X, y: d.y }, b) <= s.range + 90) healTarget(d, s.heal * dt); });
-      G.buildings.forEach(o => { if (o !== b && dist(b, o) <= s.range) healTarget(o, s.heal * 0.6 * dt); });
-      if (s.shieldHeal) G.buildings.forEach(o => { if (o !== b && dist(b, o) <= s.range && o.shieldMax > 0) o.shield = Math.min(o.shieldMax, o.shield + s.shieldHeal * dt); });
+      G.doors.forEach(d => { if (Math.abs(d.y - b.y) < 130 && dist({ x: WALL_X, y: d.y }, b) <= s.range + 90) healTarget(d, s.heal * dt,b); });
+      G.buildings.forEach(o => { if (o !== b && dist(b, o) <= s.range) healTarget(o, s.heal * 0.6 * dt,b); });
+      if (s.shieldHeal) G.buildings.forEach(o => { if (o !== b && dist(b, o) <= s.range && o.shieldMax > 0) {const before=o.shield;o.shield = Math.min(o.shieldMax, o.shield + s.shieldHeal * dt);CombatTelemetry.add(b,'recharged',o.shield-before);} });
     }
   });
   const maxLvShield = Math.max(1, ...G.buildings.filter(b => b.type === 'shield').map(b => b.level));
@@ -826,13 +833,14 @@ function updateEconomy(dt) {
   const regen = 4 + maxLvShield;
   [G.bed, ...G.doors, ...G.buildings].forEach(t => {
     if (t.shieldMax <= 0) { t.shield = 0; return; }
-    if (t.shield < t.shieldMax) t.shield = Math.min(t.shieldMax, t.shield + regen * dt);
+    if (t.shield < t.shieldMax) {const before=t.shield;t.shield = Math.min(t.shieldMax, t.shield + regen * dt);CombatTelemetry.recharge(t,t.shield-before);}
   });
   G.doors.forEach(d => {
     if (d.broken && d.hp > d.maxHp * 0.25) { d.broken = false; addText(WALL_X + 20, d.y - 70, '铁门已修复！', '#7cf39a', true); }
   });
 }
-function healTarget(t, v) { if (t.hp < t.maxHp) { t.hp = Math.min(t.maxHp, t.hp + v); return true; } return false; }
+function setShieldCapacity(target,capacity,source) { CombatTelemetry.shield(target,capacity,source);target.shieldMax=Math.max(target.shieldMax,capacity); }
+function healTarget(t, v, source) { if (t.hp < t.maxHp) { const before=t.hp;t.hp = Math.min(t.maxHp, t.hp + v);CombatTelemetry.add(source,'healed',t.hp-before);return true; } return false; }
 /**
  * 剧情承诺的统一解释器
  * 剧情里写下的每一条选择/理解奖励都通过这里结算，避免「说了给却没给」的冲突。
@@ -990,6 +998,7 @@ function damageTarget(t, dmg) {
   if (defSum > 0) dmg *= Math.max(0.4, 1 - defSum);
   const absorbed = Math.min(Math.max(0, t.shield || 0), dmg);
   if (absorbed > 0) t.shield -= absorbed;
+  CombatTelemetry.absorb(t,absorbed);
   const bodyLoss = Math.min(t.hp, Math.max(0, dmg - absorbed));
   t.hp -= bodyLoss;
   if (t.lane != null && t.y != null && t.def === undefined && !t.isBed) {
@@ -1009,6 +1018,10 @@ function bossKeyForWave(n) {
   if (n >= finalWave() && !(G && G.mode === 'unlimited' && n > finalWave())) return 'final';
   const idx = Math.floor(n / 5 - 1) % BOSS_ORDER.length;
   return BOSS_ORDER[(idx + BOSS_ORDER.length) % BOSS_ORDER.length];
+}
+function bossCountForWave(n) {
+  const isFinal=n>=finalWave() && !(G && G.mode==='unlimited' && n>finalWave());
+  return n%5===0 ? isFinal?1:Math.min(3,1+Math.floor(n/22)) : 0;
 }
 function admitEnemySummon() {
   if((G.summonsThisWave || 0)>=120 || G.enemies.length>=200)return false;
@@ -1039,14 +1052,14 @@ function spawnEnemy(type, wave, lane, summoned = false) {
     stealthT: 0, alpha: 1, untargetable: false, stun: 0,
     res: Object.assign({}, d.res), weak: Object.assign({}, d.weak),
     affixes: [], affixRes: 0, phase: 0, summonT: 0,
-    wob: rnd(0, 6.28), anim: 0, dead: false, boss: !!d.phases, bossKey,
+    wob: PresentationRandom.range(0, 6.28), anim: 0, dead: false, boss: !!d.phases, bossKey,
     hitFlash: 0, hasteT: 0, hasteMul: 1, inCombatT: 0,
     maxPhase: d.phases ? d.phases.length - 1 : 0,
     empT: d.emp ? d.emp.cd : 0, fzT: d.freezeTower ? d.freezeTower.cd : 0,
     reviveT: 0, mimicRevealed: false, parasiteTarget: null, vamp: d.vamp || 0,
   };
   const eliteChance = clamp((wave - 4) * 0.035, 0, 0.42);
-  if (wave >= 5 && Math.random() < eliteChance && !d.boss) {
+  if (wave >= 5 && !e.boss && Math.random() < eliteChance) {
     const n = wave >= 20 && Math.random() < 0.3 ? 2 : 1;
     const pool = AFFIX_KEYS.slice();
     for (let i = 0; i < n && pool.length; i++) {
@@ -1093,6 +1106,8 @@ function spawnEnemy(type, wave, lane, summoned = false) {
   e.healthFactors = health.factors;
   if (health.shield > 0) e.shield = e.shieldMax = health.shield;
   if (d.phaseShield) { e.phaseShield = d.phaseShield; e.segMax = e.maxHp / (d.phaseShield + 1); e.segIdx = 0; }
+  BossEncounters.init(e);
+  if(e.boss)e.res=Object.assign({},bossPhases(e)[0].res);
   G.enemies.push(e);
   return e;
 }
@@ -1110,7 +1125,7 @@ function enemySpeed(e) {
   // 精英词缀狂暴 + 敌人内置狂暴（如 berserker）
   const frenzySpd = (e.def.frenzy && e.def.frenzy.spd) || 1.9;
   if (enemyIsFrenzied(e)) s *= frenzySpd;
-  if (e.phase > 0 && e.boss) {
+  if (e.boss) {
     const bps = bossPhases(e);
     if (bps[e.phase]) s *= bps[e.phase].speed;
   }
@@ -1123,7 +1138,10 @@ function updateEnemies(dt) {
   for (let i = G.enemies.length - 1; i >= 0; i--) {
     const e = G.enemies[i];
     if (e.dead) { G.enemies.splice(i, 1); continue; }
-    const incapacitated=e.stun>0 || G.buff.freeze>0;
+    // Knockback can arrive before this system, including on a stunned enemy.
+    // Keep every living target on the battlefield instead of stranding a wave.
+    e.x=clamp(e.x,8,ROOM_X1-8);e.y=clamp(e.y,ARENA_TOP+8,ARENA_BOT-8);
+    const incapacitated=e.boss ? BossEncounters.control(e,dt) : e.stun>0 || G.buff.freeze>0;
     e.anim += dt;
     if (e.hitFlash > 0) e.hitFlash -= dt;
     if (e.slowT > 0) e.slowT -= dt;
@@ -1139,6 +1157,7 @@ function updateEnemies(dt) {
         e.phaseNext = 0;
         const ph = phs[np];
         e.res = Object.assign({}, ph.res);
+        BossEncounters.stage(e,np);
         addText(e.x, e.y - 60, ph.name + ' · 转换护甲', '#ff4d6d', true);
         spawnParts(e.x, e.y, 34, '#ff4d6d', 5, 0.9); shakeBy(12); SFX.boom();
         // 关键剧情 BOSS 的阶段台词之前只存放在 story.js、从未在战斗中触发。
@@ -1154,8 +1173,9 @@ function updateEnemies(dt) {
     if (e.def.stealth) {
       e.stealthT += dt;
       const cyc = e.stealthT % 6;
-      e.alpha = cyc < 2.2 ? 0.28 : 1;
-      e.untargetable = cyc < 2.2;
+      const revealed=e.boss && BossEncounters.revealed(e);
+      e.alpha = !revealed && cyc < 2.2 ? 0.28 : 1;
+      e.untargetable = !revealed && cyc < 2.2;
     }
     // 灼烧叠层衰减：火焰塔每帧会重新点亮 flameOn，离开火舌后才开始掉层
     if (!e.flameOn && e.burnStack > 0) e.burnStack = Math.max(0, e.burnStack - dt * 1.2);
@@ -1164,7 +1184,7 @@ function updateEnemies(dt) {
       e.burnT -= dt;
       // 走统一伤害管线：抗性 / 护盾 / 统计 / 击杀归属（烈焰专精挑战）全部生效
       if (e.burnDmg > 0) dotDamage(e, e.burnDmg, 'fire', e.burnSrc, dt);
-      if (Math.random() < dt * 8) spawnParts(e.x, e.y, 1, '#ff8c42', 1.2, 0.4);
+      if (PresentationRandom.next() < dt * 8) spawnParts(e.x, e.y, 1, '#ff8c42', 1.2, 0.4);
       if (e.hp <= 0) { killEnemy(e); continue; }
       if (e.burnT <= 0) { e.burnDmg = 0; e.burnStack = 0; e.burnSrc = null; }
     }
@@ -1182,13 +1202,14 @@ function updateEnemies(dt) {
       e.poisonT = Math.max(0, e.poisonT - dt);
       // Poison bypasses shields, but resistance, vulnerability and armor still apply.
       dotDamage(e, e.poisonDps * e.poison, 'toxic', e.poisonSrc, activeDt, true);
-      if (Math.random() < dt * 5) spawnParts(e.x, e.y, 1, '#a3e635', 1.1, 0.4);
+      if (PresentationRandom.next() < dt * 5) spawnParts(e.x, e.y, 1, '#a3e635', 1.1, 0.4);
       if (e.dead) continue;
       if (e.poisonT <= 0) { e.poison = 0; e.poisonDps = 0; e.poisonSrc = null; }
     }
     const sp_ = e.def;
+    const bossChanneling=e.boss && BossEncounters.update(e,dt,incapacitated);
     if(sp_.revive && EnemyRemains.updateCaster(e,dt,incapacitated))continue;
-    if (!incapacitated && sp_.emp) {
+    if (!incapacitated && !e.boss && sp_.emp) {
       e.empT -= dt;
       if (e.empT <= 0) {
         e.empT = sp_.emp.cd;
@@ -1243,7 +1264,7 @@ function updateEnemies(dt) {
     }
     const bps = e.boss ? bossPhases(e) : null;
     const sm = e.def.summon || (e.boss && e.phase > 0 && bps[e.phase] && bps[e.phase].summon);
-    if (!incapacitated && sm && !G.buff.noSummon) {   // 剧情奖励「本波停止召唤」的真正落点
+    if (!incapacitated && !e.boss && sm && !G.buff.noSummon) {
       e.summonT += dt;
       if (e.summonT >= sm.every) {
         e.summonT = 0;
@@ -1251,8 +1272,8 @@ function updateEnemies(dt) {
         addText(e.x, e.y - e.r - 14, '召唤！', '#f0abfc');
       }
     }
-    if (G.buff.freeze > 0 && Math.random() < dt * 3) spawnParts(e.x, e.y, 1, '#7fdfff', 0.6, 0.5);
-    if(incapacitated || channeling)continue;
+    if (G.buff.freeze > 0 && PresentationRandom.next() < dt * 3) spawnParts(e.x, e.y, 1, '#7fdfff', 0.6, 0.5);
+    if(incapacitated || channeling || bossChanneling)continue;
     const sp = enemySpeed(e);
     const L = LANES[e.lane];
     const D = G.doors[e.lane];
@@ -1287,7 +1308,7 @@ function updateEnemies(dt) {
           e.atkCd = 0.85;
           const dealt = enemyStrike(e, d, enemyAttackDamage(e));
           if (G.tech.thorn > 0) { applyDamage(e, e.dmg * G.tech.thorn * 0.2, 'kinetic'); G.track && (G.track.doorDmg = G.track.doorDmg || 0); }
-          addText(WALL_X - 30, e.y + rnd(-30, 30), '-' + Math.round(dealt), '#ff6b6b');
+          addText(WALL_X - 30, e.y + PresentationRandom.range(-30, 30), '-' + Math.round(dealt), '#ff6b6b');
           spawnParts(WALL_X - 16, e.y, 6, '#ff9e6b', 2, 0.4); shakeBy(1.6); SFX.hit();
           if (d.hp <= 0) breakDoor(d);
         }
@@ -1329,6 +1350,7 @@ function updateEnemies(dt) {
       }
     }
     e.y = clamp(e.y, ARENA_TOP + 8, ARENA_BOT - 8);
+    e.x = clamp(e.x, 8, ROOM_X1 - 8);
   }
 }
 function pickRoomTarget(e) {
@@ -1385,6 +1407,7 @@ function destroyBuilding(b) {
 function killEnemy(e) {
   if (e.dead) return;
   e.dead = true;
+  BossEncounters.cancel(e);
   EnemyRemains.cancel(e);EnemyParasite.cancel(e);EnemyRemains.record(e);
   G.stats.kills++;
   G.combo = (G.combo || 0) + 1; G.comboT = 3;
@@ -1407,7 +1430,7 @@ function killEnemy(e) {
   // 灵魂光球上升效果
   if (soulGain > 0) {
     for (let i = 0; i < 3; i++) {
-      spawnParts(e.x + rnd(-10, 10), e.y + rnd(-10, 10), 1, '#c77dff', 1.5 + i * 0.5, 1.2);
+      spawnParts(e.x + PresentationRandom.range(-10, 10), e.y + PresentationRandom.range(-10, 10), 1, '#c77dff', 1.5 + i * 0.5, 1.2);
     }
   }
   // 普通击杀微震
@@ -1497,7 +1520,7 @@ function updateTowers(dt) {
       b.zcd = (b.zcd || 0) - dt;
       if (b.zcd <= 0) {
         const t = findTarget(b, s.zapRange, 'front');
-        if (t) { b.zcd = 1.4; b.fireFx=.2; b.recoil=1; applyDamage(t, s.zapDmg * towerDmgMul(b), 'shock', b); addEffect({ type: 'arc', x: b.x, y: b.y, x2: t.x, y2: t.y, life: 0.2, maxLife: 0.2 }); SFX.zap(); }
+        if (t) { b.zcd = 1.4; b.fireFx=.2; b.recoil=1; applyDamage(t, s.zapDmg * towerDmgMul(b), 'shock', b); addEffect({ type: 'arc', x: b.x, y: b.y, x2: t.x, y2: t.y, life: 0.2, maxLife: 0.2 }); SFX.weapon('generator'); }
       }
     }
     if (!b.def.tower || !fire) continue;
@@ -1507,6 +1530,7 @@ function updateTowers(dt) {
     if (b.type === 'flame') {
       const targets = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       b.flameOn = targets.length > 0;
+      if (b.flameOn) SFX.weapon('flame');
       if (targets.length) b.angle = Math.atan2(targets[0].y - b.y, targets[0].x - b.x);
       targets.forEach(e => {
         // 灼烧叠层：仅在持续被喷到期间累积，离开火舌后会衰减（以前叠满 5 层就永久不减）
@@ -1521,12 +1545,13 @@ function updateTowers(dt) {
         // 接触伤害交给统一管线：护盾/固定减伤/抗性/统计全部生效，且不再每帧刷数字
         dotDamage(e, d, 'fire', b, dt);
       });
-      if (targets.length && Math.random() < dt * 22) spawnParts(rnd(b.x - 20, b.x + 20), rnd(b.y - 20, b.y + 20), 1, '#ff8c42', 1.4, 0.5);
+      if (targets.length && PresentationRandom.next() < dt * 22) spawnParts(PresentationRandom.range(b.x - 20, b.x + 20), PresentationRandom.range(b.y - 20, b.y + 20), 1, '#ff8c42', 1.4, 0.5);
       continue;
     }
     if (s.gravity) {
       const targets = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
       b.gravOn = targets.length > 0;
+      if (b.gravOn) SFX.weapon('gravity');
       const gm = s.dmg * towerDmgMul(b) * rate;
       targets.forEach(e => {
         const dx = b.x - e.x, dy = b.y - e.y, d = Math.hypot(dx, dy) || 1;
@@ -1534,7 +1559,7 @@ function updateTowers(dt) {
         e.slow = Math.max(e.slow || 0, s.gravSlow); e.slowT = Math.max(e.slowT || 0, 0.4);
         dotDamage(e, gm, 'energy', b, dt);
       });
-      if (targets.length && Math.random() < dt * 14) spawnParts(rnd(b.x - 16, b.x + 16), rnd(b.y - 16, b.y + 16), 1, '#818cf8', 1.3, 0.5);
+      if (targets.length && PresentationRandom.next() < dt * 14) spawnParts(PresentationRandom.range(b.x - 16, b.x + 16), PresentationRandom.range(b.y - 16, b.y + 16), 1, '#818cf8', 1.3, 0.5);
       continue;
     }
     b.cd -= dt * rate;
@@ -1560,7 +1585,7 @@ function updateTowers(dt) {
       addEffect({ type: 'ring', x: b.x, y: b.y, r: s.range, life: 0.3, maxLife: 0.3, color: '#f0abfc' });
       b.fireFx = 0.25; b.recoil = 1; // 开火脉冲 + 后座
       spawnParts(b.x, b.y, 5, b.def.color, 1.5, 0.3);
-      SFX.shoot();
+      SFX.weapon('sonic');
       continue;
     }
     fire_(b, t, s);
@@ -1600,7 +1625,7 @@ function fire_(b, t, s) {
         }
       }
     });
-    SFX.laser();
+    SFX.weapon('laser');
   } else if (b.type === 'tesla') {
     let cur = t; const hit = new Set([t]); const chain = [t];
     for (let i = 1; i < (s.chain || 3); i++) {
@@ -1623,7 +1648,7 @@ function fire_(b, t, s) {
       }
       px = e.x; py = e.y;
     });
-    SFX.zap();
+    SFX.weapon('tesla');
   } else if (b.type === 'prism') {
     const n = s.split || 3;
     const pool = G.enemies.filter(e => !e.dead && !e.untargetable && dist(e, b) <= s.range);
@@ -1633,7 +1658,7 @@ function fire_(b, t, s) {
       addEffect({ type: 'laser', x: b.x, y: b.y, x2: e.x, y2: e.y, life: 0.16, maxLife: 0.16, color: '#67e8f9' });
       applyDamage(e, s.dmg * mul * critRoll(b), dtype, b);
     });
-    SFX.laser();
+    SFX.weapon('prism');
   } else {
     const nm = s.multi || 1;
     const bspd = b.type === 'frost' ? 390 : (b.type === 'missile' ? 330 : (b.type === 'poison' ? 470 : 640));
@@ -1652,7 +1677,7 @@ function fire_(b, t, s) {
     const tipX = b.x + Math.cos(b.angle) * 28;
     const tipY = b.y + Math.sin(b.angle) * 28;
     spawnParts(tipX, tipY, 3, b.def.color, 1.2, 0.25);
-    SFX.shoot();
+    SFX.weapon(b.type);
   }
 }
 function triggerReaction(e, rx, baseDmg, src) {
@@ -1727,7 +1752,7 @@ function dotDamage(e, dps, dtype, src, dt, bypassShield = false) {
     e.dotAcc = (e.dotAcc || 0) + d;
     e.dotT = (e.dotT || 0) + dt;
     if (e.dotT >= DOT_MERGE_INTERVAL) {
-      addText(e.x + rnd(-5, 5), e.y - e.r, Math.round(e.dotAcc), (DMG[dtype] && DMG[dtype].color) || '#ffd6d6');
+      addText(e.x + PresentationRandom.range(-5, 5), e.y - e.r, Math.round(e.dotAcc), (DMG[dtype] && DMG[dtype].color) || '#ffd6d6');
       e.dotAcc = 0; e.dotT = 0;
       emitHitFx(e,src);
       touchElement(e, dtype, dps * DOT_MERGE_INTERVAL,src);
@@ -1741,7 +1766,7 @@ function dotDamage(e, dps, dtype, src, dt, bypassShield = false) {
 function applyDamage(e, dmg, dtype, src, chain, silent, damageInterval, bypassShield = false) {
   if (e.dead || (e.phaseBarrier || 0)>0 || !Number.isFinite(dmg) || dmg<=0) return 0;
   const tm = typeMul(e, dtype);
-  let d = dmg * tm;
+  let d = dmg * tm * (e.boss ? BossEncounters.damageMultiplier(e) : 1);
   if (e.flat) d = silent ? Math.max(0,d-e.flat*(damageInterval || 1)) : Math.max(1,d-e.flat);
   // 破甲词条按命中结算，不限伤害类型（旧实现只认 frost，腐蚀炮的破甲永不生效）
   if (!silent && src && src.def && typeof src.def.stat === 'function') {
@@ -1779,7 +1804,7 @@ function applyDamage(e, dmg, dtype, src, chain, silent, damageInterval, bypassSh
   if (!silent && e.def && e.def.reflect && src && src.def && d>0) {
     const reflected=d*e.def.reflect;
     damageTarget(src,reflected);
-    if(Math.random()<0.3) addText(e.x,e.y-44,'反弹 '+Math.round(reflected),'#e2e8f0');
+    if(PresentationRandom.next()<0.3) addText(e.x,e.y-44,'反弹 '+Math.round(reflected),'#e2e8f0');
   }
   if (silent) {
     if (e.hp <= 0) {
@@ -1805,7 +1830,7 @@ function applyDamage(e, dmg, dtype, src, chain, silent, damageInterval, bypassSh
   const crit = tm > 1.05 || tm < 0.95;
   // 大伤害数字使用更醒目的颜色
   const dmgColor = d > 200 ? '#ff4d6d' : (d > 80 ? '#ffa500' : (tm > 1.05 ? '#ffe066' : (tm < 0.95 ? '#94a3b8' : '#ffffff')));
-  addText(e.x + rnd(-6, 6), e.y - e.r, Math.round(d), dmgColor);
+  addText(e.x + PresentationRandom.range(-6, 6), e.y - e.r, Math.round(d), dmgColor);
   spawnParts(e.x, e.y, crit ? 5 : 3, crit ? '#ffe066' : '#ffd6d6', crit ? 3 : 2, 0.35);
   if (e.hp <= 0) {
     if (src && src.kills !== undefined) {
@@ -1874,7 +1899,7 @@ function buildWaveQueue(n) {
   for (let i = 0; i < cnt; i++) q.push(pick(pool));
   const isFinalWave = n >= finalWave() && !(G && G.mode === 'unlimited' && n > finalWave());
   // 终局波只刷一只终焉梦魇（与「击败【终焉梦魇】即可通关」的口径一致）；无尽模式 60 波以后永远走轮换
-  const bosses = n % 5 === 0 ? (isFinalWave ? 1 : Math.min(3, 1 + Math.floor(n / 22))) : 0;
+  const bosses = bossCountForWave(n);
   const bossList = [];
   const bossType = isFinalWave ? 'final' : 'boss';
   for (let i = 0; i < bosses; i++) bossList.push(bossType);
@@ -1905,6 +1930,8 @@ function startWave() {
   G.waveStartSouls = G.souls; G.waveSpentSouls = 0;
   G.waveRuneIds = [];
   if (!resumeSavedWave) G.wave++;
+  G.bossSpawnSerial=0;
+  if(!resumeSavedWave)G.bossStageRewards={};
   if (typeof Music !== 'undefined') Music.play(Music.trackForWave(G.wave));
   if (!resumeSavedWave) G.event = rollEvent();
   const { rest, bossList } = buildWaveQueue(G.wave);
@@ -2019,7 +2046,9 @@ function endWave() {
     if (s.interest) interest += G.gold * s.interest;
     if (s.souls) soulsFromBank += s.souls;
   });
+  const rawInterest=interest;
   interest = EconomyBalance.interest(interest,G.gold,totalGoldRate());
+  G.buildings.forEach(b=>{const s=bstat(b);if(s.interest && rawInterest>0)CombatTelemetry.add(b,'gold',interest*G.gold*s.interest/rawInterest);if(s.souls)CombatTelemetry.add(b,'souls',s.souls);});
   if (interest > 0) { G.gold += interest; addText(BED_CX - 100, BED_CY + 46, '银行利息 +' + Math.round(interest), '#ffc300'); }
   if (soulsFromBank > 0) { G.souls += soulsFromBank; addText(BED_CX - 100, BED_CY + 64, '+' + soulsFromBank + '🔮', '#c77dff'); }
   const bonus = Math.round((45 + G.wave * 18) * (G.event.eff.rewardMul || 1));
@@ -2030,11 +2059,11 @@ function endWave() {
   flash = 0.2;
   // 金币雨粒子
   for (let i = 0; i < 20; i++) {
-    spawnParts(rnd(ROOM_X0, ROOM_X1), rnd(ARENA_TOP, ARENA_BOT), 1, '#ffd166', rnd(1, 3), rnd(0.6, 1.2));
+    spawnParts(PresentationRandom.range(ROOM_X0, ROOM_X1), PresentationRandom.range(ARENA_TOP, ARENA_BOT), 1, '#ffd166', PresentationRandom.range(1, 3), PresentationRandom.range(0.6, 1.2));
   }
   // 治愈光球
   for (let i = 0; i < 8; i++) {
-    spawnParts(rnd(ROOM_X0, ROOM_X1), rnd(ARENA_TOP, ARENA_BOT), 1, '#7cf39a', rnd(0.8, 2), rnd(0.5, 1));
+    spawnParts(PresentationRandom.range(ROOM_X0, ROOM_X1), PresentationRandom.range(ARENA_TOP, ARENA_BOT), 1, '#7cf39a', PresentationRandom.range(0.8, 2), PresentationRandom.range(0.5, 1));
   }
   SFX.win();
   setTip('第 ' + G.wave + ' 波清除！+' + bonus + ' 金币。趁机扩建防线。', 5);
@@ -2060,13 +2089,11 @@ function useSkill(key) {
   SFX.skill();
   if (key === 'meteor') {
     const dmg = 200 + G.wave * 50;
-    const rs = G.runStamp;   // runStamp 守卫：重开局后旧陨石回调不再打到新一局的敌人与统计上
+    const volley={sounded:false};
     G.enemies.forEach(e => {
       if (e.dead) return;
-      addEffect({ type: 'meteor', x: e.x + rnd(-40, 40), y: e.y - 400, tx: e.x, ty: e.y, life: 0.5, maxLife: 0.5 });
-      setTimeout(() => { if (G && G.runStamp === rs && !e.dead) { applyDamage(e, dmg, 'fire'); spawnParts(e.x, e.y, 18, '#ff8c42', 4, 0.7); } }, 450);
+      addEffect({ type: 'meteor', x: e.x + PresentationRandom.range(-40, 40), y: e.y - 400, tx: e.x, ty: e.y, life: 0.5, maxLife: 0.5,target:e,damage:dmg,delay:.45,volley });
     });
-    setTimeout(() => { shakeBy(14); SFX.boom(); }, 460);
     addText(ROOM_X0 + 300, DOOR_MID_Y() - 170, '☄️ 陨石雨！', '#ff8c42', true);
   } else if (key === 'freeze') {
     G.buff.freeze = 4.5;
@@ -2120,14 +2147,26 @@ function updateEffects(dt) {
     const e = G.effects[i];
     const activeDt = Math.min(dt,Math.max(0,e.life));
     e.life -= dt;
-    if (e.type === 'meteor') { e.x += (e.tx - e.x) * dt * 5; e.y += (e.ty - e.y) * dt * 5; }
+    if (e.type === 'meteor') {
+      e.x += (e.tx - e.x) * dt * 5;e.y += (e.ty - e.y) * dt * 5;
+      if(e.target&&!e.detonated){
+        e.delay-=activeDt;
+        if(e.delay<=1e-8){
+          e.detonated=true;
+          if(!e.target.dead&&G.enemies.includes(e.target)){
+            applyDamage(e.target,e.damage,'fire');spawnParts(e.target.x,e.target.y,18,'#ff8c42',4,.7);
+            if(!e.volley.sounded){e.volley.sounded=true;shakeBy(14);SFX.boom();}
+          }
+        }
+      }
+    }
     if (e.type === 'boom') { const mx = (e.max != null) ? e.max : e.r; e.r = mx * (1 - e.life / e.maxLife); }
     if (e.type === 'curse') {
       const damage = (e.dps == null ? 26 : e.dps) * activeDt;
       for (const b of G.buildings.slice()) { if (dist(b, e) < e.r && damageTarget(b, damage)) destroyBuilding(b); }
       G.doors.forEach(d => { if (dist({ x: WALL_X, y: d.y }, e) < e.r) { damageTarget(d, damage); if (d.hp <= 0) breakDoor(d); } });
       if (dist({ x: BED_CX, y: BED_CY }, e) < e.r && damageTarget(G.bed, damage)) gameOver();
-      if (Math.random() < dt * 10) spawnParts(e.x + rnd(-e.r, e.r), e.y + rnd(-e.r, e.r), 1, '#94a3b8', 0.8, 0.6);
+      if (PresentationRandom.next() < dt * 10) spawnParts(e.x + PresentationRandom.range(-e.r, e.r), e.y + PresentationRandom.range(-e.r, e.r), 1, '#94a3b8', 0.8, 0.6);
     }
     if (e.life <= 0) G.effects.splice(i, 1);
   }
@@ -2260,6 +2299,7 @@ function step(dt) {
     const ts = DeepDream.getTimeScale();
     if (ts && ts !== 1) dt *= ts;
   }
+  CombatTelemetry.tick(dt);
   if (G.fate.bedRegen) G.bed.hp = Math.min(G.bed.maxHp, G.bed.hp + G.fate.bedRegen * dt);
   if (G.resDirty) { computeResonance(); G.resDirty = false; }
   updateWave(dt);
@@ -2307,7 +2347,7 @@ function drawLottery(n, currency) {
   for (let i = 0; i < n; i++) {
     const item = rollLotteryItem();
     let txt = '';
-    try { txt = item.apply() || ''; } catch (e) { txt = '奖励已生效'; }
+    try { txt = LotteryRewards.settle(item); } catch (e) { console.warn('Lottery reward:',item.id,e);txt = '奖励结算异常，请导出存档反馈'; }
     results.push({ id: item.id, r: item.r, name: item.name, icon: item.icon, desc: item.desc, txt });
   }
   G.lastDraw = results;
@@ -2373,6 +2413,7 @@ function socketRune(b, runeId, slot) {
   if (slot < 0 || slot >= slots) { SFX.err(); setTip('没有空的符文槽，升级「符文宗师」可增加槽位', 3); return false; }
   const old = b.runes[slot];
   b.runes[slot] = G.runeBag.splice(idx, 1)[0];
+  b.__sf = -1;
   if (old) G.runeBag.push(old);
   SFX.up(); setTip('已镶嵌「' + b.runes[slot].name + '」到 ' + buildName(b), 3);
   return true;
@@ -2380,6 +2421,7 @@ function socketRune(b, runeId, slot) {
 function unsocketRune(b, slot) {
   if (!b || !b.runes || !b.runes[slot]) return false;
   G.runeBag.push(b.runes[slot]); b.runes[slot] = null;
+  b.__sf = -1;
   SFX.coin(); return true;
 }
 function upgradeRune(r) {
@@ -2391,6 +2433,7 @@ function upgradeRune(r) {
   // 旧符文照常记账，回滚不影响
   if ((G.waveRuneIds || []).indexOf(r.id) < 0) G.waveSpentSouls += c;
   r.lv++;
+  G.buildings.forEach(b => { if ((b.runes || []).includes(r)) b.__sf = -1; });
   SFX.up(); setTip('符文强化至 +' + r.lv + '（效果 +' + Math.round((runeMul(r) - 1) * 100) + '%）', 3);
   return true;
 }
@@ -2405,6 +2448,7 @@ function salvageRune(runeId) {
       for (let i = 0; i < (b.runes || []).length; i++) {
         if (b.runes[i] && b.runes[i].id === runeId) {
           const rr = b.runes[i]; b.runes[i] = null;
+          b.__sf = -1;
           const v = runeSalvage(rr); G.souls += v;
           // 本波掉落的符文随回滚移除，其分解所得也要一起回滚，否则「掉→存→读」能刷灵魂
           if ((G.waveRuneIds || []).indexOf(rr.id) < 0) G.waveSpentSouls -= v;

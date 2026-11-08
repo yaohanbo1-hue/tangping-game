@@ -5,7 +5,7 @@
     "kind": "original-procedural-canvas",
     "url_or_tool": "enemy-art.js",
     "creator": "Codex for yaohanbo1-hue/tangping-game",
-    "license": "MIT (repository LICENSE)",
+    "license": "Apache-2.0 (repository LICENSE; historical notice in LICENSES/MIT-legacy.txt)",
     "attribution": "No external raster art or enemy fonts."
   },
   "technical": {

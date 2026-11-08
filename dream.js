@@ -285,7 +285,7 @@ const NeutralCreatures = {
       wavesProtected: 0,
       stealAccum: 0,
       rewarded: false,
-      bobPhase: Math.random() * Math.PI * 2,
+      bobPhase: PresentationRandom.next('ui') * Math.PI * 2,
     };
 
     this._creatures.push(creature);
@@ -834,12 +834,12 @@ const FourthWall = {
     this._state.chatMessages.push({
       text,
       timer: 6,
-      y: 0.3 + Math.random() * 0.4, // 随机垂直位置
+      y: PresentationRandom.range(0.3, 0.7, 'ui'),
     });
     // 长文案交给 UI 的聊天气泡；短句额外飘一行字增加存在感（剧情框已讲过时不重复）
     const silent = !!(evt && evt.silent);
     if (!silent && text.length <= 24 && typeof addText === 'function' && typeof ROOM_X0 !== 'undefined') {
-      addText(ROOM_X0 + 200, 200 + Math.random() * 200, '👁 ' + text, '#b91c1c', true);
+      addText(ROOM_X0 + 200, PresentationRandom.range(200, 400, 'ui'), '👁 ' + text, '#b91c1c', true);
     }
     EventBus.emit('fourthWall:chatMessage', { text, title: (evt && evt.title) || '梦魇', silent: !!(evt && evt.silent) });
   },
@@ -1212,6 +1212,10 @@ const DreamSound = {
 
   /** @type {string[]} 已触发过的旋律 id */
   _triggeredMelodies: [],
+  resetForRun() {
+    this._clickHistory=[];this._triggeredMelodies=[];this._melodyTriggered=false;this._ambientDepth=0;
+    if(typeof SFX!=='undefined'){SFX.stopAll();SFX.ambient(0);}
+  },
 
   /**
    * 不同伤害类型的音效参数
@@ -1269,7 +1273,7 @@ const DreamSound = {
    */
   _tone(freq, dur, type, vol, slide) {
     if (typeof SFX !== 'undefined' && typeof SFX.tone === 'function') {
-      SFX.tone(freq, dur, type, vol, slide);
+      SFX.tone(freq, dur, type, vol, slide, 'ui');
       return;
     }
     if (!this._ctx) return;
@@ -1292,6 +1296,7 @@ const DreamSound = {
    * @param {string} type - 伤害类型（kinetic/frost/energy/shock/fire/toxic）
    */
   playDamageSound(type) {
+    if (typeof SFX !== 'undefined') { SFX.impact(type); return; }
     const params = this.DMG_SOUNDS[type] || this.DMG_SOUNDS.kinetic;
     if (!params) return;
     const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
@@ -1324,8 +1329,8 @@ const DreamSound = {
       const tail = hist.slice(hist.length - seq.length);
       if (seq.every((k, i) => k === tail[i])) {
         this._triggeredMelodies.push(mel.id);
-        this._playMelody(mel);
         EventBus.emit('sound:secretMelody', mel);
+        this._playMelody(mel);
         return true;
       }
     }
@@ -1338,14 +1343,15 @@ const DreamSound = {
    * @private
    */
   _playMelody(mel) {
+    const run = G;
     const notes = [523, 587, 659, 698, 784, 880]; // C5 D5 E5 F5 G5 A5
     notes.forEach((f, i) => {
-      setTimeout(() => { this._tone(f, 0.3, 'triangle', 0.12, 0); }, i * 180);
+      setTimeout(() => { if(G===run && !G.over)this._tone(f, 0.3, 'triangle', 0.12, 0); }, i * 180);
     });
-    setTimeout(() => {
-      const got = this.grantMelodyReward(mel.rewardSpec, mel.name);
-      EventBus.emit('sound:melodyReward', { melody: mel.id, name: mel.name, got });
-    }, notes.length * 180 + 200);
+    // Gameplay rewards commit with discovery. Audio scheduling must not decide
+    // whether a save, background tab or new run loses/duplicates the reward.
+    const got = this.grantMelodyReward(mel.rewardSpec, mel.name);
+    EventBus.emit('sound:melodyReward', { melody: mel.id, name: mel.name, got });
   },
 
   /**
@@ -1360,8 +1366,8 @@ const DreamSound = {
       return got;
     }
     // 金币 / 灵魂
-    if (spec.gold) { G.gold += spec.gold; got.push('+' + spec.gold + '💰'); }
-    if (spec.souls) { G.souls += spec.souls; got.push('+' + spec.souls + '🔮'); }
+    if (spec.gold) { G.gold += spec.gold;G.waveSpentGold-=spec.gold;got.push('+' + spec.gold + '💰'); }
+    if (spec.souls) { G.souls += spec.souls;G.waveSpentSouls-=spec.souls;got.push('+' + spec.souls + '🔮'); }
     // 床铺回满
     if (spec.healBed && G.bed) { G.bed.hp = G.bed.maxHp; got.push('床铺回满'); }
     // 全体修复
@@ -1420,6 +1426,9 @@ const DreamSound = {
    * @param {number} depth - 深度（0=浅层，1/2/3=深层）
    */
   setAmbient(depth) {
+    if (typeof SFX !== 'undefined') {
+      this._ambientDepth = depth; SFX.ambient(depth); return;
+    }
     if (!this._ctx) this._ctx = (typeof SFX !== 'undefined') ? SFX.ctx : null;
     if (!this._ctx) return;
     this._ambientDepth = depth;
@@ -1902,12 +1911,13 @@ const DreamFragments = {
   },
 
   isRevealed(fragment) {
-    return !!fragment && (!fragment.revealWave || !!G && G.wave >= fragment.revealWave);
+    return !!fragment && StoryKnowledge.canReveal(fragment.revealWave);
   },
 
   visibleFragment(fragment) {
+    if(!fragment)return null;
     return this.isRevealed(fragment) ? fragment : Object.assign({}, fragment, {
-      name: '模糊的记忆', icon: '❓', desc: '内容尚未显影', story: '这段记忆仍被雨声遮住。',
+      name: '模糊的记忆', title: '模糊的记忆', icon: '❓', desc: '内容尚未显影', story: '这段记忆仍被雨声遮住。', text: '这段记忆仍被雨声遮住。',
     });
   },
 
@@ -1924,10 +1934,10 @@ const DreamFragments = {
       percentage: total > 0 ? Math.round(collected / total * 100) : 0,
       stories: this.FRAGMENT_DEFS.map(f => ({
         id: f.id,
-        name: f.revealWave && (!G || G.wave < f.revealWave) ? '???' : f.name,
-        icon: f.revealWave && (!G || G.wave < f.revealWave) ? '❓' : f.icon,
-        desc: f.revealWave && (!G || G.wave < f.revealWave) ? '记录尚未显影' : f.desc,
-        story: f.revealWave && (!G || G.wave < f.revealWave)
+        name: !this.isRevealed(f) ? '???' : f.name,
+        icon: !this.isRevealed(f) ? '❓' : f.icon,
+        desc: !this.isRevealed(f) ? '记录尚未显影' : f.desc,
+        story: !this.isRevealed(f)
           ? '???'
           : this._collected && this._collected.has(f.id) ? f.story : '???',
         unlocked: this.isRevealed(f) && !!(this._collected && this._collected.has(f.id)),
@@ -1972,7 +1982,7 @@ const DreamDiary = {
     });
     EventBus.on('fragment:collect', (frag) => {
       if (frag) {
-        this.addEntry('fragment', '收集到「' + frag.name + '」：' + frag.story);
+        this.addEntry('fragment', '收集到「' + frag.name + '」：' + frag.story, { fragmentId: frag.id });
       }
     });
     EventBus.on('deepDream:enter', (level) => {
@@ -2012,16 +2022,17 @@ const DreamDiary = {
    * @param {string} type - 条目类型 key（story/battle/discover/mercy/fragment/npc/deep/fourth/custom）
    * @param {string} content - 条目内容
    */
-  addEntry(type, content) {
+  addEntry(type, content, source = {}) {
     if (!this._entries) this._entries = [];
     const typeDef = this.ENTRY_TYPES[type] || this.ENTRY_TYPES.custom;
     const entry = {
-      id: 'diary_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
+      id: 'diary_' + Date.now() + '_' + Math.floor(PresentationRandom.next('ui') * 10000),
       type,
       typeDef,
       content,
       wave: (typeof G !== 'undefined' && G.wave) ? G.wave : 0,
       timestamp: Date.now(),
+      fragmentId: source.fragmentId || null,
     };
     this._entries.push(entry);
     EventBus.emit('diary:add', entry);
@@ -2034,8 +2045,14 @@ const DreamDiary = {
    */
   getEntries(filterType) {
     if (!this._entries) return [];
-    if (filterType) return this._entries.filter(e => e.type === filterType);
-    return this._entries.slice();
+    return this._entries.filter(e=>e && typeof e==='object' && (!filterType || e.type===filterType)).map(entry=>{
+      const typeDef=this.ENTRY_TYPES[entry.type] || this.ENTRY_TYPES.custom;
+      const result={...entry,typeDef,wave:Math.max(0,Math.min(9999,Math.floor(+entry.wave || 0)))};
+      const fragment=DreamFragments.FRAGMENT_DEFS.find(f=>f.id===entry.fragmentId || (entry.type==='fragment' && String(entry.content).includes('「'+f.name+'」')));
+      if(fragment){const visible=DreamFragments.visibleFragment(fragment);result.content='收集到「'+visible.name+'」：'+visible.story;}
+      else if(entry.wave>=55 && ['story','fourth'].includes(entry.type) && !StoryKnowledge.canReveal(55))result.content='这页记录尚未显影。阅读剧情模式对应篇章后可回看。';
+      return result;
+    });
   },
 
   /**
@@ -2109,7 +2126,7 @@ const DreamEngine = {
     this._neutralSpawnTimer = 0;
     NPCGuardians.initNPCs();
     FourthWall.initFourthWall();
-    DreamSound.initSound();
+    DreamSound.resetForRun();DreamSound.initSound();
     MercyPath.init();
     DreamFragments.initFragments();
     DreamDiary.initDiary();
