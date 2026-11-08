@@ -54,13 +54,7 @@ function save(name,url) {fs.writeFileSync(path.join(output,name+'.png'),Buffer.f
         for(const level of [6,12,30])grades.push(digest(fake(type,null,level)).hash);
         rows.push({type,hashes,animations,gradeHashes:grades});
       });
-      const fitted=[];
-      for(const type of BuildingArt.types)for(const branch of [null,'a','b']){const b=fake(type,branch);BuildingArt.draw(sink,b,bstat(b),0,0,{motion:false});fitted.push(b);}
-      let warmGradients=0;const gradient=CanvasRenderingContext2D.prototype.createLinearGradient;
-      CanvasRenderingContext2D.prototype.createLinearGradient=function(...args){warmGradients++;return gradient.apply(this,args);};
-      try{for(let frame=0;frame<30;frame++)for(const b of fitted){b.angle=frame*.2;BuildingArt.draw(sink,b,bstat(b),frame/10,0,{motion:true});}}
-      finally{CanvasRenderingContext2D.prototype.createLinearGradient=gradient;}
-      return {rows,idle:sheet.toDataURL(),states:states.toDataURL(),shots:shots.toDataURL(),cache:BuildingArt.stats(),warmGradients};
+      return {rows,idle:sheet.toDataURL(),states:states.toDataURL(),shots:shots.toDataURL(),cache:BuildingArt.stats()};
     });
     for(const row of catalog.rows) {
       assert.equal(new Set(row.hashes.map(h=>h.hash)).size,3,row.type+' has three distinct silhouettes');
@@ -69,7 +63,6 @@ function save(name,url) {fs.writeFileSync(path.join(output,name+'.png'),Buffer.f
       assert.equal(new Set(row.gradeHashes).size,3,row.type+' evolves at high levels');
     }
     assert.equal(catalog.rows.length,16);assert.ok(catalog.cache.entries<=144&&catalog.cache.bytes<5.4e6);
-    assert.equal(catalog.warmGradients,0,'brushed metal and lenses bake gradients only when building cached components');
     save('catalog-idle',catalog.idle);save('catalog-states',catalog.states);save('catalog-working',catalog.shots);
     const integration=await page.evaluate(()=>{
       newGame();G.experience='combat';paused=true;G.gold=1e10;G.power=1e10;G.souls=1e5;
@@ -92,7 +85,7 @@ function save(name,url) {fs.writeFileSync(path.join(output,name+'.png'),Buffer.f
     assert.equal(warmed,0,'aiming and idle frames reuse cached components');save('battlefield-native',integration.native);
     await page.setViewportSize({width:844,height:390});await page.waitForTimeout(250);await page.screenshot({path:path.join(output,'mobile-context.png')});
     assert.deepEqual(errors,[]);
-    const report={engine:browser.version(),headless:true,rows:catalog.rows,cache:catalog.cache,warmGradients:catalog.warmGradients,integration:{same:integration.same,cache:integration.cache,warmedRebuilds:warmed},errors};
+    const report={engine:browser.version(),headless:true,rows:catalog.rows,cache:catalog.cache,integration:{same:integration.same,cache:integration.cache,warmedRebuilds:warmed},errors};
     fs.writeFileSync(path.join(output,'validation.json'),JSON.stringify(report,null,2));console.log('Building art: 48 variants, 16 animation/state/level families and live render invariants passed');
   } finally {await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;server.close();});

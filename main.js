@@ -171,10 +171,6 @@ window.addEventListener('keydown', e => {
   }
 });
 function bindUI() {
-  if($('gameGraphicsQuality'))$('gameGraphicsQuality').onchange=ev=>Graphics.set(ev.target.value);
-  for(const [id,bus]of [['gameMasterVolume','master'],['gameMusicVolume','music'],['gameCombatVolume','combat'],['gameUiVolume','ui'],['gameAmbienceVolume','ambience']]) {
-    if($(id)){$(id).oninput=ev=>bus==='music'?Music.setVolume(ev.target.value,false):Music.setBusVolume(bus,ev.target.value,false);$(id).onchange=()=>Music.persist();}
-  }
   $('btnSkip').onclick = () => Cmd.skipPrep();
   $('btnSkip2').onclick = () => Cmd.skipPrep();
   $('btnTech').onclick = () => togglePanel('techPanel');
@@ -246,14 +242,14 @@ function buildHelp() {
     '</table>' +
     '<div class="hnote">右下角圆点标示炮塔的伤害类型。抗性可被「能量超载」科技削减。</div>' +
     '<h4>精英词缀</h4><div class="afflist">' +
-    AFFIX_KEYS.map(k => '<span class="aff" style="border-color:' + AFFIX[k].color + '55">' + AFFIX[k].icon + ' <b style="color:' + AFFIX[k].color + '">' + AFFIX[k].name + '</b> ' + AFFIX[k].desc + '<small class="enemy-counter">应对：'+EnemyCounterplay.affixes[k]+'</small></span>').join('') +
+    AFFIX_KEYS.map(k => '<span class="aff" style="border-color:' + AFFIX[k].color + '55">' + AFFIX[k].icon + ' <b style="color:' + AFFIX[k].color + '">' + AFFIX[k].name + '</b> ' + AFFIX[k].desc + '</span>').join('') +
     '</div>' +
     '<h4>敌人特殊机制</h4><div class="afflist">' +
     '<span class="aff">🦔 <b>钻地</b> 无视铁门，直接从地下潜入房间</span>' +
     '<span class="aff">📴 <b>EMP</b> 周期性瘫痪附近炮塔数秒，优先集火</span>' +
     '<span class="aff">🎭 <b>拟态</b> 未靠近建筑时无法被锁定</span>' +
     '<span class="aff">☠️ <b>诅咒</b> 死亡后留下持续伤害建筑的区域</span>' +
-    '<span class="aff">🪱 <b>寄生</b> 0.6秒前摇后汲取8秒，冻结／眩晕或超出260范围可打断</span>' +
+    '<span class="aff">🪱 <b>寄生</b> 附着炮塔持续吸血直至摧毁</span>' +
     '<span class="aff">👁️ <b>守望</b> 为周围友军持续附加护盾</span>' +
     '<span class="aff">💀 <b>亡魂复活</b> 定期复活小怪</span>' +
     '<span class="aff">🐺 <b>霜噬</b> 减速附近炮塔射速</span>' +
@@ -277,9 +273,6 @@ function buildHelp() {
     '<span class="aff">🧊 <b>碎冰弹</b>：冰霜 + 动能 → 概率定身</span>' +
     '<span class="aff">🌩️ <b>弧光场</b>：能量 + 电磁 → 攻击额外弹射一个目标</span>' +
     '</div>' +
-    '<h4>Boss 机制与反制</h4><div class="afflist">' +
-    Object.entries(BossEncounters.defs).map(([key,def])=>'<span class="aff"><b>'+BOSS_DEFS[key].name+' · '+def.name+'</b>：蓄力'+def.windup+'秒。'+def.hint+'</span>').join('')+
-    '<span class="aff">Boss韧性：武器眩晕累计1.2秒后抵抗武器眩晕4秒，主动时间冻结仍可完整生效并打断。弱点显露：打断后受到伤害增加20%；机械核心过热时增加50%。阶段突破提供抢修或冷却返还，每波每Boss阶段只领取一次，读档不重复。</span></div>'+
     '<h4>新增炮塔</h4><div class="afflist">' +
     '<span class="aff">🧪 <b>毒液喷射塔</b>：叠加毒层持续掉血，无视护盾侵蚀生命</span>' +
     '<span class="aff">📢 <b>声波共振塔</b>：扇形声波同时打击射程内全部梦魇并击退</span>' +
@@ -328,7 +321,7 @@ function buildHelp() {
       if (d.buildingBonus) sp.push('建筑克星x' + d.buildingBonus); if (d.devour) sp.push('吞噬');
       if (d.summon) sp.push('召唤'); if (d.split) sp.push('分裂'); if (d.explode) sp.push('自爆');
       if (d.shieldself) sp.push('自带护盾'); if (d.vamp) sp.push('吸血'); if (d.frenzy) sp.push('残血狂暴');
-      return '<span class="aff enemy-entry">' + uiEnemy(k,d.icon) + '<span><b>' + d.name + '</b> ' + rw.join(' ') + (sp.length ? ' <em>' + sp.join('·') + '</em>' : '') + '<small class="enemy-counter">应对：'+enemyCounterHint(k)+'</small></span></span>';
+      return '<span class="aff enemy-entry">' + uiEnemy(k,d.icon) + '<span><b>' + d.name + '</b> ' + rw.join(' ') + (sp.length ? ' <em>' + sp.join('·') + '</em>' : '') + '</span></span>';
     }).join('') +
     '</div>' +
     '<h4>经济规则</h4><div class="hnote">' +
@@ -469,7 +462,6 @@ const Mobile = {
   },
   /** 竖屏 + 手机 才提醒横屏 */
   refreshHint() {
-    if (typeof TouchControls !== 'undefined' && TouchControls.active()) return;
     if (!this.isTouch || this.hintDismissed) return;
     const vp = viewportSize();
     this.isPhone = Math.min(vp.w, vp.h) <= this.PHONE_SHORT_SIDE;
@@ -495,10 +487,7 @@ function fit() {
   if (!wrap) return;
   const vp = viewportSize();
   const p = safeInset();
-  const phone = typeof TouchControls !== 'undefined' && TouchControls.playing();
-  const reserve = typeof TouchControls !== 'undefined' ? TouchControls.insets() : {t:0,b:0};
   const portrait = vp.h > vp.w;
-  wrap.style.top = '';
   if (Mobile.rotated && portrait) {
     // 竖屏 + 旋转模式：把可用宽高对调（旋转 90° 后 844×390 就变成「宽 844、高 390」）
     const availW = Math.max(180, vp.h - p.t - p.b);
@@ -508,27 +497,17 @@ function fit() {
     return;
   }
   // 竖屏不需要给侧边刘海留白（横屏才需要），底部横条始终留
-  const insL = portrait && !phone ? 0 : p.l, insR = portrait && !phone ? 0 : p.r;
+  const insL = portrait ? 0 : p.l, insR = portrait ? 0 : p.r;
   const availW = Math.max(180, vp.w - insL - insR);
-  const availH = Math.max(140, vp.h - p.t - p.b - reserve.t - reserve.b);
-  const s = Math.min(availW / 1280, availH / (phone ? 490 : 720));
-  const dx = (insL - insR) / 2, dy = (p.t + reserve.t - p.b - reserve.b) / 2;
-  if (phone && portrait) {
-    const boardTop=p.t+reserve.t+12;
-    wrap.style.top=boardTop+'px';
-    wrap.style.transform='translate(calc(-50% + '+dx.toFixed(2)+'px),0) scale('+s.toFixed(5)+')';
-    // The origin is the native board centre; compensate for scale before anchoring its top.
-    wrap.style.top=(boardTop-(490-490*s)/2)+'px';
-    document.body.style.setProperty('--phone-guide-top',(boardTop+490*s+18)+'px');
-    return;
-  }
+  const availH = Math.max(140, vp.h - p.t - p.b);
+  const s = Math.min(availW / 1280, availH / 720);
+  const dx = (insL - insR) / 2, dy = (p.t - p.b) / 2;
   wrap.style.transform = 'translate(calc(-50% + ' + dx.toFixed(2) + 'px), calc(-50% + ' + dy.toFixed(2) + 'px)) scale(' + s.toFixed(5) + ')';
 }
 
 function initMobile() {
   if (!Mobile.isTouch) return;                 // 桌面端完全不受影响
   document.body.classList.add('touch');
-  if (typeof TouchControls !== 'undefined') TouchControls.init();
   Mobile.applyHintText();
   const bf = $('btnFull'); if (bf) bf.onclick = () => Mobile.toggleFullscreen();
   const rhFull = $('rhFull'); if (rhFull) rhFull.onclick = () => Mobile.goFullscreenLandscape();
@@ -568,7 +547,7 @@ function scrollBuildKeyIntoView(k) {
   var card = el.querySelector('.card[data-k="' + k + '"]');
   if (card && card.scrollIntoView) card.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
 }
-function refitAll() { if (typeof TouchControls !== 'undefined') TouchControls.layout(); fit(); fitHUD(); updateBuildBarOverflow(); applyCompactBar(); Mobile.refreshHint(); }
+function refitAll() { fit(); fitHUD(); updateBuildBarOverflow(); applyCompactBar(); Mobile.refreshHint(); }
 window.addEventListener('resize', refitAll);
 // 手机转屏 / 进出全屏后浏览器上报的尺寸有延迟，补两次再算一遍
 window.addEventListener('orientationchange', function () { refitAll(); setTimeout(refitAll, 120); setTimeout(refitAll, 450); });
@@ -598,7 +577,7 @@ function resetFrameClock() {
 }
 // Visibility is separate from the player/story pause, so returning cannot dismiss a choice
 // or undo a manual pause. Discard elapsed wall time instead of catching up the battle.
-document.addEventListener('visibilitychange', () => { resetFrameClock(); Music.setBackground(document.hidden); });
+document.addEventListener('visibilitychange', resetFrameClock);
 window.addEventListener('pageshow', resetFrameClock);
 function loop(now) {
   // 先把下一帧排上：任何一帧里抛出的异常都不会再让主循环「静默死掉」——
@@ -629,7 +608,6 @@ let LAST_SAVE = null;
 function init() {
   Music.init();
   Accessibility.init();
-  Graphics.init();
   const unlockAudio = () => { Music.unlock(); SFX.init(); };
   document.addEventListener('pointerdown', unlockAudio, { once: true });
   document.addEventListener('keydown', unlockAudio, { once: true });

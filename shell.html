@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!--LICENSE-->
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -1582,7 +1581,7 @@ body.simple-ui #wavePreview,body.simple-ui #bossBar{background:rgba(20,17,31,.94
 <div id="rotateHint">
   <div class="rh-ico">📱</div>
   <h3>把手机横过来玩</h3>
-  <p>横屏可以看清更大的战场。手机界面也支持竖屏菜单、大按钮与建造面板。</p>
+  <p>《守灯人：梦魇防线》是横屏塔防，竖屏下战场会被压得很小、按钮也难点。</p>
   <p style="margin-top:-2px">如果手机开了「旋转锁定」，横过来屏幕不会自动转 ——<br>
      请先把手机<b>横着拿</b>，再点第二个按钮把画面转过来。</p>
   <button class="rh-btn primary" id="rhFull" type="button">全屏 + 锁定横屏</button>
@@ -1669,16 +1668,6 @@ body.simple-ui #wavePreview,body.simple-ui #bossBar{background:rgba(20,17,31,.94
   </div>
   <div id="helpPanel" class="slide">
     <h3>❓ 图鉴与帮助 <button class="btn" id="btnReplayTutorial">重看新手引导</button><button class="btn" id="helpClose">关闭</button></h3>
-    <details class="battle-settings"><summary>⚙ 战场画质与声音</summary>
-      <div class="audio-controls">
-        <label><span>战场画质</span><select id="gameGraphicsQuality"><option value="low">低 · 节能</option><option value="medium">中 · 均衡</option><option value="high">高 · 完整光效</option></select></label>
-        <label><span>主音量</span><input id="gameMasterVolume" type="range" min="0" max="1" step="0.01" value="1"><output id="gameMasterVolumeValue">100%</output></label>
-        <label><span>背景音乐</span><input id="gameMusicVolume" type="range" min="0" max="1" step="0.01" value="0.34"><output id="gameMusicVolumeValue">34%</output></label>
-        <label><span>战斗音效</span><input id="gameCombatVolume" type="range" min="0" max="1" step="0.01" value="0.72"><output id="gameCombatVolumeValue">72%</output></label>
-        <label><span>界面提示</span><input id="gameUiVolume" type="range" min="0" max="1" step="0.01" value="0.65"><output id="gameUiVolumeValue">65%</output></label>
-        <label><span>环境音</span><input id="gameAmbienceVolume" type="range" min="0" max="1" step="0.01" value="0.45"><output id="gameAmbienceVolumeValue">45%</output></label>
-      </div>
-    </details>
     <div id="helpBody" class="slist"></div>
   </div>
   <div id="lotPanel" class="slide wide">
@@ -1703,7 +1692,6 @@ body.simple-ui #wavePreview,body.simple-ui #bossBar{background:rgba(20,17,31,.94
   <div class="panel" id="runePanel" style="display:none">
     <h2>🔮 符文系统</h2>
     <div class="rsub">符文可镶嵌到建筑上，提供额外词条。品质决定词条数量，强化提升效果。</div>
-    <label id="runePhoneTarget" hidden>选择建筑<select id="runePhoneBuilding" aria-label="要镶嵌符文的建筑"></select></label>
     <div class="rsec">
       <div class="rt"><b>符文背包</b> <span id="runeCount">0/40</span></div>
       <div id="runeList" class="runelist"></div>
@@ -1781,7 +1769,6 @@ body.simple-ui #wavePreview,body.simple-ui #bossBar{background:rgba(20,17,31,.94
       <span id="storyAvatar" class="story-avatar" aria-hidden="true">◌</span>
       <div class="story-id"><span id="storySpeaker" class="story-speaker"></span><small id="storyMeta" class="story-meta">梦境记录</small></div>
     </div>
-    <div id="storyArc" class="story-arc" role="img" aria-label="主线章节" hidden></div>
     <div id="storyMedia" class="story-media" style="display:none"></div>
     <div id="storyText" class="story-text" aria-live="polite"></div>
     <div id="storyChoices" class="story-choices"></div>
@@ -1924,18 +1911,14 @@ body.simple-ui #wavePreview,body.simple-ui #bossBar{background:rgba(20,17,31,.94
         <details class="home-audio">
           <summary><span>🎧 声音与显示</span><small>配乐、音效与无障碍选项</small><b>＋</b></summary>
           <div class="audio-controls">
-            <label><span>主音量</span><input id="masterVolume" type="range" min="0" max="1" step="0.01" value="1"><output id="masterVolumeValue">100%</output></label>
             <label><span>背景音乐音量</span><input id="musicVolume" type="range" min="0" max="1" step="0.01" value="0.34"><output id="musicVolumeValue">34%</output></label>
             <label><span>战斗音效音量</span><input id="sfxVolume" type="range" min="0" max="1" step="0.01" value="0.72"><output id="sfxVolumeValue">72%</output></label>
-            <label><span>界面提示音量</span><input id="uiVolume" type="range" min="0" max="1" step="0.01" value="0.65"><output id="uiVolumeValue">65%</output></label>
-            <label><span>环境音量</span><input id="ambienceVolume" type="range" min="0" max="1" step="0.01" value="0.45"><output id="ambienceVolumeValue">45%</output></label>
-            <button id="btnSoundHome" type="button">🔊 音效：开启</button>
+            <button id="btnSoundHome" type="button">🔊 战斗音效：开启</button>
             <div class="access-controls" aria-label="无障碍显示设置">
               <label>剧情播放<select id="storyPlayback"><option value="on">开</option><option value="off">关</option></select></label>
               <label>界面文字<select id="a11yText"><option value="normal">标准</option><option value="large">大字</option></select></label>
               <label>闪屏效果<select id="a11yFlash"><option value="normal">正常</option><option value="reduced">减弱</option><option value="off">关闭</option></select></label>
               <label>画面震动<select id="a11yShake"><option value="normal">正常</option><option value="reduced">减弱</option><option value="off">关闭</option></select></label>
-              <label>战场画质<select id="graphicsQuality"><option value="low">低 · 节能</option><option value="medium" selected>中 · 均衡</option><option value="high">高 · 完整光效</option></select></label>
               <label>界面特效<select id="uiEffects"><option value="simple">流畅（推荐）</option><option value="full">完整光影</option></select></label>
             </div>
           </div>

@@ -19,7 +19,7 @@ function buildBuildBar() {
     // 悬停提示里补上面板 DPS —— 建造栏太窄，塞不下更多数字
     let tip = d.name + '：' + d.desc + '（建造不消耗电力）';
     if (d.tower) {
-      if (dps1) tip += '\nLv1 武器参考 DPS ≈ ' + fmt1(dps1) + '/秒（未计场上伤害/攻速增益）';
+      if (dps1) tip += '\nLv1 面板 DPS ≈ ' + fmt1(dps1) + '/秒';
     }
     c.title = tip;
     c.setAttribute('aria-label', tip);
@@ -113,7 +113,6 @@ function buyTech(k) {
   G.souls -= c; G.waveSpentSouls += c; G.tech[k]++;
   SFX.up();
   G.buildings.forEach(b => {
-    b.__sf = -1;
     const nh = buildingMaxHp(b.def, b.level, b.branch);
     b.hp += nh - b.maxHp; b.maxHp = nh;
   });
@@ -268,15 +267,12 @@ function updateHUD(dt) {
   const got = ACHIEVEMENTS.filter(a => G.ach[a.id]).length;
   $('achCount').textContent = got + '/' + ACHIEVEMENTS.length;
   if ($('lotPanel').classList.contains('open')) updateLotteryHUD();
-  if (typeof TouchControls !== 'undefined') TouchControls.update();
 }
 let _challengeHudSig = '';   // 挑战横幅的渲染签名（数值不变不重建 DOM）
 let _wavePreviewKey = '';
 function enemyCounterHint(id) {
   const enemy = ENEMY_DEFS[id];
   if (!enemy) return '';
-  if(EnemyCounterplay.enemies[id])return enemy.name+'：'+EnemyCounterplay.enemies[id];
-  if(enemy.boss)return BossEncounters.defs[id==='boss'?'lord':id]?.hint || '';
   if (enemy.revive) return '死灵：冻结或眩晕可打断复苏';
   if (enemy.parasite) return '寄生体：在汲取前摇中及时控制';
   if (enemy.emp) return '干扰梦魇：控制它可阻止炮塔停机';
@@ -307,34 +303,27 @@ function updateWavePreview() {
     const e = ENEMY_DEFS[id];
     return e ? '<span class="forecast-enemy" title="' + e.name + ' · ' + enemyCounterHint(id) + '"><i>' + uiEnemy(id, e.icon) + '</i>' + e.name + '</span>' : '';
   }).join('');
-  const bossCount = bossCountForWave(wave);
+  const bossCount = wave % 5 === 0 ? 1 + Math.floor(wave / 22) : 0;
   let bossMarkup = '';
   if (bossCount) {
-    const bossId = bossKeyForWave(wave);
+    const bossId = wave >= finalWave() ? 'final' : bossKeyForWave(wave);
     const boss = BOSS_DEFS[bossId] || BOSS_DEFS.final;
     bossMarkup = '<span class="forecast-boss">' + uiEnemy(bossId,boss.icon || '👁️') + ' BOSS · ' + boss.name + (bossCount > 1 ? ' ×' + bossCount : '') + '</span>';
   }
   $('forecastTitle').textContent = '下一波 · 第 ' + wave + ' 波';
   $('forecastEnemies').innerHTML = enemyMarkup + bossMarkup;
   const hints = Array.from(new Set(featured.map(enemyCounterHint).filter(Boolean))).slice(0, 2);
-  if(bossCount && BossEncounters.defs[bossKeyForWave(wave)])hints.unshift(BossEncounters.defs[bossKeyForWave(wave)].hint);
-  $('forecastHint').textContent = hints.length ? hints.slice(0,2).join('；') : '精英词缀与随机事件将在开战时揭晓。';
+  $('forecastHint').textContent = hints.length ? hints.join('；') : '精英词缀与随机事件将在开战时揭晓。';
 }
 let detailSig = '';
 function updateDetail(force) {
   const el = $('detail');
-  if (typeof TouchControls !== 'undefined' && TouchControls.active() && TouchControls.sheetOpen()) {el.style.display='none';detailSig='';return;}
   const s = selected;
   if (!s) {
     if (el.style.display !== 'none') { el.style.display = 'none'; detailSig = ''; }
     return;
   }
   let sig;
-  const st = s.def ? bstat(s) : null;
-  const dps = s.def && s.def.tower ? towerDisplayDps(st,s) : 0;
-  const goldRate = s.type === 'miner' ? goldProductionRate((st.gold || 0) * techVal('mining',0.10)) : null;
-  const powerRate = st && st.regen ? powerProductionRate(st.regen) : null;
-  const contribution = s.def ? buildingContributionHTML(s,st) : '';
   // 血量按 5% 分档进签名：持续掉血时不必每 tick 整棵重建详情面板（会丢滚动位置、闪按钮）
   const hpPct = (hp, maxHp) => Math.round(hp / (maxHp || 1) * 20);
   // 血量行单独提取成函数：分档签名会让面板少重建，但面板上的数字必须始终是当前值，
@@ -346,16 +335,14 @@ function updateDetail(force) {
         (s.door.shieldMax ? '　护盾 ' + Math.ceil(s.door.shield) + '/' + Math.ceil(s.door.shieldMax) : '')
       : () => '生命 ' + Math.ceil(s.hp) + '/' + Math.ceil(s.maxHp) + (s.shieldMax ? '　护盾 ' + Math.ceil(s.shield) + '/' + Math.ceil(s.shieldMax) : '') +
         '　运行不消耗电力' + (s.kills ? '　击杀 <b class="hl">' + s.kills + '</b>' : '');
-  if (s.isBed) sig = 'bed|' + G.bed.lv + '|' + hpPct(G.bed.hp, G.bed.maxHp) + '|' + fmt1(bedGoldEff()) + '|' + (G.gold >= bedUpgradeCost(G.bed.lv) ? 1 : 0);
-  else if (s.isDoor) sig = 'door|' + s.door.lane + '|' + s.door.lv + '|' + hpPct(s.door.hp, s.door.maxHp) + '|' + (G.gold >= doorUpgradeCost(s.door.lv) ? 1 : 0);
+  if (s.isBed) sig = 'bed|' + G.bed.lv + '|' + hpPct(G.bed.hp, G.bed.maxHp) + '|' + (G.gold > bedUpgradeCost(G.bed.lv) ? 1 : 0);
+  else if (s.isDoor) sig = 'door|' + s.door.lane + '|' + s.door.lv + '|' + hpPct(s.door.hp, s.door.maxHp) + '|' + (G.gold > doorUpgradeCost(s.door.lv) ? 1 : 0);
   else if (s.def) sig = 'b|' + s.type + '|' + s.level + '|' + (s.branch || '') + '|' + hpPct(s.hp, s.maxHp) + '|' + G.buildings.indexOf(s) +
-    '|' + (s.resN || 0) + '|' + (s.resDmg || 1) + '|' + (s.kills || 0) + '|' + (s.targetMode || targetModeOf(s).id) + '|' + (canAfford(upgradeCost(s.def, s.level)) ? 1 : 0) +
-    '|' + JSON.stringify([st,dps,goldRate,powerRate,s.runes]);
+    '|' + (s.resN || 0) + '|' + (s.resDmg || 1) + '|' + (s.kills || 0) + '|' + (s.targetMode || targetModeOf(s).id) + '|' + (canAfford(upgradeCost(s.def, s.level)) ? 1 : 0);
   else return;
   if (!force && sig === detailSig) {
     const hpEl = $('dHpLine');
     if (hpEl) { const t = hpLine(); if (hpEl.innerHTML !== t) hpEl.innerHTML = t; }
-    const live=$('dContribution');if(live && live.innerHTML!==contribution)live.innerHTML=contribution;
     return;
   }
   detailSig = sig;
@@ -364,11 +351,13 @@ function updateDetail(force) {
   if (s.isBed) {
     const c = bedUpgradeCost(G.bed.lv);
     const nx = G.bed.lv < 50 ? bedGoldEffOf(G.bed.lv + 1) : 0;
-    html = '<div class="dhead"><span class="dico">' + uiIcon('bed','🛏️') + '</span><b>' + bedName() + '</b><span class="dlv">Lv.' + G.bed.lv + '/50</span></div>' +
+    const dm = diffCfg().goldMul;
+    html = '<div class="dhead"><span class="dico">🛏️</span><b>' + bedName() + '</b><span class="dlv">Lv.' + G.bed.lv + '/50</span></div>' +
       '<div class="dst">金币产出 <b class="hl">' + fmt1(bedGoldEff()) + '</b>/秒' +
-      (nx ? '　<span class="dup2">下一级 ' + fmt1(nx) + '/秒（x' + fmt1(nx / bedGoldEff()) + '）</span>' : '') + '</div>' +
+      (dm !== 1 ? '　<span class="dup2">基础 ' + fmt1(bedGold()) + ' × 难度 ' + dm + '</span>' : '') +
+      (nx ? '　<span class="dup2">下一级 ' + fmt1(nx) + '/秒（x2）</span>' : '') + '</div>' +
       '<div class="dst" id="dHpLine">' + hpLine() + '</div>' +
-      '<div class="dnote">显示床铺在当前科技、事件、剧情和难度下的实际产出；不含矿机、银行利息与击杀奖励。Lv8 起升级产量 <b>x1.8</b>。</div>';
+      '<div class="dnote">躺得久不再自动加金币，<b>升级床</b>才是提升产出的唯一途径。</div>';
     act = G.bed.lv >= 50 ? '<span class="max">已至巅峰</span>'
       : '<button id="dUp">升级 ' + fmt(c) + '💰</button><button id="dMax" class="maxup">⏫升满</button>';
   } else if (s.isDoor) {
@@ -381,6 +370,7 @@ function updateDetail(force) {
     act = d.lv >= 50 ? '<span class="max">已至巅峰</span>'
       : '<button id="dUp">⬆ 加固<i>' + fmt(c) + '💰</i></button><button id="dMax" class="maxup">⏫ 升满</button>';
   } else if (s.def) {
+    const st = bstat(s);
     const dtn = s.def.dmgType ? '<span class="dtn" style="color:' + DMG[s.def.dmgType].color + '">' + DMG[s.def.dmgType].icon + DMG[s.def.dmgType].name + '</span>' : '';
     html = '<div class="dhead"><span class="dico">' + uiBuilding(s.type,s.branch,s.def.icon) + '</span><b>' +
       buildName(s) + '</b><span class="dlv">Lv.' + s.level + '/50</span>' + dtn + '</div>' +
@@ -388,21 +378,17 @@ function updateDetail(force) {
         : (s.level < FREE_POWER_LV ? '<div class="dnote">⚡ Lv' + (FREE_POWER_LV + 1) + ' 之前升级<b>不消耗电量</b></div>' : '')) +
       '<div class="dst">' + s.def.statText(st) + '</div>' +
       '<div class="dst" id="dHpLine">' + hpLine() + '</div>';
-    if (goldRate != null || powerRate != null) {
-      html += '<div class="dst production-live">当前贡献 <b class="hl">' + fmt1(goldRate != null ? goldRate : powerRate) + '</b> ' + (goldRate != null ? '金币' : '电量') + '/秒<span class="dup2">（含当前科技、事件等增益）</span></div>';
-    }
     // 面板 DPS：回答「这座炮塔到底值不值得升」
     if (s.def.tower) {
+      const dps = towerPanelDps(st, s);
       const perK = dps / Math.max(1, s.invested) * 1000;
-      html += '<div class="dst">当前理论 DPS ≈ <b class="hl" id="dDpsValue">' + fmt1(dps) + '</b>/秒' +
-        '<span class="dup2">　性价比 ' + perK.toFixed(2) + ' DPS / 千金币</span></div>' +
-        '<div class="dps-note">' + ((s.empT || 0) > 0 ? '瘫痪中，当前无法攻击。' : '含当前伤害与攻速增益；群攻按固定目标数折算，毒层与元素反应另计。') + '</div>';
+      html += '<div class="dst">面板 DPS ≈ <b class="hl">' + fmt1(dps) + '</b>/秒' +
+        '<span class="dup2">　性价比 ' + perK.toFixed(2) + ' DPS / 千金币</span></div>';
       if (s.type !== 'flame' && !st.gravity && !st.aoe) {
         const targetMode = targetModeOf(s);
         html += '<div class="target-mode-row"><span>集火优先</span><small>影响单体选敌策略</small><button id="dTargetMode" type="button" aria-label="切换炮塔攻击优先级">' + targetMode.name + ' · 切换</button></div>';
       }
     }
-    html+='<div id="dContribution">'+contribution+'</div>';
     // 共鸣：相邻不同元素炮塔互相增幅（原先只有内部倍率，玩家看不到）
     const rb = resBonusOf(s);
     if (rb.n >= 2) {
@@ -413,8 +399,8 @@ function updateDetail(force) {
       html += '<div class="dres dim">🎵 暂无共鸣 —— 把<b>不同元素</b>的炮塔挨着放（约 1.5 格内）即可互相增幅</div>';
     }
     if (s.level < 50) {
-      const ns = bstat(Object.assign({}, s, { level: s.level + 1, __sf: -1, __ss: null }));
-      html += '<div class="dup" id="dNextStats">下一级 → <b>' + (NAME_POOL[s.type] ? NAME_POOL[s.type][s.level] : s.def.name) + '</b>　' + s.def.statText(ns) + '</div>';
+      const ns = bstat(Object.assign(Object.create(Object.getPrototypeOf(s)), s, { level: s.level + 1 }));
+      html += '<div class="dup">下一级 → <b>' + (NAME_POOL[s.type] ? NAME_POOL[s.type][s.level] : s.def.name) + '</b>　' + s.def.statText(ns) + '</div>';
     }
     const hasR = (s.runes || []).filter(Boolean);
     if (hasR.length) {
@@ -439,14 +425,7 @@ function updateDetail(force) {
         '<button type="button" class="bropt" id="brB"><b>' + uiBuilding(s.type,'b',B.icon) + ' ' + B.name + '</b><span>' + B.desc + '</span><em>' + B.cost.gold + '💰 ' + B.cost.soul + '🔮</em></button></div>';
     }
   }
-  const focusId = document.activeElement && el.contains(document.activeElement) ? document.activeElement.id : null;
-  const scrollTop = el.scrollTop;
-  const phone = typeof TouchControls !== 'undefined' && TouchControls.active();
-  el.innerHTML = (phone ? '<button type="button" id="dDismiss" class="detail-dismiss" aria-label="关闭建筑详情">×</button>' : '') + html + (phone&&s.def?'<button type="button" class="phone-rune-link" id="dRune">管理这座建筑的符文</button>':'') + '<div class="dact">' + act + '</div>';
-  el.scrollTop = scrollTop;
-  if (focusId) { const control = $(focusId); if (control && el.contains(control)) control.focus({ preventScroll: true }); }
-  if ($('dDismiss')) $('dDismiss').onclick = () => { selected=null;updateDetail(true);if(phone)TouchControls.update(); };
-  if ($('dRune')) $('dRune').onclick = () => togglePanel('runePanel');
+  el.innerHTML = html + '<div class="dact">' + act + '</div>';
   const u = $('dUp'); if (u) u.onclick = () => { Cmd.upgradeSelection(selected); detailSig = ''; };
   const sl = $('dSell'); if (sl) sl.onclick = () => { Cmd.sellSelection(selected); detailSig = ''; };
   const dm = $('dMax'); if (dm) dm.onclick = () => { Cmd.maxSelection(selected); detailSig = ''; };
@@ -605,17 +584,6 @@ function runeAffixText(r) {
 function updateRunePanel() {
   const el = $('runeList');
   if (!el) return;
-  const phoneTarget=$('runePhoneTarget');
-  if(phoneTarget){
-    const phone=typeof TouchControls!=='undefined'&&TouchControls.active();phoneTarget.hidden=!phone;
-    if(phone){
-      const picker=$('runePhoneBuilding');picker.replaceChildren();
-      const empty=document.createElement('option');empty.value='';empty.textContent='选择要镶嵌的建筑';picker.appendChild(empty);
-      G.buildings.forEach((b,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent=buildName(b)+' · Lv'+b.level+' · 第'+(b.col+1)+'列第'+(b.row+1)+'格';picker.appendChild(option);});
-      picker.value=selected&&G.buildings.includes(selected)?String(G.buildings.indexOf(selected)):'';
-      picker.onchange=()=>{selected=picker.value===''?null:G.buildings[Number(picker.value)]||null;updateRunePanel();updateDetail(true);};
-    }
-  }
   $('runeCount').textContent = G.runeBag.length + '/40';
   $('runeSlotsInfo').textContent = '每座建筑 ' + runeSlots() + ' 个槽位（符文宗师可增加）';
   let h = '';
@@ -774,15 +742,6 @@ function syncAudioUI() {
   if (sfxRange) sfxRange.value = SFX.volume;
   if (musicValue) musicValue.textContent = Math.round(Music.volume * 100) + '%';
   if (sfxValue) sfxValue.textContent = Math.round(SFX.volume * 100) + '%';
-  for(const [id,value]of [['gameMasterVolume',SFX.masterVolume],['gameMusicVolume',Music.volume],['gameCombatVolume',SFX.volume],['gameUiVolume',SFX.uiVolume],['gameAmbienceVolume',SFX.ambienceVolume]]) {
-    if($(id))$(id).value=value;
-    if($(id+'Value'))$(id+'Value').textContent=Math.round(value*100)+'%';
-  }
-  for (const [id,value] of [['masterVolume',SFX.masterVolume],['uiVolume',SFX.uiVolume],['ambienceVolume',SFX.ambienceVolume]]) {
-    const range=$(id), output=$(id+'Value');
-    if(range)range.value=value;
-    if(output)output.textContent=Math.round(value*100)+'%';
-  }
   const status = $('musicStatus');
   if (status) status.textContent = Music.status();
   const state = $('musicState');
@@ -794,14 +753,14 @@ function syncAudioUI() {
   }
   const homeSfxButton = $('btnSoundHome');
   if (homeSfxButton) {
-    homeSfxButton.textContent = SFX.unsupported ? '音效不可用（此浏览器）' : (SFX.on ? '🔊 音效：开启' : '🔇 音效：关闭');
+    homeSfxButton.textContent = (SFX.on ? '🔊 战斗音效：开启' : '🔇 战斗音效：关闭');
     homeSfxButton.setAttribute('aria-pressed', SFX.on ? 'true' : 'false');
   }
   const gameSfxButton = $('btnSound');
   if (gameSfxButton) {
     gameSfxButton.textContent = (SFX.on ? '🔊' : '🔇') + '音';
     gameSfxButton.setAttribute('aria-pressed', SFX.on ? 'true' : 'false');
-    gameSfxButton.title = SFX.on ? '关闭战斗、界面和环境音效' : '开启战斗、界面和环境音效';
+    gameSfxButton.title = SFX.on ? '关闭战斗音效' : '开启战斗音效';
   }
 }
 function syncStoryPlaybackUI() {
@@ -823,9 +782,6 @@ function syncAccessibilityUI() {
   if (shakeSelect) shakeSelect.value = Accessibility.shake;
   const effects = $('uiEffects');
   if (effects) effects.value = Accessibility.uiEffects;
-  const graphics = $('graphicsQuality');
-  if (graphics) graphics.value = Graphics.level;
-  if($('gameGraphicsQuality'))$('gameGraphicsQuality').value=Graphics.level;
 }
 function showMenu() {
   ensureMenuDOM();
@@ -924,7 +880,6 @@ function updateMenu() {
   if (typeof syncAudioUI === 'function') syncAudioUI();
   if (typeof syncAccessibilityUI === 'function') syncAccessibilityUI();
   if (typeof UiArt !== 'undefined') UiArt.decorate();
-  if (typeof TouchControls !== 'undefined') TouchControls.update();
 }
 const FIRST_RUN_STEPS = [
   { title: '三条走廊，三扇铁门', text: '梦魇会从不同路线靠近。每条走廊都要留意；门一旦被攻破，敌人就会进入房间攻击建筑和床铺。', tip: '先看三路的门和敌人数量，再决定把炮塔放在哪里。' },
@@ -1002,11 +957,7 @@ function wireMenu() {
     $('sfxVolume').oninput = ev => Music.setSfxVolume(ev.target.value, false);
     $('sfxVolume').onchange = () => Music.persist();
   }
-  for(const [id,bus]of [['masterVolume','master'],['uiVolume','ui'],['ambienceVolume','ambience']]) {
-    if($(id)){$(id).oninput=ev=>Music.setBusVolume(bus,ev.target.value,false);$(id).onchange=()=>Music.persist();}
-  }
   if ($('btnSoundHome')) $('btnSoundHome').onclick = () => Music.setSfx(!SFX.on);
-  if ($('graphicsQuality')) $('graphicsQuality').onchange = ev => Graphics.set(ev.target.value);
   if ($('storyPlayback')) $('storyPlayback').onchange = ev => StoryFlow.setPlayback(ev.target.value === 'on');
   [['a11yText', 'textSize'], ['a11yFlash', 'flash'], ['a11yShake', 'shake'], ['uiEffects', 'uiEffects']].forEach(pair => {
     const select = $(pair[0]);
@@ -1605,16 +1556,7 @@ function _processStoryQueue() {
     avatar.style.setProperty('--sp-glow', sp.glow || 'rgba(167,139,250,.35)');
     avatar.setAttribute('aria-label', (data.speaker || '未知声音') + '的头像');
   }
-  const act=StoryPresentation.forDialog(data),rail=$('storyArc');
-  panel.style.setProperty('--story-accent',act?act.accent:'#c9b77f');
-  panel.style.setProperty('--story-ground',act?act.ground:'#20363d');
-  if(act)panel.dataset.storyAct=act.id;else delete panel.dataset.storyAct;
-  if(rail){
-    rail.hidden=!act;
-    rail.innerHTML=act?['I','II','III','IV','V'].map((label,i)=>'<span aria-hidden="true" data-stage="'+(i<act.index?'past':i===act.index?'current':'later')+'">'+label+'</span>').join(''):'';
-    rail.setAttribute('aria-label',act?'主线第'+(act.index+1)+'幕，共5幕':'主线章节');
-  }
-  if (storyMeta) storyMeta.textContent = [act?act.title:data.actTitle, data.wave ? '梦境记录 · 第 ' + data.wave + ' 波' : '梦境记录 · 未知时间'].filter(Boolean).join('　/　');
+  if (storyMeta) storyMeta.textContent = [data.actTitle, data.wave ? '梦境记录 · 第 ' + data.wave + ' 波' : '梦境记录 · 未知时间'].filter(Boolean).join('　/　');
   if (spEl) {
     spEl.textContent = data.speaker || '???';
     spEl.style.color = sp.color;
@@ -1661,7 +1603,7 @@ function _processStoryQueue() {
       storyTyping = false;
       textEl.classList.remove('typing');
       textEl.textContent = text;
-      textEl.scrollTop = 0;
+      textEl.scrollTop = textEl.scrollHeight;
       if (hasChoices) _renderStoryChoices(data);
       else nextEl.style.display = '';
       return true;
@@ -1670,7 +1612,7 @@ function _processStoryQueue() {
   };
   textEl.title = '点击显示完整对话';
   textEl.onclick = finishTyping;
-  nextEl.onclick = () => { if (!finishTyping()) { StoryKnowledge.record(data); _processStoryQueue(); } };
+  nextEl.onclick = () => { if (!finishTyping()) _processStoryQueue(); };
 }
 
 /** 渲染剧情选项，并在点击时用统一解释器兑现选项承诺 */
@@ -1755,7 +1697,6 @@ function hideStoryDialog() {
   const panel = $('storyDialog');
   if (panel) {
     panel.style.display = 'none';
-    delete panel.dataset.storyAct;if($('storyArc'))$('storyArc').hidden=true;
     panel.style.borderColor = '';
     panel.style.boxShadow = '';
     const d = panel.querySelector('.story-deco');
@@ -1785,10 +1726,10 @@ function showDiaryPanel() {
     const list = $('diaryList');
     if (list) {
       // 最新在前，便于回看刚发生的事
-      const entries = (typeof DreamDiary !== 'undefined' ? DreamDiary.getEntries() : []).reverse();
+      const entries = (typeof DreamDiary !== 'undefined' && DreamDiary._entries ? DreamDiary._entries.slice() : []).reverse();
       if (entries.length) {
         list.innerHTML = entries.map(e => {
-          const td = DreamDiary.ENTRY_TYPES[e.type] || DreamDiary.ENTRY_TYPES.custom;
+          const td = e.typeDef || { name: '笔记', icon: '📝', color: '#94a3b8' };
           return '<div class="diary-entry">' +
             '<div class="diary-head">' +
               '<span class="diary-badge" style="background:' + td.color + '1f;color:' + td.color + ';border:1px solid ' + td.color + '44">' + td.icon + ' ' + td.name + '</span>' +
@@ -1890,12 +1831,11 @@ function showFragmentGallery() {
     const collected = DreamFragments._collected;
     const list = $('fragmentList');
     const sub = panel.querySelector('.dream-panel-sub');
-    const unlockedCount = defs.filter(f => collected && collected.has(f.id) && DreamFragments.isRevealed(f)).length;
-    const collectedCount=defs.filter(f=>collected && collected.has(f.id)).length;
-    if (sub) sub.textContent = '已收集 '+collectedCount+'/'+defs.length+' · 已显影 '+unlockedCount+' · 模糊记忆需阅读对应剧情';
+    const unlockedCount = defs.filter(f => collected && collected.has(f.id) && (!f.revealWave || G && G.wave >= f.revealWave)).length;
+    if (sub) sub.textContent = '散落在梦境中的记忆 — ' + unlockedCount + '/' + defs.length + ' 已收集';
     if (list) {
       list.innerHTML = defs.map(f => {
-        const spoilerLocked = !DreamFragments.isRevealed(f);
+        const spoilerLocked = !!(f.revealWave && (!G || G.wave < f.revealWave));
         const unlocked = !spoilerLocked && !!(collected && collected.has(f.id));
         const rarity = unlocked ? DreamFragments.rarityOf(f) : 'locked';
         const rc = FRAG_RARITY_COLORS[rarity] || '#cbd5e1';
@@ -1906,7 +1846,7 @@ function showFragmentGallery() {
           (unlocked
             ? '<span class="frag-rarity" style="background:' + rc + '22;color:' + rc + '">' + (FRAG_RARITY_NAMES[rarity] || rarity) + '</span>' +
               '<span class="fmore">点击读全文</span>'
-            : '<span class="fmore">'+(collected && collected.has(f.id)?'已收集 · 待剧情显影':'尚未拾得')+'</span>') +
+            : '<span class="fmore">尚未拾得</span>') +
           '</div>';
       }).join('');
       // 正文用 textContent 填充（碎片文案里有引号等字符）
@@ -1915,7 +1855,7 @@ function showFragmentGallery() {
         const d = cards[i] && cards[i].querySelector('.fdesc');
         if (!d) return;
         const unlocked = !!(collected && collected.has(f.id));
-        const spoilerLocked = !DreamFragments.isRevealed(f);
+        const spoilerLocked = !!(f.revealWave && (!G || G.wave < f.revealWave));
         d.textContent = spoilerLocked ? '记录尚未显影' : unlocked ? (f.story || f.desc || '') : '未解锁';
       });
       cards.forEach(card => {
@@ -2351,7 +2291,7 @@ function closeQuestPanel() {
 /** 信物详情浮层（"可以查看"的落点） */
 function openQuestItem(id) {
   const d = (typeof QUEST_ITEMS !== 'undefined') ? QUEST_ITEMS[id] : null;
-  if (!d || !QuestSystem.getItems().some(item=>item.id===id)) return;
+  if (!d) return;
   const r = (typeof RARITY !== 'undefined' && RARITY[d.rare]) ? RARITY[d.rare] : { name: '普通', color: '#94a3b8' };
   $('itemIco').textContent = d.icon;
   $('itemName').textContent = d.name;
@@ -2416,18 +2356,15 @@ function updateBossBar() {
   const bdef = (typeof BOSS_DEFS !== 'undefined' && BOSS_DEFS[boss.bossKey]) ? BOSS_DEFS[boss.bossKey] : null;
   const phN = bdef ? ((bdef.phases[boss.phase] || {}).name || '') : '';
   const transitioning=(boss.phaseBarrier || 0)>0;
-  const cue=enemyCastCue(boss),guard=boss.encounter && boss.encounter.controlGuard || 0;
-  const status=transitioning?' · 转换护甲':cue?' · '+cue.label+' '+cue.left.toFixed(1)+'秒':guard>0?' · 武器眩晕抵抗 '+guard.toFixed(1)+'秒':'';
-  const sig = boss.maxHp + '|' + Math.round(hp * 1000) + '|' + boss.phase+'|'+status;
+  const sig = boss.maxHp + '|' + Math.round(hp * 1000) + '|' + boss.phase+'|'+transitioning;
   if (sig === _bossBarSig) return;
   _bossBarSig = sig;
   el.style.display = 'block';
   requestAnimationFrame(() => el.classList.add('show'));
   $('bbName').textContent = (bdef ? bdef.name : boss.def.name);
-  $('bbPhase').textContent = phN+status;
+  $('bbPhase').textContent = phN+(transitioning?' · 转换护甲':'');
   $('bbPhase').style.display = phN ? '' : 'none';
-  $('bbHp').textContent = fmt(boss.hp) + ' / ' + fmt(boss.maxHp) + '　(' + Math.round(hp * 100) + '%)';
-  el.title=BossEncounters.defs[boss.bossKey]?.hint || '';
+  $('bbHp').textContent = Math.ceil(boss.hp) + ' / ' + Math.ceil(boss.maxHp) + '　(' + Math.round(hp * 100) + '%)';
   $('bbFill').style.width = (hp * 100).toFixed(1) + '%';
   const sh = (boss.shieldMax > 0) ? Math.max(0, boss.shield / boss.shieldMax) * 100 : 0;
   $('bbShield').style.width = sh.toFixed(1) + '%';

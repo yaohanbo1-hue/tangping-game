@@ -18,8 +18,6 @@ async function exercise(engine, name, mobile) {
   const page = await context.newPage(), errors = [];
   page.on('pageerror', e => errors.push(e.message));
   try {
-    // This suite checks the optional classic canvas controls; native phone mode has its own suite.
-    if (mobile) await page.addInitScript(()=>localStorage.setItem('tangping_phone_controls','off'));
     await page.addInitScript(() => {
       if (!localStorage.getItem('displayTestInitialized')) {
         localStorage.setItem('tangping_accessibility', 'null');

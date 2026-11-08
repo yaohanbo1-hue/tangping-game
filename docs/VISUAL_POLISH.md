@@ -1,6 +1,6 @@
 # 雨夜守灯：怪物与界面整合
 
-本轮按用户“继续美化一切可以美化的地方”的委托自行选定样板：蓝灰石材、暖金黄铜、档案纸与低饱和危险色。沿用已有雨夜宿舍和机械建筑，不改变格子、实体坐标、碰撞半径与费用。当前文件版本为2.0.0（待发布）。
+本轮按用户“继续美化一切可以美化的地方”的委托自行选定样板：蓝灰石材、暖金黄铜、档案纸与低饱和危险色。沿用已有雨夜宿舍和机械建筑，不改变格子、实体坐标、碰撞半径与费用。版本仍为开发中的 1.9.2。
 
 ## 实际接入
 
@@ -38,10 +38,6 @@
 
 固定实体的前后对照见 [性能记录](PERFORMANCE.md)：32建筑+95敌人，前后各两次独立测量，平均帧间隔约22.80→16.67ms，JS绘制2.29→1.71ms。软件栅格、暂停场景，不等同实战或物理手机性能。
 
-方法参考：[MDN Canvas优化](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas)的重复图形离屏复用建议；[Xbox文字指南](https://learn.microsoft.com/en-us/gaming/accessibility/xbox-accessibility-guidelines/101)与[对比度指南](https://learn.microsoft.com/en-us/gaming/accessibility/xbox-accessibility-guidelines/102)用于检查文字与焦点可读性。资源来源和尺寸登记于 [enemies.json](../assets/art/enemies.json)、[ui.json](../assets/art/ui.json)，全部原创程序化 Canvas/SVG，按仓库 Apache-2.0 许可（历史声明保留在 LICENSES/MIT-legacy.txt）。
+方法参考：[MDN Canvas优化](https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Optimizing_canvas)的重复图形离屏复用建议；[Xbox文字指南](https://learn.microsoft.com/en-us/gaming/accessibility/xbox-accessibility-guidelines/101)与[对比度指南](https://learn.microsoft.com/en-us/gaming/accessibility/xbox-accessibility-guidelines/102)用于检查文字与焦点可读性。资源来源和尺寸登记于 [enemies.json](../assets/art/enemies.json)、[ui.json](../assets/art/ui.json)，全部原创程序化 Canvas/SVG，按仓库 MIT 许可。
 
-2026-11-08续作已加入画质分级、五Boss机制、音频分组、实际DPS、全来源剧情防剧透，以及分支／词缀客观对照；当前3694项逻辑断言另有构建、许可及浏览器专项。详见 [V2_STATUS.md](V2_STATUS.md)。真实Android／iPhone、安全区／全屏／系统行为、实际听感与人工难度评价仍待独立验收，美化不等同全部发布条件完成。
-
-![Boss独立施法与状态牌](images/boss-warning-desktop.png)
-
-2026-11-08继续完善五幕剧情的章节条、灯光底色与短屏大字阅读，回应按钮在320px大字模式完整可见。开场与回忆的可读钟面统一为03:07，保留原运镜、完整帧数与音轨。桌面／手机共15组实际媒体检查和首幕安全示例见 [剧情呈现复查](STORY_PRESENTATION_REVIEW.md)。
+仍需独立验收：真实手机与安全区、完整画质分级、全部词缀反制/转职收益平衡、五Boss新机制、音频和全来源剧情防剧透。美化完成不代表2.0发布条件全部满足。

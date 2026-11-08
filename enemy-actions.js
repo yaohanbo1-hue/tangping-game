@@ -1,33 +1,3 @@
-// Shared by the forecast, bestiary and the checked combat reference.
-const EnemyCounterplay={
-  enemies:{
-    grunt:'集中清理前排，避免梦魇在门前堆积。',sprinter:'在入口布置减速，保留紧急控制应对冲线。',
-    brute:'使用能量火力克制重甲，减少低单发的动能投入。',phantom:'利用显形窗口集火，或招募侦察兵持续揭示。',
-    bomber:'减速并在门外击杀，让死亡爆炸远离建筑。',healer:'优先集火治疗者，减少邻近敌人的恢复。',
-    splitter:'保留群攻处理死亡后出现的分裂体。',bulwark:'电磁克制盾卫；毒液可绕过护盾侵蚀本体。',
-    flier:'在床铺前保留射程覆盖，使用动能克制飞行目标。',summoner:'在召唤前摇中控制或击杀；召唤封印也能阻止增援。',
-    berserker:'在残血狂暴前保留冰霜和爆发，缩短危险阶段。',vampire:'保持门线并及时减伤／控制，压低实际攻击带来的回血。',
-    reflector:'用持续伤害避免直接反伤，并给开火炮塔配维修。',thief:'在接触门和建筑前控制或击杀，减少窃取次数。',
-    chronos:'优先处理加速光环源，减缓整群敌人的推进。',nullifier:'从光环外远射或先集火光环源，恢复近处炮塔输出。',
-    colossus:'用连续火力逐段拆甲，大额单次伤害会被段位截断。',saboteur:'它会绕门扑向建筑；在房内留火力并及时控制。',
-    adaptive:'轮换元素并配合破抗，避免长期只用同一种伤害。',brood:'控制或击杀孵化源，配合群攻清理已出生幼虫。',
-    digger:'潜入会绕过完整铁门，在床铺与后排留守火力。',emp:'在干扰前摇中控制或击杀，避免相邻炮塔同时停机。',
-    mimic:'靠近建筑后会显形，布置后排火力覆盖揭示区。',wraith:'尽量在门外击杀，避免建筑留在死亡诅咒区内。',
-    juggernaut:'保持铁门并用减速争取输出，避免它接触脆弱建筑。',swarm:'使用火焰、声波或溅射，减少单体火力浪费。',
-    leech:'在0.6秒汲取前摇中控制；击退超出260范围也会断开寄生。',warden:'优先击杀护盾来源，或用毒液绕过盟友的护盾。',
-    reaper:'使用冰霜控制并优先击杀，避免三倍建筑伤害接触后排。',frostbane:'在冻缓前摇中控制；火焰克制它的冰霜抗性。',
-    necromancer:'在残骸复苏前摇中冻结／眩晕，或使用召唤封印。',rustbug:'它会优先扑向武器；用电磁克制并保留前排控制。',
-    owl:'侦察兵或显形窗口处理隐身，在床前布置动能火力。',echo:'预留群攻清理回响分裂体，避免只靠慢速单发。',
-    weaver:'优先集火织梦者，减少整群敌人的护盾补充。',
-  },
-  affixes:{
-    tough:'集中火力并搭配易伤／破抗，避免伤害分散。',swift:'提前布置减速与拦截，留意冲线时间。',
-    shielded:'持续接触压住回盾，或用毒液绕盾。',resist:'优先破抗科技、腐蚀与易伤，再集中输出。',
-    vamp:'减伤、控制并守住门线，减少实际攻击带来的回血。',frenzy:'在残血前保留控制与爆发，避免让狂暴敌人贴脸。',
-    splitter:'预留群攻与射程处理两只分裂体；召唤封印可拦截分裂。',deadly:'保持距离击杀，提前修复爆炸半径内的防御。',
-    regen:'集中爆发压过回血；控制主要延缓推进，再生仍会持续。',armored:'提高单发伤害或配合破甲；持续伤害按时间结算固定减伤。',
-  },
-};
 // Transient remains and interruptible resurrection. Bodies keep their original
 // health calculation and identity; revival never rerolls or re-multiplies HP.
 const EnemyRemains={
@@ -146,7 +116,6 @@ const EnemyParasite={
 // Read-only warnings use the same cooldowns that trigger the actual action.
 function enemyCastCue(enemy) {
   if(enemy.dead || enemy.stun>0 || G.buff.freeze>0 || enemy.phaseBarrier>0)return null;
-  if(enemy.boss)return BossEncounters.cue(enemy);
   if(enemy.raiseCast)return {kind:'revive',label:'复苏',left:enemy.raiseCast.left,total:enemy.raiseCast.total,color:'#c0a1d8'};
   if(enemy.parasiteTarget)return {kind:'parasite',label:enemy.parasiteWindup>0?'寄生蓄力':'寄生吸取',left:enemy.parasiteWindup>0?enemy.parasiteWindup:enemy.parasiteRemaining,
     total:enemy.parasiteWindup>0?EnemyParasite.windup:enemy.def.parasite.dur,color:'#b8db72'};

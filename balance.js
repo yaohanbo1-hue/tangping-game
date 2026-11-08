@@ -17,12 +17,11 @@ const EnemyBalance = {
     return (2*t3-3*t2+1)*a[1] + (t3-2*t2+t)*10*slope(i) +
       (-2*t3+3*t2)*b[1] + (t3-t2)*10*slope(i+1);
   },
-  bossCurve(value) { return Math.pow(2,Math.min(9,Math.max(0,(this.wave(value)-10)*.18))); },
   health(def, wave, context={}) {
     const valid=n=>Number.isFinite(+n) && +n>0 ? +n : 1;
     const factors = { base: valid(def.hp), wave: this.legacyScale(wave), curve: this.curve(wave),
       difficulty: valid(context.difficulty), event: valid(context.event), trial: valid(context.trial),
-      dream: valid(context.dream), elite: 1, boss: def.phases ? this.bossCurve(wave) : 1 };
+      dream: valid(context.dream), elite: 1 };
     let shieldFraction=def.shieldself || 0;
     (context.affixes || []).forEach(key => {
       const a=AFFIX[key];

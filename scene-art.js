@@ -39,9 +39,6 @@ const SceneArt = (() => {
     // Continuous wall cap and skirting have a different material from the floor.
     box(c,ROOM_X0,HUD_H,ROOM_X1-ROOM_X0,10,'#0c1721');
     box(c,ROOM_X0,ARENA_TOP-3,ROOM_X1-ROOM_X0,3,'#53616a');
-    for(let x=ROOM_X0+14;x<ROOM_X1-20;x+=110) {
-      box(c,x,HUD_H+2,6,7,'#364853');box(c,x+1,HUD_H+2,4,1,'#8a9994');
-    }
     box(c,ROOM_X0,ARENA_BOT,ROOM_X1-ROOM_X0,9,'#0b151e');
     line(c,ROOM_X0,ARENA_BOT,ROOM_X1,ARENA_BOT,'#65706b',2);
     box(c,ROOM_X1-5,ARENA_TOP,5,ARENA_BOT-ARENA_TOP,'#111c25');
@@ -51,20 +48,10 @@ const SceneArt = (() => {
     round(c,ROOM_X0+22,ARENA_TOP+7,88,15,2,'#263740','#52636a');
     c.font='8px monospace';c.fillStyle='#b1bfb8';c.textAlign='left';c.fillText('DORM / 03:07',ROOM_X0+29,ARENA_TOP+18);
     for(let i=0;i<6;i++) box(c,ROOM_X0+127+i*6,ARENA_TOP+9,3,9,'#08141e');
-    line(c,ROOM_X0+124,ARENA_TOP+8,ROOM_X0+162,ARENA_TOP+8,'#6f7e79');
-    // Recessed service rail and numbered clips remain on the wall, not build cells.
-    for(const x of [ROOM_X0+240,ROOM_X0+520,ROOM_X0+720]) {
-      round(c,x,ARENA_TOP+4,24,12,1,'#142630','#52656b');
-      box(c,x+4,ARENA_TOP+7,16,2,'#879387');box(c,x+4,ARENA_TOP+11,9,1,'#51676c');
-    }
     // A dedicated bedside mat frames the two occupied cells.
     round(c,1155,170,99,188,6,'#313b3b','#697068');
     round(c,1160,175,89,178,4,null,'#927c55');
     for(let i=0;i<10;i++)line(c,1161+i*9,350,1161+i*9,354,'#b29a6d');
-    for(let y=182;y<347;y+=9)line(c,1162,y,1247,y,'rgba(167,145,103,.08)');
-    // A discreet lamp cable follows the existing occupied bedside strip.
-    path(c,[[1257,216],[1253,230],[1255,249],[1250,258],[1252,282]],null,'#121d25',3);
-    path(c,[[1257,216],[1253,230],[1255,249],[1250,258],[1252,282]],null,'#807450',1);
     lampGlow=glow(256,[[0,'rgba(255,218,144,.48)'],[.24,'rgba(237,175,78,.23)'],[.65,'rgba(220,151,65,.07)'],[1,'rgba(220,151,65,0)']]);
     fog=glow(128,[[0,'rgba(114,152,174,.24)'],[.5,'rgba(69,101,129,.12)'],[1,'rgba(69,101,129,0)']]);
   }
@@ -77,18 +64,11 @@ const SceneArt = (() => {
       c.save();c.beginPath();c.rect(x,y,w,h);c.clip();
       box(c,tx+1,ty+1,56,26,noise(col*13+row+L.i*55)>.5?'#1a2e3e':'#1c3040');
       line(c,tx+3,ty+2,tx+54,ty+2,'rgba(118,148,166,.10)');
-      line(c,tx+55,ty+4,tx+55,ty+24,'rgba(5,15,24,.32)');
-      if(noise(col*17+row*43+L.i)>.64) {
-        path(c,[[tx+5,ty+21],[tx+14,ty+17],[tx+22,ty+19],[tx+29,ty+15]],null,'rgba(7,20,29,.27)');
-        line(c,tx+6,ty+20,tx+14,ty+16,'rgba(111,144,158,.12)');
-      }
       if((col+row)%4===0)line(c,tx+8,ty+20,tx+18,ty+19,'rgba(108,142,163,.12)');
       c.restore();
     }
     box(c,x,y,w,30,'#101d2b');box(c,x,y+28,w,5,'#080f1a');
     line(c,x,y+27,WALL_X,y+27,'#405566');
-    line(c,x,y+31,WALL_X,y+31,'#0a1520',2);
-    for(const px of [89,219,345]){box(c,px,y+2,3,24,'#263c4b');line(c,px,y+3,px,y+24,'#546772');}
     // A pair of recessed rain windows in each corridor wall.
     for(const wx of [96,237]) {
       round(c,wx-4,y+2,104,26,2,'#060e19','#4a6372');
@@ -102,10 +82,6 @@ const SceneArt = (() => {
       for(let i=0;i<8;i++)box(c,wx+i*13,y+5,3,18,'rgba(93,139,159,.10)');
       box(c,wx+45,y+4,4,21,'#0b1823');box(c,wx,y+13,96,2,'#101e2b');
       line(c,wx-3,y+28,wx+102,y+28,'#75929d');
-      line(c,wx-2,y+1,wx+99,y+1,'#6a8290');
-      line(c,wx+99,y+4,wx+99,y+24,'#07121e',2);
-      box(c,wx+43,y+21,8,3,'#98a9a4');box(c,wx+46,y+19,3,3,'#7b8f91');
-      for(const sx of [wx+9,wx+70])path(c,[[sx,y+6],[sx-3,y+11],[sx-1,y+17]],null,'rgba(166,197,204,.15)');
       // Window projection on wet slate, with mullion shadows and glints.
       path(c,[[wx,y+34],[wx+93,y+34],[wx+110,y+107],[wx+8,y+97]],'rgba(80,124,149,.12)');
       path(c,[[wx+44,y+34],[wx+49,y+34],[wx+61,y+103],[wx+55,y+102]],'#172b3b');
@@ -119,17 +95,11 @@ const SceneArt = (() => {
     line(c,133,L.doorY+36,182,L.doorY+36,'rgba(143,187,200,.16)');
     ellipse(c,288,L.doorY-25,36,4,'rgba(4,12,22,.42)');
     line(c,267,L.doorY-26,301,L.doorY-26,'rgba(126,171,191,.16)');
-    // An inset drainage grate and a broken reflection explain the wet material.
-    round(c,304,L.y1-18,47,8,1,'#091521','#3a5360');
-    for(let gx=308;gx<349;gx+=6)line(c,gx,L.y1-16,gx,L.y1-12,'#617984');
-    for(const [gx,gy,len]of [[112,43,24],[218,78,33],[288,110,19]])
-      line(c,gx,L.y0+gy,gx+len,L.y0+gy-1,'rgba(135,173,188,.12)');
     const dark=c.createLinearGradient(x,0,x+66,0);dark.addColorStop(0,'#040914');dark.addColorStop(1,'rgba(4,9,20,0)');
     c.fillStyle=dark;c.fillRect(x,y,66,h);
     // The pink fissure marks the spawn edge, leaving the floor calm.
     path(c,[[47,y+39],[54,y+53],[49,y+84],[55,y+112],[48,y+145]],null,'#6b345b',3);
     round(c,60,y+39,24,18,2,'#152532','#465a66');
-    box(c,61,y+40,3,16,'#61777e');box(c,63,y+59,19,2,'#0b1822');
     c.fillStyle='#a5bdc9';c.font='bold 10px monospace';c.textAlign='center';c.fillText('0'+(L.i+1),72,y+52);
     // Low floor guides point toward the actual opening.
     for(const px of [108,214,320])path(c,[[px,L.doorY-3],[px+6,L.doorY],[px,L.doorY+3]],null,'rgba(124,156,170,.25)');
@@ -151,14 +121,9 @@ const SceneArt = (() => {
           const sx=px+7+noise(col*49+r*61+g*7+p)*20,sy=y+8+noise(g*29+col+r*13+p*19)*55;
           line(c,sx,sy,sx+noise(g*7+col)*4,Math.min(y+CH-6,sy+22),'rgba(9,22,29,.19)');
         }
-        if((col+r+p)%5===0) {
-          const knotX=px+CW/6,knotY=y+23+noise(col+r*9+p)*38;
-          c.strokeStyle='rgba(13,26,32,.25)';c.lineWidth=.7;c.beginPath();c.ellipse(knotX,knotY,2.5,6,0,0,TAU);c.stroke();
-        }
-        for(const sy of [6,CH-6]){box(c,px+5,y+sy,1.5,1.5,'rgba(7,20,27,.5)');}
       }
       // Four short brackets make a build cell readable without a glowing table.
-      c.strokeStyle='rgba(137,161,159,.23)';c.lineWidth=1;c.beginPath();
+      c.strokeStyle='rgba(137,161,159,.18)';c.lineWidth=1;c.beginPath();
       for(const [dx,dy,sx,sy]of [[5,5,1,1],[CW-5,5,-1,1],[5,CH-5,1,-1],[CW-5,CH-5,-1,-1]]) {
         c.moveTo(x+dx,y+dy+sy*6);c.lineTo(x+dx,y+dy);c.lineTo(x+dx+sx*6,y+dy);
       }c.stroke();
@@ -226,10 +191,6 @@ const SceneArt = (() => {
       box(c,x-10,y-half+10,16,half*2-20,wooden?'#64513f':'#344b5a');
       line(c,x-9,y-half+9,x-9,y+half-9,wooden?'#a18760':'#74939c');line(c,x+10,y-half+7,x+10,y+half-7,'#1a2b38',2);
       if(wooden) for(let i=0;i<3;i++)line(c,x-6+i*5,y-half+12,x-5+i*5,y+half-11,'#493c32');
-      else {
-        box(c,x-7,y-half+12,10,2,'#526d79');line(c,x+3,y-half+15,x+3,y+half-12,'#1b303e');
-        for(const by of [-12,11]){box(c,x-8,y+by,10,2,'#223a47');line(c,x-8,y+by-1,x+2,y+by-1,'#56737e');}
-      }
       // Crossbars, hinges and an independent latch create a steel-door silhouette.
       for(const off of [-22,22]) {
         box(c,x-16,y+off-3,32,6,'#172a36');box(c,x-15,y+off-3,30,2,'#7d939a');
@@ -237,7 +198,6 @@ const SceneArt = (() => {
         ellipse(c,x-15,y+off,1.2,1.2,'#bec6bd');ellipse(c,x+11,y+off,1.1,1.1,'#a7b2ae');
       }
       round(c,x-1,y-8,11,16,2,'#1b2c37','#8b9d9f');box(c,x+5,y-2,8,3,palette.gold);
-      ellipse(c,x+3,y+4,1,1,'#0a1a25');line(c,x-12,y-half+6,x-12,y+half-7,'#b6bcb0');
       box(c,x-5,y-half+13,7,3,p<.3?palette.danger:'#a3d7bb');
       for(let i=0;i<level;i++)box(c,x-8+i*4,y+half-13,2,5,'#e6be78');
       if(p<.7) {
@@ -271,7 +231,6 @@ const SceneArt = (() => {
     round(c,bx+4,y+27,w-8,h-36,4,'#acb9b5','#d3d8c7');
     round(c,x-25,y+32,50,23,5,'#e7dfc8','#b0b7ad');
     line(c,x-21,y+36,x+21,y+36,'#fff1d5');
-    path(c,[[x-23,y+43],[x-20,y+50],[x-7,y+53]],null,'#b8beaf');
     // Sleeping child and fabric folds, no emoji or text used as the subject.
     ellipse(c,x-2,y+49+breathe*.2,11,9,'#d8ac85');
     path(c,[[x-13,y+48],[x-12,y+41],[x-6,y+38],[x+4,y+40],[x+9,y+45],[x+2,y+44],[x-4,y+46]],'#27313a');
@@ -281,7 +240,6 @@ const SceneArt = (() => {
     path(c,[[bx+7,qy+8],[x-5,qy+3],[bx+w-8,qy+8],[bx+w-8,qy+17],[x,qy+12],[bx+7,qy+19]],'#6c8990');
     path(c,[[bx+7,qy+19],[bx+13,qy+24],[bx+12,qy+86],[bx+7,qy+91]],'#344e60');
     line(c,bx+18,qy+29,bx+22,qy+67,'#5f7e86');line(c,x+11,qy+31,x+15,qy+84,'#3b586b');
-    for(const dx of [-19,21])for(let sy=27;sy<86;sy+=8)line(c,x+dx,qy+sy,x+dx,qy+sy+3,'#8ba19e',.7);
     path(c,[[bx+7,qy+86],[x-3,qy+91],[bx+w-7,qy+85],[bx+w-7,qy+96],[bx+7,qy+96]],'#2e485b');
     for(let i=0;i<5;i++)line(c,bx+9+i*9,qy+93,bx+13+i*9,qy+93,'#9eae9f');
     // A stitched lamp emblem on the quilt ties the silhouette to the title.
@@ -294,9 +252,6 @@ const SceneArt = (() => {
     box(c,1236,176,22,3,'#f0cf87');line(c,1242,165,1240,175,'#e3c384');
     box(c,1246,163,2,12,'#ad895a');ellipse(c,1247,180,4,2,'#ffe6a6');
     line(c,1255,188,1257,194,'#bfa675');box(c,1244,202,6,2,'#b9c394');
-    // A closed notebook and a mug sit on the existing nightstand.
-    path(c,[[1239,207],[1252,208],[1252,214],[1239,213]],'#677a73','#afaf8d');line(c,1241,209,1250,210,'#c3c1a4');
-    ellipse(c,1253,199,3,2,'#d1c8ab');box(c,1250,199,6,5,'#a6ad9d');ellipse(c,1253,204,3,1,'#64766e');
     if(hp<.5) {
       path(c,[[x-9,qy+40],[x-3,qy+46],[x-8,qy+53],[x+1,qy+58]],null,'#132f43',2);
       if(hp<.3)round(c,bx-7,y-3,w+14,h+6,6,null,palette.danger);

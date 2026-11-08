@@ -5,7 +5,7 @@
     "kind": "original-procedural-canvas",
     "url_or_tool": "building-art.js",
     "creator": "Codex for yaohanbo1-hue/tangping-game",
-    "license": "Apache-2.0 (repository LICENSE; historical notice in LICENSES/MIT-legacy.txt)",
+    "license": "MIT (repository LICENSE)",
     "attribution": "No external raster art used."
   },
   "assets": [

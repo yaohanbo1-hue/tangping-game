@@ -27,43 +27,24 @@ const EnemyArt = (() => {
   }
   function plate(c, x, y, w, h, fill = METAL) {
     path(c, [[x+4,y],[x+w-4,y],[x+w,y+4],[x+w,y+h-4],[x+w-4,y+h],[x+4,y+h],[x,y+h-4],[x,y+4]], fill);
-    path(c,[[x+4,y+1],[x+w-4,y+1],[x+w-7,y+4],[x+4,y+4],[x+2,y+h-5],[x+1,y+4]],mix(fill,BONE,.38),null);
-    path(c,[[x+w-3,y+5],[x+w-1,y+4],[x+w-1,y+h-5],[x+w-5,y+h-1],[x+5,y+h-1],[x+7,y+h-4],[x+w-5,y+h-4]],mix(fill,INK,.48),null);
-    if(w>=28&&h>=20){
-      line(c,x+7,y+7,x+w-7,y+7,mix(fill,INK,.38),1);
-      for(const dx of [6,w-6]){oval(c,x+dx,y+6,1.4,1.4,INK);oval(c,x+dx-.3,y+5.7,.65,.65,BONE);}
-    }
+    line(c, x+4, y+1, x+w-4, y+1, '#9aa3a5', 1);
   }
   function eye(c, x, y, r, color) {
-    path(c, [[x-r-2,y],[x-r*.4,y-r*.8],[x+r*.45,y-r*.7],[x+r+2,y],[x+r*.4,y+r*.72],[x-r*.45,y+r*.65]],mix(color,INK,.8));
     path(c, [[x-r,y],[x-r*.35,y-r*.6],[x+r*.45,y-r*.5],[x+r,y],[x+r*.3,y+r*.55],[x-r*.45,y+r*.45]], BONE);
-    path(c,[[x-r+1,y],[x-r*.35,y-r*.6],[x+r*.45,y-r*.5],[x+r-1,y],[x+r*.3,y-r*.18],[x-r*.4,y-r*.25]],'#9eaaad',null);
-    oval(c,x,y,r*.42,r*.62,mix(color,INK,.28),INK);oval(c,x-.5,y-.8,r*.27,r*.46,color);
-    line(c,x,y-r*.36,x,y+r*.36,INK,Math.max(1.5,r*.16));
-    oval(c,x-r*.13,y-r*.25,Math.max(.65,r*.09),Math.max(.8,r*.13),'#f4ead0');
+    oval(c, x, y, r*.35, r*.58, color, INK); line(c,x,y-r*.32,x,y+r*.32,INK,1.5);
   }
   function mask(c, x, y, r, color, long = false) {
     path(c, [[x-r,y-r*.65],[x-r*.45,y-r],[x+r*.6,y-r],[x+r,y-r*.4],[x+r*.65,y+r*.65],[x,y+r*(long?1.5:1)],[x-r*.75,y+r*.5]], BONE);
-    path(c,[[x+r*.16,y-r*.95],[x+r*.6,y-r],[x+r,y-r*.4],[x+r*.65,y+r*.65],[x,y+r*(long?1.5:1)],[x+r*.04,y+r*.1]],'#9ca5a5',null);
-    path(c,[[x-r*.88,y-r*.6],[x-r*.43,y-r*.85],[x-r*.5,y-r*.35],[x-r*.72,y+r*.26]],'#eee5cb',null);
-    path(c,[[x-r*.78,y-r*.26],[x-r*.18,y-r*.16],[x-r*.06,y+r*.18],[x-r*.56,y+r*.14]],INK,null);
-    path(c,[[x+r*.06,y+r*.18],[x+r*.18,y-r*.16],[x+r*.78,y-r*.26],[x+r*.56,y+r*.14]],INK,null);
     line(c,x-r*.6,y-r*.12,x-r*.12,y+r*.03,INK,2.7);
     line(c,x+r*.12,y+r*.03,x+r*.6,y-r*.12,INK,2.7);
     oval(c,x-r*.33,y-r*.03,1.2,1.2,color); oval(c,x+r*.33,y-r*.03,1.2,1.2,color);
     line(c,x+1,y-r*.8,x-r*.1,y-r*.15,'#857d7a',1);
     line(c,x-r*.1,y-r*.15,x+r*.3,y+r*.58,'#857d7a',1);
-    line(c,x-r*.22,y+r*.58,x+r*.2,y+r*.61,INK,1.4);
-    if(long)line(c,x-.5,y+r*.7,x-.5,y+r*1.15,'#666f77',1);
   }
   function cloak(c, color, width = 22, length = 29) {
     path(c, [[-width,24],[-width*.7,-12],[-8,-29],[9,-30],[width*.8,-12],[width,length],[11,length-5],[3,length],[0,length-7],[-10,length-1]], color);
     path(c, [[-7,-22],[-13,21],[-3,17],[3,25],[9,-20]], mix(color,INK,.35), null);
     line(c,-width*.7,-8,-width+3,19,mix(color,BONE,.35),1);
-    path(c,[[-9,-27],[-width*.58,-10],[-4,-4],[1,2],[width*.57,-11],[9,-28],[5,-13],[-3,-11]],mix(color,BONE,.16),INK,1);
-    path(c,[[width*.65,-5],[width-2,length-3],[11,length-7],[8,4]],mix(color,INK,.38),null);
-    line(c,-width+4,length-5,-13,length-9,mix(color,BONE,.25),1);
-    line(c,10,6,14,length-7,mix(color,BONE,.18),1);
   }
   function legs(c, n, color, spread = 33) {
     for (let i=0;i<n;i++) for (const s of [-1,1]) {
@@ -74,14 +55,7 @@ const EnemyArt = (() => {
   }
   function wings(c, color, owl = false) {
     for (const s of [-1,1]) path(c, [[s*7,-12],[s*25,-29],[s*44,-17],[s*34,-4],[s*39,10],[s*24,5],[s*21,18],[s*11,11]], color);
-    for (const s of [-1,1]) {
-      path(c,[[s*11,-10],[s*25,-25],[s*40,-17],[s*29,-11],[s*21,12]],mix(color,INK,.32),null);
-      for(let i=0;i<3;i++) {
-        line(c,s*12,-10,s*(25+i*5),-14+i*7,owl?BONE:mix(color,BONE,.4),1);
-        if(owl)path(c,[[s*(20+i*5),-13+i*6],[s*(31+i*3),-12+i*6],[s*(26+i*3),-5+i*6]],mix(color,BONE,.32),INK,.7);
-      }
-      line(c,s*9,-13,s*25,-27,mix(color,BONE,.55),1.5);
-    }
+    for (const s of [-1,1]) for(let i=0;i<3;i++) line(c,s*12,-10,s*(25+i*5),-14+i*7,owl?BONE:mix(color,BONE,.4),1);
   }
   function horns(c, color, height = 36) {
     for(const s of [-1,1]) path(c, [[s*8,-20],[s*16,-height],[s*24,-height-2],[s*17,-height+11],[s*20,-17]],color);
@@ -94,32 +68,28 @@ const EnemyArt = (() => {
       case 'sprinter':
         path(c,[[-33,6],[-22,-13],[4,-20],[27,-10],[36,0],[19,6],[11,22],[-2,14],[-23,20]],skin);
         for(const x of [-18,0,15])path(c,[[x,5],[x+11,9],[x-1,30],[x-7,28]],deep);
-        path(c,[[12,-14],[18,-31],[24,-17],[35,-10],[35,0],[19,5]],light);eye(c,24,-8,6,color);
-        path(c,[[-25,-7],[0,-16],[15,-8],[-4,-4]],deep,null);line(c,23,3,34,1,INK,2);line(c,29,2,28,7,BONE,1.5);break;
+        path(c,[[12,-14],[18,-31],[24,-17],[35,-10],[35,0],[19,5]],light);eye(c,24,-8,6,color);break;
       case 'brute':
         for(const s of [-1,1]){plate(c,s<0?-35:18,-16,18,39,deep);plate(c,s<0?-25:8,17,17,16,skin);}
         plate(c,-23,-20,46,45,skin);plate(c,-14,-29,28,23,light);line(c,-10,-17,10,-17,color,4);line(c,-5,-4,-5,18,BONE);line(c,5,-4,5,18,BONE);break;
       case 'phantom': case 'wraith':
         path(c,[[-28,29],[-19,0],[-23,-12],[-10,-32],[11,-34],[23,-15],[19,6],[29,31],[11,22],[7,37],[-4,24],[-15,32]],deep);
         path(c,[[-12,-23],[-15,16],[-4,9],[4,27],[11,10],[12,-20]],skin,null);mask(c,0,-13,id==='wraith'?8:13,light,true);
-        if(id==='wraith')for(const x of [-23,19]){line(c,x,-2,x*1.45,26,light,2);for(let i=0;i<3;i++)oval(c,x*1.45,16+i*6,2.5,3,deep,light);}
-        else {line(c,-14,8,-21,24,light,1.5);line(c,13,5,21,20,light,1.5);}break;
+        if(id==='wraith')for(const x of [-23,19])line(c,x,-2,x*1.45,26,light,2);break;
       case 'bomber':
         line(c,-8,-26,-8,-35,light,3);arc(c,0,-28,10,Math.PI,TAU,light,2);plate(c,-22,-21,44,48,deep);
         oval(c,0,2,15,19,color,light);for(const x of [-16,-7,7,16])line(c,x,-18,x,24,METAL,3);
-        path(c,[[-6,4],[0,-12],[8,5],[0,15]],BONE,null);plate(c,-25,22,50,7,METAL);line(c,-16,-23,16,-23,BONE,1);break;
+        path(c,[[-6,4],[0,-12],[8,5],[0,15]],BONE,null);break;
       case 'healer':
         for(let i=0;i<6;i++){c.save();c.rotate(i*TAU/6);path(c,[[9,-6],[29,-11],[34,0],[25,10],[9,6]],skin);c.restore();}
-        oval(c,0,0,17,21,deep,light);eye(c,0,-2,12,color);line(c,-4,14,4,14,light,2);
-        for(const s of [-1,1])line(c,s*13,12,s*23,22,light,2);break;
+        oval(c,0,0,17,21,deep,light);eye(c,0,-2,12,color);line(c,-4,14,4,14,light,2);break;
       case 'splitter': case 'weaver':
         legs(c,id==='weaver'?4:3,light,33);oval(c,0,11,id==='weaver'?18:22,20,skin,light);
-        if(id==='weaver'){path(c,[[0,-30],[17,-8],[0,13],[-17,-8]],BONE);for(const x of [-8,0,8])line(c,x,-12,x,9,deep);for(const y of [2,10,18])arc(c,0,y,12,-.3,Math.PI+.3,light,1);}
+        if(id==='weaver'){path(c,[[0,-30],[17,-8],[0,13],[-17,-8]],BONE);for(const x of [-8,0,8])line(c,x,-12,x,9,deep);}
         else {mask(c,-8,-13,10,color);mask(c,9,-10,10,color);line(c,0,-8,0,26,INK,2);}break;
       case 'bulwark':
         cloak(c,deep,24,28);mask(c,9,-20,9,color);path(c,[[-32,-18],[-7,-28],[17,-17],[14,18],[-8,33],[-30,18]],skin);
-        path(c,[[-24,-13],[-9,-19],[8,-12],[6,13],[-8,23],[-23,13]],deep,light);line(c,-20,-3,2,-3,color,3);
-        path(c,[[-24,-13],[-9,-19],[-8,23],[-23,13]],mix(skin,BONE,.23),null);line(c,-8,-18,-8,22,light,1.5);for(const y of [-12,13])oval(c,-20,y,1.5,1.5,BONE);break;
+        path(c,[[-24,-13],[-9,-19],[8,-12],[6,13],[-8,23],[-23,13]],deep,light);line(c,-20,-3,2,-3,color,3);break;
       case 'flier': case 'owl':
         wings(c,skin,id==='owl');oval(c,0,2,id==='owl'?15:10,25,deep,light);
         if(id==='owl'){path(c,[[-17,-26],[-9,-17],[9,-17],[17,-26],[14,3],[0,13],[-14,3]],light);eye(c,-7,-7,6,color);eye(c,7,-7,6,color);path(c,[[-3,0],[3,0],[0,7]],'#b5a078');}
@@ -147,16 +117,14 @@ const EnemyArt = (() => {
         plate(c,-23,-31,46,8,skin);plate(c,-23,24,46,8,skin);
         path(c,[[-17,-23],[17,-23],[6,-2],[17,23],[-17,23],[-6,-2]],'#677584',light);
         path(c,[[-13,-18],[13,-18],[0,0]],color,null);path(c,[[-12,20],[0,8],[12,20]],BONE,null);
-        for(const s of [-1,1]){line(c,s*22,-22,s*22,23,light,3);line(c,s*19,-19,s*19,20,deep,1);}
-        line(c,0,4,0,13,color,1.5);for(const [x,y]of [[-8,17],[5,19],[0,14]])oval(c,x,y,.8,.8,light);eye(c,0,0,7,color);break;
+        for(const s of [-1,1])line(c,s*22,-22,s*22,23,light,3);eye(c,0,0,7,color);break;
       case 'nullifier':
         for(let i=0;i<7;i++){c.save();c.rotate(i*TAU/7);path(c,[[18,-9],[31,-12],[36,0],[28,12],[17,8]],skin,light);c.restore();}
         oval(c,0,0,19,23,INK,light);line(c,-15,19,16,-20,color,4);break;
       case 'colossus':
         for(const s of [-1,1]){plate(c,s<0?-37:20,-12,17,42,skin);plate(c,s<0?-23:6,19,17,20,deep);}
         plate(c,-25,-27,50,50,'#6f7574');plate(c,-16,-36,32,25,light);line(c,-9,-23,9,-23,color,4);
-        for(let i=0;i<3;i++)plate(c,-15,-4+i*9,30,6,deep);line(c,-17,-12,-6,15,'#c4c0a9');
-        path(c,[[9,-13],[3,-3],[12,5],[5,15]],null,INK,2);line(c,10,-13,5,-3,light,1);for(const s of [-1,1])oval(c,s*28,0,3,4,deep,light);break;
+        for(let i=0;i<3;i++)plate(c,-15,-4+i*9,30,6,deep);line(c,-17,-12,-6,15,'#c4c0a9');break;
       case 'saboteur':
         legs(c,2,light,28);plate(c,-21,-17,42,38,skin);mask(c,0,-14,10,color);
         for(const s of [-1,1]){line(c,s*17,-4,s*33,-27,BONE,4);line(c,s*33,-27,s*39,-24,light,2);line(c,s*33,-27,s*29,-36,light,2);}break;
@@ -165,15 +133,13 @@ const EnemyArt = (() => {
         eye(c,0,-2,14,color);path(c,[[-12,16],[0,32],[11,17]],light);break;
       case 'brood':
         legs(c,3,light,32);oval(c,0,10,26,26,skin,light);oval(c,0,-17,13,13,deep,light);
-        for(const [x,y]of [[-13,4],[8,-1],[0,15],[14,19],[-13,22]]){oval(c,x,y,7,9,mix(color,BONE,.55),INK);oval(c,x-2,y-3,2,3,BONE);arc(c,x,y,5,0,2,deep,1);}
-        eye(c,0,-18,9,color);break;
+        for(const [x,y]of [[-13,4],[8,-1],[0,15],[14,19],[-13,22]])oval(c,x,y,7,9,mix(color,BONE,.55),INK);eye(c,0,-18,9,color);break;
       case 'digger':
         oval(c,0,10,27,18,deep);for(let i=0;i<5;i++)path(c,[[-25+i*11,5],[-18+i*10,-25],[-8+i*10,6]],skin,light);
         path(c,[[14,-8],[36,2],[16,15]],BONE);line(c,22,-2,20,10,deep);eye(c,8,-3,6,color);break;
       case 'emp':
         plate(c,-18,-10,36,36,skin);oval(c,0,-15,14,17,deep,light);eye(c,0,-15,10,color);
-        for(const s of [-1,1]){line(c,s*12,-24,s*27,-35,light,2);oval(c,s*27,-35,4,4,color);arc(c,s*24,5,11,-2,1.8,light,2);}
-        for(const y of [5,11,17])line(c,-10,y,10,y,INK,2);line(c,-9,24,8,24,light,1);break;
+        for(const s of [-1,1]){line(c,s*12,-24,s*27,-35,light,2);oval(c,s*27,-35,4,4,color);arc(c,s*24,5,11,-2,1.8,light,2);}break;
       case 'mimic':
         cloak(c,deep,28,28);mask(c,-11,-7,16,color);c.save();c.rotate(.3);mask(c,13,0,15,mix(color,BONE,.6),true);c.restore();
         path(c,[[-10,13],[0,30],[12,12]],skin);break;
@@ -197,35 +163,27 @@ const EnemyArt = (() => {
         for(const x of [-20,-9,1])path(c,[[x,-7],[x+5,-28],[x+11,-9]],BONE);eye(c,21,-8,7,color);path(c,[[24,4],[29,4],[26,14]],BONE);break;
       case 'rustbug':
         legs(c,3,'#b59e6a',31);for(let i=0;i<8;i++){c.save();c.rotate(i*TAU/8);plate(c,19,-5,12,10,skin);c.restore();}
-        oval(c,0,0,25,27,deep,light);plate(c,-16,-18,32,38,skin);eye(c,0,-7,11,color);line(c,-9,9,9,9,BONE,2);
-        for(const s of [-1,1]){arc(c,s*19,1,3,0,TAU,'#ad8a57',1.5);line(c,s*21,-12,s*25,-8,INK,2);}line(c,-8,14,8,14,INK,1);break;
+        oval(c,0,0,25,27,deep,light);plate(c,-16,-18,32,38,skin);eye(c,0,-7,11,color);line(c,-9,9,9,9,BONE,2);break;
       case 'echo':
         path(c,[[-23,-21],[0,-32],[25,-18],[32,12],[9,31],[-22,25]],skin,light);
         for(let i=0;i<4;i++)oval(c,0,-6+i*7,19-i*2,7,deep,light);eye(c,0,-17,9,color);break;
       case 'lord': case 'boss':
         cloak(c,deep,35,42);horns(c,light,48);mask(c,0,-8,20,color,true);
         path(c,[[-18,-26],[-20,-44],[-8,-34],[0,-47],[9,-34],[23,-44],[18,-24]],'#b39a70');
-        for(const s of [-1,1]){path(c,[[s*25,-9],[s*48,9],[s*43,33],[s*32,19],[s*21,27]],skin,light);line(c,s*27,-7,s*39,24,'#b39a70',2);}
-        path(c,[[-22,10],[0,26],[22,10],[15,30],[0,37],[-15,30]],'#82745f',BONE,1);eye(c,0,17,10,color);oval(c,0,-38,3,4,color,BONE);break;
+        for(const s of [-1,1])path(c,[[s*25,-9],[s*48,9],[s*43,33],[s*32,19],[s*21,27]],skin,light);eye(c,0,17,10,color);break;
       case 'abyss':
-        for(let i=0;i<8;i++){const a=i*TAU/8;c.save();c.rotate(a);path(c,[[16,-9],[35,-16],[51,-7],[42,3],[53,13],[37,9],[24,13]],skin,light);
-          line(c,22,5,38,-3,deep,3);for(const [x,y]of [[30,7],[38,5],[45,10]])oval(c,x,y,2,2.7,mix(color,BONE,.55),deep);c.restore();}
+        for(let i=0;i<8;i++){const a=i*TAU/8;c.save();c.rotate(a);path(c,[[16,-9],[35,-16],[51,-7],[42,3],[53,13],[37,9],[24,13]],skin,light);c.restore();}
         oval(c,0,0,29,33,deep,light);oval(c,0,0,20,27,INK);
         for(let i=0;i<10;i++){const a=i*TAU/10;path(c,[[Math.cos(a)*23,Math.sin(a)*27],[Math.cos(a+.2)*11,Math.sin(a+.2)*16],[Math.cos(a+.4)*23,Math.sin(a+.4)*27]],BONE);}eye(c,0,-23,7,color);break;
       case 'machine':
-        for(let i=0;i<3;i++){c.save();c.rotate(i*TAU/3);plate(c,19,-13,32,26,skin);plate(c,40,-18,13,36,deep);line(c,43,-10,43,10,color,3);
-          for(const x of [27,32,37])line(c,x,-6,x,6,INK,2);c.restore();}
-        oval(c,0,0,30,30,METAL,light);oval(c,0,0,25,25,deep,BONE);
-        for(let i=0;i<12;i++){const a=i*TAU/12;line(c,Math.cos(a)*25,Math.sin(a)*25,Math.cos(a)*29,Math.sin(a)*29,i%3?light:color,2);}
-        oval(c,0,0,22,22,INK,light);eye(c,0,0,19,color);break;
+        for(let i=0;i<3;i++){c.save();c.rotate(i*TAU/3);plate(c,19,-13,32,26,skin);plate(c,40,-18,13,36,deep);line(c,43,-10,43,10,color,3);c.restore();}
+        oval(c,0,0,30,30,METAL,light);oval(c,0,0,22,22,INK,light);eye(c,0,0,19,color);break;
       case 'void':
         for(const s of [-1,1])path(c,[[s*6,-43],[s*35,-31],[s*46,-3],[s*34,28],[s*11,44],[s*24,14],[s*19,-10]],skin,light);
-        for(const s of [-1,1]){path(c,[[s*12,-37],[s*31,-28],[s*39,-3],[s*29,23],[s*22,29],[s*29,8],[s*27,-13]],deep,null);line(c,s*29,-20,s*34,-5,light,1.5);}
         cloak(c,INK,19,28);mask(c,0,-4,12,'#b39ccd',true);for(const [x,y]of [[-40,33],[38,-37],[-16,-46]])path(c,[[x,y-8],[x+5,y],[x,y+9],[x-5,y]],light);break;
       case 'final':
         for(let i=0;i<12;i++){c.save();c.rotate(i*TAU/12);path(c,[[31,-3],[48,-5],[55,0],[48,5],[31,3]],i%3?'#7e5961':'#c2a16e',light,1);c.restore();}
-        cloak(c,deep,31,43);horns(c,BONE,48);oval(c,0,-1,34,28,skin,light);oval(c,0,-1,30,24,deep,'#c2a16e');
-        for(let i=0;i<12;i++){const a=i*TAU/12;line(c,Math.cos(a)*29,-1+Math.sin(a)*23,Math.cos(a)*33,-1+Math.sin(a)*27,i%3?light:BONE,1.5);}eye(c,0,-1,28,color);
+        cloak(c,deep,31,43);horns(c,BONE,48);oval(c,0,-1,34,28,skin,light);eye(c,0,-1,28,color);
         for(const s of [-1,1]){line(c,s*22,25,s*37,39,BONE,3);line(c,s*37,39,s*43,26,BONE,2);}break;
       default: cloak(c,skin);mask(c,0,-8,12,color);
     }

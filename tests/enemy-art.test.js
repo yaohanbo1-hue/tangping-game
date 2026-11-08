@@ -28,13 +28,12 @@ function save(name,url){fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(
         const hash=digest(ctx=>EnemyArt.draw(ctx,e,0,.016,{motion:false}));
         const moveA=digest(ctx=>EnemyArt.draw(ctx,e,.2,.016,{motion:true})),moveB=digest(ctx=>EnemyArt.draw(ctx,e,1.3,.016,{motion:true}));
         const reduced=digest(ctx=>EnemyArt.draw(ctx,e,9,.016,{motion:false}));
-        const fullRadius=e.r;e.r=14;const small=digest(ctx=>EnemyArt.draw(ctx,e,0,.016,{motion:false}));e.r=fullRadius;
         e.hitFlash=.12;const hit=digest(ctx=>EnemyArt.draw(ctx,e,0,.016,{motion:false}));e.hitFlash=0;
         const phases=[];if(boss)for(let p=0;p<def.phases.length;p++){e.phase=p;phases.push(digest(ctx=>EnemyArt.draw(ctx,e,0,.016,{motion:false})).hash);}e.phase=0;
         const x=(i%8)*160+80,y=Math.floor(i/8)*152+70;
         EnemyArt.preview(c,id,x,y,boss?31:28);c.fillStyle='#dfd8bd';c.font='11px sans-serif';c.textAlign='center';c.fillText(def.name,x,y+59);
         c.fillStyle='#7f969b';c.font='8px monospace';c.fillText(id.toUpperCase(),x,y+73);
-        rows.push({id,...hash,smallInk:small.ink,smallEdge:small.edge,moves:moveA.hash!==moveB.hash,reduced:reduced.hash===hash.hash,hit:hit.hash!==hash.hash,phases});
+        rows.push({id,...hash,moves:moveA.hash!==moveB.hash,reduced:reduced.hash===hash.hash,hit:hit.hash!==hash.hash,phases});
       });}finally{Math.random=random;}
       const badge=document.createElement('canvas');badge.width=600;badge.height=90;const b=badge.getContext('2d');b.fillStyle='#101e28';b.fillRect(0,0,600,90);
       Object.keys(AFFIX).forEach((key,i)=>{EnemyArt.mark(b,key,30+i*60,32,14,AFFIX[key].color);b.font='10px sans-serif';b.textAlign='center';b.fillStyle='#dfd8bd';b.fillText(AFFIX[key].name,30+i*60,69);});
@@ -42,7 +41,7 @@ function save(name,url){fs.writeFileSync(path.join(out,name+'.png'),Buffer.from(
     });
     assert.equal(catalog.rows.length,40,'35 regular enemies plus five Bosses');
     assert.equal(new Set(catalog.rows.map(r=>r.hash)).size,40,'all enemies have distinct artwork');
-    for(const r of catalog.rows){assert.ok(r.ink>300&&r.edge===0,r.id+' is visible without clipping');assert.ok(r.smallInk>200&&r.smallEdge===0,r.id+' retains a visible body at mobile thumbnail scale');assert.ok(r.moves&&r.reduced&&r.hit,r.id+' has movement, reduced-motion and hit states');if(r.phases.length)assert.equal(new Set(r.phases).size,r.phases.length,r.id+' changes across actual phases');}
+    for(const r of catalog.rows){assert.ok(r.ink>300&&r.edge===0,r.id+' is visible without clipping');assert.ok(r.moves&&r.reduced&&r.hit,r.id+' has movement, reduced-motion and hit states');if(r.phases.length)assert.equal(new Set(r.phases).size,r.phases.length,r.id+' changes across actual phases');}
     assert.ok(catalog.cache.bytes<8e6&&catalog.cache.entries<=64,'bestiary cache stays bounded');save('catalog',catalog.sheet);save('elite-marks',catalog.badges);
     await page.locator('[data-experience="combat"]').click();await page.locator('#btnStart').click();
     const integration=await page.evaluate(()=>{

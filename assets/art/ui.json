@@ -5,7 +5,7 @@
     "kind": "original-inline-svg-and-procedural-canvas",
     "url_or_tool": "ui-art.js; theme.css",
     "creator": "Codex for yaohanbo1-hue/tangping-game",
-    "license": "Apache-2.0 (repository LICENSE; historical notice in LICENSES/MIT-legacy.txt)",
+    "license": "MIT (repository LICENSE)",
     "attribution": "No external raster art, icon fonts or network image requests."
   },
   "assets": [
@@ -74,25 +74,6 @@
       "path": "theme.css",
       "role": "home, HUD, build controls, drawers, archives, dialogue, tutorial and summary",
       "status": "integrated"
-    },
-    {
-      "id": "native-phone-controls",
-      "path": "mobile-controls.js; mobile.css",
-      "role": "native-size phone menu/HUD/build/skill/management controls and real-control portals",
-      "status": "integrated",
-      "technical": {
-        "dimensions": "responsive CSS pixels; at least 44px primary controls",
-        "world": "unchanged 1280x720; visible battle y66..556"
-      },
-      "states": [
-        "portrait",
-        "landscape",
-        "asymmetric safe area",
-        "classic fallback",
-        "rotated touch",
-        "large text",
-        "reduced motion"
-      ]
     }
   ],
   "verification": {

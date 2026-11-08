@@ -27,7 +27,6 @@ async function exercise(engine,name,mobile) {
   page.on('console',msg=>{if(msg.type()==='error' && /^\[(loop|init)\]/.test(msg.text())) errors.push(msg.text());});
   page.on('request',r=>{if(r.url().includes('/assets/story/'))videos.push(r.url());});
   try {
-    if(mobile)await page.addInitScript(()=>localStorage.setItem('tangping_phone_controls','off'));
     await page.goto('http://127.0.0.1:'+server.address().port+'/');
     await page.locator('#experienceCards [data-experience="combat"]').click();
     await page.locator('#btnStart').click();
