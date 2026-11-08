@@ -13,6 +13,7 @@ const server=http.createServer((req,res)=>{
   try {
     const page=await browser.newPage({viewport:{width:844,height:390},isMobile:true,hasTouch:true}),errors=[],videos=[];
     page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(r.url().includes('/assets/story/'))videos.push(r.url());});
+    await page.addInitScript(()=>localStorage.setItem('tangping_phone_controls','off'));
     await page.goto('http://127.0.0.1:'+server.address().port+'/');await page.locator('[data-experience="combat"]').click();await page.locator('#btnStart').click();
     await page.evaluate(()=>{
       newGame();G.experience='combat';paused=true;SFX.on=false;Music.setEnabled(false);G.wave=27;G.state='wave';

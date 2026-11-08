@@ -38,12 +38,14 @@ const server=http.createServer((req,res)=>{
         shake=3;render(1/60);G.effects=effects;
       } finally {Math.random=random;}
       const pixels=(time,motion)=>{SceneArt.drawBase(c);SceneArt.drawWeather(c,time,motion);return surface.toDataURL();};
-      return {same:before===state(),animated:pixels(0,true)!==pixels(2,true),reducedStable:pixels(0,false)===pixels(2,false),...SceneArt.stats()};
+      const props=time=>{SceneArt.drawBase(c);SceneArt.drawWeather(c,time,false);SceneArt.drawBed(c,G.bed,time,0,false);for(const L of LANES)SceneArt.drawDoor(c,L,G.doors[L.i],time,0,false);return surface.toDataURL();};
+      return {same:before===state(),animated:pixels(0,true)!==pixels(2,true),reducedStable:pixels(0,false)===pixels(2,false),reducedPropsStable:props(0)===props(2),...SceneArt.stats()};
     });
     assert.equal(result.same,true,'rendering cannot change combat fields');
     assert.equal(result.builds,1,'static scene built once across sixty frames');
     assert.equal(result.animated,true,'rain, fog and lamp breathing are connected');
     assert.equal(result.reducedStable,true,'reduced motion holds decorative atmosphere still');
+    assert.equal(result.reducedPropsStable,true,'door, bedside objects and fabric remain still with reduced motion');
     assert.ok(result.bytes<4.1e6,'bounded scene texture budget');
     await page.evaluate(()=>{shake=0;G.doors[0].hp=G.doors[0].maxHp*.24;G.doors[1].hp=0;G.doors[1].broken=true;G.doors[2].shield=100;G.doors[2].shieldMax=100;G.bed.hp=G.bed.maxHp*.28;});
     await capture('damage-breach-native');

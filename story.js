@@ -16,6 +16,27 @@ const STORY_ARCS = [
   { id: 'the-reply', title: '听完那条语音', waves: [51, 60], question: '这一次，你愿意亲口回答吗？' },
 ];
 
+// Subtle scene lighting for the five acts; future chapter titles are never
+// rendered by the progress rail. Dialogue identity stays separate from G.wave.
+const STORY_ACT_LOOKS=[
+  {accent:'#9db9bf',ground:'#213944'},
+  {accent:'#acbea8',ground:'#243b3c'},
+  {accent:'#beb0cb',ground:'#2c3344'},
+  {accent:'#d5bc84',ground:'#383b32'},
+  {accent:'#b8cbb3',ground:'#2e3d38'},
+];
+const StoryPresentation={
+  forDialog(data){
+    if(!data)return null;
+    const main=WAVE_STORY.find(s=>s===data||(s.wave===data.wave&&s.text===data.text&&s.speaker===data.speaker));
+    if(!main)return null;
+    const index=STORY_ARCS.findIndex(arc=>main.wave>=arc.waves[0]&&main.wave<=arc.waves[1]);
+    if(index<0)return null;
+    const arc=STORY_ARCS[index];
+    return {id:arc.id,index,title:data.actTitle||'第'+['一','二','三','四','五'][index]+'幕 · '+arc.title,...STORY_ACT_LOOKS[index]};
+  },
+};
+
 // 第 55 波的理解路线 × 第 60 波的最后回应，共同决定主线结尾。
 // 结尾文案与 ui.js 的通关结算共用，档案页只展示已抵达的版本。
 const STORY_ENDINGS = [

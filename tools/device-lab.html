@@ -1,0 +1,71 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>守灯人 · 手机验收</title>
+<style>
+:root{color-scheme:dark;font:15px/1.75 system-ui,sans-serif;background:#0c1e28;color:#dedbc4}*{box-sizing:border-box}body{max-width:860px;margin:auto;padding:24px max(16px,env(safe-area-inset-right)) 40px max(16px,env(safe-area-inset-left))}h1{font-size:24px;color:#e9d29b;margin-bottom:6px}p{color:#b8c9bc}section{padding:18px;background:#1c333b;border:1px solid #627d6d;border-radius:8px;margin:16px 0}label{display:block;margin:12px 0}input[type=text],textarea,select{font:inherit;background:#102830;color:#e1d7ba;border:1px solid #7a8b73;border-radius:4px;min-height:44px;padding:8px;max-width:100%}input[type=text],textarea{width:100%}input[type=checkbox]{width:22px;height:22px;vertical-align:middle;margin-right:8px}button,a.action{display:inline-block;font:600 15px/1.4 system-ui;padding:12px 17px;min-height:48px;background:#cbb47c;color:#112732;border:1px solid #ebd6a1;border-radius:5px;margin:5px 8px 5px 0;text-decoration:none}button:disabled{opacity:.5}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #eddba0;outline-offset:3px}.check{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #3b574f}.check small{display:block;color:#9fb4a7;font-size:12px}#sampleResult,pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;color:#c9d7c2}#status{color:#efd298;min-height:26px}#download{color:#e3cc94}small{color:#a9bcae}
+</style>
+<style>.audio-row{display:grid;grid-template-columns:minmax(0,1fr) 76px 140px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #3b574f}.audio-row button{margin:0}.audio-row select{width:100%}.audio-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.audio-controls input{min-height:44px;width:180px}.audio-row b{font-size:14px}summary{cursor:pointer;min-height:44px;color:#e6d09a;font-weight:600;line-height:44px}#audioStatus{min-height:26px;color:#ead39b}@media(max-width:420px){.audio-row{grid-template-columns:minmax(0,1fr) 80px}.audio-row select{grid-column:1/-1}}</style>
+<h1>守灯人 · 手机验收</h1><p>在手机浏览器打开本页，再进入游戏。测试期间可切回本页记录结果；报告保存在运行这台服务器的电脑上。</p>
+<section><b>1 · 打开同一份游戏</b><p>游戏在独立标签页运行，保留真实地址栏、安全区与全屏行为。测试入口使用独立端口，不读取你原来站点的存档。</p><button id="launch">打开游戏</button><button id="sample">采样当前战斗 10 秒</button><p id="status" role="status">先开始一局游戏；采样时保持游戏标签页在前台。</p><pre id="sampleResult">尚无采样。不会注入金币、建筑或敌人。</pre></section>
+<section><b>2 · 记录设备与操作</b><label>设备／系统／浏览器<input id="device" type="text" maxlength="160" placeholder="例如：iPhone 型号 / iOS 版本 / Safari 版本"></label><label><input id="physical" type="checkbox">我正在物理手机上操作并记录本次结果</label><small>浏览器仿真、桌面窗口和未操作的设备保持未勾选。此选项不会自动判断。</small><div id="checks"></div><label>异常或观察<textarea id="notes" rows="4" maxlength="6000" placeholder="描述出现问题的步骤、方向和设置"></textarea></label></section>
+<section><details id="audioCheck"><summary>16种声音试听与听感记录</summary><p>直接使用游戏的音效代码逐项试听，不改游戏存档或音量偏好。播放按钮只表示已发出声音，不会自动把听感记成通过。单独音色与实际战斗混音分开检查。</p><label>输出设备<input id="listeningSetup" type="text" maxlength="160" placeholder="手机外放 / 有线耳机 / 蓝牙耳机及型号"></label><div class="audio-controls"><label for="previewVolume">试听音量</label><input id="previewVolume" type="range" min="0" max="1" step=".05" value=".6"><output id="previewVolumeValue">60%</output><button id="stopAudio">停止试听</button></div><p id="audioStatus" role="status">点某一项播放，再自行记录辨识和听感。</p><div id="audioRows"></div><audio id="recordedPreview" preload="none"></audio><small>浏览器不提供Web Audio时，尝试播放已生成的离线PCM，并明确记录该回退方式。电脑可用 npm run test:audio 生成录音；离线试听不算Web Audio解锁通过。</small></details></section>
+<section><b>3 · 保存本次记录</b><p>采样包含视口、安全区、画质、实体数量和帧时间，并保留手动听感记录；不包含存档、剧情文字或浏览器中的其他内容。未测试项目会明确保留为“未测试”。</p><button id="save">保存到本地报告</button><a id="download" hidden>下载报告副本</a><pre id="saved"></pre></section>
+<script src="/audio-runtime.js"></script>
+<script>
+const labToken='<!--LAB_TOKEN-->',labels={portrait:['竖屏','资源栏、全景、大格布防、底栏均可操作'],landscape:['横屏','战场不被刘海、地址栏和底栏遮挡'],rotation:['旋转','同一局横竖屏互换后，在原位置建造／升级'],safeArea:['安全区','刘海、底部系统手势区与动态地址栏'],largeText:['大字','打开大字模式后查看设置、图鉴与建筑说明'],build:['建造与技能','大格／全景建造、升级、取消与冻结技能'],runes:['符文','选择建筑、镶嵌、卸下与背包返回'],story:['剧情','剧情模式播放、跳过、选项与返回；检查出声'],saveLoad:['存读档','手动保存／载入、战中重开本波与奖励保留'],fullscreen:['全屏','检查进入／退出或不支持时的横屏回退'],background:['后台恢复','切换其他应用后返回，检查计时、暂停与音乐'],audio:['声音','首次手势解锁、静音／分组音量、Boss预警出声'],denseBattle:['密集战斗','记录实际波次、画质与实体数量，采样10秒']};
+document.getElementById('checks').innerHTML=Object.entries(labels).map(([id,[name,note]])=>'<label class="check"><span>'+name+'<small>'+note+'</small></span><select data-check="'+id+'" aria-label="'+name+'结果"><option value="untested">未测试</option><option value="pass">通过</option><option value="fail">有问题</option></select></label>').join('');
+const previewCatalog=<!--PREVIEW_DATA-->;
+document.getElementById('audioRows').innerHTML=previewCatalog.map(([id,name])=>'<div class="audio-row"><b>'+name+'</b><button data-preview="'+id+'" aria-label="试听'+name+'">播放</button><select data-listen="'+id+'" aria-label="'+name+'听感"><option value="untested">未测试</option><option value="clear">清楚可辨</option><option value="confusing">容易混淆</option><option value="inaudible">听不清</option><option value="harsh">刺耳</option></select></div>').join('');
+let game=null,lastSample=null,previewSequence=0,previewId='',audioPreview={method:'untested',contextState:'not-unlocked',volume:.6};
+const recorded=document.getElementById('recordedPreview'),audioStatus=document.getElementById('audioStatus');
+const recordedVolume=volume=>volume*volume*SFX.gain(previewId.startsWith('boss_')?SFX.uiVolume:SFX.volume);
+function stopPreview(){previewSequence++;SFX.stopAll();recorded.pause();}
+document.getElementById('stopAudio').onclick=()=>{stopPreview();audioStatus.textContent='已停止试听。';};
+document.getElementById('previewVolume').oninput=event=>{const volume=Number(event.target.value);SFX.setVolume('master',volume);recorded.volume=recordedVolume(volume);audioPreview.volume=volume;document.getElementById('previewVolumeValue').textContent=Math.round(volume*100)+'%';};
+for(const button of document.querySelectorAll('[data-preview]'))button.onclick=async()=>{
+ stopPreview();const sequence=previewSequence,id=button.dataset.preview,name=previewCatalog.find(row=>row[0]===id)[1],volume=Number(document.getElementById('previewVolume').value);
+ previewId=id;
+ audioPreview={method:'untested',contextState:'not-unlocked',volume};
+ SFX.setBackground(false);SFX.setEnabled(true);SFX.setVolume('master',volume);SFX.init();
+ if(SFX.ctx){try{await SFX.ctx.resume();}catch(error){}}
+ if(sequence!==previewSequence)return;
+ if(SFX.ctx?.state==='running'){
+  SFX.gates.clear();if(id.startsWith('boss_'))SFX.alert(id.slice(5));else SFX.weapon(id);
+  audioPreview={method:'web-audio',contextState:SFX.ctx.state,volume};audioStatus.textContent='已播放：'+name+' · 游戏Web Audio音效；听感仍需自行选择。';
+ }else{
+  recorded.src='/sound-samples/'+id+'.wav';recorded.volume=recordedVolume(volume);
+  try{await recorded.play();if(sequence===previewSequence){audioPreview={method:'recorded-pcm',contextState:SFX.ctx?.state||'unavailable',volume};audioStatus.textContent='已播放：'+name+' · 离线PCM回退，未验证Web Audio解锁。';}}
+  catch(error){if(sequence===previewSequence)audioStatus.textContent='此浏览器尚不能播放该项。若未生成离线样本，可先在电脑运行 npm run test:audio；已有录音时，请换用手机浏览器检查并保留未测试状态。';}
+ }
+};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){stopPreview();SFX.setBackground(true);if(SFX.ctx?.state==='running')SFX.ctx.suspend().catch(()=>{});}});
+const status=document.getElementById('status');
+document.getElementById('launch').onclick=()=>{game=window.open('/game','shoudengren-device-game');status.textContent=game?'已打开游戏。完成操作后返回本页记录；采样会提示你切到游戏。':'浏览器拦截了新标签页，请允许此本地页面打开游戏。';};
+document.getElementById('sample').onclick=async()=>{
+ const button=document.getElementById('sample');if(!game||game.closed){status.textContent='请先用“打开游戏”进入一局。';return;}
+ button.disabled=true;status.textContent='即将采样10秒，请切到游戏标签页并保持前台。';
+ try{
+  lastSample=await game.eval(`(async()=>{
+   if(!G||G.over)throw Error('请先开始一局');if(globalThis.__deviceSampling)throw Error('已有采样进行中');
+   globalThis.__deviceSampling=true;const frames=[],renders=[],steps=[];let last=0;
+   const originalRender=render,originalStep=step;
+   const measuredRender=function(...args){const now=performance.now();if(last)frames.push(now-last);last=now;try{return originalRender.apply(this,args);}finally{renders.push(performance.now()-now);}};
+   const measuredStep=function(...args){const now=performance.now();try{return originalStep.apply(this,args);}finally{steps.push(performance.now()-now);}};
+   const stats=values=>{const sorted=values.slice().sort((a,b)=>a-b);return{count:values.length,mean:values.length?values.reduce((a,b)=>a+b,0)/values.length:0,p95:sorted[Math.min(sorted.length-1,Math.floor(sorted.length*.95))]||0,max:sorted.at(-1)||0};};
+   render=measuredRender;step=measuredStep;const started=performance.now();
+   try{await new Promise(resolve=>setTimeout(resolve,10000));const safe=safeInset();return{
+    environment:{userAgent:navigator.userAgent,platform:navigator.platform,viewport:innerWidth+'×'+innerHeight+' / visual '+Math.round(visualViewport?.width||innerWidth)+'×'+Math.round(visualViewport?.height||innerHeight),safeArea:JSON.stringify(safe),audio:typeof AudioContext+' / '+(SFX.ctx?.state||'not-unlocked'),fullscreen:String(!!document.fullscreenElement)+' / supported '+String(!!document.documentElement.requestFullscreen)},
+    measurement:{seconds:(performance.now()-started)/1000,paused,quality:Graphics.level,wave:G.wave,buildings:G.buildings.length,enemies:G.enemies.filter(e=>!e.dead).length,frames:stats(frames),render:stats(renders),simulation:stats(steps)}};
+   }finally{if(render===measuredRender)render=originalRender;if(step===measuredStep)step=originalStep;globalThis.__deviceSampling=false;}
+  })()`);
+  document.getElementById('sampleResult').textContent=JSON.stringify(lastSample,null,2);status.textContent=lastSample.measurement.frames.count<30?'采样帧数较少，请确认游戏在前台后重测。':'采样完成。暂停／低负载的结果只代表该次状态。';
+ }catch(error){status.textContent='未完成采样：'+error.message;}finally{button.disabled=false;}
+};
+document.getElementById('save').onclick=async()=>{
+ const device=document.getElementById('device').value,physical=document.getElementById('physical').checked;
+ if(physical&&!device.trim()){document.getElementById('saved').textContent='请填写实际设备、系统和浏览器。';return;}
+ const report={device,physicalConfirmed:physical,checks:Object.fromEntries([...document.querySelectorAll('[data-check]')].map(el=>[el.dataset.check,el.value])),listening:Object.fromEntries([...document.querySelectorAll('[data-listen]')].map(el=>[el.dataset.listen,el.value])),listeningSetup:document.getElementById('listeningSetup').value,audioPreview,notes:document.getElementById('notes').value,sample:lastSample};
+ try{const response=await fetch('/report',{method:'POST',headers:{'Content-Type':'application/json','X-Device-Lab-Token':labToken},body:JSON.stringify(report)});if(!response.ok)throw Error('保存失败 '+response.status);
+  const result=await response.json();document.getElementById('saved').textContent=result.saved+'\n'+result.report.interpretation;
+  const link=document.getElementById('download');if(link.href.startsWith('blob:'))URL.revokeObjectURL(link.href);link.href=URL.createObjectURL(new Blob([JSON.stringify(result.report,null,2)],{type:'application/json'}));link.download=result.saved;link.hidden=false;
+ }catch(error){document.getElementById('saved').textContent=error.message;}
+};
+</script></html>

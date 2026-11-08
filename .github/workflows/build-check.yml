@@ -32,7 +32,20 @@ jobs:
           node tests/enemies.test.js
           node tests/enemy-abilities.test.js
           node tests/refinements.test.js
+          node tests/detail-consistency.test.js
+          node tests/presentation.test.js
+          node tests/telemetry.test.js
+          node tests/narrative.test.js
+          node tests/boss-encounters.test.js
+          node tests/knockback-bounds.test.js
+          node tests/resonance.test.js
+          node tests/reactions.test.js
+          node tests/meteor.test.js
+          node tests/lottery.test.js
+          node tests/enemy-counterplay.test.js
+          node tests/device-lab.test.js
           node tests/build.test.js
+          node tests/license.test.js
 
       - name: 从零资源的完整战役与策略矩阵
         run: node tests/campaign-matrix.js
@@ -41,6 +54,9 @@ jobs:
       - name: 可重复战斗对照模拟
         run: node tests/simulate.js
 
+      - name: 32个建筑分支投入与实际结算对照
+        run: node tests/branch-benchmark.js
+
       - name: 保存模拟原始结果
         uses: actions/upload-artifact@v4
         with:
@@ -48,6 +64,7 @@ jobs:
           path: |
             artifacts/balance-simulation.json
             artifacts/campaign-matrix.json
+            artifacts/branch-benchmark.json
 
       - name: 构建单文件产物
         run: node build.js
@@ -71,11 +88,22 @@ jobs:
           node tests/scene-art.test.js
           node tests/building-art.test.js
           node tests/enemy-art.test.js
+          node tests/text-art.test.js
+          node tests/audio.browser.test.js
+          node tests/narrative.browser.test.js
+          node tests/story-acts.browser.test.js
+          node tests/boss-encounters.browser.test.js
+          node tests/meteor.browser.test.js
+          node tests/boss-warning-art.browser.test.js
+          node tests/ui-responsive.browser.test.js
+          node tests/phone-room.browser.test.js
+          node tests/device-lab.browser.test.js
           node tests/polish.browser.test.js
+          node tests/mobile.browser.test.js
           node tests/enemy-actions.browser.test.js
           node tests/display.browser.test.js
           node tests/browser.test.js
-      - name: 保存实际画面与帧时间
+      - name: 保存实际画面、音频与验收报告
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -87,4 +115,13 @@ jobs:
             artifacts/enemies/
             artifacts/bestiary/
             artifacts/polish/
+            artifacts/mobile/
             artifacts/display/
+            artifacts/audio/
+            artifacts/narrative/
+            artifacts/story-acts/
+            artifacts/bosses/
+            artifacts/boss-warning-art/
+            artifacts/ui-responsive/
+            artifacts/phone-room/
+            artifacts/device-reports/

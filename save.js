@@ -258,6 +258,7 @@ const SaveSystem = {
         fateWave: G.fateWave || null,
         affection: G.affection || {},
         melodyBuff: G.melodyBuff || null,
+        bossStageRewards: {...G.bossStageRewards},
         buff: G.buff || null,
         // 战斗中存档的经济基准：读档重开本波时回滚本波净收益，防止反复存/读刷击杀掉落
         waveEcon: {
@@ -351,6 +352,12 @@ const SaveSystem = {
       if (run.diffKey && typeof DIFFS !== 'undefined' && DIFFS[run.diffKey]) G.diffKey = run.diffKey;
       if (run.mode && typeof MODES !== 'undefined' && MODES[run.mode]) G.mode = run.mode;
       G.experience = run.experience === 'combat' ? 'combat' : 'story';
+      G.bossStageRewards={};
+      if(run.bossStageRewards && typeof run.bossStageRewards==='object'){
+        Object.keys(run.bossStageRewards).slice(0,64).forEach(key=>{
+          if(new RegExp('^'+G.wave+'\\|(lord|abyss|machine|void|final)\\|[1-3]\\|[1-3]$').test(key) && run.bossStageRewards[key]===true)G.bossStageRewards[key]=true;
+        });
+      }
       if (typeof StoryFlow !== 'undefined') StoryFlow.restore(run.storyState, G.wave);
       G.startTime = performance.now() - this._num(run.elapsed, 0, 0, 31536000) * 1000;
       G.admin = !!run.admin;
@@ -403,6 +410,7 @@ const SaveSystem = {
       if (!G.stats.towerDamage || typeof G.stats.towerDamage !== 'object') G.stats.towerDamage = {};
       if (!G.stats.towerKills || typeof G.stats.towerKills !== 'object') G.stats.towerKills = {};
       if (prog.lot && typeof prog.lot === 'object') Object.assign(G.lot, prog.lot);
+      G.lot.hpBonus=Math.min(2,Math.max(0,this._num(G.lot.hpBonus,0)));
       if (Array.isArray(prog.runeBag)) G.runeBag = prog.runeBag.map(r => this._fixRune(r)).filter(Boolean);
       if (prog.quest && typeof prog.quest === 'object') G.quest = prog.quest;
 
