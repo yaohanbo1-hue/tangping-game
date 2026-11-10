@@ -11218,6 +11218,13 @@ const NightWatch = {
     const offer=this._offer();if(!offer)return false;const c=offer.choices.find(x=>x.id===id);if(!c||c.disabled)return false;
     const s=this._state(),a=c.action;s.decided[offer.wave]=id;
     for(const k of ['gold','power','souls'])G[k]=Math.max(0,(G[k]||0)-(c.payment?.[k]||0));
+    // A loaded combat wave sits in build state until restarted, but the save
+    // system still rolls its gold/souls back to start minus recorded spending.
+    // Include preparation performed in that state in the same economic ledger.
+    if(G.resumeWave){
+      G.waveSpentGold=(G.waveSpentGold||0)+(c.payment?.gold||0);
+      G.waveSpentSouls=(G.waveSpentSouls||0)+(c.payment?.souls||0);
+    }
     s.result=null;
     if(a.kind==='pass')this._record(offer.title,'你决定按原来的计划守夜。',true,offer.wave);
     else if(a.kind==='repairDoor'){
@@ -11226,7 +11233,9 @@ const NightWatch = {
     }else if(a.kind==='repairBuildings'){
       G.buildings.forEach(b=>{b.hp=Math.min(b.maxHp,b.hp+b.maxHp*.15);});this._record(offer.title,c.title+'：'+c.reward,true,offer.wave);
     }else if(a.kind==='gold'||a.kind==='power'){
-      G[a.kind]+=a.amount;this._record(offer.title,c.title+'：'+c.reward,true,offer.wave);
+      G[a.kind]+=a.amount;
+      if(G.resumeWave&&a.kind==='gold')G.waveSpentGold=(G.waveSpentGold||0)-a.amount;
+      this._record(offer.title,c.title+'：'+c.reward,true,offer.wave);
     }else s.active={...a,wave:offer.wave,title:offer.title,description:c.description+' '+c.reward,startedWave:0,startStamp:null,elapsed:0,baseline:null};
     G.resDirty=true;if(typeof EventBus!=='undefined')EventBus.emit('watch:choice',{wave:offer.wave,id,title:offer.title});return true;
   },

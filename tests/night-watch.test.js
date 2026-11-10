@@ -62,4 +62,31 @@ equal(skillCompatibility.run('G.skills.siphon'),0,'NaN cooldown migrates safely'
 const invalidChoice=setup(6);invalidChoice.run("NightWatch.choose('prepare');globalThis.mismatch=NightWatch.serialize();mismatch.active.kind='freeze';NightWatch.init(mismatch);");
 equal(invalidChoice.run('NightWatch.serialize().active'),null,'restored action must match the actually selected option');
 invalidChoice.run("NightWatch.init({decided:{'1':'prepare','3':'pass','9999':'venture'}});");equal(plain(invalidChoice.run('NightWatch.serialize().decided')),{'3':'pass'},'decision ledger accepts only bounded encounter slots');
+// Choices remain available in the preparation created by a combat save. Their
+// costs and immediate proceeds must survive that save's economic rewind too.
+function resumeOffer(slot,gold=1000000){
+ const g=setup(slot);g.run(`G.experience='combat';G.gold=${gold};G.doors[0].hp=100;startWave();globalThis.combatSave=JSON.parse(JSON.stringify(SaveSystem.capture()));newGame(combatSave);`);
+ ok(g.run('G.resumeWave&&G.state===\'build\''),'actual combat restore provides a resumed preparation');
+ return g;
+}
+function roundTripTwice(g,expected,id){
+ for(let i=0;i<2;i++){
+  const json=g.run('JSON.stringify(SaveSystem.capture())');g.run('newGame('+json+');');
+  equal(plain(g.run('({gold:G.gold,power:G.power,souls:G.souls,hp:G.doors[0].hp})')),expected,'resumed preparation economics survive reload '+i);
+  equal(g.run('NightWatch.choose('+JSON.stringify(id)+')'),false,'the recorded choice cannot be claimed again');
+ }
+}
+const resumedRepair=resumeOffer(2,1000);resumedRepair.run('globalThis.beforeChoice=G.gold;');ok(resumedRepair.run("NightWatch.choose('prepare')"));
+equal(resumedRepair.run('G.gold'),966,'the resumed repair pays its 34 gold cost');equal(resumedRepair.run('G.doors[0].hp'),205);
+equal(resumedRepair.run('G.waveSpentGold'),34,'resumed gold cost enters the existing rewind ledger');
+roundTripTwice(resumedRepair,plain(resumedRepair.run('({gold:G.gold,power:G.power,souls:G.souls,hp:G.doors[0].hp})')),'prepare');
+const resumedGold=resumeOffer(22);resumedGold.run('globalThis.beforeChoice=G.gold;globalThis.beforePower=G.power;');ok(resumedGold.run("NightWatch.choose('prepare')"));
+ok(resumedGold.run('G.gold>beforeChoice&&G.power<beforePower'),'power-for-gold exchange actually transfers both resources');
+ok(resumedGold.run('G.waveSpentGold<0'),'immediate gold credit is retained as negative net spending');
+roundTripTwice(resumedGold,plain(resumedGold.run('({gold:G.gold,power:G.power,souls:G.souls,hp:G.doors[0].hp})')),'prepare');
+const resumedPower=resumeOffer(22);resumedPower.run('globalThis.beforeChoice=G.gold;globalThis.beforePower=G.power;');ok(resumedPower.run("NightWatch.choose('venture')"));
+ok(resumedPower.run('G.gold<beforeChoice&&G.power>beforePower'),'gold-for-power exchange actually transfers both resources');
+roundTripTwice(resumedPower,plain(resumedPower.run('({gold:G.gold,power:G.power,souls:G.souls,hp:G.doors[0].hp})')),'venture');
+const ordinaryPreparation=setup(2);ordinaryPreparation.run('G.doors[0].hp=100;G.waveSpentGold=7;G.waveSpentSouls=3;');ok(ordinaryPreparation.run("NightWatch.choose('prepare')"));
+equal(plain(ordinaryPreparation.run('({gold:G.waveSpentGold,souls:G.waveSpentSouls})')),{gold:7,souls:3},'ordinary preparation does not touch prior wave economics');
 console.log('Night watch: '+checks+' decision, cost, queue, commitment, pause, reload and room-response checks passed');
