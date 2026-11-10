@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 // One canonical output on Windows/Linux, including when invoked outside the repo.
 const read = file => fs.readFileSync(path.join(__dirname, file), 'utf8').replace(/\r\n?/g, '\n');
-const files = ['story.js', 'data.js', 'names.js', 'balance.js', 'combat.js', 'enemy-actions.js', 'presentation.js', 'audio.js', 'telemetry.js', 'boss-encounters.js', 'lottery-rewards.js', 'core.js', 'campaign.js', 'save.js', 'net.js', 'dream.js', 'quest.js', 'scene-art.js', 'building-art.js', 'enemy-art.js', 'ui-art.js', 'text-art.js', 'render.js', 'ui.js', 'mobile-controls.js', 'main.js'];
+const files = ['story.js', 'data.js', 'names.js', 'balance.js', 'combat.js', 'enemy-actions.js', 'presentation.js', 'audio.js', 'telemetry.js', 'boss-encounters.js', 'lottery-rewards.js', 'core.js', 'campaign.js', 'save.js', 'net.js', 'dream.js', 'quest.js', 'night-watch.js', 'hidden-secrets.js', 'scene-art.js', 'building-art.js', 'enemy-art.js', 'ui-art.js', 'text-art.js', 'render.js', 'ui.js', 'mobile-controls.js', 'watch-ui.js', 'main.js'];
 const js = files.map(f => '/* ==== ' + f + ' ==== */\n' + read(f)).join('\n');
 const version = read('VERSION').trim();
 if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('VERSION must use MAJOR.MINOR.PATCH format');
@@ -14,7 +14,7 @@ if (['<!--LICENSE-->','<!--THEME-->','<!--VERSION-->','<!--SCRIPT-->'].some(mark
 const license='<!--\nSPDX-License-Identifier: Apache-2.0\n'+read('LICENSE')+'\nNOTICE\n'+read('NOTICE')+'\nHistoric MIT notice\n'+read('LICENSES/MIT-legacy.txt')+'\n-->';
 // Replacement strings interpret $&, $` and $' inside ordinary source text.
 // Functions insert exact bytes, including regular expressions and quotations.
-const out = shell.replace('<!--LICENSE-->', () => license).replace('<!--THEME-->', () => read('theme.css')+'\n'+read('mobile.css')).replace('<!--VERSION-->', () => version).replace('<!--SCRIPT-->', () => '<script>\n' + js + '\n</script>');
+const out = shell.replace('<!--LICENSE-->', () => license).replace('<!--THEME-->', () => read('theme.css')+'\n'+read('mobile.css')+'\n'+read('watch-ui.css')).replace('<!--VERSION-->', () => version).replace('<!--SCRIPT-->', () => '<script>\n' + js + '\n</script>');
 const outPath = path.join(__dirname, 'shoudengren.html');
 fs.writeFileSync(outPath, out);
 

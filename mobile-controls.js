@@ -75,12 +75,13 @@ const TouchControls = (() => {
       text('phoneSheetTitle','防线与档案');
       const panels=[['techPanel','research','灵魂科技'],['runePanel','gem','符文背包'],['savePanel','save','存档管理'],['questPanel','archive','梦境委托'],['helpPanel','book','图鉴与设置'],['achPanel','trophy','成就'],['lotPanel','chest','梦境摇奖']];
       body.innerHTML='<div class="phone-management">'+panels.map(([id,key,label])=>'<button type="button" data-panel="'+id+'">'+icon(key)+label+'</button>').join('')+
-        '<button type="button" data-native="bed">'+icon('bed')+'升级床铺</button>'+[0,1,2].map(i=>'<button type="button" data-door="'+i+'">'+icon('door')+'第'+(i+1)+'路铁门</button>').join('')+
+        '<button type="button" data-native="watch">'+icon('book')+'守夜手记 · 宿舍角落</button><button type="button" data-native="bed">'+icon('bed')+'升级床铺</button>'+[0,1,2].map(i=>'<button type="button" data-door="'+i+'">'+icon('door')+'第'+(i+1)+'路铁门</button>').join('')+
         '<button type="button" data-native="skip">'+icon('arrow')+'提前召唤下一波</button>'+[['btnUpAll','arrow','全体升级'],['btnUpTower','target','炮塔升级'],['btnMaxAll','arrow','全体升满'],['btnStoryPlayback','book','剧情开关'],['btnSound','volume','音效开关']].map(([id,key,label])=>'<button type="button" data-forward="'+id+'">'+icon(key)+label+'</button>').join('')+
         '<button type="button" data-native="speed">'+icon('clock')+'速度 '+timeScale+'×</button><button type="button" data-native="full">'+icon('fullscreen')+'全屏 / 横屏</button><button type="button" data-native="rotate">'+icon('rotate')+'旋转画面</button><button type="button" data-native="classic">'+icon('phone')+'使用经典界面</button></div>';
       body.querySelectorAll('[data-panel]').forEach(el=>el.onclick=()=>openPanel(el.dataset.panel));
       body.querySelectorAll('[data-door]').forEach(el=>el.onclick=()=>{selectedBuildKey=null;selected={isDoor:true,door:G.doors[Number(el.dataset.door)]};closeSheet();updateDetail(true);update();});
       body.querySelector('[data-native="bed"]').onclick=()=>{selectedBuildKey=null;selected={isBed:true};closeSheet();updateDetail(true);update();};
+      body.querySelector('[data-native="watch"]').onclick=()=>{closeSheet();if(typeof WatchUI!=='undefined')WatchUI.open();};
       body.querySelector('[data-native="speed"]').onclick=()=>{node('btnSpeed').click();closeSheet();update();};
       body.querySelector('[data-native="skip"]').onclick=()=>{node('btnSkip').click();closeSheet();update();};
       body.querySelectorAll('[data-forward]').forEach(el=>el.onclick=()=>{node(el.dataset.forward).click();closeSheet();update();});

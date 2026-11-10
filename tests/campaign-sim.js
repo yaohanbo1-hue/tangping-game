@@ -4,11 +4,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { createGame } = require('./runtime');
 
-function campaign({ seed = 20261106, difficulty = 'normal', profile = 'balanced', maxWave = 60, seconds = 7200, log = false } = {}) {
+function campaign({ seed = 20261106, difficulty = 'normal', profile = 'balanced', maxWave = 60, seconds = 7200, log = false, watchChoices = false } = {}) {
   const game = createGame(seed);
   game.run(`newGame(); G.experience='combat'; G.diffKey=${JSON.stringify(difficulty)};
     G.prepTimer*=diffCfg().prepMul; G.prepTotal=G.prepTimer; paused=false;
     globalThis.policyProfile=${JSON.stringify(profile)};
+    globalThis.policyWatch=${JSON.stringify(watchChoices)};globalThis.policyWatchLog=[];
     globalThis.policyClock=0; globalThis.policyNext=0; globalThis.policyWave=0;
     globalThis.policyActions={build:0,upgrade:0,branch:0,tech:0,rune:0,skills:0};
     globalThis.policySamples=[]; globalThis.policyBosses=[];
@@ -32,6 +33,15 @@ function campaign({ seed = 20261106, difficulty = 'normal', profile = 'balanced'
     const policyBranches={turret:'a',frost:'b',laser:'a',tesla:'a',flame:'a',poison:'b',sonic:'b',gravity:'a',prism:'b'};
     const policyTech=['economy','firepower','rapid','structure','ironwall','crit','electric','overload','swift','focus','mining','sleep','vitality','harvest','greed','fortify','berserk','compound','critmaster','soulstorm','overcore','annihilation','runemaster','runelord','fortress','eternity'];
     function policyAct() {
+      if(policyWatch && G.state==='build'){
+        const offer=NightWatch.view();
+        if(offer.available){
+          const choices=offer.choices.filter(c=>c.id!=='pass'&&!c.disabled);
+          const preferred=Math.floor((G.wave-2)/4)%2?'venture':'prepare';
+          const choice=choices.find(c=>c.id===preferred)||choices[0]||offer.choices.find(c=>c.id==='pass');
+          if(choice&&NightWatch.choose(choice.id))policyWatchLog.push({wave:G.wave,nextWave:offer.nextWave,title:offer.title,choice:choice.id,cost:choice.cost,reward:choice.reward});
+        }
+      }
       const alive=G.enemies.filter(e=>!e.dead), boss=alive.some(e=>e.boss);
       const close=alive.some(e=>e.x>WALL_X-40);
       if(G.doors.some(d=>d.hp<d.maxHp*.5) || G.bed.hp<G.bed.maxHp*.65) {
@@ -109,7 +119,7 @@ function campaign({ seed = 20261106, difficulty = 'normal', profile = 'balanced'
     samples:policySamples,bosses:policyBosses,endingIds:META.endingIds,admin:G.admin,prizes:G.prize,lotteryRolls:G.lot.n,
     buffs:{fate:G.fate,tech:G.tech},topTowers:G.buildings.filter(b=>b.def.tower).map(b=>({type:b.type,level:b.level,branch:b.branch,
       stats:bstat(b),damageMul:towerDmgMul(b),rateMul:towerRateMul()*towerRateMulOn(b),runes:b.runes})).slice(0,5)})`);
-  return {seed,difficulty,profile,stop,videos:game.videos,errors:game.errors,...result};
+  return {seed,difficulty,profile,stop,videos:game.videos,errors:game.errors,...result,...(watchChoices?{watchLog:game.run('policyWatchLog')}:{} )};
 }
 if(require.main===module) {
   const arg=k=>{const a=process.argv.find(a=>a.startsWith('--'+k+'='));return a && a.split('=')[1];};

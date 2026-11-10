@@ -35,6 +35,7 @@ function cancelSelection() {
 function applyCanvasPointer(x, y) { mouse.x = x; mouse.y = y; hoverCell = cellFromXY(x, y); }
 /** 点按（鼠标左键 / 轻触）的落点判定 */
 function handleCanvasTap(x, y) {
+  if (typeof WatchUI !== 'undefined' && WatchUI.isOpen()) return;
   if (x > WALL_X - 44 && x < ROOM_X0 + 30) {
     for (const D of G.doors) {
       const L = LANES[D.lane];
@@ -118,6 +119,10 @@ cv.addEventListener('contextmenu', e => {
 });
 const SKILL_MAP = { q: 'meteor', w: 'freeze', e: 'overclock', r: 'mend', t: 'repel', f: 'siphon' };
 window.addEventListener('keydown', e => {
+  if (typeof WatchUI !== 'undefined' && WatchUI.isOpen()) {
+    if (e.key === 'Escape') { e.preventDefault(); WatchUI.close(); }
+    return;
+  }
   const tutorial = $('tutorialOverlay');
   if (tutorial && tutorial.style.display === 'flex') {
     if (e.key === 'Escape' && typeof closeFirstRunTutorial === 'function') closeFirstRunTutorial();
@@ -619,7 +624,7 @@ function loop(now) {
       while (simAcc >= FIXED_DT && n < 15) { step(FIXED_DT); simAcc -= FIXED_DT; n++; }
       if (n >= 15) simAcc = 0;      // 追不上就丢掉欠帧，避免雪崩
     } else simAcc = 0;
-    if (G) { render(dt); updateHUD(dt); }   // 帧时长传给渲染层，动画衰减按真实时间推进
+    if (G) { render(dt); updateHUD(dt); if (typeof WatchUI !== 'undefined') WatchUI.update(dt); }   // 帧时长传给渲染层，动画衰减按真实时间推进
   } catch (err) {
     if (G) G.loopErrors = (G.loopErrors || 0) + 1;
     console.error('[loop]', err);
@@ -647,6 +652,7 @@ function init() {
   wireMenu();
   wireDreamMenuButtons();
   initDreamUI();
+  if (typeof WatchUI !== 'undefined') WatchUI.init();
   showMenu();
   syncAudioUI();
   requestAnimationFrame(loop);

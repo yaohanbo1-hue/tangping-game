@@ -668,6 +668,7 @@ function updateRunePanel() {
 }
 /** 面板互斥：收起除 id 之外的全部面板（tech/ach/help/lot 走 .open，quest/rune/save 另有内联 display） */
 function _closeOtherPanels(id) {
+  if (typeof WatchUI !== 'undefined') WatchUI.close();
   ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => { if (p !== id && $(p)) $(p).classList.remove('open'); });
   ['questPanel', 'runePanel', 'savePanel'].forEach(p => {
     if (p !== id && $(p)) { $(p).classList.remove('open'); $(p).style.display = 'none'; }
@@ -828,6 +829,7 @@ function syncAccessibilityUI() {
   if($('gameGraphicsQuality'))$('gameGraphicsQuality').value=Graphics.level;
 }
 function showMenu() {
+  if (typeof WatchUI !== 'undefined') WatchUI.close();
   ensureMenuDOM();
   setMenuStartFeedback('', false);
   $('startPanel').style.display = '';
@@ -1453,6 +1455,7 @@ const STORY_SPEAKERS = (function () {
 })();
 
 function showStoryDialog(data) {
+  if (typeof WatchUI !== 'undefined') WatchUI.close();
   if (!data || !StoryFlow.begin(data)) return;
   const panel = $('storyDialog');
   // 空数据直接忽略：undefined 进队列会在 _processStoryQueue 里抛错，

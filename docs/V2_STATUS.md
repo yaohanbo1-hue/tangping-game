@@ -1,6 +1,10 @@
-# v2.0 当前验收状态
+# v2 当前验收状态
 
-截至2026-11-08，本地分支 `codex/visual-polish`，提交基线仍为b58c5d2。VERSION、package与两份HTML已按维护者要求统一为2.0.0，存档仍v7。按维护者最新要求，本轮通过独立分支PR提交，合并与Release发布由维护者执行。旧远端CI只证明对应旧提交，历史记录移至 [V2_STATUS_HISTORY.md](V2_STATUS_HISTORY.md)。
+以下为v2.0.0发布复核（2026-11-10新增玩法前）：PR #3和发布前小屏修复PR #4均已合并；核对时main为`2e5828d`，v2.0.0发布提交为`4b3f072`。VERSION、package与两份HTML统一为2.0.0，存档仍v7。正式[Release](https://github.com/yaohanbo1-hue/tangping-game/releases/tag/v2.0.0)已于2026-11-08发布；历史阶段记录见 [V2_STATUS_HISTORY.md](V2_STATUS_HISTORY.md)。
+
+2026-11-10只读核对：线上GitHub Pages返回200，版本2.0.0、Apache-2.0标记存在，HTML与本地／Release附件逐字节一致，SHA-256为`f98ac131bbf52c4ec16b69852e9e5b8d48bb75230de82f938aa725d27569e52c`。完整游戏ZIP为33,185,672字节，SHA-256为`681f7ea3c40dc715927380e8b2754011fac455ea2cf60e4e65a6d566b9861cd6`；GitHub记录的上传摘要一致。
+
+发布提交的[Linux CI](https://github.com/yaohanbo1-hue/tangping-game/actions/runs/42457562209)构建与浏览器均已通过，包含320px大字资源栏修复。Linux WebKit音频检查通过；Windows WebKit缺少Web Audio的既有记录继续保留，均不等于物理iPhone验收。
 
 ## 已落实的本地代码与证据
 
@@ -38,3 +42,7 @@ GitHub Actions配置已接入本轮新增检查与证据收集，远端结果以
 逐项[完成情况审计](COMPLETION_AUDIT.md)保留31条计划的实现／证据与缺口：26项已落实、5项待实际记录；人工难度评价已从原说明单列为待验。CI配置补齐自动设备报告收集，结果以本轮PR对应提交为准。
 
 执行入口和记录表已经准备，`npm run device:lab -- --lan`可供同一Wi-Fi手机访问。当前没有任何物理设备报告；自动样例均为 `physicalConfirmed:false`。因此完整目标仍保持未完成，版本更新不代表未测项目已经通过。详细发布文字见 [RELEASE_NOTES_NEXT.md](../RELEASE_NOTES_NEXT.md)，逐项进度见 [COMPLETION_PLAN.md](COMPLETION_PLAN.md)。
+
+## v2.1.0 守夜互动续作
+
+维护者追加减少无聊、增强沉浸和多个彩蛋的要求。本轮新增六类可选备战抉择、五件宿舍道具与六项收藏、实际战况回应；技能冷却与安排账本随v7存档恢复。当前代码版本2.1.0，正式Release v2.0.0保持不变，详见[本轮说明](IMMERSION_UPDATE.md)。本轮按最新指示直接合并推送，推送后核对CI和线上产物；原有五项实际体验仍未冒记完成。

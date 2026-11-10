@@ -43,12 +43,18 @@ jobs:
           node tests/meteor.test.js
           node tests/lottery.test.js
           node tests/enemy-counterplay.test.js
+          node tests/night-watch.test.js
+          node tests/hidden-secrets.test.js
+          node tests/immersion-integration.test.js
           node tests/device-lab.test.js
           node tests/build.test.js
           node tests/license.test.js
 
       - name: 从零资源的完整战役与策略矩阵
         run: node tests/campaign-matrix.js
+
+      - name: 守夜抉择的合法经济通关
+        run: node tests/watch-campaign.test.js
 
 
       - name: 可重复战斗对照模拟
@@ -65,6 +71,7 @@ jobs:
             artifacts/balance-simulation.json
             artifacts/campaign-matrix.json
             artifacts/branch-benchmark.json
+            artifacts/watch-campaigns.json
 
       - name: 构建单文件产物
         run: node build.js
@@ -96,6 +103,7 @@ jobs:
           node tests/meteor.browser.test.js
           node tests/boss-warning-art.browser.test.js
           node tests/ui-responsive.browser.test.js
+          node tests/watch-ui.browser.test.js
           node tests/phone-room.browser.test.js
           node tests/device-lab.browser.test.js
           node tests/polish.browser.test.js
@@ -125,3 +133,4 @@ jobs:
             artifacts/ui-responsive/
             artifacts/phone-room/
             artifacts/device-reports/
+            artifacts/watch-ui/

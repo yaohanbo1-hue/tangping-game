@@ -240,6 +240,9 @@ const SaveSystem = {
         grow: G.grow, growTimer: G.growTimer,
         diffKey: G.diffKey, mode: G.mode, experience: G.experience || 'story',
         storyState: G.storyState || null,
+        nightWatch: typeof NightWatch !== 'undefined' ? NightWatch.serialize() : null,
+        hiddenSecrets: typeof HiddenSecrets !== 'undefined' ? HiddenSecrets.serialize() : null,
+        skills: { ...G.skills },
         elapsed: Math.max(0, (performance.now() - G.startTime) / 1000),
         admin: !!G.admin, winWave: G.winWave | 0, trialId: G.trialId || null,
         resumeWave: !!G.resumeWave,
@@ -385,6 +388,10 @@ const SaveSystem = {
         }
       }
       G.reviveLeft = run.reviveLeft | 0;
+      if (typeof SKILL_DEFS !== 'undefined') {
+        G.skills = G.skills || {};
+        Object.keys(SKILL_DEFS).forEach(key => { G.skills[key] = this._num(run.skills?.[key], 0, 0, SKILL_DEFS[key].cd); });
+      }
       G.combo = run.combo | 0; G.comboT = +run.comboT || 0; G.maxCombo = run.maxCombo | 0;
       G.eventTimer = +run.eventTimer || 0;
       if (run.eventId && typeof EVENTS !== 'undefined') {
@@ -475,6 +482,8 @@ const SaveSystem = {
         if (Array.isArray(b.runes)) b.runes = b.runes.map(r => (r && dropIds.has(r.id)) ? null : r);
       });
       this.restoreDream(d.dream);
+      if (typeof NightWatch !== 'undefined') NightWatch.init(run.nightWatch);
+      if (typeof HiddenSecrets !== 'undefined') HiddenSecrets.init(run.hiddenSecrets);
       if (typeof StoryFlow !== 'undefined') StoryFlow.recoverPending();
       G.waveStartGold = G.gold; G.waveSpentGold = 0;
       G.waveStartSouls = G.souls; G.waveSpentSouls = 0;

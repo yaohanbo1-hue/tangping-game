@@ -249,7 +249,7 @@ SOFTWARE.
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="game-version" content="2.0.0">
+<meta name="game-version" content="2.1.0">
 <!-- 手机端：viewport-fit=cover 让页面铺进刘海区，安全区由 CSS 变量 + JS 缩放一起处理 -->
 <meta name="theme-color" content="#08060f">
 <meta name="color-scheme" content="dark">
@@ -2214,6 +2214,28 @@ body.phone-ui.large-text #phoneHud>div{font-size:15px}body.phone-ui.large-text #
 #phoneThreat[data-danger="true"]{color:#efb097}
 body.phone-ui #phoneShade:not([hidden]){z-index:150}body.phone-ui .phone-portal.slide{z-index:162}body.phone-ui #detail.phone-portal{z-index:161}body.phone-ui :is(#runePanel,#questPanel,#savePanel).phone-portal{z-index:166}
 body.phone-ui #runePhoneTarget:not([hidden]){display:block;font-size:13px;color:#d8c797;margin:10px 0}#runePhoneBuilding{display:block;width:100%;min-height:48px;font-size:16px;padding:8px;margin-top:5px;background:#263f40;color:#e1d8b6;border:1px solid #809376;border-radius:4px}.phone-rune-link{display:block;width:100%;min-height:44px;padding:8px;background:#304a40;color:#ddcea2;border:1px solid #7c8d6f;border-radius:4px;margin:8px 0;font-size:13px}
+
+/* A desk-sized notebook, rendered in native CSS pixels on every screen. */
+.watch-entry[hidden],.watch-backdrop[hidden],.watch-backdrop [hidden]{display:none!important}
+.watch-entry{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:160px;z-index:58;display:flex;align-items:center;gap:9px;min-height:46px;padding:8px 14px;border:1px solid #b6ac80;border-top:2px solid #e2c88f;border-radius:5px;background:linear-gradient(145deg,#30454a,#172e37);color:#e9d8ad;font:600 13px/1.5 system-ui,sans-serif;box-shadow:0 3px 0 #0b2029,0 6px 18px #07131b66;cursor:pointer}
+.watch-entry-icon{font-size:23px;color:#c3be9b}.watch-entry i{display:none;width:7px;height:7px;border-radius:50%;background:#e3cd84;box-shadow:0 0 0 3px #d5b97825}.watch-entry[data-offer=true] i{display:block}body.phone-ui .watch-entry{display:none!important}
+.watch-backdrop{position:fixed;inset:0;z-index:182;display:flex;align-items:center;justify-content:center;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:#06151bba;overscroll-behavior:contain;color:#d6dfc9;font:14px/1.75 system-ui,sans-serif}
+.watch-notebook{width:min(720px,100%);max-height:100%;max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));display:flex;flex-direction:column;min-height:0;border:1px solid #9fa58a;border-top:3px solid #c9b783;border-radius:8px;background:linear-gradient(135deg,#c3b16f0b,transparent 42%),linear-gradient(145deg,#253e44,#142b35 80%);box-shadow:0 12px 65px #020b14b3;overflow:hidden}
+.watch-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 20px 8px;flex:none}.watch-heading small{font-size:11px;letter-spacing:1.2px;color:#abbda8}.watch-heading h2{font-size:23px;letter-spacing:2px;line-height:1.5;color:#ecd8a6;margin:1px 0}.watch-intro{margin:0;padding:0 20px 12px;color:#b8c8b4;font-size:12px;flex:none}
+.watch-backdrop button{font:600 14px/1.5 system-ui,sans-serif;min-height:44px;cursor:pointer;border:1px solid #6b8270;border-top-color:#a8ab85;background:linear-gradient(150deg,#354c46,#233d3e);color:#e0dec0;border-radius:4px;padding:8px 12px}.watch-backdrop button:disabled{cursor:default;opacity:.6}.watch-backdrop button:active:not(:disabled){background:#18323b}.watch-backdrop button:focus-visible,.watch-backdrop summary:focus-visible,.watch-entry:focus-visible{outline:2px solid #f1dca1;outline-offset:3px}.watch-heading button{min-width:60px;font-size:12px}
+.watch-tabs{display:flex;gap:6px;padding:0 20px 12px;border-bottom:1px solid #65785e;flex:none}.watch-tabs button{flex:1;min-width:0;white-space:nowrap;padding:8px;font-size:13px;border-color:#526c61;background:#17313a}.watch-tabs button[aria-selected=true]{border-color:#cbb985;background:#c3b784;color:#112b33}.watch-tabs span{font-size:11px;margin-left:2px}
+.watch-pages{min-height:0;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;padding:16px 20px 22px;flex:1}.watch-pages h3{color:#e4d4aa;font-size:18px;line-height:1.6;margin:4px 0 8px}.watch-pages p{margin:6px 0 12px;overflow-wrap:anywhere}.watch-muted{color:#b0c3af;font-size:12px}.watch-scene-line{display:flex;align-items:center;gap:10px;color:#b2c5b2;font-size:11px;letter-spacing:.7px}.watch-lamp{display:inline-block;width:9px;height:13px;background:#dcc58b;border:2px solid #344e4b;border-radius:3px 3px 5px 5px;box-shadow:0 0 0 3px #dfc07814}
+.watch-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}.watch-choice:last-child{grid-column:1/-1}.watch-choice-action{width:100%;height:100%;min-height:110px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;gap:5px;border-left:3px solid #b6ba89!important}.watch-choice-action b{font-size:15px;color:#ead9ac}.watch-choice-action span{font-size:12px;font-weight:400;color:#c6d3bb}.watch-choice-action small{font-size:11px;font-weight:400;line-height:1.7}.watch-choice-cost{color:#dfc198}.watch-choice-reward{color:#bed1ac}.watch-choice:last-child button{min-height:44px;border-left-width:1px!important}.watch-choice-reason{font-size:11px;color:#d4b6a2;margin:4px 3px!important}.watch-choice-reason:empty,.watch-choice-action small:empty{display:none}
+.watch-active{margin:15px 0;padding:12px 14px;background:#122b34;border:1px solid #597563;border-left:3px solid #bdc793;border-radius:4px}.watch-active b{color:#dfe1bd}.watch-active p{font-size:12px}.watch-active progress{display:block;width:100%;height:8px;accent-color:#b5c38d;margin:10px 0 4px}.watch-active small{font-variant-numeric:tabular-nums;color:#b4c7b2}.watch-result{border:1px solid #777e63;border-left:3px solid #c4b989;border-radius:4px;padding:10px 12px;background:#233b3a;color:#dfd6ad;font-size:12px}.watch-result[data-success=false]{border-color:#7b7468;color:#d3c0b1}.watch-roommate{margin:17px 0;padding:10px 13px;border-left:2px solid #84977a;background:#c4c98c08;font-size:12px;color:#bfcfb7;font-style:normal}.watch-pages details{font-size:12px;border-top:1px solid #496456;padding-top:7px}.watch-pages summary{cursor:pointer;min-height:44px;line-height:44px;color:#c8cda9}.watch-pages ol{padding-left:20px}.watch-pages li{padding:6px 0;color:#b8c9b3}
+.watch-props{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;padding:18px 12px 12px;margin:16px 0 12px;border:1px solid #526e63;border-bottom:4px solid #7e8060;border-radius:5px;background:linear-gradient(180deg,#091d2a 0,#19333e 73%,#2d4443 73%,#203638 100%)}.watch-prop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:104px!important;padding:8px 4px!important;background:#152f39!important;border-color:#536b60!important}.watch-prop[aria-pressed=true]{border-color:#d1be85!important;background:#33473e!important}.watch-prop-symbol{display:flex;align-items:center;justify-content:center;width:38px;height:42px;color:#c4c99e;font-size:34px;line-height:1;font-style:normal;text-shadow:0 2px #0a2028}.watch-prop[data-prop=lamp] .watch-prop-symbol{color:#dfbd78;text-shadow:0 0 18px #efd58b55}.watch-prop b{font-size:12px;font-weight:500;white-space:nowrap}.watch-prop-description{min-height:45px;font-size:12px;color:#b4c6af}.watch-response{border:1px solid #7f876a;border-radius:4px;min-height:65px;padding:13px 14px;color:#ded6af;background:#172f35;font-size:14px}
+.watch-finds{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:15px}.watch-find{border:1px solid #4e6b61;border-top-color:#70836e;border-radius:4px;padding:13px 14px;background:#172e37}.watch-find small{font-size:10px;letter-spacing:1px;color:#93aa9c}.watch-find h4{font-size:15px;color:#b5c4ae;margin:5px 0}.watch-find p{font-size:12px;line-height:1.9;margin:0;color:#9fb7a6}.watch-find[data-found=true]{background:linear-gradient(140deg,#3b4d3f,#243d3d);border-color:#87906d}.watch-find[data-found=true] h4{color:#ead9ad}.watch-find[data-found=true] p{color:#cad6ba}
+.watch-prop-symbol svg{display:block;width:100%;height:100%;overflow:visible}.watch-prop[data-prop=lamp] svg{filter:drop-shadow(0 0 5px #dfbd7822)}
+.watch-choice{display:flex;flex-direction:column;min-width:0}.watch-choice-action{height:auto;flex:1}
+.watch-footer{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:12px 20px;border-top:1px solid #596c58;background:#152e36;flex:none}.watch-footer span{font-size:10px;color:#a7bca7}.watch-footer button{min-width:96px;flex:none}
+body.large-text .watch-backdrop{font-size:16px}body.large-text .watch-muted,body.large-text .watch-choice-action span,body.large-text .watch-choice-action small,body.large-text .watch-roommate,body.large-text .watch-find p,body.large-text .watch-prop-description,body.large-text .watch-result{font-size:14px}body.large-text .watch-tabs button,body.large-text .watch-prop b{font-size:14px}body.large-text .watch-footer span{font-size:12px}
+@media(max-width:540px){.watch-backdrop{padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}.watch-notebook{max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}.watch-heading{padding:12px 13px 7px;gap:8px}.watch-heading h2{font-size:21px}.watch-intro{padding:0 13px 9px;font-size:11px}.watch-tabs{padding:0 13px 10px;gap:5px}.watch-tabs button{font-size:12px;padding:8px 3px}.watch-tabs span{font-size:10px}.watch-pages{padding:12px 13px 17px}.watch-choices,.watch-finds{grid-template-columns:1fr}.watch-choice-action{min-height:100px}.watch-props{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:12px 8px}.watch-prop{min-height:87px!important}.watch-prop-symbol{height:32px;font-size:29px}.watch-footer{padding:10px 13px;gap:8px}.watch-footer span{font-size:10px;line-height:1.6}.watch-footer button{font-size:13px;min-width:89px}.watch-entry{right:12px;bottom:142px}}
+@media(max-height:480px){.watch-heading{padding-top:8px;padding-bottom:4px}.watch-heading h2{font-size:19px}.watch-heading small,.watch-intro{display:none}.watch-tabs{padding-bottom:7px}.watch-pages{padding-top:9px}.watch-footer{padding-top:7px;padding-bottom:7px}}
+@media(prefers-reduced-motion:reduce){.watch-backdrop *,.watch-entry{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 
 </style>
 </head>
@@ -5338,6 +5360,7 @@ let mouse = { x: -999, y: -999 };
 let hoverCell = null, selected = null, selectedBuildKey = null;
 let shake = 0, flash = 0, hitStop = 0, timeScale = 1, paused = false;
 function newGame(loadFrom) {
+  if (typeof WatchUI !== 'undefined') WatchUI.close();
   if (typeof resetStoryPresentation === 'function') resetStoryPresentation(false);
   EventBus.clear(); // 清理上一局事件监听，防止累积
   G = {
@@ -5380,6 +5403,8 @@ function newGame(loadFrom) {
   // NPC 驻守 / 理解路线 / 第四面墙触发记录全部复位。顺序反了的话，restoreDream() 刚恢复的
   // 进度会被立刻清空 —— 表现就是「读档之后记忆碎片和日记全没了」。
   if (typeof DreamEngine !== 'undefined') { try { DreamEngine.init(); } catch(e) { console.warn('DreamEngine init failed:', e); } }
+  if (typeof NightWatch !== 'undefined') NightWatch.init();
+  if (typeof HiddenSecrets !== 'undefined') HiddenSecrets.init();
   if (loadFrom) applySave(loadFrom);
   else setTip('点击左侧建筑卡片，再点击房间空位建造。先放「金币矿机」和「发电机」！', 8);
 }
@@ -6930,6 +6955,7 @@ function startWave() {
     flash = 0.6; shakeBy(20);
   }
   // 梦境系统：波次开始钩子
+  if (typeof NightWatch !== 'undefined') NightWatch.onWaveStart();
   if (!resumeSavedWave && typeof DreamEngine !== 'undefined') { try { DreamEngine.onWaveStart(G.wave); } catch(e) { console.warn('DreamEngine waveStart:', e); } }
   StoryFlow.onWave(G.wave);
   // 波次剧情触发
@@ -7035,6 +7061,7 @@ function endWave() {
   SFX.win();
   setTip('第 ' + G.wave + ' 波清除！+' + bonus + ' 金币。趁机扩建防线。', 5);
   checkAchievements();
+  if (typeof NightWatch !== 'undefined') NightWatch.onWaveEnd();
   saveGame();
 }
 function skipPrep() {
@@ -7267,6 +7294,8 @@ function step(dt) {
     if (ts && ts !== 1) dt *= ts;
   }
   CombatTelemetry.tick(dt);
+  if (typeof NightWatch !== 'undefined') NightWatch.tick(dt);
+  if (typeof HiddenSecrets !== 'undefined') HiddenSecrets.tick(dt);
   if (G.fate.bedRegen) G.bed.hp = Math.min(G.bed.maxHp, G.bed.hp + G.fate.bedRegen * dt);
   if (G.resDirty) { computeResonance(); G.resDirty = false; }
   updateWave(dt);
@@ -7813,6 +7842,9 @@ const SaveSystem = {
         grow: G.grow, growTimer: G.growTimer,
         diffKey: G.diffKey, mode: G.mode, experience: G.experience || 'story',
         storyState: G.storyState || null,
+        nightWatch: typeof NightWatch !== 'undefined' ? NightWatch.serialize() : null,
+        hiddenSecrets: typeof HiddenSecrets !== 'undefined' ? HiddenSecrets.serialize() : null,
+        skills: { ...G.skills },
         elapsed: Math.max(0, (performance.now() - G.startTime) / 1000),
         admin: !!G.admin, winWave: G.winWave | 0, trialId: G.trialId || null,
         resumeWave: !!G.resumeWave,
@@ -7958,6 +7990,10 @@ const SaveSystem = {
         }
       }
       G.reviveLeft = run.reviveLeft | 0;
+      if (typeof SKILL_DEFS !== 'undefined') {
+        G.skills = G.skills || {};
+        Object.keys(SKILL_DEFS).forEach(key => { G.skills[key] = this._num(run.skills?.[key], 0, 0, SKILL_DEFS[key].cd); });
+      }
       G.combo = run.combo | 0; G.comboT = +run.comboT || 0; G.maxCombo = run.maxCombo | 0;
       G.eventTimer = +run.eventTimer || 0;
       if (run.eventId && typeof EVENTS !== 'undefined') {
@@ -8048,6 +8084,8 @@ const SaveSystem = {
         if (Array.isArray(b.runes)) b.runes = b.runes.map(r => (r && dropIds.has(r.id)) ? null : r);
       });
       this.restoreDream(d.dream);
+      if (typeof NightWatch !== 'undefined') NightWatch.init(run.nightWatch);
+      if (typeof HiddenSecrets !== 'undefined') HiddenSecrets.init(run.hiddenSecrets);
       if (typeof StoryFlow !== 'undefined') StoryFlow.recoverPending();
       G.waveStartGold = G.gold; G.waveSpentGold = 0;
       G.waveStartSouls = G.souls; G.waveSpentSouls = 0;
@@ -11105,6 +11143,248 @@ const QuestSystem = {
   },
 };
 
+/* ==== night-watch.js ==== */
+// Optional preparation decisions. Only an explicit choice changes the battle.
+// Everything is run-local and serializable; no combat RNG or wall-clock timer.
+const NightWatch = {
+  _number(value, max=1e12) { return Number.isFinite(value) ? Math.max(0,Math.min(max,value)) : 0; },
+  init(saved) {
+    if (typeof G==='undefined'||!G)return;
+    const s={version:1,decided:{},active:null,history:[],result:null,messages:[],said:[],observed:{leaks:G.stats?.leaks||0,interrupts:G.stats?.bossInterrupts||0,lowBed:G.bed?.hp<=G.bed?.maxHp*.3}};
+    if(saved&&typeof saved==='object'&&!Array.isArray(saved)){
+      for(const [key,value]of Object.entries(saved.decided||{}))if(/^\d+$/.test(key)&&Number(key)>=3&&Number(key)<=55&&(Number(key)-3)%4===0&&['prepare','venture','pass'].includes(value))s.decided[Number(key)]=value;
+      if(Array.isArray(saved.history))s.history=saved.history.slice(-8).filter(x=>x&&typeof x.title==='string').map(x=>({title:x.title.slice(0,80),description:String(x.description||'').slice(0,240),success:x.success===true,wave:this._number(x.wave,9999)}));
+      if(saved.result&&typeof saved.result.title==='string')s.result={title:saved.result.title.slice(0,80),description:String(saved.result.description||'').slice(0,240),success:saved.result.success===true};
+      if(Array.isArray(saved.messages))s.messages=saved.messages.slice(-8).filter(m=>m&&typeof m.text==='string').map(m=>({speaker:'室友',text:m.text.slice(0,240),wave:this._number(m.wave,9999)}));
+      if(Array.isArray(saved.said))s.said=saved.said.filter(k=>typeof k==='string').slice(-24).map(k=>k.slice(0,70));
+      const a=saved.active,activeKinds=[{}, {prepare:'overload',venture:'freeze'}, {prepare:'lure',venture:'seal'}, {prepare:'deposit'}, {prepare:'route',venture:'spread'}, {}];
+      const slot=a&&a.wave-1,index=slot>=2?(Math.floor((slot-2)/4)%6):-1;
+      if(a&&typeof a==='object'&&Number.isInteger(a.wave)&&a.wave>=3&&a.wave<=55&&(slot-2)%4===0&&activeKinds[index]?.[s.decided[a.wave]]===a.kind){
+        const base=Math.round(35*Math.pow(1.22,slot));
+        s.active={kind:a.kind,wave:a.wave,title:String(a.title||'守夜安排').slice(0,80),description:String(a.description||'').slice(0,240),reward:a.kind==='lure'?Math.round(base*.8):a.kind==='deposit'?Math.round(base*.45):0,deposit:a.kind==='deposit'?Math.round(base*.5):0,lane:Math.floor(this._number(a.lane,2)),freezeApplied:a.freezeApplied===true,violated:a.violated===true,startedWave:0,startStamp:null,elapsed:0,baseline:null};
+      }
+    }
+    G.nightWatch=s;
+  },
+  _state() { if(typeof G==='undefined'||!G)return null;if(!G.nightWatch)this.init();return G.nightWatch; },
+  _slot() { return G.resumeWave ? G.wave-1 : G.wave; },
+  _offer() {
+    const s=this._state();if(!s||G.over||G.state!=='build'||s.active)return null;
+    const slot=this._slot();if(slot<2||slot>54||(slot-2)%4)return null;
+    const wave=slot+1;if(s.decided[wave])return null;
+    const base=Math.round(35*Math.pow(1.22,Math.min(slot,60))),power=8+slot*2;
+    const living=(G.doors||[]).filter(d=>!d.broken),weak=living.slice().sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
+    const strongest=living.slice().sort((a,b)=>b.hp/b.maxHp-a.hp/a.maxHp||a.lane-b.lane)[0];
+    const lane=strongest?strongest.lane:1;
+    const choice=(id,title,description,cost,reward,action,reason='')=>({id,title,description,cost,reward,action,disabled:!!reason,reason});
+    const fee=(gold=0,p=0,souls=0)=>({gold:Math.round(gold),power:p,souls});
+    const payText=c=>[c.gold?c.gold+'金币':'',c.power?c.power+'电力':'',c.souls?c.souls+'灵魂':''].filter(Boolean).join(' · ')||'无需预付';
+    let title,description,choices;
+    switch(Math.floor((slot-2)/4)%6){
+      case 0:
+        title='门缝里的螺丝';description='值夜的同伴找到了两套工具。只能趁下一波到来前修一处。';
+        choices=[choice('prepare','先补最危险的门','修补当前生命比例最低、尚未破坏的铁门。',fee(base*.65),'该门恢复25%最大生命',{kind:'repairDoor',lane:weak?weak.lane:1},!weak?'没有完整铁门可修':weak.hp>=weak.maxHp?'铁门目前完好':''),choice('venture','把工具分给房内','用电动工具给全部现存建筑做一次小修。',fee(0,power),'现存建筑各恢复15%最大生命',{kind:'repairBuildings'},!(G.buildings||[]).some(b=>b.hp<b.maxHp)?'现存建筑目前无需修理':'')];break;
+      case 1:
+        title='插座正在发烫';description='走廊里的电压忽高忽低。是把余电留给火力，还是先让应急开关复位？';
+        choices=[choice('prepare','存成一轮爆发','下一波开场获得12秒超频，电力现在支付。',fee(0,power*2),'下一波开场12秒超频',{kind:'overload'}),choice('venture','先校准冻结开关','下一波开场缩短冻结技能冷却8秒；不会越过试炼的禁技能规则。',fee(base*.55),'冻结冷却缩短8秒',{kind:'freeze'},(G.skills.freeze||0)<=0?'冻结开关已就绪，无需校准':'')];break;
+      case 2:
+        title='拐角又响了三声';description='有人想用空罐头把追赶者引出来。多守一小群，便能取回他们丢下的物资。';
+        choices=[choice('prepare','引它们到门前','下一波增加3只同波次普通梦魇，不增加Boss；完成该波才领额外补给。',fee(),'额外3只梦魇；守住后+'+Math.round(base*.8)+'金币',{kind:'lure',reward:Math.round(base*.8)}),choice('venture','封住召唤的回声','花费物资布置封条，下一波禁止敌人召唤增援；现存敌人仍正常进攻。',fee(base*.8),'下一波召唤封锁',{kind:'seal'})];break;
+      case 3:
+        title='借来的工具箱';description='维修员愿意押下一箱补给：下一波先守住已有布阵，清波后再扩建。';
+        choices=[choice('prepare','答应先守后建','预付押金；下一波不新建建筑则返还押金与额外补给。升级和转职仍可进行。',fee(base*.5),'不新建通关：返还押金并额外+'+Math.round(base*.45)+'金币',{kind:'deposit',deposit:Math.round(base*.5),reward:Math.round(base*.45)}),choice('venture','现在买走备用电池','不接押金约定，把金币换成电力，继续自由扩建。',fee(base*.7),'立即获得'+power*3+'电力',{kind:'power',amount:power*3})];break;
+      case 4:
+        title='走廊路口的信号灯';description='同伴能挪动第一批追赶者的来路。调整只影响普通队列，Boss仍按原路线抵达。';
+        choices=[choice('prepare','把前排引向第'+(lane+1)+'路','下一波前8名普通队列集中到当前最完好的铁门一路；总敌人数不变。',fee(base*.55),'前8名集中到第'+(lane+1)+'路',{kind:'route',lane}),choice('venture','把前排分散三路','下一波前12名普通队列按一、二、三路轮流抵达；总敌人数不变。',fee(base*.35),'前12名轮流三路',{kind:'spread'})];break;
+      default:
+        title='值夜人的补给单';description='储物柜里只剩两种互换方案。考虑下一轮升级需要，签下一项即可。';
+        choices=[choice('prepare','先留建筑预算','交出一批电力换金币；只在本次补给中可兑换一次。',fee(0,power*3),'立即获得'+Math.round(base*.9)+'金币',{kind:'gold',amount:Math.round(base*.9)}),choice('venture','先留高阶升级电力','支付金币换电力，保留下一轮高阶升级空间。',fee(base*.65),'立即获得'+power*4+'电力',{kind:'power',amount:power*4})];
+    }
+    for(const c of choices){c.payment=c.cost;c.cost=payText(c.payment);if(!c.disabled&&['gold','power','souls'].some(k=>(G[k]||0)<(c.payment[k]||0))){c.disabled=true;c.reason='当前资源不足';}}
+    choices.push(choice('pass','按原计划守夜','不接受这次安排，保留资源与原本的战局。','无','战斗不变',{kind:'pass'}));
+    return{title,description,choices,wave,nextWave:wave};
+  },
+  _record(title,description,success,wave) {
+    const s=this._state();if(!s)return;s.result={title,description,success};s.history.push({title,description,success,wave});s.history=s.history.slice(-8);
+    this._say(description,'result:'+wave);
+    if(typeof EventBus!=='undefined')EventBus.emit('watch:result',s.result);
+  },
+  _say(text,key) {
+    const s=this._state();if(!s||s.said.includes(key))return;s.said.push(key);s.said=s.said.slice(-24);
+    const message={speaker:'室友',text,wave:G.wave};s.messages.push(message);s.messages=s.messages.slice(-8);
+    if(typeof EventBus!=='undefined')EventBus.emit('watch:room',message);
+  },
+  choose(id) {
+    const offer=this._offer();if(!offer)return false;const c=offer.choices.find(x=>x.id===id);if(!c||c.disabled)return false;
+    const s=this._state(),a=c.action;s.decided[offer.wave]=id;
+    for(const k of ['gold','power','souls'])G[k]=Math.max(0,(G[k]||0)-(c.payment?.[k]||0));
+    s.result=null;
+    if(a.kind==='pass')this._record(offer.title,'你决定按原来的计划守夜。',true,offer.wave);
+    else if(a.kind==='repairDoor'){
+      const door=G.doors.find(d=>d.lane===a.lane&&!d.broken);if(door)door.hp=Math.min(door.maxHp,door.hp+door.maxHp*.25);
+      this._record(offer.title,c.title+'：'+c.reward,true,offer.wave);
+    }else if(a.kind==='repairBuildings'){
+      G.buildings.forEach(b=>{b.hp=Math.min(b.maxHp,b.hp+b.maxHp*.15);});this._record(offer.title,c.title+'：'+c.reward,true,offer.wave);
+    }else if(a.kind==='gold'||a.kind==='power'){
+      G[a.kind]+=a.amount;this._record(offer.title,c.title+'：'+c.reward,true,offer.wave);
+    }else s.active={...a,wave:offer.wave,title:offer.title,description:c.description+' '+c.reward,startedWave:0,startStamp:null,elapsed:0,baseline:null};
+    G.resDirty=true;if(typeof EventBus!=='undefined')EventBus.emit('watch:choice',{wave:offer.wave,id,title:offer.title});return true;
+  },
+  onWaveStart() {
+    const s=this._state();if(!s||G.state!=='wave')return;
+    if(G.wave%5===0)this._say('脚步比刚才沉。你盯住前摇，我替你看着门。','boss:'+G.wave);
+    const a=s.active;if(!a)return;
+    if(a.wave!==G.wave){if(a.wave<G.wave){this._record(a.title,'这次安排已经错过了对应波次。',false,a.wave);s.active=null;}return;}
+    if(a.startStamp===G.runStamp&&a.startedWave===G.wave)return;
+    a.startStamp=G.runStamp;a.startedWave=G.wave;a.elapsed=0;a.baseline={build:G.stats?.build||0};
+    if(a.kind==='overload')G.buff.overclock=Math.max(G.buff.overclock||0,12);
+    if(a.kind==='freeze'&&!a.freezeApplied){G.skills.freeze=Math.max(0,(G.skills.freeze||0)-8);a.freezeApplied=true;}
+    if(a.kind==='seal')G.buff.noSummon=true;
+    if(a.kind==='lure')for(let i=0;i<3;i++)G.spawnQueue.push({type:'grunt',lane:i});
+    if(a.kind==='route'||a.kind==='spread'){
+      const count=a.kind==='route'?8:12;
+      for(let i=0;i<Math.min(count,G.spawnQueue.length);i++){const entry=G.spawnQueue[i];G.spawnQueue[i]={...(typeof entry==='string'?{type:entry}:entry),lane:a.kind==='route'?a.lane:i%3};}
+    }
+  },
+  tick(dt) {
+    const s=this._state();if(!s||G.state!=='wave'||G.over||typeof paused!=='undefined'&&paused)return;
+    const seen=s.observed,leaks=G.stats?.leaks||0,interrupts=G.stats?.bossInterrupts||0,lowBed=G.bed?.hp<=G.bed?.maxHp*.3;
+    if(leaks>seen.leaks)this._say('门被撞开了。先顾床边，这条路我会一直提醒你。','leak:'+G.wave);
+    if(interrupts>seen.interrupts)this._say('就是这个空当！它的动作断了，趁现在。','interrupt:'+G.wave);
+    if(lowBed&&!seen.lowBed)this._say('床边快守不住了，留一手抢修。灯还亮着。','bed:'+G.wave);
+    s.observed={leaks,interrupts,lowBed};const a=s.active;if(!a)return;
+    if(a.kind==='deposit'&&this._depositBroken(a))a.violated=true;
+    if(Number.isFinite(dt)&&dt>0)a.elapsed+=Math.min(dt,.25);
+  },
+  onWaveEnd() {
+    const s=this._state(),a=s?.active;if(!a||a.wave!==G.wave||a.startedWave!==G.wave)return;
+    const pass=a.kind!=='deposit'||!this._depositBroken(a);
+    const payment=pass?(a.reward||0)+(a.deposit||0):0;
+    s.active=null; // Consume before dispatch/reward; nested calls cannot pay twice.
+    if(payment>0)G.gold+=payment;
+    const detail=pass?(a.kind==='deposit'?'你守住了原有布阵，押金与补给已交还。':a.kind==='lure'?'额外的脚步声停下了，物资已取回。':'这轮守夜安排已经完成。'):( '你选择了临场扩建，押金用于工具损耗；防线仍由你作主。');
+    this._record(a.title,detail+(payment?' +'+payment+'金币':''),pass,a.wave);G.resDirty=true;
+  },
+  _depositBroken(active) { return active.violated===true||!!active.baseline&&(G.stats?.build||0)!==active.baseline.build; },
+  serialize() {
+    const s=this._state();if(!s)return null;const copy=JSON.parse(JSON.stringify(s));
+    // A paused UI can build and immediately save without another simulation tick.
+    if(copy.active?.kind==='deposit')copy.active.violated=this._depositBroken(s.active);
+    return copy;
+  },
+  view() {
+    const s=this._state();if(!s)return{available:false,title:'守夜安排',description:'进入梦境后再查看。',choices:[],active:null,result:null,history:[]};
+    const offer=this._offer(),a=s.active;
+    const active=a?{title:a.title,description:a.description,progress:a.kind==='deposit'?(this._depositBroken(a)?0:1):a.elapsed,target:a.kind==='deposit'?1:0,wave:a.wave}:null;
+    return{available:!!offer,title:offer?.title||'守夜安排',description:offer?.description||'每隔几轮备战，同伴会送来一项可选安排。不接受也可照常守夜。',wave:G.wave,nextWave:offer?.wave||(G.resumeWave?G.wave:G.wave+1),choices:offer?offer.choices.map(({action,payment,...c})=>c):[],active,result:s.result,history:s.history.slice(),messages:s.messages.slice(),roomMessage:s.messages.at(-1)||null,hint:G.state==='wave'?'这一波正在守夜，先看好防线。':'先安排布阵，再决定是否接受同伴的提议。'};
+  },
+};
+
+/* ==== hidden-secrets.js ==== */
+/* Optional dorm discoveries: cosmetic collections, separate from story rewards. */
+const HiddenSecrets = {
+  key: 'tangping_hidden_secrets',
+  _found: new Set(), _state: null, _owner: null, _generation: -1,
+  _revision: 0, _message: '宿舍角落也有自己的声音。选一件东西，慢慢看看。',
+  definitions: [
+    {id:'rain_letter',name:'写在雨里的便条',hint:'窗上没有字。也许借一点暖光，再回头看看。',text:'你看向窗，又护住灯，再望回玻璃。两滴雨水绕过灯的倒影，像给一句没说出口的“晚安”加了引号。'},
+    {id:'borrowed_second',name:'借来的滴答',hint:'钟安静了。和另一件还在动的东西对照看看。',text:'你对照了钟和窗外的雨。钟面没有改变，雨却一滴一滴往下走。原来今晚的时间，也可以这样数。'},
+    {id:'paper_cat',name:'纸猫留的位置',hint:'纸猫不喜欢被一直盯着。忙完一轮守夜，再回来看看。',text:'你回来时，纸猫旁多了一小块折好的空纸。没有名字，也没有要求。像是谁认真给你留了一个位置。'},
+    {id:'mended_light',name:'补好的一点暖光',hint:'有些灯影，只有在最暗的时候见过，才认得出回来时的样子。',text:'你记得床铺快撑不住时，灯影晃得很厉害。现在床沿补好了，灯下那道细细的裂纹还在——它像一条缝过的金线。'},
+    {id:'door_chalk',name:'门边的一道粉笔线',hint:'等走廊里最大的一阵脚步过去，看看还守在原处的门。',text:'首领退去，三扇门仍在。你在门框下发现一道很短的粉笔线，旁边写着：“这一轮，大家都在。”'},
+    {id:'window_chorus',name:'玻璃里的小合唱',hint:'窗里映着什么，取决于你让哪些颜色亮起来。',text:'暖光、冷光和跳动的电弧一起映进玻璃。窗上的雨点像捧着一排很小的灯。你没按任何节拍，它们却像在合唱。'},
+  ],
+  init(saved) {
+    this._owner = typeof G !== 'undefined' ? G : null;
+    const data = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+    let stored = [];
+    try { stored = JSON.parse(typeof Store !== 'undefined' ? Store.get(this.key,'[]') : '[]'); } catch (_) {}
+    const legal = new Set(this.definitions.map(d=>d.id));
+    // Keep in-memory discoveries if this browser cannot persist storage.
+    this._found = new Set([...this._found, ...(Array.isArray(stored) ? stored.slice(0,64) : []),
+      ...(Array.isArray(data.found) ? data.found.slice(0,64) : [])].filter(id=>legal.has(id)));
+    if(typeof Store!=='undefined')Store.set(this.key,JSON.stringify([...this._found]));
+    const wave = this._wave();
+    const integer = value => Number.isInteger(value) && value >= 0 && value <= wave ? value : 0;
+    this._state = {completedWave:integer(data.completedWave),catVisitWave:null,bedWasLow:data.bedWasLow===true,
+      windowSeen:false,sequence:[]};
+    if(Number.isInteger(data.catVisitWave) && data.catVisitWave>=0 && data.catVisitWave<=wave) this._state.catVisitWave=data.catVisitWave;
+    // A half-finished observation sequence is deliberately not replayed by loading.
+    this._message='宿舍角落也有自己的声音。选一件东西，慢慢看看。';
+    this._revision++;
+    if(typeof EventBus !== 'undefined' && this._generation!==EventBus.generation) {
+      this._generation=EventBus.generation;
+      EventBus.on('dream:waveEnd', waveNum=>{
+        if(!this._ready() || !Number.isInteger(waveNum) || waveNum<1 || waveNum>this._wave())return;
+        this._state.completedWave=Math.max(this._state.completedWave,waveNum);
+        this._state.sequence=[];
+        this._revision++;
+      });
+    }
+  },
+  _wave() { return typeof G!=='undefined' && Number.isFinite(G?.wave) ? Math.max(0,Math.floor(G.wave)) : 0; },
+  _ready() { return !!this._state && typeof G!=='undefined' && G===this._owner && !G.over; },
+  tick(dt) {
+    if(!this._ready() || !Number.isFinite(dt) || dt<=0 || (typeof paused!=='undefined' && paused) ||
+      (typeof document!=='undefined' && document.hidden))return;
+    const bed=G.bed;
+    if(bed && bed.hp>0 && bed.maxHp>0 && bed.hp/bed.maxHp<=.5 && !this._state.bedWasLow) {
+      this._state.bedWasLow=true;this._revision++;
+    }
+  },
+  _discover(id, discovered) {
+    if(this._found.has(id))return;
+    this._found.add(id);discovered.push(id);
+    if(typeof Store!=='undefined')Store.set(this.key,JSON.stringify([...this._found]));
+    if(typeof EventBus!=='undefined')EventBus.emit('secrets:discovered',{id,name:this.definitions.find(d=>d.id===id).name});
+  },
+  interact(key) {
+    if(!this._ready())return {ok:false,message:'先开始一局守夜，再看看宿舍。',discovered:[]};
+    const descriptions={
+      window:'玻璃上有三道水痕，灯的倒影恰好落在中间。',
+      lamp:'你护住灯罩。暖黄的光铺在床沿，没有催你做任何事。',
+      clock:'钟面停在03:07。窗沿滴落一滴水，像是替它数了一秒。',
+      cat:'桌上是一只折纸猫。它的耳朵朝着门，不知在等谁回来。',
+      door:'你摸了摸门框。旧划痕旁有一小截没用完的粉笔。',
+    };
+    if(!Object.prototype.hasOwnProperty.call(descriptions,key))return {ok:false,message:'这里没有可以查看的东西。',discovered:[]};
+    const discovered=[],s=this._state;
+    s.sequence.push(key);s.sequence=s.sequence.slice(-3);
+    const sequence=s.sequence.join('>');
+    if(sequence==='window>lamp>window')this._discover('rain_letter',discovered);
+    if(sequence==='clock>window>clock')this._discover('borrowed_second',discovered);
+    if(key==='window') {
+      s.windowSeen=true;
+      const colors=new Set((G.buildings||[]).filter(b=>b.hp>0).map(b=>typeof BUILD_DEFS!=='undefined'?BUILD_DEFS[b.type]?.dmgType:null).filter(Boolean));
+      if(colors.size>=3)this._discover('window_chorus',discovered);
+    }
+    if(key==='cat') {
+      if(s.catVisitWave!==null && s.completedWave>s.catVisitWave)this._discover('paper_cat',discovered);
+      else if(s.catVisitWave===null)s.catVisitWave=this._wave();
+    }
+    if(key==='lamp' && s.bedWasLow && G.bed?.maxHp>0 && G.bed.hp/G.bed.maxHp>=.8)this._discover('mended_light',discovered);
+    if(key==='door' && G.state==='build' && (G.stats?.bossKills||0)>0 && G.doors?.length===3 && G.doors.every(d=>!d.broken && d.hp>0))this._discover('door_chalk',discovered);
+    this._message=discovered.length ? discovered.map(id=>{const d=this.definitions.find(d=>d.id===id);return '发现「'+d.name+'」：'+d.text;}).join('\n') : descriptions[key];
+    this._revision++;
+    return {ok:true,message:this._message,discovered};
+  },
+  view() {
+    const props=[
+      {key:'window',name:'雨窗',description:'窗沿挂着细细的水痕，玻璃映着房里的灯。',hint:'隔着玻璃，外面还在下雨。'},
+      {key:'lamp',name:'床头灯',description:this._state?.bedWasLow?'灯罩的裂纹里透着暖光。':'灯罩下有一圈暖黄色的光晕。',hint:'靠近一点，看看灯照到哪里。'},
+      {key:'clock',name:'停下的钟',description:'03:07。钟面下面积着一小道灰。',hint:'安静不代表什么也没发生。'},
+      {key:'cat',name:'折纸猫',description:'纸猫的耳朵朝着门，尾巴压着一角空纸。',hint:'它看起来很有耐心。'},
+      {key:'door',name:'门边刻痕',description:'木纹里夹着一小截白色粉笔印。',hint:'等脚步远一点，再看看这里。'},
+    ];
+    const discoveries=this.definitions.map(d=>({id:d.id,name:this._found.has(d.id)?d.name:'尚未记录',discovered:this._found.has(d.id),hint:d.hint,text:this._found.has(d.id)?d.text:''}));
+    return {props,discoveries,message:this._message,found:this._found.size,total:this.definitions.length,revision:this._revision};
+  },
+  serialize() {
+    if(!this._state)return null;
+    return {version:1,found:[...this._found],completedWave:this._state.completedWave,catVisitWave:this._state.catVisitWave,bedWasLow:this._state.bedWasLow};
+  },
+};
+
 /* ==== scene-art.js ==== */
 // Original procedural environment art. All state here is presentation-only;
 // no combat RNG, timers, entity mutations or collision geometry.
@@ -13911,6 +14191,7 @@ function updateRunePanel() {
 }
 /** 面板互斥：收起除 id 之外的全部面板（tech/ach/help/lot 走 .open，quest/rune/save 另有内联 display） */
 function _closeOtherPanels(id) {
+  if (typeof WatchUI !== 'undefined') WatchUI.close();
   ['techPanel', 'achPanel', 'helpPanel', 'lotPanel'].forEach(p => { if (p !== id && $(p)) $(p).classList.remove('open'); });
   ['questPanel', 'runePanel', 'savePanel'].forEach(p => {
     if (p !== id && $(p)) { $(p).classList.remove('open'); $(p).style.display = 'none'; }
@@ -14071,6 +14352,7 @@ function syncAccessibilityUI() {
   if($('gameGraphicsQuality'))$('gameGraphicsQuality').value=Graphics.level;
 }
 function showMenu() {
+  if (typeof WatchUI !== 'undefined') WatchUI.close();
   ensureMenuDOM();
   setMenuStartFeedback('', false);
   $('startPanel').style.display = '';
@@ -14696,6 +14978,7 @@ const STORY_SPEAKERS = (function () {
 })();
 
 function showStoryDialog(data) {
+  if (typeof WatchUI !== 'undefined') WatchUI.close();
   if (!data || !StoryFlow.begin(data)) return;
   const panel = $('storyDialog');
   // 空数据直接忽略：undefined 进队列会在 _processStoryQueue 里抛错，
@@ -15964,12 +16247,13 @@ const TouchControls = (() => {
       text('phoneSheetTitle','防线与档案');
       const panels=[['techPanel','research','灵魂科技'],['runePanel','gem','符文背包'],['savePanel','save','存档管理'],['questPanel','archive','梦境委托'],['helpPanel','book','图鉴与设置'],['achPanel','trophy','成就'],['lotPanel','chest','梦境摇奖']];
       body.innerHTML='<div class="phone-management">'+panels.map(([id,key,label])=>'<button type="button" data-panel="'+id+'">'+icon(key)+label+'</button>').join('')+
-        '<button type="button" data-native="bed">'+icon('bed')+'升级床铺</button>'+[0,1,2].map(i=>'<button type="button" data-door="'+i+'">'+icon('door')+'第'+(i+1)+'路铁门</button>').join('')+
+        '<button type="button" data-native="watch">'+icon('book')+'守夜手记 · 宿舍角落</button><button type="button" data-native="bed">'+icon('bed')+'升级床铺</button>'+[0,1,2].map(i=>'<button type="button" data-door="'+i+'">'+icon('door')+'第'+(i+1)+'路铁门</button>').join('')+
         '<button type="button" data-native="skip">'+icon('arrow')+'提前召唤下一波</button>'+[['btnUpAll','arrow','全体升级'],['btnUpTower','target','炮塔升级'],['btnMaxAll','arrow','全体升满'],['btnStoryPlayback','book','剧情开关'],['btnSound','volume','音效开关']].map(([id,key,label])=>'<button type="button" data-forward="'+id+'">'+icon(key)+label+'</button>').join('')+
         '<button type="button" data-native="speed">'+icon('clock')+'速度 '+timeScale+'×</button><button type="button" data-native="full">'+icon('fullscreen')+'全屏 / 横屏</button><button type="button" data-native="rotate">'+icon('rotate')+'旋转画面</button><button type="button" data-native="classic">'+icon('phone')+'使用经典界面</button></div>';
       body.querySelectorAll('[data-panel]').forEach(el=>el.onclick=()=>openPanel(el.dataset.panel));
       body.querySelectorAll('[data-door]').forEach(el=>el.onclick=()=>{selectedBuildKey=null;selected={isDoor:true,door:G.doors[Number(el.dataset.door)]};closeSheet();updateDetail(true);update();});
       body.querySelector('[data-native="bed"]').onclick=()=>{selectedBuildKey=null;selected={isBed:true};closeSheet();updateDetail(true);update();};
+      body.querySelector('[data-native="watch"]').onclick=()=>{closeSheet();if(typeof WatchUI!=='undefined')WatchUI.open();};
       body.querySelector('[data-native="speed"]').onclick=()=>{node('btnSpeed').click();closeSheet();update();};
       body.querySelector('[data-native="skip"]').onclick=()=>{node('btnSkip').click();closeSheet();update();};
       body.querySelectorAll('[data-forward]').forEach(el=>el.onclick=()=>{node(el.dataset.forward).click();closeSheet();update();});
@@ -16054,6 +16338,209 @@ const TouchControls = (() => {
   return {init,layout,update,insets,setEnabled,openSheet,closeSheet,sheetOpen:()=>!!tab,active:()=>active,playing:()=>active&&gameVisible()};
 })();
 
+/* ==== watch-ui.js ==== */
+// Native, non-blocking entry to the night's decisions and small discoveries.
+const WatchUI = (() => {
+  let root, entry, open = false, tab = 'watch', previousFocus = null, pauseGame = null, previousPause = true;
+  let observedGame = null, refresh = 0, lastWave = -1, interactionText = '', propKey = '';
+  const byId = id => document.getElementById(id);
+  const text = (el, value) => { const next = String(value == null ? '' : value); if (el.textContent !== next) el.textContent = next; };
+  const visible = el => !!el && !el.hidden && getComputedStyle(el).display !== 'none' && getComputedStyle(el).visibility !== 'hidden';
+  const node = (tag, cls, value) => { const el = document.createElement(tag); if (cls) el.className = cls; if (value != null) text(el, value); return el; };
+  const messageText = value => typeof value === 'string' ? value : value?.text ? [value.speaker,value.text].filter(Boolean).join(' · ') : '';
+  function game() { return typeof G !== 'undefined' ? G : null; }
+  function watchView() { return typeof NightWatch !== 'undefined' ? NightWatch.view() : {}; }
+  function secretView() { return typeof HiddenSecrets !== 'undefined' ? HiddenSecrets.view() : {}; }
+  function blocked() {
+    return ['overlay','tutorialOverlay','storyDialog','npcPanel','diaryPanel','fragmentGallery','fragmentDetail','itemDetail','actCard','deepDreamTransition'].some(id=>visible(byId(id))) ||
+      !!document.querySelector('.slide.open, #questPanel.open, #runePanel.open, #savePanel.open') ||
+      (typeof TouchControls !== 'undefined' && TouchControls.sheetOpen());
+  }
+  function setTab(value, focus = false) {
+    tab = ['watch', 'room', 'finds'].includes(value) ? value : 'watch';
+    for (const button of root.querySelectorAll('[data-watch-tab]')) {
+      const selected = button.dataset.watchTab === tab;
+      button.setAttribute('aria-selected', String(selected));
+      button.tabIndex = selected ? 0 : -1;
+      if (selected && focus) button.focus();
+    }
+    for (const panel of root.querySelectorAll('[data-watch-page]')) panel.hidden = panel.dataset.watchPage !== tab;
+  }
+  function init() {
+    if (root?.isConnected) return;
+    entry = node('button', 'watch-entry'); entry.type = 'button'; entry.id = 'watchEntry';
+    entry.innerHTML = '<span class="watch-entry-icon" aria-hidden="true">▤</span><span>守夜手记</span><i aria-hidden="true"></i>';
+    entry.hidden = true; entry.onclick = () => api.open(); document.body.appendChild(entry);
+    root = node('div', 'watch-backdrop'); root.id = 'watchNotebook'; root.hidden = true;
+    root.innerHTML = '<section class="watch-notebook" role="dialog" aria-modal="true" aria-labelledby="watchTitle">'+
+      '<header class="watch-heading"><div><small>值夜记录 · 灯还亮着</small><h2 id="watchTitle">守夜手记</h2></div><button id="watchClose" type="button" aria-label="关闭守夜手记">关闭</button></header>'+
+      '<p class="watch-intro">门外有脚步，身边也有人。下一步，由你来定。</p>'+
+      '<nav class="watch-tabs" role="tablist" aria-label="手记栏目"><button type="button" role="tab" id="watchTabWatch" data-watch-tab="watch" aria-controls="watchPageWatch">这一夜</button><button type="button" role="tab" id="watchTabRoom" data-watch-tab="room" aria-controls="watchPageRoom">宿舍角落</button><button type="button" role="tab" id="watchTabFinds" data-watch-tab="finds" aria-controls="watchPageFinds">发现册 <span id="watchFoundCount"></span></button></nav>'+
+      '<div class="watch-pages"><section id="watchPageWatch" role="tabpanel" aria-labelledby="watchTabWatch" data-watch-page="watch"><div class="watch-scene-line"><span class="watch-lamp" aria-hidden="true"></span><small id="watchWave"></small></div><h3 id="watchOfferTitle"></h3><p id="watchOfferDescription"></p><p id="watchOfferHint" class="watch-muted"></p><div id="watchChoices" class="watch-choices"></div><section id="watchActive" class="watch-active" hidden><b></b><p></p><progress max="1" value="0" aria-label="当前守夜约定进度"></progress><small></small></section><p id="watchResult" class="watch-result" hidden></p><blockquote id="watchRoommate" class="watch-roommate"></blockquote><details id="watchPast"><summary>之前的守夜记录</summary><ol id="watchHistory"></ol></details></section>'+
+      '<section id="watchPageRoom" role="tabpanel" aria-labelledby="watchTabRoom" data-watch-page="room" hidden><h3>把目光从炮塔上移开一会儿</h3><p class="watch-muted">雨声、旧物，还有留给别人的一点位置。这里有些东西值得再看一眼。</p><div id="watchProps" class="watch-props"></div><p id="watchPropDescription" class="watch-prop-description"></p><p id="watchInteraction" class="watch-response" role="status" aria-live="polite">选择一处角落，听听它的回应。</p></section>'+
+      '<section id="watchPageFinds" role="tabpanel" aria-labelledby="watchTabFinds" data-watch-page="finds" hidden><h3>夹在本子里的小事</h3><p class="watch-muted">未发现的页只留下线索。慢慢来，没有倒计时。</p><div id="watchFinds" class="watch-finds"></div></section></div>'+
+      '<footer class="watch-footer"><span>翻开手记时战斗暂停，合上后保持原来的节奏。</span><button id="watchResume" type="button">合上手记</button></footer></section>';
+    document.body.appendChild(root);
+    byId('watchClose').onclick = byId('watchResume').onclick = () => api.close();
+    root.addEventListener('click', event => { if (event.target === root) api.close(); });
+    for (const button of root.querySelectorAll('[data-watch-tab]')) {
+      button.onclick = () => setTab(button.dataset.watchTab);
+      button.onkeydown = event => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault(); const all = [...root.querySelectorAll('[data-watch-tab]')], index = all.indexOf(button);
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? all.length-1 : (index+(event.key === 'ArrowRight' ? 1 : -1)+all.length)%all.length;
+        setTab(all[next].dataset.watchTab, true);
+      };
+    }
+    document.addEventListener('keydown', event => {
+      if (!open) return;
+      if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); api.close(); return; }
+      if (event.key === 'Tab') {
+        const items = [...root.querySelectorAll('button:not(:disabled),summary,[tabindex="0"]')].filter(el => el.tabIndex >= 0 && el.getClientRects().length);
+        const first = items[0], last = items.at(-1), active = document.activeElement;
+        if (event.shiftKey && (active === first || !root.contains(active))) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && (active === last || !root.contains(active))) { event.preventDefault(); first?.focus(); }
+      }
+      // Keep gameplay shortcuts out while retaining normal button/arrow defaults.
+      if (!root.contains(event.target) || !['ArrowLeft','ArrowRight','Home','End'].includes(event.key)) event.stopPropagation();
+    }, true);
+    setTab('watch');
+  }
+  function syncChoices(view) {
+    const host = byId('watchChoices'), choices = view.available ? view.choices || [] : [];
+    const keys = choices.map(c => String(c.id)).join('|');
+    if (host.dataset.keys !== keys) {
+      host.replaceChildren(); host.dataset.keys = keys;
+      for (const choice of choices) {
+        const card = node('div', 'watch-choice'), button = node('button', 'watch-choice-action');
+        button.type = 'button'; button.dataset.choice = choice.id;
+        button.append(node('b'), node('span'), node('small', 'watch-choice-cost'), node('small', 'watch-choice-reward'));
+        card.append(button, node('p', 'watch-choice-reason')); host.appendChild(card);
+        button.onclick = () => { if (typeof NightWatch !== 'undefined') {
+          const accepted = NightWatch.choose(button.dataset.choice); render();
+          if (accepted) {
+            const active = byId('watchActive'), result = byId('watchResult'), destination = !active.hidden ? active : !result.hidden ? result : byId('watchOfferTitle');
+            destination.tabIndex = -1; destination.focus({preventScroll:true});
+          }
+        } };
+      }
+    }
+    for (let i = 0; i < choices.length; i++) {
+      const choice = choices[i], card = host.children[i], button = card.querySelector('button');
+      text(button.querySelector('b'), choice.title); text(button.querySelector('span'), choice.description);
+      text(button.querySelector('.watch-choice-cost'), choice.cost ? '付出 · '+choice.cost : '');
+      text(button.querySelector('.watch-choice-reward'), choice.reward ? '约定 · '+choice.reward : '');
+      button.disabled = !!choice.disabled; text(card.querySelector('p'), choice.reason || '');
+    }
+  }
+  function renderWatch(view) {
+    if (messageText(view.roomMessage)) text(byId('watchRoommate'), messageText(view.roomMessage));
+    text(byId('watchWave'), '第 '+(view.wave || game()?.wave || 1)+' 波 · '+(game()?.state === 'build' ? '备战灯下' : '防线进行中'));
+    text(byId('watchOfferTitle'), view.title || '这一夜才刚刚开始');
+    text(byId('watchOfferDescription'), view.description || '先守住眼前的防线。等到备战时，再来看看有什么需要你决定。');
+    text(byId('watchOfferHint'), view.hint || '抉择不会强制弹出，照常守夜也是一种选择。'); syncChoices(view);
+    const active = byId('watchActive'); active.hidden = !view.active;
+    if (view.active) {
+      text(active.querySelector('b'), view.active.title); text(active.querySelector('p'), view.active.description);
+      const current = Math.max(0,Number(view.active.progress)||0), target = Number(view.active.target)||0, progress = active.querySelector('progress');
+      progress.hidden = target <= 0;
+      if (target > 0) { progress.max = target; progress.value = Math.min(target,current); }
+      text(active.querySelector('small'), target > 0 ? '当前约定 '+Math.min(target,current)+' / '+target+' · 本波结束后结算' : '已守夜 '+Math.floor(current)+' 秒 · 本波结束后结算');
+    }
+    const result = byId('watchResult'); result.hidden = !view.result;
+    if (view.result) { text(result, [view.result.title, view.result.description].filter(Boolean).join(' · ')); result.dataset.success = String(!!view.result.success); }
+    const history = (view.history || []).slice(-6).reverse(), list = byId('watchHistory');
+    const signature = JSON.stringify(history);
+    if (list.dataset.signature !== signature) { list.dataset.signature = signature; list.replaceChildren(...history.map(r => node('li','', '第'+r.wave+'波 · '+r.title+'：'+(r.description||'')))); }
+    byId('watchPast').hidden = !history.length;
+  }
+  function renderSecrets(view) {
+    text(byId('watchFoundCount'), (view.found||0)+'/'+(view.total||0));
+    const props = view.props || [], host = byId('watchProps'), keys = props.map(p => p.key || p.id).join('|');
+    const drawings = {
+      window:'<path d="M7 6h38v39H7zM26 6v39M7 25h38M4 46h44M13 12l-2 6m10-4-2 6m15-8-2 6m9 11-2 6m-22-4-2 6"/>',
+      lamp:'<path d="M24 5h4m-2 0v7M18 13h16l6 22H12zM19 13l-2 22m16-22 2 22M26 13v22M12 35h28M26 35v9m-9 3h18"/><path d="M22 24q4-9 8 0v6h-8z" fill="currentColor" opacity=".35"/>',
+      clock:'<rect x="5" y="15" width="42" height="24" rx="3"/><path d="M11 39v4m30-4v4M9 10h7m20 0h7"/><text x="26" y="31" text-anchor="middle" stroke="none" fill="currentColor" font-size="10" font-family="monospace">03:07</text>',
+      cat:'<path d="M11 45V16l9 9 6-5 6 5 9-9v29zM11 16l15 20 15-20M19 33h1m12 0h1M23 40l3 2 3-2M26 36v6M7 47h38"/>',
+      door:'<path d="M8 46V6h35v40M14 46V12h23v34M5 47h41M30 28v5M18 39h10M18 42h7"/>'
+    };
+    if (host.dataset.keys !== keys) {
+      host.dataset.keys = keys; host.replaceChildren();
+      for (const prop of props) {
+        const key = prop.key || prop.id, button = node('button', 'watch-prop'); button.type = 'button'; button.dataset.prop = key;
+        const symbol = node('i', 'watch-prop-symbol'); symbol.setAttribute('aria-hidden','true');
+        symbol.innerHTML = '<svg viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(drawings[key]||'<path d="M26 8l18 18-18 18L8 26z"/>')+'</svg>';
+        button.append(symbol, node('b','',prop.name)); host.appendChild(button);
+        button.onclick = () => {
+          propKey = key;
+          if (typeof HiddenSecrets !== 'undefined') { const result = HiddenSecrets.interact(key); interactionText = result?.message || '你仔细看了一会儿。'; }
+          render();
+          const response = byId('watchInteraction'), viewport = root.querySelector('.watch-pages');
+          const r = response.getBoundingClientRect(), v = viewport.getBoundingClientRect();
+          if (r.top < v.top || r.bottom > v.bottom) response.scrollIntoView({block:'nearest',inline:'nearest',behavior:'auto'});
+        };
+      }
+    }
+    for (const button of host.children) button.setAttribute('aria-pressed', String(button.dataset.prop === propKey));
+    const selected = props.find(p => (p.key || p.id) === propKey);
+    text(byId('watchPropDescription'), selected ? [selected.description,selected.hint].filter(Boolean).join(' ') : '不必急着找到所有东西。熟悉一处角落，也算有了收获。');
+    text(byId('watchInteraction'), interactionText || view.message || view.lastMessage || '选择一处角落，听听它的回应。');
+    const finds = view.discoveries || view.entries || [], list = byId('watchFinds');
+    const signature = JSON.stringify(finds);
+    if (list.dataset.signature !== signature) {
+      list.dataset.signature = signature; list.replaceChildren(...finds.map(item => {
+        const found = !!(item.discovered || item.found), card = node('article', 'watch-find'); card.dataset.found = String(found);
+        card.append(node('small','',found ? '已夹入手记' : '一页空白'), node('h4','', found ? item.name || item.title : '尚未记录'), node('p','',found ? item.text : item.hint)); return card;
+      }));
+    }
+  }
+  function render() { if (!root) return; renderWatch(watchView()); renderSecrets(secretView()); }
+  function roommate() {
+    const g = game(); if (!g || g.wave === lastWave) return; lastWave = g.wave;
+    const authored = messageText(watchView().roomMessage); if (authored) { text(byId('watchRoommate'), authored); return; }
+    const damaged = g.bed && g.bed.hp < g.bed.maxHp*.45, broken = (g.doors||[]).filter(d=>d.broken).length;
+    const line = damaged ? '室友把床沿的东西收好：“先护住这里，我帮你看着门。”' : broken ? '有人搬来一把椅子：“这边门线松了。别硬撑，修好再说。”' :
+      ['走廊又静了一点。室友压低声音：“下一波你来安排，我不乱跑。”','有人把窗边的水擦掉：“雨还没停。你刚才那套布置，挺稳的。”','你听见身后一声轻轻的“嗯”。不是每次回应都需要很多话。'][Math.abs(g.wave||0)%3];
+    text(byId('watchRoommate'), line);
+  }
+  const api = {
+    init,
+    isOpen: () => open,
+    open(section = 'watch') {
+      init(); const g = game(); if (open) { setTab(section); return true; }
+      if (!g || g.over || blocked()) return false;
+      pauseGame = g; previousPause = typeof paused !== 'undefined' ? paused : true; previousFocus = document.activeElement;
+      if (typeof paused !== 'undefined') paused = true;
+      open = true; entry.hidden = true; root.hidden = false; document.body.classList.add('watch-open'); render(); roommate(); setTab(section);
+      byId('watchClose').focus({preventScroll:true}); return true;
+    },
+    close() {
+      if (!open) return;
+      open = false; root.hidden = true; document.body.classList.remove('watch-open');
+      const anotherModal = blocked();
+      if (pauseGame === game() && !game()?.over && !anotherModal && typeof paused !== 'undefined') paused = previousPause;
+      pauseGame = null;
+      entry.hidden = !game() || game().over || game().wave < 2 || anotherModal;
+      if (!anotherModal) {
+        if (previousFocus?.isConnected && previousFocus.getClientRects().length) previousFocus.focus({preventScroll:true});
+        else (document.body.classList.contains('phone-ui') ? byId('phoneMore') : entry)?.focus({preventScroll:true});
+      }
+      previousFocus = null;
+    },
+    update(dt = 0) {
+      init(); const g = game();
+      if (observedGame !== g) { api.close(); observedGame = g; interactionText = ''; propKey = ''; lastWave = -1; }
+      refresh += Math.max(0,Number(dt)||0); if (refresh < .3) return; refresh = 0;
+      const anotherModal = blocked(), available = !!g && !g.over && g.wave >= 2 && !anotherModal; entry.hidden = !available || open;
+      if (open && (!g || g.over || anotherModal)) { api.close(); return; }
+      const view = watchView(); entry.dataset.offer = String(!!view.available);
+      entry.setAttribute('aria-label', view.available ? '守夜手记，有新的备战抉择' : '打开守夜手记');
+      if (open) { renderWatch(view); renderSecrets(secretView()); roommate(); }
+    }
+  };
+  return api;
+})();
+
 /* ==== main.js ==== */
 function cellFromXY(x, y) {
   if (x < ROOM_X0 || x > ROOM_X1 || y < ARENA_TOP || y > ARENA_BOT) return null;
@@ -16092,6 +16579,7 @@ function cancelSelection() {
 function applyCanvasPointer(x, y) { mouse.x = x; mouse.y = y; hoverCell = cellFromXY(x, y); }
 /** 点按（鼠标左键 / 轻触）的落点判定 */
 function handleCanvasTap(x, y) {
+  if (typeof WatchUI !== 'undefined' && WatchUI.isOpen()) return;
   if (x > WALL_X - 44 && x < ROOM_X0 + 30) {
     for (const D of G.doors) {
       const L = LANES[D.lane];
@@ -16175,6 +16663,10 @@ cv.addEventListener('contextmenu', e => {
 });
 const SKILL_MAP = { q: 'meteor', w: 'freeze', e: 'overclock', r: 'mend', t: 'repel', f: 'siphon' };
 window.addEventListener('keydown', e => {
+  if (typeof WatchUI !== 'undefined' && WatchUI.isOpen()) {
+    if (e.key === 'Escape') { e.preventDefault(); WatchUI.close(); }
+    return;
+  }
   const tutorial = $('tutorialOverlay');
   if (tutorial && tutorial.style.display === 'flex') {
     if (e.key === 'Escape' && typeof closeFirstRunTutorial === 'function') closeFirstRunTutorial();
@@ -16676,7 +17168,7 @@ function loop(now) {
       while (simAcc >= FIXED_DT && n < 15) { step(FIXED_DT); simAcc -= FIXED_DT; n++; }
       if (n >= 15) simAcc = 0;      // 追不上就丢掉欠帧，避免雪崩
     } else simAcc = 0;
-    if (G) { render(dt); updateHUD(dt); }   // 帧时长传给渲染层，动画衰减按真实时间推进
+    if (G) { render(dt); updateHUD(dt); if (typeof WatchUI !== 'undefined') WatchUI.update(dt); }   // 帧时长传给渲染层，动画衰减按真实时间推进
   } catch (err) {
     if (G) G.loopErrors = (G.loopErrors || 0) + 1;
     console.error('[loop]', err);
@@ -16704,6 +17196,7 @@ function init() {
   wireMenu();
   wireDreamMenuButtons();
   initDreamUI();
+  if (typeof WatchUI !== 'undefined') WatchUI.init();
   showMenu();
   syncAudioUI();
   requestAnimationFrame(loop);

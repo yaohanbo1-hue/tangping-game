@@ -1,9 +1,9 @@
 {
   "name": "shoudengren-nightmare-defense",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
-    "test": "node tests/smoke.test.js && node tests/campaign.test.js && node tests/balance.test.js && node tests/economy.test.js && node tests/combat.test.js && node tests/buildings.test.js && node tests/visual-events.test.js && node tests/enemies.test.js && node tests/enemy-abilities.test.js && node tests/refinements.test.js && node tests/detail-consistency.test.js && node tests/presentation.test.js && node tests/telemetry.test.js && node tests/narrative.test.js && node tests/boss-encounters.test.js && node tests/knockback-bounds.test.js && node tests/resonance.test.js && node tests/reactions.test.js && node tests/meteor.test.js && node tests/lottery.test.js && node tests/enemy-counterplay.test.js && node tests/device-lab.test.js && node tests/build.test.js && node tests/license.test.js",
+    "test": "node tests/smoke.test.js && node tests/campaign.test.js && node tests/balance.test.js && node tests/economy.test.js && node tests/combat.test.js && node tests/buildings.test.js && node tests/visual-events.test.js && node tests/enemies.test.js && node tests/enemy-abilities.test.js && node tests/refinements.test.js && node tests/detail-consistency.test.js && node tests/presentation.test.js && node tests/telemetry.test.js && node tests/narrative.test.js && node tests/boss-encounters.test.js && node tests/knockback-bounds.test.js && node tests/resonance.test.js && node tests/reactions.test.js && node tests/meteor.test.js && node tests/lottery.test.js && node tests/enemy-counterplay.test.js && node tests/night-watch.test.js && node tests/hidden-secrets.test.js && node tests/immersion-integration.test.js && node tests/device-lab.test.js && node tests/build.test.js && node tests/license.test.js",
     "test:campaign": "node tests/campaign-matrix.js && node tools/campaign-report.js",
     "test:browser": "node tests/display.browser.test.js && node tests/enemy-actions.browser.test.js && node tests/browser.test.js",
     "test:art": "node tests/scene-art.test.js && node tests/building-art.test.js && node tests/enemy-art.test.js && node tests/text-art.test.js",
@@ -18,7 +18,9 @@
     "profile:battlefield": "node tests/profile-battlefield.js",
     "benchmark:branches": "node tests/branch-benchmark.js",
     "device:lab": "node tools/mobile-lab.js",
-    "test:lab": "node tests/device-lab.browser.test.js"
+    "test:lab": "node tests/device-lab.browser.test.js",
+    "test:immersion": "node tests/night-watch.test.js && node tests/hidden-secrets.test.js && node tests/immersion-integration.test.js && node tests/watch-ui.browser.test.js",
+    "test:watch-campaign": "node tests/watch-campaign.test.js"
   },
   "devDependencies": {
     "playwright": "1.63.0"

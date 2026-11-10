@@ -4,7 +4,7 @@
 
 ![HTML5](https://img.shields.io/badge/HTML5-Game-E34F26?style=flat-square&logo=html5&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES6-F7DF1E?style=flat-square&logo=javascript&logoColor=black)
-![版本](https://img.shields.io/badge/version-2.0.0-blue?style=flat-square)
+![版本](https://img.shields.io/badge/version-2.1.0-blue?style=flat-square)
 ![单文件](https://img.shields.io/badge/单文件-开箱即玩-4CAF50?style=flat-square)
 ![零依赖](https://img.shields.io/badge/依赖-0-9C27B0?style=flat-square)
 ![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-222222?style=flat-square&logo=github&logoColor=white)
@@ -16,15 +16,24 @@
 
 手机、平板、电脑的浏览器都能直接打开，不用下载、不用安装。下载下来双击 `shoudengren.html` 也一样能玩。
 
-📱 **本地开发版移动端适配**：原生尺寸主页、资源栏与操作抽屉，竖屏使用大格布防，横屏保留战场全景；考虑刘海与底部安全区，支持全屏、横屏锁定或画面转向（具体能力取决于浏览器）。桌面、Android与WebKit仿真已完成回归；物理手机仍需另行验收。
+📱 **移动端适配**：原生尺寸主页、资源栏与操作抽屉，竖屏使用大格布防，横屏保留战场全景；考虑刘海与底部安全区，支持全屏、横屏锁定或画面转向（具体能力取决于浏览器）。桌面、Android与WebKit仿真已完成回归；物理手机仍需另行验收。
 
 🎞️ **主线加入 12 段静音剧情镜头**：按波次播放，第 55 波揭晓真相，主线通关后播放结尾镜头。视频按需加载并支持手机行内播放；缺少素材或浏览器无法播放时，文字剧情仍可继续。本地运行时请把 `assets/story/` 文件夹与 HTML 放在一起；只下载 HTML 仍可游玩，但不会带上视频。
 
 ---
 
+## v2.1.0 守夜互动更新
+
+main当前加入新的守夜抉择、宿舍角落与六个发现彩蛋；最新正式Release仍为下方的v2.0.0。
+
+- 第3波开始，每隔四轮备战有一项可选安排：修门、临时供电、诱敌／封印、押金守约、调整来路及后勤取舍。收益、代价和结算条件会明确显示，不接受仍可照常玩。
+- 桌面右侧“守夜手记”，手机“管理→守夜手记”进入。可看当前安排、室友对真实战况的回应，或观察窗、灯、钟、折纸猫与门边刻痕。
+- 发现册共有六页，未发现只给线索；收藏跨局保留并可随存档备份，不发资源、不提前揭示主线。
+- 技能冷却现在随存档恢复；押金约定与开关校准均防读档重领。详见[本轮说明](docs/IMMERSION_UPDATE.md)。
+
 ## v2.0.0 更新（已发布）
 
-当前文件版本已统一为2.0.0，本轮通过独立分支PR提交审阅，合并与发布由维护者执行。汇总本次全部更新的详细文字见 [RELEASE_NOTES_NEXT.md](RELEASE_NOTES_NEXT.md)，当前验收范围见 [V2_STATUS.md](docs/V2_STATUS.md)。
+v2.0.0已于2026-11-08发布，PR #3和发布前小屏修复PR #4均已合并。[下载完整游戏包](https://github.com/yaohanbo1-hue/tangping-game/releases/download/v2.0.0/shoudengren-v2.0.0.zip)（含音乐与剧情视频），完整更新与校验文件见 [Release](https://github.com/yaohanbo1-hue/tangping-game/releases/tag/v2.0.0)。汇总说明见 [RELEASE_NOTES_NEXT.md](RELEASE_NOTES_NEXT.md)，当前验收范围见 [V2_STATUS.md](docs/V2_STATUS.md)。
 
 - **手机可直接点大格布防。** 原生尺寸主页、资源／威胁栏和建造／技能／管理底栏；竖屏增加8列×5行布防板，44×48px以上格子对应真实建筑、等级和床铺，窄屏可横向滚动；横屏保留更大全景。科技、符文、存档、档案、详情与剧情支持原生字号、大字和安全区，详见 [手机适配](docs/MOBILE_ADAPTATION.md)。
 - **雨夜美术继续精修。** 三个美术子任务细化16建筑／32转职的炮管、线圈、晶面、管路与机械材质，35普通怪／五Boss的装甲与独立轮廓、雨窗湿石与寝具物件，以及黄铜UI、图标和人物头像。实际缩略图与受击／修复／升级保持一致，见 [视觉说明](docs/VISUAL_POLISH.md)。

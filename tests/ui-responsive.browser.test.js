@@ -5,7 +5,7 @@ const {chromium,webkit}=require('playwright');
 const root=path.resolve(__dirname,'..'),out=path.join(root,'artifacts','ui-responsive');fs.mkdirSync(out,{recursive:true});
 const read=file=>fs.readFileSync(path.join(root,file),'utf8').replace(/\r\n?/g,'\n');
 const fileBlock=read('build.js').match(/const files = \[([\s\S]*?)\];/)[1],files=[...fileBlock.matchAll(/'([^']+)'/g)].map(m=>m[1]);
-const html=read('shell.html').replace('<!--THEME-->',()=>read('theme.css')+'\n'+read('mobile.css')).replace('<!--VERSION-->',()=>read('VERSION').trim()).replace('<!--SCRIPT-->',()=>'<script>\n'+files.map(read).join('\n')+'\n</script>');
+const html=read('shell.html').replace('<!--THEME-->',()=>read('theme.css')+'\n'+read('mobile.css')+'\n'+read('watch-ui.css')).replace('<!--VERSION-->',()=>read('VERSION').trim()).replace('<!--SCRIPT-->',()=>'<script>\n'+files.map(read).join('\n')+'\n</script>');
 const server=http.createServer((req,res)=>{const pathname=new URL(req.url,'http://localhost').pathname;if(pathname==='/'){res.setHeader('Content-Type','text/html; charset=utf-8');return res.end(html);}const file=path.resolve(root,'.'+pathname);if(!file.startsWith(root+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return res.writeHead(404).end();fs.createReadStream(file).pipe(res);});
 async function exercise(engine,name,viewport,large){
   const browser=await engine.launch(process.platform==='linux'&&engine===webkit?{env:{...process.env,WEBKIT_SKIA_ENABLE_CPU_RENDERING:'1'}}:{});

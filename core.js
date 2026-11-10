@@ -371,6 +371,7 @@ let mouse = { x: -999, y: -999 };
 let hoverCell = null, selected = null, selectedBuildKey = null;
 let shake = 0, flash = 0, hitStop = 0, timeScale = 1, paused = false;
 function newGame(loadFrom) {
+  if (typeof WatchUI !== 'undefined') WatchUI.close();
   if (typeof resetStoryPresentation === 'function') resetStoryPresentation(false);
   EventBus.clear(); // 清理上一局事件监听，防止累积
   G = {
@@ -413,6 +414,8 @@ function newGame(loadFrom) {
   // NPC 驻守 / 理解路线 / 第四面墙触发记录全部复位。顺序反了的话，restoreDream() 刚恢复的
   // 进度会被立刻清空 —— 表现就是「读档之后记忆碎片和日记全没了」。
   if (typeof DreamEngine !== 'undefined') { try { DreamEngine.init(); } catch(e) { console.warn('DreamEngine init failed:', e); } }
+  if (typeof NightWatch !== 'undefined') NightWatch.init();
+  if (typeof HiddenSecrets !== 'undefined') HiddenSecrets.init();
   if (loadFrom) applySave(loadFrom);
   else setTip('点击左侧建筑卡片，再点击房间空位建造。先放「金币矿机」和「发电机」！', 8);
 }
@@ -1963,6 +1966,7 @@ function startWave() {
     flash = 0.6; shakeBy(20);
   }
   // 梦境系统：波次开始钩子
+  if (typeof NightWatch !== 'undefined') NightWatch.onWaveStart();
   if (!resumeSavedWave && typeof DreamEngine !== 'undefined') { try { DreamEngine.onWaveStart(G.wave); } catch(e) { console.warn('DreamEngine waveStart:', e); } }
   StoryFlow.onWave(G.wave);
   // 波次剧情触发
@@ -2068,6 +2072,7 @@ function endWave() {
   SFX.win();
   setTip('第 ' + G.wave + ' 波清除！+' + bonus + ' 金币。趁机扩建防线。', 5);
   checkAchievements();
+  if (typeof NightWatch !== 'undefined') NightWatch.onWaveEnd();
   saveGame();
 }
 function skipPrep() {
@@ -2300,6 +2305,8 @@ function step(dt) {
     if (ts && ts !== 1) dt *= ts;
   }
   CombatTelemetry.tick(dt);
+  if (typeof NightWatch !== 'undefined') NightWatch.tick(dt);
+  if (typeof HiddenSecrets !== 'undefined') HiddenSecrets.tick(dt);
   if (G.fate.bedRegen) G.bed.hp = Math.min(G.bed.maxHp, G.bed.hp + G.fate.bedRegen * dt);
   if (G.resDirty) { computeResonance(); G.resDirty = false; }
   updateWave(dt);
